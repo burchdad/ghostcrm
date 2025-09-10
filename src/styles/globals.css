@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Debug: Force images and SVGs to display */
+img, svg {
+	display: inline-block !important;
+	visibility: visible !important;
+	width: auto !important;
+	height: auto !important;
+	max-width: 100px !important;
+	max-height: 100px !important;
+}
