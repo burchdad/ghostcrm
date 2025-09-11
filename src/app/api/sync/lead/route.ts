@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(req: Request) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
-    const payload = await req.json();
-    console.log('[Sync Lead] Received payload:', payload);
+    const data = await req.json(); // Robust body parsing
+    console.log('[RECEIVED PAYLOAD]', JSON.stringify(data, null, 2));
 
     const {
       full_name,
@@ -23,33 +22,49 @@ export async function POST(req: Request) {
       priority,
       vehicle_of_interest,
       trade_in_details
-    } = payload;
+    } = data;
 
-    const { error } = await supabase.from('leads').insert([
-      {
-        full_name,
-        contact_email,
-        contact_phone,
-        source,
-        stage,
-        assigned_rep_id,
-        data: {
-          notes,
-          priority,
-          vehicle_of_interest,
-          trade_in_details
-        }
+    // Map assigned_rep_id from email to UUID if possible
+    let rep_uuid = null;
+    if (contact_email) {
+      const { data: user, error: userError } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('email', contact_email)
+        .single();
+      if (userError) {
+        console.warn('[PROFILE LOOKUP ERROR]', userError.message);
       }
-    ]);
-
-    if (error) {
-      console.error('[Supabase Insert Error]', error);
-      return NextResponse.json({ success: false, error: error.message, debug: error }, { status: 500 });
+      rep_uuid = user?.user_id || null;
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    const insertData = {
+      full_name,
+      contact_email,
+      contact_phone,
+      source,
+      stage,
+      assigned_rep_id: rep_uuid || assigned_rep_id || null,
+      data: {
+        notes,
+        priority,
+        vehicle_of_interest,
+        trade_in_details
+      }
+    };
+
+    console.log('[INSERT TO SUPABASE]', JSON.stringify(insertData, null, 2));
+
+    const { error } = await supabase.from('leads').insert([insertData]);
+
+    if (error) {
+      console.error('[SUPABASE INSERT ERROR]', error);
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
   } catch (err: any) {
-    console.error('[API Error]', err.message, err);
-    return NextResponse.json({ success: false, error: err.message, debug: err }, { status: 500 });
+    console.error('[WEBHOOK PARSE ERROR]', err.message);
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
