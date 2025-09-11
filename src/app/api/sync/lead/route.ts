@@ -15,6 +15,7 @@ export async function POST(req: Request) {
     );
 
     const payload = await req.json();
+    console.log('[Sync Lead] Received payload:', payload);
 
     const {
       full_name,
@@ -48,12 +49,12 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error('[Supabase Insert Error]', error);
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      return NextResponse.json({ success: false, error: error.message, debug: error }, { status: 500 });
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err: any) {
-    console.error('[API Error]', err.message);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    console.error('[API Error]', err.message, err);
+    return NextResponse.json({ success: false, error: err.message, debug: err }, { status: 500 });
   }
 }
