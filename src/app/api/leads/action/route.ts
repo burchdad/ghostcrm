@@ -35,6 +35,18 @@ export async function POST(req: Request) {
         from: fromNumber,
         to: phone.startsWith('+') ? phone : `+1${phone}`
       });
+
+      await supabase.from('messages').insert([
+        {
+          lead_id: leadId,
+          action_type: 'sms',
+          contact: phone,
+          content: message,
+          rep_id: null,
+          metadata: {}
+        }
+      ]);
+
       return NextResponse.json({ success: true, sid: result.sid, message: `SMS sent to ${phone}` });
     } catch (err: any) {
       return NextResponse.json({ error: err.message || String(err) }, { status: 500 });
@@ -51,11 +63,23 @@ export async function POST(req: Request) {
     try {
       await sgMail.send({
         to: email,
-        from: 'support@ghostai.solutions', // Change to your verified sender
+        from: 'support@ghostai.solutions',
         subject: 'CRM Lead Notification',
         text: message,
         html: `<p>${message}</p>`
       });
+
+      await supabase.from('messages').insert([
+        {
+          lead_id: leadId,
+          action_type: 'email',
+          contact: email,
+          content: message,
+          rep_id: null,
+          metadata: {}
+        }
+      ]);
+
       return NextResponse.json({ success: true, message: `Email sent to ${email}` });
     } catch (err: any) {
       return NextResponse.json({ error: err.message || String(err) }, { status: 500 });
