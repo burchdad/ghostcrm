@@ -1,0 +1,24 @@
+# Node modules
+node_modules/
+
+# Build output
+.next/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env files
+.env*
+
+# IDE files
+.vscode/
+.idea/
+
+# TypeScript build info
+*.tsbuildinfo
