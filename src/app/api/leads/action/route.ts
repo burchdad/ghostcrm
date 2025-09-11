@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-export const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
+const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
 export async function POST(req: Request) {
   const body = await req.json();
