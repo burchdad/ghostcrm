@@ -3,6 +3,10 @@
 import { useEffect, useState, useRef } from "react";
 import { createClient } from '@supabase/supabase-js';
 
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  throw new Error("NEXT_PUBLIC_SUPABASE_URL missing");
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
