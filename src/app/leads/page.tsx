@@ -195,7 +195,15 @@ export default function Leads() {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>{lead["Full Name"]}</TableCell>
+                    <TableCell>
+                      <a
+                        href={`/leads/${lead.id}/messages`}
+                        className="text-blue-600 hover:underline"
+                        title="View messages for this lead"
+                      >
+                        {lead["Full Name"]}
+                      </a>
+                    </TableCell>
                     <TableCell>{lead["Phone Number"]}</TableCell>
                     <TableCell>{lead["Email Address"]}</TableCell>
                     <TableCell>{lead["Source"]}</TableCell>
