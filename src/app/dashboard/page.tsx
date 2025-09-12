@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 "use client";
     // --- AI Automation & Integration Management State ---
     const [aiTags, setAiTags] = useState<string[]>([]);
