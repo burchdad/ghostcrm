@@ -38,6 +38,13 @@ export async function POST(req: Request) {
           from: fromNumber,
           to: phone.startsWith('+') ? phone : `+1${phone}`
         });
+        // --- Slack/Email Alert Integration (placeholder) ---
+        // TODO: Replace with actual Slack/email API call
+        // Example: Send alert to Slack/email when a new message is created
+        // await sendSlackAlert({ leadId, action, message });
+        // await sendEmailAlert({ leadId, action, message });
+        // For now, just log to console
+        console.log(`ALERT: New message for lead ${leadId} via ${action}`);
 
         await supabase.from('messages').insert([
           {
