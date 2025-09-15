@@ -33,6 +33,9 @@ function getDefaultEmailMessage(type: string, lead: any) {
 
 export default function Leads() {
   // ...existing state...
+  const [selectedOrg, setSelectedOrg] = useState("");
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIdxs, setSelectedIdxs] = useState<number[]>([]);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailLead, setEmailLead] = useState<any>(null);
   const [emailType, setEmailType] = useState(emailTypes[0]);
@@ -124,6 +127,16 @@ export default function Leads() {
         <span>Lucide Test:</span>
         <LucidePhone style={{ width: 32, height: 32, color: "blue" }} />
       </div>
+      {/* Multi-tenant Organization Selector */}
+      <div className="flex gap-2 items-center mb-2">
+        <label className="text-sm text-blue-800">Organization</label>
+        <select value={selectedOrg} onChange={e => setSelectedOrg(e.target.value)} className="border rounded px-2 py-1">
+          <option value="">All</option>
+          <option value="org1">Org 1</option>
+          <option value="org2">Org 2</option>
+        </select>
+        <Button variant="outline" onClick={() => setBulkMode(!bulkMode)}>{bulkMode ? "Cancel Bulk" : "Bulk Ops"}</Button>
+      </div>
       <div className="flex gap-4 items-center">
         <Input
           placeholder="Filter by name, rep, source..."
@@ -131,11 +144,42 @@ export default function Leads() {
           value={filter}
           onChange={e => setFilter(e.target.value)}
         />
-  <Button variant={sortKey === "Current Stage" ? "ghost" : "outline"} onClick={() => setSortKey("Current Stage")}>Stage</Button>
-  <Button variant={sortKey === "Source" ? "ghost" : "outline"} onClick={() => setSortKey("Source")}>Source</Button>
-  <Button variant={sortKey === "Lead Priority (AI)" ? "ghost" : "outline"} onClick={() => setSortKey("Lead Priority (AI)")}>Priority</Button>
+        <Button variant={sortKey === "Current Stage" ? "ghost" : "outline"} onClick={() => setSortKey("Current Stage")}>Stage</Button>
+        <Button variant={sortKey === "Source" ? "ghost" : "outline"} onClick={() => setSortKey("Source")}>Source</Button>
+        <Button variant={sortKey === "Lead Priority (AI)" ? "ghost" : "outline"} onClick={() => setSortKey("Lead Priority (AI)")}>Priority</Button>
         <Button variant="ghost" onClick={() => setSortAsc(a => !a)}>{sortAsc ? "↑" : "↓"}</Button>
       </div>
+      {/* Bulk Operations UI */}
+      {bulkMode && (
+        <div className="mb-2 flex gap-2">
+          <Button variant="outline" onClick={() => {
+            // Bulk email
+            selectedIdxs.forEach(idx => handleAction(leads[idx], "email"));
+            setBulkMode(false);
+            setSelectedIdxs([]);
+          }}>Email Selected</Button>
+          <Button variant="outline" onClick={() => {
+            // Bulk export
+            const data = JSON.stringify(selectedIdxs.map(idx => leads[idx]), null, 2);
+            const blob = new Blob([data], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "leads-selected.json";
+            a.click();
+            URL.revokeObjectURL(url);
+            setBulkMode(false);
+            setSelectedIdxs([]);
+          }}>Export Selected</Button>
+          <Button variant="ghost" onClick={() => {
+            // Bulk delete
+            setLeads(leads.filter((_, idx) => !selectedIdxs.includes(idx)));
+            setBulkMode(false);
+            setSelectedIdxs([]);
+          }}>Delete Selected</Button>
+          <Button variant="outline" onClick={() => setBulkMode(false)}>Cancel</Button>
+        </div>
+      )}
       <Card className="p-4">
         {loading ? (
           <div>Loading leads...</div>
@@ -166,6 +210,8 @@ export default function Leads() {
             <TableBody>
               {leads
                 .filter(lead => {
+                  // Org filter (scaffolded)
+                  if (selectedOrg && lead.tags && !lead.tags.includes(selectedOrg)) return false;
                   const search = filter.toLowerCase();
                   return (
                     (lead["Full Name"] || "").toLowerCase().includes(search) ||
@@ -181,20 +227,42 @@ export default function Leads() {
                   }
                   return 0;
                 })
-                .map((lead, index) => (
-                  <TableRow key={lead.id || index}>
-                    <TableCell>
-                      {/* Test: Static image */}
-                      <img src="https://placekitten.com/40/40" alt="Test" className="w-8 h-8 rounded-full object-cover mb-1" />
-                      {/* Test: Dynamic photo */}
-                      {lead["Lead Photo"] && Array.isArray(lead["Lead Photo"]) && lead["Lead Photo"].length > 0 ? (
-                        <img src={lead["Lead Photo"][0].url} alt="Lead" className="w-8 h-8 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
-                          <span className="text-xs">No Photo</span>
-                        </div>
-                      )}
-                    </TableCell>
+                .map((lead, index) => {
+                  // Real-time analytics (scaffolded)
+                  const analytics = {
+                    activityRate: Math.floor(Math.random() * 100),
+                    avgResponse: Math.floor(Math.random() * 60),
+                    conversionRate: Math.floor(Math.random() * 100),
+                  };
+                  // Compliance/security badges (scaffolded)
+                  const compliance = lead.tags?.includes("gdpr") ? "GDPR" : "";
+                  const security = lead.tags?.includes("secure") ? "Secure" : "";
+                  return (
+                    <TableRow key={lead.id || index}>
+                      <TableCell>
+                        {bulkMode && (
+                          <input type="checkbox" checked={selectedIdxs.includes(index)} onChange={e => {
+                            setSelectedIdxs(e.target.checked ? [...selectedIdxs, index] : selectedIdxs.filter(i => i !== index));
+                          }} />
+                        )}
+                        {/* Test: Static image */}
+                        <img src="https://placekitten.com/40/40" alt="Test" className="w-8 h-8 rounded-full object-cover mb-1" />
+                        {/* Test: Dynamic photo */}
+                        {lead["Lead Photo"] && Array.isArray(lead["Lead Photo"]) && lead["Lead Photo"].length > 0 ? (
+                          <img src={lead["Lead Photo"][0].url} alt="Lead" className="w-8 h-8 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
+                            <span className="text-xs">No Photo</span>
+                          </div>
+                        )}
+                        {/* Real-time analytics badges */}
+                        <span className="ml-2 text-xs bg-green-100 text-green-800 rounded px-1">Activity: {analytics.activityRate}/wk</span>
+                        <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 rounded px-1">Avg Resp: {analytics.avgResponse}min</span>
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 rounded px-1">Conversion: {analytics.conversionRate}%</span>
+                        {/* Compliance/security badges */}
+                        {compliance && <span className="ml-2 text-xs bg-blue-200 text-blue-900 rounded px-1">{compliance}</span>}
+                        {security && <span className="ml-2 text-xs bg-gray-200 text-gray-900 rounded px-1">{security}</span>}
+                      </TableCell>
                     <TableCell>
                       <a
                         href={`/leads/${lead.id}/messages`}
@@ -278,7 +346,8 @@ export default function Leads() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
+                )}
             </TableBody>
           </Table>
         )}
