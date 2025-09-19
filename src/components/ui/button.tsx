@@ -19,7 +19,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
-        className={cn(base, variant && variants[variant], size && sizes[size], className)}
+        className={cn(base, variant && variants[variant], size && sizes[size], "focus:ring-2 hover:scale-105 transition-all", className)}
+        aria-label={typeof children === 'string' ? children : 'Button'}
         {...props}
       >
         {children}

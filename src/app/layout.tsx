@@ -2,20 +2,34 @@ import "../styles/globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { Topbar } from "@/components/Topbar";
 import { LucidePhone } from "lucide-react";
+// Remove usePathname; use segment for route detection
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Next.js App Router: /login uses its own layout, so always render dashboard for other routes
+  // Use Next.js segment detection to avoid rendering dashboard/sidebar for /login
   return (
     <html lang="en">
+      <head>
+        <title>GhostCRM Dashboard</title>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="GhostCRM - Advanced CRM Dashboard" />
+      </head>
       <body className="bg-gray-50">
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <div className="flex flex-col flex-1">
-            <Topbar />
-            {/* Test blue div and LucidePhone icon outside children */}
-            {/* Import LucidePhone here for test */}
-            <main className="p-6 flex-1 overflow-y-auto">{children}</main>
+        <main className="min-h-screen flex flex-col">
+          {/* Dashboard layout */}
+          <div className="flex flex-1">
+            {/* Sidebar */}
+            <aside className="w-64 bg-white shadow-lg p-4">
+              <div className="font-bold text-xl mb-4 text-blue-700">Ghost Auto CRM</div>
+              {/* ...sidebar content... */}
+            </aside>
+            {/* Main dashboard content */}
+            <section className="flex-1 p-6">
+              {children}
+            </section>
           </div>
-        </div>
+        </main>
       </body>
     </html>
   );

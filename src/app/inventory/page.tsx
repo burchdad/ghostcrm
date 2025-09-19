@@ -1,4 +1,5 @@
-import { useState } from "react";
+ "use client";
+import { useState, useEffect } from "react";
 // Placeholder chart component
 function ChartPlaceholder({ title }: { title: string }) {
   return (
@@ -14,13 +15,22 @@ export default function Inventory() {
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIdxs, setSelectedIdxs] = useState<number[]>([]);
   const [userRole] = useState("admin"); // scaffolded role
-  // Real-time analytics (scaffolded)
-  const analytics = {
-    stockLevel: Math.floor(Math.random() * 1000),
-    turnover: Math.floor(Math.random() * 10000),
-    lowStock: Math.floor(Math.random() * 50),
-    outOfStock: Math.floor(Math.random() * 10),
-  };
+  // Real-time analytics (scaffolded) - generate only on client
+  const [analytics, setAnalytics] = useState<null | {
+    stockLevel: number;
+    turnover: number;
+    lowStock: number;
+    outOfStock: number;
+  }>(null);
+  // Generate analytics only on client to avoid hydration mismatch
+  useEffect(() => {
+    setAnalytics({
+      stockLevel: Math.floor(Math.random() * 1000),
+      turnover: Math.floor(Math.random() * 10000),
+      lowStock: Math.floor(Math.random() * 50),
+      outOfStock: Math.floor(Math.random() * 10),
+    });
+  }, []);
   // Audit/versioning (scaffolded)
   const auditHistory = [
     { action: "view", user: "alice", timestamp: "2025-09-14" },
@@ -70,7 +80,7 @@ export default function Inventory() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-green-100 rounded p-4">
           <div className="font-bold text-green-800">Stock Level</div>
-          <div className="text-2xl">{analytics.stockLevel}</div>
+          <div className="text-2xl">{analytics ? analytics.stockLevel : <span className="text-gray-400">...</span>}</div>
           {bulkMode && (
             <input type="checkbox" checked={selectedIdxs.includes(0)} onChange={e => {
               setSelectedIdxs(e.target.checked ? [...selectedIdxs, 0] : selectedIdxs.filter(i => i !== 0));
@@ -79,7 +89,7 @@ export default function Inventory() {
         </div>
         <div className="bg-blue-100 rounded p-4">
           <div className="font-bold text-blue-800">Turnover</div>
-          <div className="text-2xl">${analytics.turnover.toLocaleString()}</div>
+          <div className="text-2xl">{analytics ? `$${analytics.turnover.toLocaleString()}` : <span className="text-gray-400">...</span>}</div>
           {bulkMode && (
             <input type="checkbox" checked={selectedIdxs.includes(1)} onChange={e => {
               setSelectedIdxs(e.target.checked ? [...selectedIdxs, 1] : selectedIdxs.filter(i => i !== 1));
@@ -88,7 +98,7 @@ export default function Inventory() {
         </div>
         <div className="bg-yellow-100 rounded p-4">
           <div className="font-bold text-yellow-800">Low Stock</div>
-          <div className="text-2xl">{analytics.lowStock}</div>
+          <div className="text-2xl">{analytics ? analytics.lowStock : <span className="text-gray-400">...</span>}</div>
           {bulkMode && (
             <input type="checkbox" checked={selectedIdxs.includes(2)} onChange={e => {
               setSelectedIdxs(e.target.checked ? [...selectedIdxs, 2] : selectedIdxs.filter(i => i !== 2));
@@ -97,7 +107,7 @@ export default function Inventory() {
         </div>
         <div className="bg-red-100 rounded p-4">
           <div className="font-bold text-red-800">Out of Stock</div>
-          <div className="text-2xl">{analytics.outOfStock}</div>
+          <div className="text-2xl">{analytics ? analytics.outOfStock : <span className="text-gray-400">...</span>}</div>
           {bulkMode && (
             <input type="checkbox" checked={selectedIdxs.includes(3)} onChange={e => {
               setSelectedIdxs(e.target.checked ? [...selectedIdxs, 3] : selectedIdxs.filter(i => i !== 3));

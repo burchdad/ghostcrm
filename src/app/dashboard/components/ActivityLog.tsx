@@ -301,16 +301,29 @@ const ActivityLog: React.FC<ActivityLogProps> = ({
   <button className="px-2 py-1 bg-red-500 text-white rounded" onClick={async () => { await logAction('bulk_delete', { org: selectedOrg }); handleBulkDelete(); }} aria-label="Bulk Delete">Bulk Delete</button>
         <button className="px-2 py-1 bg-gray-200 text-gray-700 rounded" onClick={() => setPage(1)} aria-label="Reset">Reset</button>
       </div>
-      {loading && <div className="text-xs text-blue-500">Loading...</div>}
+      {loading && (
+        <div className="text-xs text-blue-500">
+          <div className="animate-pulse flex gap-2">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-6 bg-blue-100 rounded w-full mb-2" />
+            ))}
+          </div>
+          Loading...
+        </div>
+      )}
       {error && <div className="text-xs text-red-500">Error: {error}</div>}
       <ul className="text-xs mt-2" role="list">
         {collabActivity.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((a, idx) => (
-          <li key={a.id || idx} className="mb-1 flex items-center gap-2" role="listitem" tabIndex={0} aria-label={`Activity log entry ${a.id}`}
-              onClick={() => openModal(a)} style={{ cursor: 'pointer', background: selected.includes(a.id) ? '#f3f4f6' : undefined }}>
+          <li key={a.id || idx} className={`mb-1 flex items-center gap-2 rounded-lg shadow-sm border border-gray-100 transition-all duration-200 cursor-pointer focus:ring-2 ${selected.includes(a.id) ? 'bg-blue-50' : 'hover:bg-gray-100'} ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`} role="listitem" tabIndex={0} aria-label={`Activity log entry ${a.id}`}
+              onClick={() => openModal(a)}>
             <input type="checkbox" checked={selected.includes(a.id)} onChange={() => handleSelect(a.id)} aria-label={`Select ${a.id}`} />
-            {a.avatarUrl && <img src={a.avatarUrl} alt={a.user} className="w-5 h-5 rounded-full" />}
-            {visibleColumns.includes('user') && <span className="font-bold">{a.user}</span>}
-            {visibleColumns.includes('action') && <span>{a.action}</span>}
+            {a.avatarUrl ? (
+              <img src={a.avatarUrl} alt={a.user} className="w-6 h-6 rounded-full border" />
+            ) : (
+              <span className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">{a.user[0]}</span>
+            )}
+            {visibleColumns.includes('user') && <span className="font-bold text-blue-700">{a.user}</span>}
+            {visibleColumns.includes('action') && <span className="text-green-700">{a.action}</span>}
             {visibleColumns.includes('target') && <span className="text-gray-500">{a.target || a.source || a.item_type}</span>}
             {visibleColumns.includes('item_type') && <span className="text-gray-400">{a.item_type}</span>}
             {visibleColumns.includes('item_id') && a.item_id && <span className="text-gray-400">({a.item_id})</span>}
@@ -318,6 +331,9 @@ const ActivityLog: React.FC<ActivityLogProps> = ({
             {visibleColumns.includes('notes') && <span className="text-green-700">{a.notes}</span>}
             {/* Inline notification/alert example */}
             {a.action === 'alert' && <span className="text-red-500 ml-2">⚠️ Alert</span>}
+            {/* Quick actions */}
+            <button className="ml-2 px-2 py-1 bg-gray-100 rounded text-xs hover:bg-blue-100 focus:ring-2" aria-label="View Details" onClick={e => { e.stopPropagation(); openModal(a); }}>Details</button>
+            <button className="px-2 py-1 bg-gray-100 rounded text-xs hover:bg-green-100 focus:ring-2" aria-label="Export" onClick={e => { e.stopPropagation(); handleExport('csv'); }}>Export</button>
           </li>
         ))}
       </ul>

@@ -89,10 +89,10 @@ const Marketplace: React.FC<MarketplaceProps> = ({
   if (!showMarketplace) return null;
   return (
     <div className={`fixed inset-0 ${theme === "dark" ? "bg-gray-900" : "bg-black bg-opacity-30"} flex items-center justify-center z-50`}>
-      <div className={`bg-white ${theme === "dark" ? "dark:bg-gray-800 dark:text-white" : ""} p-6 rounded shadow-lg w-full max-w-3xl`} role="dialog" aria-modal="true">
+  <div className={`bg-white ${theme === "dark" ? "dark:bg-gray-800 dark:text-white" : ""} p-6 rounded-xl shadow-2xl w-full max-w-3xl animate-fadeIn`} role="dialog" aria-modal="true">
         <div className="flex justify-between items-center mb-2">
-          <h3 className="font-bold text-xl">{t("Dashboard Card Marketplace")}</h3>
-          <button className="ml-2 px-2 py-1 rounded bg-gray-200 text-gray-700" onClick={() => setShowMarketplace(false)} aria-label={t("Close Marketplace")}>{t("Close")}</button>
+          <h3 className="font-bold text-2xl text-gradient bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">{t("Dashboard Card Marketplace")}</h3>
+          <button className="ml-2 px-3 py-2 rounded-full bg-gray-200 text-gray-700 shadow hover:bg-gray-300 focus:ring-2 transition-all" onClick={() => setShowMarketplace(false)} aria-label={t("Close Marketplace")}>{t("Close")}</button>
         </div>
         {/* Language Selector */}
         <div className="mb-2 flex gap-2 items-center">
@@ -115,22 +115,22 @@ const Marketplace: React.FC<MarketplaceProps> = ({
           <button className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs" onClick={() => setBulkMode(!bulkMode)}>{bulkMode ? t("Cancel Bulk") : t("Bulk Ops")}</button>
         </div>
         <div className="flex gap-2 mb-4">
-          <div className="flex items-center bg-gray-100 rounded px-2">
+          <div className="flex items-center bg-gray-100 rounded px-2 shadow focus-within:ring-2">
             <FaSearch className="mr-1" />
             <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={t("Search cards...")} className="bg-transparent outline-none py-1" aria-label={t("Search cards")}/>
           </div>
-          <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="px-2 py-1 rounded bg-gray-100 text-xs" aria-label="Sort cards">
+          <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="px-2 py-1 rounded bg-gray-100 text-xs focus:ring-2" aria-label="Sort cards">
             <option value="rating">{t("Sort by Rating")}</option>
             <option value="newest">{t("Sort by Newest")}</option>
             <option value="recommended">{t("Sort by Recommended")}</option>
           </select>
-          <select value={filterRole || ""} onChange={e => setFilterRole(e.target.value || null)} className="px-2 py-1 rounded bg-gray-100 text-xs" aria-label="Filter by Role">
+          <select value={filterRole || ""} onChange={e => setFilterRole(e.target.value || null)} className="px-2 py-1 rounded bg-gray-100 text-xs focus:ring-2" aria-label="Filter by Role">
             <option value="">{t("All Roles")}</option>
             {[...new Set(marketplaceCards.flatMap(card => card.roles))].map(role => (
               <option key={role} value={role}>{role}</option>
             ))}
           </select>
-            <button className="px-2 py-1 rounded bg-gray-100 text-xs" onClick={() => setTheme(theme === "light" ? "dark" : "light")} aria-label={t("Toggle Theme")}><FaPalette /></button>
+            <button className="px-2 py-1 rounded-full bg-gradient-to-r from-purple-400 to-blue-400 text-white text-xs shadow hover:scale-105 transition-all" onClick={() => setTheme(theme === "light" ? "dark" : "light")} aria-label={t("Toggle Theme")}><FaPalette /></button>
         </div>
         {/* Bulk Operations UI */}
         {bulkMode && (
@@ -176,32 +176,31 @@ const Marketplace: React.FC<MarketplaceProps> = ({
           {filteredCards.map(card => {
             const isActive = cardOrder.includes(card.key);
             const isAIRecommended = aiRecommendedKeys.includes(card.key);
-            // Filter by organization (scaffolded)
             if (selectedOrg && card.author && card.author !== selectedOrg) return null;
             return (
-              <div key={card.key} className={`border rounded p-3 flex flex-col relative ${isAIRecommended ? "ring-2 ring-blue-400" : ""}`} tabIndex={0} aria-label={card.label} draggable onDragStart={e => e.dataTransfer.setData("cardKey", card.key)}>
+              <div key={card.key} className={`border rounded-xl p-4 flex flex-col relative shadow-lg transition-transform duration-200 hover:scale-105 bg-gradient-to-br from-gray-50 to-white ${isAIRecommended ? "ring-2 ring-blue-400" : ""}`} tabIndex={0} aria-label={card.label} draggable onDragStart={e => e.dataTransfer.setData("cardKey", card.key)}>
                 <div className="flex justify-between items-center mb-1">
                   {bulkMode && (
                     <input type="checkbox" checked={selectedKeys.includes(card.key)} aria-label={`Select ${card.label}`} onChange={e => {
                       setSelectedKeys(e.target.checked ? [...selectedKeys, card.key] : selectedKeys.filter(k => k !== card.key));
                     }} />
                   )}
-                  <span className="font-bold text-lg">{card.label}</span>
-                  {isAIRecommended && <span className="px-2 py-0.5 bg-blue-100 rounded text-xs">AI Recommended</span>}
+                  <span className="font-bold text-lg text-gradient bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">{card.label}</span>
+                  {isAIRecommended && <span className="px-2 py-0.5 bg-blue-100 rounded-full text-xs animate-pulse">AI Recommended</span>}
                 </div>
                 <div className="text-xs text-gray-500 mb-1">{card.description}</div>
                 <div className="text-xs text-gray-400 mb-1">By: {card.author || "System"}</div>
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="text-xs text-green-700">{card.roles.join(", ")}</span>
-                  {card.recommended && <span className="px-2 py-0.5 bg-green-100 rounded text-xs">Recommended</span>}
+                  {card.recommended && <span className="px-2 py-0.5 bg-green-100 rounded-full text-xs animate-pulse">Recommended</span>}
                   {/* Compliance badges */}
-                  <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">GDPR</span>
-                  <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">SOC2</span>
-                  <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">CCPA</span>
-                  <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Encrypted</span>
+                  <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">GDPR</span>
+                  <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">SOC2</span>
+                  <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">CCPA</span>
+                  <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Encrypted</span>
                 </div>
-                <div className="flex gap-2 mb-2">
-                  <button className={`px-2 py-1 rounded text-xs ${isActive ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`} aria-label={isActive ? `Remove ${card.label}` : `Install ${card.label}`} onClick={async () => {
+                <div className="flex gap-2 mb-2 flex-wrap">
+                  <button className={`px-2 py-1 rounded-full text-xs font-bold shadow transition-all duration-200 ${isActive ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`} aria-label={isActive ? `Remove ${card.label}` : `Install ${card.label}`} onClick={async () => {
                     if (isActive) {
                       setCardOrder(cardOrder.filter(k => k !== card.key));
                       saveCustomCards(cardOrder.filter(k => k !== card.key).map(key => ({ key })));
@@ -212,20 +211,20 @@ const Marketplace: React.FC<MarketplaceProps> = ({
                       await logAction("install", { key: card.key });
                     }
                   }}>{isActive ? 'Remove' : 'Install'}</button>
-                  <button className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs flex items-center gap-1" aria-label={`Rate ${card.label} 5 stars`} onClick={() => rateCard(card.key, 5)}><FaStar /> Rate</button>
-                  <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs flex items-center gap-1" aria-label={`Preview ${card.label}`} onClick={() => { setSelectedCard(card); setShowPreview(true); }}><FaEye /> Preview</button>
-                  <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs flex items-center gap-1" aria-label={`Export ${card.label}`} onClick={async () => { /* TODO: Implement export logic */ await logAction("export", { key: card.key }); }}><FaDownload /> Export</button>
-                  <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs flex items-center gap-1" aria-label={`Share ${card.label}`} onClick={async () => { /* TODO: Implement share logic */ await logAction("share", { key: card.key }); }}><FaShareAlt /> Share</button>
+                  <button className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs flex items-center gap-1 font-bold shadow hover:bg-yellow-200 transition-all" aria-label={`Rate ${card.label} 5 stars`} onClick={() => rateCard(card.key, 5)}><FaStar /> Rate</button>
+                  <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs flex items-center gap-1 font-bold shadow hover:bg-gray-200 transition-all" aria-label={`Preview ${card.label}`} onClick={() => { setSelectedCard(card); setShowPreview(true); }}><FaEye /> Preview</button>
+                  <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs flex items-center gap-1 font-bold shadow hover:bg-gray-200 transition-all" aria-label={`Export ${card.label}`} onClick={async () => { /* TODO: Implement export logic */ await logAction("export", { key: card.key }); }}><FaDownload /> Export</button>
+                  <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs flex items-center gap-1 font-bold shadow hover:bg-gray-200 transition-all" aria-label={`Share ${card.label}`} onClick={async () => { /* TODO: Implement share logic */ await logAction("share", { key: card.key }); }}><FaShareAlt /> Share</button>
                 </div>
-                <div className="flex gap-2 text-xs text-gray-500 mb-1">
+                <div className="flex gap-2 text-xs text-gray-500 mb-1 flex-wrap">
                   <span>Rating: {card.rating || 0} / 5</span>
                   {card.version && <span>v{card.version}</span>}
                   {card.installCount && <span>{card.installCount} installs</span>}
                 </div>
                 {card.apiDocsUrl && <a href={card.apiDocsUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">API Docs</a>}
-                <div className="flex gap-2 mt-2">
-                  <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs flex items-center gap-1" aria-label={`View details for ${card.label}`} onClick={() => setSelectedCard(card)}><FaHistory /> Details</button>
-                  <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs flex items-center gap-1" aria-label={`Role actions for ${card.label}`} onClick={() => { /* TODO: Implement role-based logic */ }}><FaUserShield /> Role</button>
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs flex items-center gap-1 font-bold shadow hover:bg-gray-200 transition-all" aria-label={`View details for ${card.label}`} onClick={() => setSelectedCard(card)}><FaHistory /> Details</button>
+                  <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs flex items-center gap-1 font-bold shadow hover:bg-gray-200 transition-all" aria-label={`Role actions for ${card.label}`} onClick={() => { /* TODO: Implement role-based logic */ }}><FaUserShield /> Role</button>
                 </div>
               </div>
             );

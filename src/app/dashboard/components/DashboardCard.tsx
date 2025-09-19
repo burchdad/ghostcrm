@@ -102,6 +102,7 @@ function logErrorToMonitoringService(error: any, info?: any) {
   Sentry.captureException(error, { extra: info });
 }
 import React, { useState, useEffect, useRef, ReactNode } from "react";
+import { FiEdit, FiTrash2, FiCopy, FiShare2, FiDownload, FiUsers, FiClock, FiEye, FiFilter } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 // ...existing code...
 // ErrorBoundary for advanced error handling
@@ -366,18 +367,17 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
           </div>
           {/* Role-based controls */}
           {hasEditAccess && (
-            <>
-              <button className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs" aria-label={t("Edit Card")} onClick={async () => { onEdit && onEdit(); await logAction("edit", { title, org: selectedOrg }); }}>{t("Edit")}</button>
-              <button className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs" aria-label={t("Delete Card")} onClick={async () => { onDelete && onDelete(); await logAction("delete", { title, org: selectedOrg }); }}>{t("Delete")}</button>
-              <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs" aria-label={t("Duplicate Card")} onClick={async () => { onDuplicate && onDuplicate(); await logAction("duplicate", { title, org: selectedOrg }); }}>{t("Duplicate")}</button>
-              <button className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs" aria-label={t("Share Card")} onClick={async () => { try { onShare && onShare(); await logAction("share", { title, org: selectedOrg }); alert(t("Share successful.")); } catch (err) { alert(t("Share failed.")); } }}>{t("Share")}</button>
-              <button className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs" aria-label={t("Export Card")} onClick={async () => { try { onExport && onExport(); await logAction("export", { title, org: selectedOrg }); alert(t("Export successful.")); } catch (err) { alert(t("Export failed.")); } }}>{t("Export")}</button>
-              <button className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs" aria-label={t("Bulk Operations")} onClick={() => setBulkMode(!bulkMode)}>{t("Bulk")}</button>
-              <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs" aria-label={t("Audit History")} onClick={() => setShowAudit(!showAudit)}>{t("Audit")}</button>
-              <button className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs" aria-label={t("Schedule Card")} onClick={() => setShowSchedule(!showSchedule)}>{t("Schedule")}</button>
-              {/* Template Save/Load with org/user scope */}
+            <div className="flex gap-2 flex-wrap items-center" role="toolbar" aria-label={t("Admin Actions")}> 
+              <button className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs flex items-center gap-1 hover:bg-blue-200 focus:ring-2" aria-label={t("Edit Card")} title={t("Edit Card")} onClick={async () => { onEdit && onEdit(); await logAction("edit", { title, org: selectedOrg }); }}><FiEdit />{t("Edit")}</button>
+              <button className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs flex items-center gap-1 hover:bg-red-200 focus:ring-2" aria-label={t("Delete Card")} title={t("Delete Card")} onClick={async () => { onDelete && onDelete(); await logAction("delete", { title, org: selectedOrg }); }}><FiTrash2 />{t("Delete")}</button>
+              <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs flex items-center gap-1 hover:bg-gray-200 focus:ring-2" aria-label={t("Duplicate Card")} title={t("Duplicate Card")} onClick={async () => { onDuplicate && onDuplicate(); await logAction("duplicate", { title, org: selectedOrg }); }}><FiCopy />{t("Duplicate")}</button>
+              <button className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs flex items-center gap-1 hover:bg-green-200 focus:ring-2" aria-label={t("Share Card")} title={t("Share Card")} onClick={async () => { try { onShare && onShare(); await logAction("share", { title, org: selectedOrg }); alert(t("Share successful.")); } catch (err) { alert(t("Share failed.")); } }}><FiShare2 />{t("Share")}</button>
+              <button className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs flex items-center gap-1 hover:bg-yellow-200 focus:ring-2" aria-label={t("Export Card")} title={t("Export Card")} onClick={async () => { try { onExport && onExport(); await logAction("export", { title, org: selectedOrg }); alert(t("Export successful.")); } catch (err) { alert(t("Export failed.")); } }}><FiDownload />{t("Export")}</button>
+              <button className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs flex items-center gap-1 hover:bg-purple-200 focus:ring-2" aria-label={t("Bulk Operations")} title={t("Bulk Operations")} onClick={() => setBulkMode(!bulkMode)}><FiUsers />{t("Bulk")}</button>
+              <button className={`px-2 py-1 rounded text-xs flex items-center gap-1 focus:ring-2 ${showAudit ? 'bg-gray-300 text-gray-900' : 'bg-gray-100 text-gray-700'}`} aria-label={t("Audit History")} title={t("Audit History")} onClick={() => setShowAudit(!showAudit)}><FiClock />{t("Audit")}</button>
+              <button className={`px-2 py-1 rounded text-xs flex items-center gap-1 focus:ring-2 ${showSchedule ? 'bg-indigo-300 text-indigo-900' : 'bg-indigo-100 text-indigo-700'}`} aria-label={t("Schedule Card")} title={t("Schedule Card")} onClick={() => setShowSchedule(!showSchedule)}><FiEye />{t("Schedule")}</button>
               <input type="text" placeholder={t("Template Name")} aria-label={t("Template Name")} value={templateName} onChange={e => setTemplateName(e.target.value)} className="border rounded px-2 py-1 text-xs" />
-              <button className="px-2 py-1 bg-yellow-200 text-yellow-800 rounded text-xs" aria-label={t("Save Template")} onClick={async () => {
+              <button className="px-2 py-1 bg-yellow-200 text-yellow-800 rounded text-xs flex items-center gap-1 hover:bg-yellow-300 focus:ring-2" aria-label={t("Save Template")} title={t("Save Template")} onClick={async () => {
                 if (templateName) {
                   try {
                     await fetch("/api/dashboard/cardTemplates", {
@@ -392,8 +392,8 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
                     alert(t("Template save failed."));
                   }
                 }
-              }}>{t("Save")}</button>
-            </>
+              }}><FiDownload />{t("Save")}</button>
+            </div>
           )}
         </div>
         <div className="mb-2">
@@ -438,28 +438,38 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
             </div>
           </div>
         )}
-        {/* Audit/version history with filter/export */}
+        {/* Audit/version history with filter/export, collapsible panel, badges, icons, accessibility */}
         {showAudit && (
-          <div className="mb-2 p-2 bg-gray-100 rounded text-xs">
-            <strong>{t("Audit/Version History")}</strong>
-            <input type="text" aria-label={t("Filter Audit")} placeholder={t("Filter by user/action")}
-              className="border rounded px-2 py-1 text-xs mb-2" onChange={e => {
-                const val = e.target.value.toLowerCase();
-                setFilteredAudit(auditHistory.filter(a => a.user.toLowerCase().includes(val) || a.action.toLowerCase().includes(val)));
-              }} />
-            <ul>
-              {memoFilteredAudit.length === 0 && <li>{t("No history available.")}</li>}
-              {memoFilteredAudit.map((a, idx) => (
-                <li key={idx}>{t(a.action)} {t("by")} {a.user} {t("at")} {a.timestamp}</li>
-              ))}
-            </ul>
-            <div className="flex gap-2 items-center mt-2">
+          <div className="mb-2 p-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl text-xs shadow-lg border border-gray-300" role="region" aria-label={t("Audit/Version History")}> 
+            <div className="flex items-center gap-2 mb-2">
+              <FiClock className="text-lg text-gray-500" />
+              <strong className="text-gray-800">{t("Audit/Version History")}</strong>
+              <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">{memoFilteredAudit.length} {t("events")}</span>
+            </div>
+            <div className="flex gap-2 items-center mb-2">
+              <FiFilter className="text-gray-500" />
+              <input type="text" aria-label={t("Filter Audit")} placeholder={t("Filter by user/action")}
+                className="border rounded px-2 py-1 text-xs focus:ring-2" onChange={e => {
+                  const val = e.target.value.toLowerCase();
+                  setFilteredAudit(auditHistory.filter(a => a.user.toLowerCase().includes(val) || a.action.toLowerCase().includes(val)));
+                }} />
               <label className="text-xs font-bold">{t("Export Format")}</label>
-              <select value={exportFormat} onChange={e => setExportFormat(e.target.value)} className="border rounded px-2 py-1">
+              <select value={exportFormat} onChange={e => setExportFormat(e.target.value)} className="border rounded px-2 py-1 focus:ring-2">
                 {EXPORT_FORMATS.map(fmt => <option key={fmt} value={fmt}>{fmt.toUpperCase()}</option>)}
               </select>
-              <button className="px-2 py-1 bg-gray-200 rounded" aria-label={t("Export Audit")} onClick={handleExport}>{t("Export")}</button>
+              <button className="px-2 py-1 bg-gray-200 rounded flex items-center gap-1 hover:bg-gray-300 focus:ring-2" aria-label={t("Export Audit")} title={t("Export Audit")}
+                onClick={handleExport}><FiDownload />{t("Export")}</button>
             </div>
+            <ul className="space-y-1">
+              {memoFilteredAudit.length === 0 && <li>{t("No history available.")}</li>}
+              {memoFilteredAudit.map((a, idx) => (
+                <li key={idx} className="flex items-center gap-2 bg-white rounded px-2 py-1 shadow-sm border border-gray-100">
+                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs" title={t("User")}>{a.user}</span>
+                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs" title={t("Action")}>{t(a.action)}</span>
+                  <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs" title={t("Timestamp")}>{a.timestamp}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>

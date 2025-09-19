@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 // Placeholder chart component
 function ChartPlaceholder({ title }: { title: string }) {

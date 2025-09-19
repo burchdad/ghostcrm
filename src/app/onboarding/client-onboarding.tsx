@@ -15,6 +15,8 @@ const defaultOnboarding = {
 export default function ClientOnboardingPage() {
   const [form, setForm] = useState(defaultOnboarding);
   const [submitted, setSubmitted] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
+  const router = require('next/navigation').useRouter?.() ?? null;
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -22,7 +24,10 @@ export default function ClientOnboardingPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitted(true);
-    alert("Onboarding complete! Your demo and integrations are now personalized.");
+    setTimeout(() => {
+      setRedirecting(true);
+      if (router) router.push("/login");
+    }, 1500);
     // Here, you would trigger backend logic to:
     // - Generate API keys
     // - Create dedicated Supabase DB
@@ -78,7 +83,12 @@ export default function ClientOnboardingPage() {
           </select>
         </div>
         <button className="px-2 py-1 bg-green-500 text-white rounded" type="submit">Complete Onboarding</button>
-        {submitted && <div className="text-xs text-green-700 mt-2">Onboarding complete! Your demo and integrations are now personalized.</div>}
+        {submitted && (
+          <div className="text-xs text-green-700 mt-2">
+            Onboarding complete! Your demo and integrations are now personalized.<br />
+            {redirecting ? "Redirecting to login..." : "You will be redirected to login."}
+          </div>
+        )}
       </form>
     </div>
   );
