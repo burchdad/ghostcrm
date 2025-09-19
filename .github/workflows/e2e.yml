@@ -1,0 +1,28 @@
+name: e2e
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Run Playwright
+        env:
+          APP_BASE_URL: http://localhost:3000
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          WEBAUTHN_RP_ID: ${{ secrets.WEBAUTHN_RP_ID }}
+          WEBAUTHN_EXPECTED_ORIGIN: ${{ secrets.WEBAUTHN_EXPECTED_ORIGIN }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          SENDGRID_FROM: ${{ secrets.SENDGRID_FROM }}
+          TWILIO_SID: ${{ secrets.TWILIO_SID }}
+          TWILIO_TOKEN: ${{ secrets.TWILIO_TOKEN }}
+          GHOSTCRM_TEST_EMAIL: ${{ secrets.GHOSTCRM_TEST_EMAIL }}
+          GHOSTCRM_TEST_PASSWORD: ${{ secrets.GHOSTCRM_TEST_PASSWORD }}
+        run: npx playwright test
