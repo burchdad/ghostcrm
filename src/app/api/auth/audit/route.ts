@@ -1,16 +1,18 @@
-import { NextResponse } from "next/server";
-import { queryDb } from "@/db/mssql";
 
-export async function POST(req: Request) {
-  const { userId, eventType, eventDetails } = await req.json();
-  if (!userId || !eventType) return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-  await queryDb("INSERT INTO audit_logs (user_id, event_type, event_details) VALUES (@param0, @param1, @param2)", [userId, eventType, JSON.stringify(eventDetails || {})]);
-  return NextResponse.json({ success: true });
-}
+import { NextRequest, NextResponse } from "next/server";
+import { supaFromReq } from "@/lib/supa-ssr";
 
-export async function GET(req: Request) {
-  const { userId } = Object.fromEntries(new URL(req.url).searchParams);
-  if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
-  const logs = await queryDb("SELECT * FROM audit_logs WHERE user_id = @param0 ORDER BY created_at DESC", [userId]);
-  return NextResponse.json({ logs });
+export async function POST(req: NextRequest) {
+  const { s, res } = supaFromReq(req);
+  const { entity, entityId, action, diff } = await req.json();
+
+  const { data: mem } = await s.from("memberships").select("organization_id").limit(1);
+  const org_id = mem?.[0]?.organization_id;
+  if (!org_id) return NextResponse.json({ error: "no_membership" }, { status: 403 });
+
+  const { error } = await s.from("audit_events").insert({
+    org_id, entity, entity_id: String(entityId), action, diff: diff ?? null
+  });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ success: true }, { headers: res.headers });
 }

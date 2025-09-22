@@ -1,28 +1,18 @@
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-import { NextResponse } from "next/server";
+
+import { NextRequest, NextResponse } from "next/server";
 import qrcode from "qrcode";
-import { queryDb } from "@/db/mssql";
+import { supaFromReq } from "@/lib/supa-ssr";
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const email = searchParams.get("email");
-  if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
+export async function GET(req: NextRequest) {
+  const { s } = supaFromReq(req);
+  const user = (await s.auth.getUser()).data.user?.id;
+  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  // Prefer the temp secret during setup; fall back to enabled secret
-  const row = (await queryDb(
-    "SELECT TOP 1 totp_temp_secret, totp_secret FROM users WHERE email=@param0",
-    [email]
-  ))?.[0];
+  const sec = (await s.from("user_security").select("totp_secret").eq("user_id", user).single()).data;
+  if (!sec?.totp_secret) return NextResponse.json({ error: "no_secret" }, { status: 404 });
 
-  const secret = row?.totp_temp_secret || row?.totp_secret;
-  if (!secret) return NextResponse.json({ error: "No TOTP secret available" }, { status: 404 });
-
-  const otpauth = `otpauth://totp/GhostCRM:${encodeURIComponent(email)}?secret=${secret}&issuer=GhostCRM`;
-  const png = await qrcode.toDataURL(otpauth); // data:image/png;base64,…
-  const base64 = png.split(",")[1];
-  return new NextResponse(Buffer.from(base64, "base64"), {
-    status: 200,
-    headers: { "Content-Type": "image/png", "Cache-Control": "no-store" },
-  });
+  const otpauth = `otpauth://totp/GhostCRM:${user}?secret=${sec.totp_secret}&issuer=GhostCRM`;
+  const png = await qrcode.toDataURL(otpauth);
+  const b64 = png.split(",")[1];
+  return new NextResponse(Buffer.from(b64, "base64"), { status: 200, headers: { "Content-Type": "image/png" } });
 }

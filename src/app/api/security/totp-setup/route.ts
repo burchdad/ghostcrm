@@ -1,24 +1,16 @@
-import { NextResponse } from "next/server";
-import { queryDb } from "@/db/mssql";
 
-export async function POST(req: Request) {
-  // CSRF origin check
-  const allowedOrigins = [
-    process.env.NEXT_PUBLIC_BASE_URL,
-    process.env.NEXT_PUBLIC_DEPLOY_URL,
-    "http://localhost:3000",
-    "https://ghostcrm.com"
-  ];
-  const origin = req.headers.get("origin") || req.headers.get("referer") || "";
-  if (!allowedOrigins.some(o => origin.startsWith(o))) {
-    return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
-  }
-  const { email } = await req.json();
-  if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
+import { NextRequest, NextResponse } from "next/server";
+import { supaFromReq } from "@/lib/supa-ssr";
+
+export async function POST(req: NextRequest) {
+  const { s, res } = supaFromReq(req);
+  const user = (await s.auth.getUser()).data.user?.id;
+  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const speakeasy = (await import("speakeasy")).default;
   const secret = speakeasy.generateSecret({ length: 20 });
-  await queryDb("UPDATE users SET totp_temp_secret=@param0 WHERE email=@param1", [secret.base32, email]);
-  const otpauth = `otpauth://totp/GhostCRM:${encodeURIComponent(email)}?secret=${secret.base32}&issuer=GhostCRM`;
-  return NextResponse.json({ otpauth });
+
+  await s.from("user_security").upsert({ user_id: user, totp_secret: secret.base32 });
+  const otpauth = `otpauth://totp/GhostCRM:${user}?secret=${secret.base32}&issuer=GhostCRM`;
+  return NextResponse.json({ otpauth }, { headers: res.headers });
 }
