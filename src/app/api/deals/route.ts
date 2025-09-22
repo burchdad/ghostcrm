@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/deals  { title, amount?, probability?, close_date?, lead_id?, pipeline?, stage?, owner_id? }
 export async function POST(req: NextRequest) {
-  const { s, res } = supa(req);
+  const { s, res } = supaFromReq(req);
   const body = await req.json();
 
   // Get the caller's org via memberships (RLS ensures only their orgs are visible)
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
 // PATCH /api/deals  { id, ...fields }
 export async function PATCH(req: NextRequest) {
-  const { s, res } = supa(req);
+  const { s, res } = supaFromReq(req);
   const body = await req.json();
   const id = body.id;
   if (!id) return NextResponse.json({ error: "missing id" }, { status: 400 });

@@ -3,6 +3,7 @@ import { supaFromReq } from "@/lib/supa-ssr";
 
 // ...removed supa, use supaFromReq instead
 
+export async function GET(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const todayIso = new Date(new Date().setHours(0,0,0,0)).toISOString();
 

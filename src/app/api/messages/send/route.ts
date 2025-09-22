@@ -10,6 +10,7 @@ if (hasSendgrid) { sg = (await import("@sendgrid/mail")).default; sg.setApiKey(p
 // ...removed supa, use supaFromReq instead
 
 // POST { channel:'sms'|'email', to, from?, subject?, body, lead_id? }
+export async function POST(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const { channel, to, from, subject, body, lead_id } = await req.json();
 

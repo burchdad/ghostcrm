@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { s, res } = supa(req);
+  const { s, res } = supaFromReq(req);
   const body = await req.json();
 
   const { data: mems, error: mErr } = await s.from("memberships").select("organization_id").limit(1);
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { s, res } = supa(req);
+  const { s, res } = supaFromReq(req);
   const body = await req.json();
   const id = body.id;
   if (!id) return NextResponse.json({ error: "missing id" }, { status: 400 });
@@ -68,7 +68,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { s, res } = supa(req);
+  const { s, res } = supaFromReq(req);
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: "missing id" }, { status: 400 });
 
