@@ -1,7 +1,9 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { compare, hash } from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { queryDb } from "@/db/mssql";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) throw new Error("JWT_SECRET must be set");
@@ -30,9 +32,13 @@ export async function POST(req: Request) {
   if (!a || now - a.t > WIN) attempts[key] = { c: 1, t: now };
   else { a.c++; a.t = now; if (a.c > MAX) return NextResponse.json({ error: "Too many attempts. Try later." }, { status: 429 }); }
 
-  const users = await queryDb("SELECT TOP 1 id, email, password_hash, role, totp_secret FROM users WHERE email = @param0", [email]);
-  const user = users?.[0];
-  if (!user) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+  // Query user from Supabase
+  const { data: user, error: userError } = await supabaseAdmin
+    .from("users")
+    .select("id, email, password_hash, role, totp_secret")
+    .eq("email", email)
+    .single();
+  if (!user || userError) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
 
   const valid = await compare(password, user.password_hash);
   if (!valid) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
@@ -45,14 +51,25 @@ export async function POST(req: Request) {
     if (!ok) return NextResponse.json({ error: "Invalid TOTP code" }, { status: 401 });
   }
 
-  const token = jwt.sign({ sub: String(user.id), email: user.email, role: user.role }, JWT_SECRET, { expiresIn: rememberMe ? "30d" : "2h" });
+  const orgId = process.env.DEFAULT_ORG_ID!; // TEMP until Supabase Auth
+  const token = jwt.sign(
+    { sub: String(user.id), email: user.email, role: user.role, org_id: orgId },
+    JWT_SECRET,
+    { expiresIn: rememberMe ? "30d" : "2h" }
+  );
   const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 2 * 60 * 60; // 30 days or 2 hours in seconds
-  const res = NextResponse.json({ user: { id: user.id, email: user.email, role: user.role } });
+  const res = NextResponse.json({ user: { id: user.id, email: user.email, role: user.role, org_id: orgId } });
   res.headers.set("Set-Cookie", `ghostcrm_jwt=${token}; HttpOnly; Secure; Path=/; Max-Age=${maxAge}; SameSite=Strict`);
   // audit log
   const device = req.headers.get("user-agent") || "";
-  await queryDb("INSERT INTO audit_logs (user_id, event_type, event_details) VALUES (@param0,@param1,@param2)", [
-    user.id, "login", JSON.stringify({ email, ip, device })
-  ]);
+  await supabaseAdmin.from("audit_events").insert({
+    org_id: orgId,
+    actor_id: user.id,
+    entity: "user",
+    entity_id: user.id,
+    action: "login",
+    diff: { email },
+    meta: { ip, device }
+  });
   return res;
 }

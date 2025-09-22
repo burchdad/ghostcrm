@@ -1,7 +1,9 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { hash } from "bcryptjs";
-import { queryDb } from "@/db/mssql";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import sg from "@sendgrid/mail";
 
 if (process.env.SENDGRID_API_KEY) sg.setApiKey(process.env.SENDGRID_API_KEY);
@@ -22,18 +24,20 @@ export async function POST(req: Request) {
   const { email } = await req.json();
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
 
-  const users = await queryDb("SELECT TOP 1 id, email FROM users WHERE email = @param0", [email]);
-  const user = users?.[0];
+  const { data: user } = await supabaseAdmin
+    .from("users")
+    .select("id, email")
+    .eq("email", email)
+    .single();
   if (!user) return NextResponse.json({ success: true }); // do not leak account existence
 
   const token = crypto.randomBytes(32).toString("hex");
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
   const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
-  await queryDb(
-    "INSERT INTO password_resets (email, token_hash, expires_at) VALUES (@param0,@param1,@param2)",
-    [email, tokenHash, expiresAt]
-  );
+  await supabaseAdmin
+    .from("password_resets")
+    .insert({ email, token_hash: tokenHash, expires_at: expiresAt });
 
   const resetUrl = `${process.env.APP_BASE_URL || ""}/reset-password?email=${encodeURIComponent(email)}&token=${token}`;
   if (process.env.SENDGRID_API_KEY) {
@@ -55,18 +59,25 @@ export async function PUT(req: Request) {
   if (!email || !token || !newPassword) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-  const rows = await queryDb(
-    "SELECT TOP 1 email, expires_at FROM password_resets WHERE email = @param0 AND token_hash = @param1",
-    [email, tokenHash]
-  );
-  const row = rows?.[0];
+  const { data: row } = await supabaseAdmin
+    .from("password_resets")
+    .select("email, expires_at")
+    .eq("email", email)
+    .eq("token_hash", tokenHash)
+    .single();
   if (!row || new Date(row.expires_at) < new Date()) {
     return NextResponse.json({ error: "Invalid or expired token" }, { status: 400 });
   }
 
   const passwordHash = await hash(newPassword, 10);
-  await queryDb("UPDATE users SET password_hash = @param0 WHERE email = @param1", [passwordHash, email]);
-  await queryDb("DELETE FROM password_resets WHERE email = @param0", [email]);
+  await supabaseAdmin
+    .from("users")
+    .update({ password_hash: passwordHash })
+    .eq("email", email);
+  await supabaseAdmin
+    .from("password_resets")
+    .delete()
+    .eq("email", email);
 
   return NextResponse.json({ success: true });
 }

@@ -5,29 +5,29 @@ import speakeasy from "speakeasy";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 
-// Example user DB (replace with real DB in prod)
-const users = [
-  { id: "1", username: "admin", passwordHash: "$2a$10$7QwQwQwQwQwQwQwQwQwQwOQwQwQwQwQwQwQwQwQwQwQwQwQwQw", role: "admin", totpSecret: "JBSWY3DPEHPK3PXP" }, // password: admin123
-  { id: "2", username: "user", passwordHash: "$2a$10$7QwQwQwQwQwQwQwQwQwQwOQwQwQwQwQwQwQwQwQwQwQwQwQwQw", role: "user", totpSecret: "JBSWY3DPEHPK3PXP" }, // password: user123
-];
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function POST(req: Request) {
   const { username, password, totp } = await req.json();
-  const user = users.find(u => u.username === username);
-  if (!user) {
+  const { data: user, error: userError } = await supabaseAdmin
+    .from("users")
+    .select("id, username, password_hash, role, totp_secret")
+    .eq("username", username)
+    .single();
+  if (!user || userError) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
-  const valid = await compare(password, user.passwordHash);
+  const valid = await compare(password, user.password_hash);
   if (!valid) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
   // If user has TOTP enabled, require code
-  if (user.totpSecret) {
+  if (user.totp_secret) {
     if (!totp) {
       return NextResponse.json({ error: "TOTP code required" }, { status: 401 });
     }
     const verified = speakeasy.totp.verify({
-      secret: user.totpSecret,
+      secret: user.totp_secret,
       encoding: "base32",
       token: totp,
       window: 1,

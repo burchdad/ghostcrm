@@ -49,6 +49,9 @@ function LoginAIHelp() {
       </div>
       <form onSubmit={send} className="flex gap-2">
         <input
+          id="loginHelpInput"
+          name="loginHelpInput"
+          aria-label="Ask about login issues"
           className="border rounded px-2 py-1 flex-1"
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -246,6 +249,9 @@ export default function LoginPage() {
 
           <div className="mt-2 text-center">
             <button type="button" className="text-blue-600 underline text-sm" onClick={() => setShowReset(true)}>Forgot password?</button>
+          </div>
+          <div className="mt-2 text-center">
+            <a href="/register" className="text-blue-600 underline text-sm">Create an account</a>
           </div>
 
           <button type="button" className="px-4 py-2 mt-2 bg-green-600 text-white rounded w-full font-bold hover:bg-green-700 transition"

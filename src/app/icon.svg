@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="10" fill="#2563EB"/>
+  <text x="50%" y="52%" text-anchor="middle"
+        font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial"
+        font-size="28" font-weight="700" fill="#fff" dy=".35em">G</text>
+</svg>
