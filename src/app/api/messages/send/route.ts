@@ -12,12 +12,44 @@ export async function POST(req: NextRequest) {
   const orgId = mems?.[0]?.organization_id;
   if (!orgId) return NextResponse.json({ error: "no_membership" }, { status: 403 });
 
+
+  // Upstash rate limit per org
+  const { limitKey } = await import("@/lib/edge-limit");
+  const key = `org:${orgId}`;
+  const { allow, reset } = await limitKey(key);
+  if (!allow) {
+    const secs = Math.max(1, Math.ceil((reset - Date.now())/1000));
+    return NextResponse.json({ error: "rate_limited", retry_after: secs }, { status: 429, headers: res.headers });
+  }
+
+  // STOP/HELP opt-out check
+  const { data: lead } = await s.from("leads").select("id, opt_out").eq("phone", to).single();
+  if (lead?.opt_out) {
+    return NextResponse.json({ error: "recipient_opted_out" }, { status: 403, headers: res.headers });
+  }
+
   // Create queued message row first (works even if sending fails)
   const { data: msg, error: insErr } = await s.from("messages").insert({
     org_id: orgId, direction: "outbound", channel: "sms",
     to_addr: to, from_addr: from ?? null, body, status: "queued"
   }).select().single();
   if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 });
+
+  // Quiet hours enforcement (example: org_settings table)
+  const { data: orgSettings } = await s.from("org_settings").select("quiet_hours_start, quiet_hours_end").eq("org_id", orgId).single();
+  if (orgSettings) {
+    const now = new Date();
+    const start = orgSettings.quiet_hours_start;
+    const end = orgSettings.quiet_hours_end;
+    if (start !== null && end !== null) {
+      const hour = now.getUTCHours();
+      if (hour >= start && hour < end) {
+        // Optionally queue instead of send
+        await s.from("messages").update({ status: "queued_quiet_hours" }).eq("id", msg.id);
+        return NextResponse.json({ error: "quiet_hours", queued: true }, { status: 202, headers: res.headers });
+      }
+    }
+  }
 
   // Route to the correct adapter by org/number
   const adapter = await getSmsAdapterFor(orgId, from ?? undefined);

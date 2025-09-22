@@ -1,11 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { supaFromReq } from "@/lib/supa-ssr";
 
-export async function GET() {
-  // Mock messages data
-  return NextResponse.json({
-    records: [
-      { id: 1, text: "Welcome to GhostCRM!", subject: "Getting Started", direction: "inbound" },
-      { id: 2, text: "Your dashboard is ready.", subject: "Setup Complete", direction: "outbound" }
-    ]
-  });
+export async function GET(req: NextRequest) {
+  const { s, res } = supaFromReq(req);
+  const limit = Math.min(parseInt(new URL(req.url).searchParams.get("limit") ?? "50", 10) || 50, 200);
+  const { data, error } = await s
+    .from("messages")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data, { headers: res.headers });
 }
