@@ -17,7 +17,13 @@ export async function POST(req: NextRequest) {
     });
     const reply = completion.choices[0]?.message?.content || "I'm your AI security assistant.";
     return NextResponse.json({ reply });
-  } catch (err) {
-    return NextResponse.json({ reply: "[AI Error] Unable to process your request right now." }, { status: 500 });
+  } catch (err: any) {
+    console.error("[AI][SECURITY_CHAT]", err?.message || err);
+    return NextResponse.json({
+      error: "Failed to process AI security chat request",
+      code: "AI_SECURITY_CHAT_ERROR",
+      details: err?.message || String(err),
+      reply: "[AI Error] Unable to process your request right now."
+    }, { status: 500 });
   }
 }

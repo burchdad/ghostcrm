@@ -1,8 +1,11 @@
 
-import { NextRequest, NextResponse } from "next/server";
-import { supaFromReq } from "@/lib/supa-ssr";
 
-// GET /api/deals?stage=prospect&pipeline=default
+import { NextRequest } from "next/server";
+import { supaFromReq } from "@/lib/supa-ssr";
+import { DealCreate } from "@/lib/validators";
+import { getMembershipOrgId } from "@/lib/rbac";
+import { ok, bad, oops } from "@/lib/http";
+
 export async function GET(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const url = new URL(req.url);
@@ -14,58 +17,53 @@ export async function GET(req: NextRequest) {
   if (pipeline) q = q.eq("pipeline", pipeline);
 
   const { data, error } = await q;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { headers: res.headers });
+  if (error) return oops(error.message);
+  return ok(data, res.headers);
 }
 
-// POST /api/deals  { title, amount?, probability?, close_date?, lead_id?, pipeline?, stage?, owner_id? }
 export async function POST(req: NextRequest) {
   const { s, res } = supaFromReq(req);
-  const body = await req.json();
+  const parsed = DealCreate.safeParse(await req.json());
+  if (!parsed.success) return bad(parsed.error.errors[0].message);
+  const org_id = await getMembershipOrgId(s);
+  if (!org_id) return bad("no_membership");
 
-  // Get the caller's org via memberships (RLS ensures only their orgs are visible)
-  const { data: mems, error: mErr } = await s.from("memberships").select("organization_id").limit(1);
-  if (mErr) return NextResponse.json({ error: mErr.message }, { status: 500 });
-  const org_id = mems?.[0]?.organization_id;
-  if (!org_id) return NextResponse.json({ error: "no_membership" }, { status: 403 });
+  const d = parsed.data;
+  const { data: deal, error } = await s
+    .from("deals")
+    .insert({
+      org_id,
+      title: d.title,
+      amount: d.amount ?? null,
+      probability: d.probability ?? 10,
+      close_date: d.close_date ?? null,
+      pipeline: d.pipeline ?? "default",
+      stage: d.stage ?? "prospect",
+      owner_id: d.owner_id ?? null,
+      lead_id: d.lead_id ?? null,
+    })
+    .select()
+    .single();
 
-  const { data: deal, error } = await s.from("deals").insert({
-    org_id,
-    title: body.title,
-    amount: body.amount ?? null,
-    probability: body.probability ?? 10,
-    close_date: body.close_date ?? null,
-    lead_id: body.lead_id ?? null,
-    pipeline: body.pipeline ?? "default",
-    stage: body.stage ?? "prospect",
-    owner_id: body.owner_id ?? null
-  }).select().single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  await s.from("audit_events").insert({
-    org_id, entity: "deal", entity_id: deal.id, action: "create", diff: { stage: deal.stage, pipeline: deal.pipeline }
-  });
-
-  return NextResponse.json(deal, { status: 201, headers: res.headers });
+  if (error) return oops(error.message);
+  await s.from("audit_events").insert({ org_id, entity: "deal", entity_id: deal.id, action: "create" });
+  return ok(deal, res.headers);
 }
 
-// PATCH /api/deals  { id, ...fields }
 export async function PATCH(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const body = await req.json();
-  const id = body.id;
-  if (!id) return NextResponse.json({ error: "missing id" }, { status: 400 });
+  if (!body?.id) return bad("missing id");
 
   const patch: Record<string, any> = {};
-  for (const k of ["title","amount","probability","close_date","pipeline","stage","owner_id"]) {
+  for (const k of ["title", "amount", "probability", "close_date", "pipeline", "stage", "owner_id", "lead_id"]) {
     if (k in body) patch[k] = body[k];
   }
   patch.updated_at = new Date().toISOString();
 
-  const { data: deal, error } = await s.from("deals").update(patch).eq("id", id).select().single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { data: deal, error } = await s.from("deals").update(patch).eq("id", body.id).select().single();
+  if (error) return oops(error.message);
 
-  await s.from("audit_events").insert({ entity: "deal", entity_id: id, action: "update", diff: patch });
-  return NextResponse.json(deal, { headers: res.headers });
+  await s.from("audit_events").insert({ entity: "deal", entity_id: body.id, action: "update", diff: patch });
+  return ok(deal, res.headers);
 }

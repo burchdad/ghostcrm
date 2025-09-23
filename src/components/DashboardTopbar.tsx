@@ -1,0 +1,3 @@
+// Type declaration for window.ghostcrmUser
+// ...existing code...
+// (Move the full contents of DashboardTopbar.tsx here)

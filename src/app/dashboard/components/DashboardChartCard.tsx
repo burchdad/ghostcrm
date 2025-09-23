@@ -71,7 +71,14 @@ const DashboardChartCard: React.FC<DashboardChartCardProps> = ({
     onDrillDown(chartKey, dataPoint);
   }
   return (
-    <div className="bg-white rounded-lg shadow p-4 mb-6" tabIndex={0} aria-label={`Chart card for ${s.title || chartKey}`}> 
+    <div
+      className={`bg-white rounded-lg shadow p-4 mb-6 ${s.accessibility?.contrast ? 'high-contrast' : ''}`}
+      tabIndex={0}
+      aria-label={`Chart card for ${s.title || chartKey}`}
+      role="region"
+      aria-live="polite"
+      style={s.accessibility?.contrast ? { background: '#000', color: '#fff' } : undefined}
+    >
       <div className="flex justify-between items-center mb-2">
         <h3 className="font-bold text-md">{s.title || t(chartKey)}</h3>
         {canEdit && (

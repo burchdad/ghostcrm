@@ -6,12 +6,14 @@ export function scoreLead(lead: any) {
 }
 
 export function getSuggestedAction(messages: any[]): string {
-  if (!messages || messages.length === 0) return "No actions suggested.";
+  // Use global t() if available, otherwise fallback
+  const t = (globalThis as any).t || ((s: string) => s);
+  if (!messages || messages.length === 0) return t("No actions suggested.");
   const lastMsg = messages[0];
   if (lastMsg && lastMsg.direction === "inbound") {
-    return "Follow up with lead.";
+    return t("Follow up with lead.");
   }
-  return "Review recent activity.";
+  return t("Review recent activity.");
 }
 
 export function groupBy<T>(arr: T[], key: keyof T) {

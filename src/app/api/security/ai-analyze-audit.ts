@@ -18,7 +18,13 @@ export async function POST(req: NextRequest) {
     });
     const analysis = completion.choices[0]?.message?.content || "No analysis available.";
     return NextResponse.json({ analysis });
-  } catch (err) {
-    return NextResponse.json({ analysis: "[AI Error] Unable to analyze audit logs right now." }, { status: 500 });
+  } catch (err: any) {
+    console.error("[AI][AUDIT_ANALYSIS]", err?.message || err);
+    return NextResponse.json({
+      error: "Failed to analyze audit logs with AI",
+      code: "AI_AUDIT_ANALYSIS_ERROR",
+      details: err?.message || String(err),
+      analysis: "[AI Error] Unable to analyze audit logs right now."
+    }, { status: 500 });
   }
 }

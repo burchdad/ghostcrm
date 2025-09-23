@@ -1,5 +1,7 @@
 "use client";
 import React, { useState } from "react";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { ToastProvider, useToast } from "@/components/ToastProvider";
 import { Skeleton } from "@/components/Skeleton";
 import { I18nProvider, useI18n } from "@/components/I18nProvider";
@@ -17,8 +19,18 @@ import DashboardCustomization from "./components/DashboardCustomization";
 import DashboardAdminToolbar from "./components/DashboardAdminToolbar";
 
 import Sidebar from "./components/Sidebar";
+import RealtimeOutreachFeed from "./components/RealtimeOutreachFeed";
+import CampaignAnalytics from "./components/CampaignAnalytics";
 
 export default function DashboardPage() {
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <DashboardPageContent />
+    </DndProvider>
+  );
+}
+
+function DashboardPageContent() {
   const { messages, auditLog, aiAlerts } = useDashboardData();
   const [selectedOrg, setSelectedOrg] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
@@ -48,8 +60,9 @@ export default function DashboardPage() {
     { action: "bulk export", user: "bob", timestamp: "2025-09-13" },
   ];
   // Compliance/security badges
-  const compliance = selectedOrg === "org1" ? "GDPR" : "";
-  const security = selectedOrg === "org2" ? "Secure" : "";
+  // Example: Add more logic based on org settings, audit results, or backend API
+  const compliance = selectedOrg === "org1" ? "GDPR" : selectedOrg === "org2" ? "CCPA" : "";
+  const security = selectedOrg === "org2" ? "SOC2" : "";
   const handleImportDashboards = (dashboards: any[]) => {
     setImportedDashboards(prev => [...prev, ...dashboards]);
   };
@@ -73,76 +86,48 @@ export default function DashboardPage() {
       <ToastProvider>
         {/* Main dashboard content only, sidebar/topbar handled by global layout */}
         <main className="space-y-6 p-4 md:p-8">
+          {/* Compliance & Security Badges */}
+          {(compliance || security) && (
+            <div className="flex gap-2 mb-2">
+              {compliance && <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">{t(compliance)} 4C8</span>}
+              {security && <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">{t(security)} 512</span>}
+            </div>
+          )}
+          <CampaignAnalytics orgId={selectedOrg || "1"} />
           {loading && <Skeleton className="h-10 w-full mb-4" />}
           <DashboardAdminToolbar
             t={t}
             toast={toast}
             onResetDashboard={async () => {
-              // Example: call backend API to reset dashboard data
-              try {
-                await fetch("/api/dashboard/reset", { method: "POST" });
-                toast.show(t("Dashboard data reset!"), "success");
-              } catch (err) {
-                toast.show(t("Failed to reset dashboard data"), "error");
-              }
+              // ...existing code...
             }}
             onExportAudit={async () => {
-              // Example: call backend API to export audit log
-              try {
-                const res = await fetch("/api/auditlog/export");
-                const blob = await res.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "audit_log.csv";
-                a.click();
-                URL.revokeObjectURL(url);
-                toast.show(t("Audit log exported!"), "success");
-              } catch (err) {
-                toast.show(t("Failed to export audit log"), "error");
-              }
+              // ...existing code...
             }}
             onImpersonateUser={async (userId) => {
-              // Example: call backend API to impersonate user
-              try {
-                await fetch(`/api/users/impersonate?userId=${encodeURIComponent(userId)}`, { method: "POST" });
-                toast.show(t(`Impersonating user ${userId}`), "success");
-              } catch (err) {
-                toast.show(t("Failed to impersonate user"), "error");
-              }
+              // ...existing code...
             }}
           />
           <DashboardCustomization
             widgets={[]}
             layoutTemplate={"grid"}
             handleAddWidget={async (type) => {
-              // Example: call backend API to add widget
-              await fetch(`/api/widgets/add?type=${type}`, { method: "POST" });
-              toast.show(t(`Added ${type} widget`), "success");
+              // ...existing code...
             }}
             handleRemoveWidget={async (id) => {
-              await fetch(`/api/widgets/remove?id=${id}`, { method: "POST" });
-              toast.show(t("Widget removed"), "success");
+              // ...existing code...
             }}
             handleEditWidget={async (id, updates) => {
-              await fetch(`/api/widgets/edit?id=${id}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updates)
-              });
-              toast.show(t("Widget updated"), "success");
+              // ...existing code...
             }}
             handleSaveTemplate={async () => {
-              await fetch(`/api/templates/save`, { method: "POST" });
-              toast.show(t("Layout saved as template"), "success");
+              // ...existing code...
             }}
             handleLoadTemplate={async (name) => {
-              await fetch(`/api/templates/load?name=${encodeURIComponent(name)}`);
-              toast.show(t(`Loaded template: ${name}`), "success");
+              // ...existing code...
             }}
             handleShareDashboard={async () => {
-              await fetch(`/api/dashboard/share`, { method: "POST" });
-              toast.show(t("Dashboard shared"), "success");
+              // ...existing code...
             }}
             showTemplateModal={false}
             setShowTemplateModal={() => {}}
@@ -155,6 +140,7 @@ export default function DashboardPage() {
             exampleTemplates={[]}
             t={t}
           />
+          <RealtimeOutreachFeed />
           <DashboardBulkOps
             bulkMode={bulkMode}
             setBulkMode={setBulkMode}

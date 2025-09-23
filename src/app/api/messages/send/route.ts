@@ -1,73 +1,95 @@
-import { NextRequest, NextResponse } from "next/server";
+
+import { NextRequest } from "next/server";
 import { supaFromReq } from "@/lib/supa-ssr";
+import { MessageSend } from "@/lib/validators";
+import { getMembershipOrgId } from "@/lib/rbac";
+import { ok, bad, oops } from "@/lib/http";
+import { limitKey } from "@/lib/edge-limit";
 import { getSmsAdapterFor } from "@/lib/telephony/select";
+
+async function isOptedOut(s: any, org_id: string, to: string) {
+  const { data } = await s.from("lead_opt_outs").select("id").eq("org_id", org_id).eq("phone", to).limit(1);
+  return !!data?.length;
+}
+async function getQuietHours(s: any) {
+  const { data } = await s.from("org_settings").select("quiet_start, quiet_end, timezone").limit(1);
+  return data?.[0] ?? null;
+}
+function withinQuiet(now: Date, qs?: string | null, qe?: string | null) {
+  if (!qs || !qe) return false;
+  const [sH,sM]=qs.split(":").map(Number), [eH,eM]=qe.split(":").map(Number);
+  const mins = now.getHours()*60+now.getMinutes(), s = sH*60+sM, e = eH*60+eM;
+  return s < e ? (mins>=s && mins<e) : (mins>=s || mins<e);
+}
 
 export async function POST(req: NextRequest) {
   const { s, res } = supaFromReq(req);
-  const { to, from, body } = await req.json();
-  if (!to || !body) return NextResponse.json({ error: "missing fields" }, { status: 400 });
+  const parsed = MessageSend.safeParse(await req.json());
+  if (!parsed.success) return bad(parsed.error.errors[0].message);
 
-  // org scope (RLS)
-  const { data: mems } = await s.from("memberships").select("organization_id").limit(1);
-  const orgId = mems?.[0]?.organization_id;
-  if (!orgId) return NextResponse.json({ error: "no_membership" }, { status: 403 });
+  const org_id = await getMembershipOrgId(s);
+  if (!org_id) return bad("no_membership");
 
+  const { channel, to, from, subject, body, lead_id } = parsed.data;
 
-  // Upstash rate limit per org
-  const { limitKey } = await import("@/lib/edge-limit");
-  const key = `org:${orgId}`;
-  const { allow, reset } = await limitKey(key);
-  if (!allow) {
-    const secs = Math.max(1, Math.ceil((reset - Date.now())/1000));
-    return NextResponse.json({ error: "rate_limited", retry_after: secs }, { status: 429, headers: res.headers });
+  // rate limit
+  const { allow, reset } = await limitKey(`org:${org_id}:sms`);
+  if (!allow) return new Response(JSON.stringify({ error: "rate_limited", retry_after: Math.ceil((reset-Date.now())/1000) }), { status: 429, headers: res.headers });
+
+  // STOP/HELP opt-out
+  if (await isOptedOut(s, org_id, to)) return bad("recipient_opted_out");
+
+  // quiet hours
+  const qs = await getQuietHours(s);
+  if (channel === "sms" && qs && withinQuiet(new Date(), qs.quiet_start, qs.quiet_end)) {
+    // log queued in messages table; return queued
+    await s.from("messages").insert({
+      org_id, lead_id: lead_id ?? null, direction: "outbound", channel,
+      to_addr: to, from_addr: from ?? null, subject: subject ?? null, body, status: "queued_quiet_hours"
+    });
+    return ok({ queued: true }, res.headers);
   }
 
-  // STOP/HELP opt-out check
-  const { data: lead } = await s.from("leads").select("id, opt_out").eq("phone", to).single();
-  if (lead?.opt_out) {
-    return NextResponse.json({ error: "recipient_opted_out" }, { status: 403, headers: res.headers });
-  }
-
-  // Create queued message row first (works even if sending fails)
-  const { data: msg, error: insErr } = await s.from("messages").insert({
-    org_id: orgId, direction: "outbound", channel: "sms",
-    to_addr: to, from_addr: from ?? null, body, status: "queued"
+  // create queued row first
+  const { data: row, error: insErr } = await s.from("messages").insert({
+    org_id, lead_id: lead_id ?? null, direction: "outbound", channel,
+    to_addr: to, from_addr: from ?? null, subject: subject ?? null, body, status: "queued"
   }).select().single();
-  if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 });
+  if (insErr) return oops(insErr.message);
 
-  // Quiet hours enforcement (example: org_settings table)
-  const { data: orgSettings } = await s.from("org_settings").select("quiet_hours_start, quiet_hours_end").eq("org_id", orgId).single();
-  if (orgSettings) {
-    const now = new Date();
-    const start = orgSettings.quiet_hours_start;
-    const end = orgSettings.quiet_hours_end;
-    if (start !== null && end !== null) {
-      const hour = now.getUTCHours();
-      if (hour >= start && hour < end) {
-        // Optionally queue instead of send
-        await s.from("messages").update({ status: "queued_quiet_hours" }).eq("id", msg.id);
-        return NextResponse.json({ error: "quiet_hours", queued: true }, { status: 202, headers: res.headers });
-      }
+  // send via adapter(s)
+  let provider_id: string | null = null;
+  let error: string | null = null;
+
+  try {
+    if (channel === "sms") {
+      const adapter = await getSmsAdapterFor(org_id, from ?? undefined);
+      const res = await adapter.sendSms({ orgId: org_id, to, from, body });
+      if (!res.ok) throw new Error(res.error);
+      provider_id = res.providerId ?? null;
+    } else {
+      // email path (e.g., SendGrid) – call your existing code or /api/messages/send with channel 'email'
+      const r = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/messages/send-email`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to, from, subject, body, org_id, lead_id })
+      });
+      if (!r.ok) throw new Error(await r.text());
     }
+  } catch (e: any) {
+    error = String(e?.message || e);
   }
 
-  // Route to the correct adapter by org/number
-  const adapter = await getSmsAdapterFor(orgId, from ?? undefined);
-  const send = await adapter.sendSms({ orgId, to, from, body });
-
-  // Update status + audit
   await s.from("messages").update({
-    status: send.ok ? "sent" : "error",
-    provider_id: send.ok ? send.providerId ?? null : null,
-    error: send.ok ? null : send.error
-  }).eq("id", msg.id);
+    status: error ? "error" : "sent",
+    provider_id, error
+  }).eq("id", row.id);
 
   await s.from("audit_events").insert({
-    org_id: orgId, entity: "message", entity_id: String(msg.id),
-    action: send.ok ? "send" : "fail", diff: { to, from, providerId: (send as any).providerId, error: (send as any).error }
+    org_id, entity: "message", entity_id: String(row.id),
+    action: error ? "fail" : "send", diff: { channel, to, provider_id, error }
   });
 
-  if (!send.ok) return NextResponse.json({ ok: false, error: send.error }, { status: 502, headers: res.headers });
-  return NextResponse.json({ ok: true, provider_id: (send as any).providerId }, { headers: res.headers });
+  if (error) return new Response(JSON.stringify({ ok: false, error }), { status: 502, headers: res.headers });
+  return ok({ ok: true, provider_id }, res.headers);
 }
 

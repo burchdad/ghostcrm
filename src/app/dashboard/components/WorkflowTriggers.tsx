@@ -1,5 +1,6 @@
 
 import React from "react";
+import { useI18n } from "@/components/I18nProvider";
 
 interface WorkflowTrigger {
   name: string;
@@ -70,6 +71,7 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({
   const [selectedIdxs, setSelectedIdxs] = React.useState<number[]>([]);
   const [selectedOrg, setSelectedOrg] = React.useState("");
   const isAdmin = userRole === "admin" || userRole === "superadmin";
+  const { t } = useI18n();
 
   // Test trigger stub
   const testTrigger = (trigger: WorkflowTrigger) => {
@@ -119,27 +121,27 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded shadow-lg w-full max-w-2xl">
         <div className="flex justify-between items-center mb-2">
-          <h3 className="font-bold text-xl">Manage Workflow Triggers</h3>
+          <h3 className="font-bold text-xl">{t("Manage Workflow Triggers")}</h3>
           <div className="flex gap-2">
-            <button className="px-2 py-1 bg-gray-100 rounded text-xs" onClick={exportTriggers}>Export</button>
+            <button className="px-2 py-1 bg-gray-100 rounded text-xs" onClick={exportTriggers}>{t("Export")}</button>
             <label className="px-2 py-1 bg-gray-100 rounded text-xs cursor-pointer">
-              Import
+              {t("Import")}
               <input type="file" accept="application/json" className="hidden" onChange={importTriggers} />
             </label>
           </div>
         </div>
         {/* Multi-tenant Organization Selector */}
         <div className="mb-2 flex gap-2 items-center">
-          <label className="text-sm text-blue-800">Organization</label>
+          <label className="text-sm text-blue-800">{t("Organization")}</label>
           <select value={selectedOrg} onChange={e => setSelectedOrg(e.target.value)} className="border rounded px-2 py-1">
-            <option value="">All</option>
-            <option value="org1">Org 1</option>
-            <option value="org2">Org 2</option>
+            <option value="">{t("All")}</option>
+            <option value="org1">{t("Org 1")}</option>
+            <option value="org2">{t("Org 2")}</option>
           </select>
-          <button className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs" onClick={() => setBulkMode(!bulkMode)}>{bulkMode ? "Cancel Bulk" : "Bulk Ops"}</button>
+          <button className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs" onClick={() => setBulkMode(!bulkMode)}>{bulkMode ? t("Cancel Bulk") : t("Bulk Ops")}</button>
         </div>
-        <div className="mb-2 text-sm text-gray-600">Automate actions and assignments using advanced workflow triggers.</div>
-        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search triggers..." className="border rounded px-2 py-1 mb-2 w-full" />
+  <div className="mb-2 text-sm text-gray-600">{t("Automate actions and assignments using advanced workflow triggers.")}</div>
+  <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={t("Search triggers...")} className="border rounded px-2 py-1 mb-2 w-full" />
         {/* Bulk Operations UI */}
         {bulkMode && (
           <div className="mb-2 flex gap-2">

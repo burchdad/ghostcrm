@@ -63,24 +63,130 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
     },
   };
 
-  // --- Real-time Data Updates ---
+  // --- Real-time Data Updates & Status ---
   const [liveData, setLiveData] = useState(chartData);
+  const [isOnline, setIsOnline] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   useEffect(() => {
-    // Example: Polling every 10s (replace with WebSocket for production)
+    function updateOnlineStatus() {
+      setIsOnline(navigator.onLine);
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
     const interval = setInterval(() => {
       fetch("/api/dashboard/live")
         .then(res => res.json())
-        .then(data => setLiveData(data))
-        .catch(() => {});
+        .then(data => {
+          setLiveData(data);
+          setLastRefresh(new Date());
+        });
     }, 10000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+    };
   }, []);
 
-  // --- Chart Presets & Templates ---
-  function savePreset(chartKey: string) {
-  localStorage.setItem(`chartPreset_${chartKey}`, JSON.stringify(chartSettings[chartKey]));
-  notifyUser(`Preset saved for ${chartKey}`);
-  }
+    // --- Per-chart state (move this above chartOrder!) ---
+    const [chartSettings, setChartSettings] = useState({
+      messages: {
+        type: "Bar",
+        colors: ["#22c55e"],
+        title: "Messages Over Time",
+        xLabel: "Day",
+        yLabel: "Messages",
+        legend: false,
+        grid: true,
+        query: "SELECT * FROM messages",
+        formula: "",
+        comments: [],
+        schedule: { email: "", freq: "daily" },
+        accessibility: { contrast: false, screenReader: false },
+        aiInsights: "",
+        audit: [],
+        versions: [],
+      },
+      aiAlerts: {
+        type: "Bar",
+        colors: ["#3b82f6"],
+        title: "AI Alert Trends",
+        xLabel: "Day",
+        yLabel: "Alerts",
+        legend: false,
+        grid: true,
+        query: "SELECT * FROM ai_alerts",
+        formula: "",
+        comments: [],
+        schedule: { email: "", freq: "daily" },
+        accessibility: { contrast: false, screenReader: false },
+        aiInsights: "",
+        audit: [],
+        versions: [],
+      },
+      auditLog: {
+        type: "Bar",
+        colors: ["#facc15"],
+        title: "Audit Log Events",
+        xLabel: "Day",
+        yLabel: "Events",
+        legend: false,
+        grid: true,
+        query: "SELECT * FROM audit_log",
+        formula: "",
+        comments: [],
+        schedule: { email: "", freq: "daily" },
+        accessibility: { contrast: false, screenReader: false },
+        aiInsights: "",
+        audit: [],
+        versions: [],
+      },
+      orgComparison: {
+        type: "Pie",
+        colors: ["#a78bfa", "#f472b6"],
+        title: "Org Comparison",
+        xLabel: "Org",
+        yLabel: "Score",
+        legend: true,
+        grid: false,
+        query: "SELECT * FROM org_comparison",
+        formula: "",
+        comments: [],
+        schedule: { email: "", freq: "daily" },
+        accessibility: { contrast: false, screenReader: false },
+        aiInsights: "",
+        audit: [],
+        versions: [],
+      }
+    });
+
+    // --- Chart Order State for Drag-and-Drop ---
+    const [chartOrder, setChartOrder] = useState(Object.keys(chartSettings));
+
+    // --- Quick Filter/Search State ---
+    const [filterText, setFilterText] = useState("");
+    const [filterType, setFilterType] = useState("");
+    const [filterSource, setFilterSource] = useState("");
+
+    // --- Filtered Chart Keys ---
+    const filteredChartKeys = chartOrder.filter((key) => {
+      const s = chartSettings[key];
+      const matchesText = filterText === "" || (s.title?.toLowerCase().includes(filterText.toLowerCase()) || key.toLowerCase().includes(filterText.toLowerCase()));
+      const matchesType = filterType === "" || s.type === filterType;
+      const matchesSource = filterSource === "" || (s.dataSource?.toLowerCase().includes(filterSource.toLowerCase()) || "default".includes(filterSource.toLowerCase()));
+      return matchesText && matchesType && matchesSource;
+    });
+
+    // --- Move Chart Handler for Drag-and-Drop ---
+    const moveChart = (fromIdx: number, toIdx: number) => {
+      setChartOrder(prev => {
+        const updated = [...prev];
+        const [removed] = updated.splice(fromIdx, 1);
+        updated.splice(toIdx, 0, removed);
+        return updated;
+      });
+    };
   function loadPreset(chartKey: string) {
     const preset = localStorage.getItem(`chartPreset_${chartKey}`);
     if (preset) {
@@ -98,14 +204,35 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
     return userRole === "admin" || chartKey !== "orgComparison";
   }
 
-  // --- Customizable Dashboard Layout (scaffold) ---
-  const [layout, setLayout] = useState([
-    { i: "messages", x: 0, y: 0, w: 1, h: 1 },
-    { i: "aiAlerts", x: 1, y: 0, w: 1, h: 1 },
-    { i: "auditLog", x: 0, y: 1, w: 1, h: 1 },
-    { i: "orgComparison", x: 1, y: 1, w: 1, h: 1 },
-  ]);
-  // To implement: Use ResponsiveGridLayout for drag-and-drop
+  // --- Customizable Dashboard Layout ---
+  // Use chartOrder for layout persistence
+  function saveDashboardLayout() {
+    localStorage.setItem("dashboardLayout", JSON.stringify(chartOrder));
+    notifyUser("Dashboard layout saved.");
+  }
+  function loadDashboardLayout() {
+    const saved = localStorage.getItem("dashboardLayout");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setChartOrder(parsed);
+          notifyUser("Dashboard layout loaded.");
+        } else {
+          notifyUser("Saved layout is invalid.");
+        }
+      } catch {
+        notifyUser("Failed to parse saved layout.");
+      }
+    } else {
+      notifyUser("No saved layout found.");
+    }
+  }
+  function resetDashboardLayout() {
+    setChartOrder(["messages", "aiAlerts", "auditLog", "orgComparison"]);
+    localStorage.removeItem("dashboardLayout");
+    notifyUser("Dashboard layout reset.");
+  }
 
   // --- Export to PDF/PNG (scaffold) ---
   const chartRefs = {
@@ -169,76 +296,7 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
   // --- Accessibility Improvements (scaffold) ---
   // Add aria-labels, keyboard navigation, high-contrast toggle, etc. in all components
   // Per-chart state
-  const [chartSettings, setChartSettings] = useState({
-    messages: {
-      type: "Bar",
-      colors: ["#22c55e"],
-      title: "Messages Over Time",
-      xLabel: "Day",
-      yLabel: "Messages",
-      legend: false,
-      grid: true,
-      query: "SELECT * FROM messages",
-      formula: "",
-      comments: [],
-      schedule: { email: "", freq: "daily" },
-      accessibility: { contrast: false, screenReader: false },
-      aiInsights: "",
-      audit: [],
-      versions: [],
-    },
-    aiAlerts: {
-      type: "Bar",
-      colors: ["#3b82f6"],
-      title: "AI Alert Trends",
-      xLabel: "Day",
-      yLabel: "Alerts",
-      legend: false,
-      grid: true,
-      query: "SELECT * FROM ai_alerts",
-      formula: "",
-      comments: [],
-      schedule: { email: "", freq: "daily" },
-      accessibility: { contrast: false, screenReader: false },
-      aiInsights: "",
-      audit: [],
-      versions: [],
-    },
-    auditLog: {
-      type: "Bar",
-      colors: ["#facc15"],
-      title: "Audit Log Events",
-      xLabel: "Day",
-      yLabel: "Events",
-      legend: false,
-      grid: true,
-      query: "SELECT * FROM audit_log",
-      formula: "",
-      comments: [],
-      schedule: { email: "", freq: "daily" },
-      accessibility: { contrast: false, screenReader: false },
-      aiInsights: "",
-      audit: [],
-      versions: [],
-    },
-    orgComparison: {
-      type: "Pie",
-      colors: ["#a78bfa", "#f472b6"],
-      title: "Org Comparison",
-      xLabel: "Org",
-      yLabel: "Score",
-      legend: true,
-      grid: false,
-      query: "SELECT * FROM org_comparison",
-      formula: "",
-      comments: [],
-      schedule: { email: "", freq: "daily" },
-      accessibility: { contrast: false, screenReader: false },
-      aiInsights: "",
-      audit: [],
-      versions: [],
-    }
-  });
+  // (chartSettings state already declared above, remove this duplicate)
   const [settingsModal, setSettingsModal] = useState<{ chart: string | null }>({ chart: null });
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -263,6 +321,11 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
     setNotification({ type: "info", message: `Drill-down on ${chartKey}: ${JSON.stringify(dataPoint)}` });
   }
   // Notification triggers for other actions
+  function savePreset(chartKey: string) {
+    localStorage.setItem(`chartPreset_${chartKey}`, JSON.stringify(chartSettings[chartKey]));
+    notifyUser(`Preset saved for ${chartKey}`);
+  }
+
   function handleSavePresetNotification(chartKey: string) {
     savePreset(chartKey);
   }
@@ -477,7 +540,6 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
   return (
     <ErrorBoundary>
       {/* Top modular components only! */}
-  {/* Top modular components only! */}
       <AIChartGenerator
         aiInput={aiInput}
         setAiInput={setAiInput}
@@ -486,9 +548,21 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
         onGenerate={handleAiChartGenerate}
         onPredictiveAnalytics={handlePredictiveAnalytics}
       />
-      <div className="mb-2 flex gap-2 items-center">
+      <div className="mb-2 flex gap-4 items-center">
         <label htmlFor="high-contrast-toggle" className="text-xs">High Contrast Mode</label>
         <input id="high-contrast-toggle" type="checkbox" onChange={e => document.body.classList.toggle('high-contrast', e.target.checked)} aria-label="Toggle high contrast mode" />
+        <span className={`px-2 py-1 rounded text-xs font-semibold ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+          aria-live="polite">
+          {isOnline ? 'Online' : 'Offline'}
+        </span>
+        <span className="text-xs text-gray-500">Last refresh: {lastRefresh.toLocaleTimeString()}</span>
+        <button className="px-2 py-1 bg-blue-500 text-white rounded text-xs" onClick={() => { setLastRefresh(new Date()); fetch("/api/dashboard/live").then(res => res.json()).then(data => setLiveData(data)); }}>Refresh Now</button>
+      </div>
+      <div className="mb-4 flex gap-2 items-center">
+        <button className="px-3 py-1 bg-blue-600 text-white rounded text-xs" onClick={saveDashboardLayout}>Save Layout</button>
+        <button className="px-3 py-1 bg-green-600 text-white rounded text-xs" onClick={loadDashboardLayout}>Load Layout</button>
+        <button className="px-3 py-1 bg-gray-600 text-white rounded text-xs" onClick={resetDashboardLayout}>Reset Layout</button>
+        <span className="text-xs text-gray-500">Customize your dashboard layout and save for later.</span>
       </div>
       <DashboardChartGrid
         chartSettings={chartSettings}
@@ -515,6 +589,8 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
         savePreset={handleSavePresetNotification}
         loadPreset={handleLoadPresetNotification}
         handlePredictiveAnalytics={handlePredictiveAnalytics}
+        chartKeys={filteredChartKeys}
+        moveChart={moveChart}
       />
       {settingsModal.chart && (
         <ChartSettingsModal

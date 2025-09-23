@@ -1,6 +1,15 @@
 
-import { NextRequest, NextResponse } from "next/server";
+
+import { NextRequest } from "next/server";
 import { supaFromReq } from "@/lib/supa-ssr";
+import { ApptCreate } from "@/lib/validators";
+// If the correct export is 'getMembershipOrgId', ensure it is exported in '@/lib/rbac'.
+// Otherwise, import the correct function or member, e.g.:
+// If the correct export is 'getMembershipOrgId', ensure it is exported in '@/lib/rbac'.
+// Otherwise, import the correct function or member, e.g.:
+import { getMembershipOrgId } from "@/lib/rbac";
+// And update usages of 'getMembershipOrgId' to 'getOrgIdFromMembership' below.
+import { ok, bad, oops } from "@/lib/http";
 
 export async function GET(req: NextRequest) {
   const { s, res } = supaFromReq(req);
@@ -15,67 +24,63 @@ export async function GET(req: NextRequest) {
   if (to) q = q.lte("ends_at", to);
 
   const { data, error } = await q;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { headers: res.headers });
+  if (error) return oops(error.message);
+  return ok(data, res.headers);
 }
 
 export async function POST(req: NextRequest) {
   const { s, res } = supaFromReq(req);
-  const body = await req.json();
+  const parsed = ApptCreate.safeParse(await req.json());
+  if (!parsed.success) return bad(parsed.error.errors[0].message);
+  const org_id = await getMembershipOrgId(s);
+  if (!org_id) return bad("no_membership");
 
-  const { data: mems, error: mErr } = await s.from("memberships").select("organization_id").limit(1);
-  if (mErr) return NextResponse.json({ error: mErr.message }, { status: 500 });
-  const org_id = mems?.[0]?.organization_id;
-  if (!org_id) return NextResponse.json({ error: "no_membership" }, { status: 403 });
+  const a = parsed.data;
+  const { data: appt, error } = await s
+    .from("appointments")
+    .insert({
+      org_id,
+      title: a.title,
+      location: a.location ?? null,
+      starts_at: a.starts_at,
+      ends_at: a.ends_at,
+      lead_id: a.lead_id ?? null,
+      owner_id: a.owner_id ?? null,
+      status: a.status ?? "scheduled",
+    })
+    .select()
+    .single();
 
-  const { data: appt, error } = await s.from("appointments").insert({
-    org_id,
-    title: body.title,
-    location: body.location ?? null,
-    starts_at: body.starts_at,
-    ends_at: body.ends_at,
-    lead_id: body.lead_id ?? null,
-    owner_id: body.owner_id ?? null,
-    status: body.status ?? "scheduled"
-  }).select().single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  await s.from("audit_events").insert({
-    org_id, entity: "appointment", entity_id: appt.id, action: "create",
-    diff: { title: appt.title, starts_at: appt.starts_at }
-  });
-
-  return NextResponse.json(appt, { status: 201, headers: res.headers });
+  if (error) return oops(error.message);
+  await s.from("audit_events").insert({ org_id, entity: "appointment", entity_id: appt.id, action: "create" });
+  return ok(appt, res.headers);
 }
 
 export async function PATCH(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const body = await req.json();
-  const id = body.id;
-  if (!id) return NextResponse.json({ error: "missing id" }, { status: 400 });
+  if (!body?.id) return bad("missing id");
 
   const patch: Record<string, any> = {};
-  for (const k of ["title","location","starts_at","ends_at","status","owner_id"]) {
+  for (const k of ["title", "location", "starts_at", "ends_at", "status", "owner_id"]) {
     if (k in body) patch[k] = body[k];
   }
 
-  const { data: appt, error } = await s.from("appointments").update(patch).eq("id", id).select().single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { data: appt, error } = await s.from("appointments").update(patch).eq("id", body.id).select().single();
+  if (error) return oops(error.message);
 
-  await s.from("audit_events").insert({ entity: "appointment", entity_id: id, action: "update", diff: patch });
-  return NextResponse.json(appt, { headers: res.headers });
+  await s.from("audit_events").insert({ entity: "appointment", entity_id: body.id, action: "update", diff: patch });
+  return ok(appt, res.headers);
 }
 
 export async function DELETE(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const { id } = await req.json();
-  if (!id) return NextResponse.json({ error: "missing id" }, { status: 400 });
+  if (!id) return bad("missing id");
 
-  const { data: before } = await s.from("appointments").select("id").eq("id", id).single();
   const { error } = await s.from("appointments").delete().eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return oops(error.message);
 
-  if (before) await s.from("audit_events").insert({ entity: "appointment", entity_id: id, action: "delete" });
-  return NextResponse.json({ ok: true }, { headers: res.headers });
+  await s.from("audit_events").insert({ entity: "appointment", entity_id: id, action: "delete" });
+  return ok({ ok: true }, res.headers);
 }

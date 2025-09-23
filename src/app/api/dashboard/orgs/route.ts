@@ -10,10 +10,24 @@ export async function GET() {
   return NextResponse.json({ success: true, orgs: data });
 }
 
+
 // POST: Create organization/tenant
 export async function POST(req: Request) {
   const body = await req.json();
   const { error } = await supabase.from('organizations').insert([body]);
+  if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  return NextResponse.json({ success: true });
+}
+
+// PATCH: Update quiet hours for organization
+export async function PATCH(req: Request) {
+  const body = await req.json();
+  // For demo, update org with id=1. In production, use session/org context.
+  const orgId = body.orgId || 1;
+  const update = {};
+  if (body.quiet_hours_start) update['quiet_hours_start'] = body.quiet_hours_start;
+  if (body.quiet_hours_end) update['quiet_hours_end'] = body.quiet_hours_end;
+  const { error } = await supabase.from('organizations').update(update).eq('id', orgId);
   if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }
