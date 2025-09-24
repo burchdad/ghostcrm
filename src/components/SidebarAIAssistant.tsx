@@ -221,15 +221,7 @@ function SidebarAIAssistant() {
         >
           <FiRefreshCw size={16} />
         </button>
-      </div>
-      <input
-        className="border rounded px-2 py-1 w-full text-xs mb-2"
-        placeholder="Ask or build anything..."
-        value={input}
-        onChange={e => setInput(e.target.value)}
-        onKeyDown={e => e.key === "Enter" && handleSend()}
-        disabled={loading}
-      />
+      </div>      
       <div className="flex gap-2 mb-2 text-xs">
         {["Recommended", "Ask", "Analyze", "Build"].map(tabName => (
           <button
@@ -290,4 +282,4 @@ function SidebarAIAssistant() {
   );
 }
 
-export { SidebarAIAssistant };
+export default SidebarAIAssistant;

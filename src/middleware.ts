@@ -11,11 +11,7 @@ const PUBLIC_PATHS = [
   "/api/auth/db-login",
   "/api/auth/request-reset",
   "/api/auth/register",
-  "/api/security/webauthn-register",
-  "/api/security/webauthn-authenticate",
-  "/api/security/ai-chat",
-  "/api/security/totp-setup",
-  "/api/security/totp-enable",
+  // Security endpoints removed
 ];
 
 export async function middleware(req: NextRequest) {
@@ -35,9 +31,7 @@ export async function middleware(req: NextRequest) {
   );
   await supabase.auth.getSession(); // refresh if needed
 
-  // Add security headers
-  res.headers.set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://*.supabase.co; connect-src 'self' https://*.supabase.co https://api.openai.com; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';");
-  res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  // Security headers removed
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");

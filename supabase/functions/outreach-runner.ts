@@ -7,7 +7,7 @@ const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 serve({
-  async fetch(request) {
+  async fetch(request: Request) {
     const now = new Date().toISOString();
     // Pull a batch of due enrollments
     const { data: due } = await supabase
@@ -19,12 +19,32 @@ serve({
     for (const row of due || []) {
       const stepIndex = (row.current_step || 0) + 1;
       // Get step, template, campaign, lead
-      const [{ data: step }, { data: camp }, { data: tpl }, { data: lead }] = await Promise.all([
+      // First, fetch step and campaign
+      const [
+        stepRes,
+        campRes
+      ]: [
+        { data: any },
+        { data: any }
+      ] = await Promise.all([
         supabase.from("outreach_steps").select("*").eq("campaign_id", row.campaign_id).eq("index", stepIndex).single(),
-        supabase.from("outreach_campaigns").select("*").eq("id", row.campaign_id).single(),
-        supabase.from("message_templates").select("*").eq("id", step?.template_id).single(),
+        supabase.from("outreach_campaigns").select("*").eq("id", row.campaign_id).single()
+      ]);
+      // Then, fetch template and lead using stepRes
+      const [
+        tplRes,
+        leadRes
+      ]: [
+        { data: any },
+        { data: any }
+      ] = await Promise.all([
+        supabase.from("message_templates").select("*").eq("id", stepRes?.data?.template_id).single(),
         supabase.from("leads").select("*, contacts(*)").eq("id", row.lead_id).single()
       ]);
+      const step = stepRes.data;
+      const camp = campRes.data;
+      const tpl = tplRes.data;
+      const lead = leadRes.data;
       if (!step || !tpl || !lead) {
         await supabase.from("outreach_enrollments").update({ status: "error", last_error: "missing step/template/lead" }).eq("id", row.id);
         continue;
@@ -57,7 +77,7 @@ serve({
         } else if (step.type === "voice") {
           // Call your provider-agnostic voice sender here
         }
-      } catch (e) { eventStatus = "error"; err = String(e?.message || e); }
+      } catch (e: any) { eventStatus = "error"; err = String(e?.message || e); }
       await supabase.from("outreach_events").insert({
         org_id: row.org_id, enrollment_id: row.id, step_index: stepIndex,
         channel: step.type, status: eventStatus, provider_id: providerId, error: err
@@ -74,13 +94,13 @@ serve({
   }
 });
 
-function isWithinQuiet(now, qs, qe) {
+function isWithinQuiet(now: Date, qs: string, qe: string) {
   const [qsH, qsM] = qs.split(":").map(Number); const [qeH, qeM] = qe.split(":").map(Number);
   const inMins = now.getHours() * 60 + now.getMinutes();
   const s = qsH * 60 + qsM, e = qeH * 60 + qeM;
   return s < e ? (inMins >= s && inMins < e) : (inMins >= s || inMins < e);
 }
-function bumpOutsideQuiet(now, qs, qe) {
+function bumpOutsideQuiet(now: Date, qs: string, qe: string) {
   const [qeH, qeM] = qe.split(":").map(Number);
   const out = new Date(now);
   out.setHours(qeH, qeM, 0, 0);

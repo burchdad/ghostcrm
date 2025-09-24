@@ -6,62 +6,11 @@ import { publicKeyCredentialToJSON } from "@/utils/webauthn";
 
 // --- Optional helpers (branding + mini help) ---
 async function fetchBranding() {
-  return { colorScheme: "light", branding: "GhostCRM", logo: null };
+  return { colorScheme: "light", branding: "", logo: null };
 }
 
 function LoginAIHelp() {
-  const [messages, setMessages] = useState([
-    { role: "system", content: "Hi! Need help logging in? Ask about password reset or 2FA." },
-  ]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function send(e: React.FormEvent) {
-    e.preventDefault();
-    if (!input.trim()) return;
-    setLoading(true);
-    const next = [...messages, { role: "user", content: input }];
-    setMessages(next);
-    try {
-      const res = await fetch("/api/security/ai-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next }),
-      });
-      const data = await res.json();
-      setMessages([...next, { role: "assistant", content: data.reply ?? "Thanks! Try again or contact support." }]);
-    } catch {
-      setMessages([...next, { role: "assistant", content: "I hit a snag. Try again in a bit." }]);
-    }
-    setInput("");
-    setLoading(false);
-  }
-
-  return (
-    <div className="bg-white rounded shadow-lg p-4 w-80">
-      <div className="font-bold mb-2 text-blue-700">AI Login Help</div>
-      <div className="h-32 overflow-y-auto bg-gray-50 rounded p-2 mb-2 text-xs">
-        {messages.map((m, i) => (
-          <div key={i} className={m.role === "assistant" ? "text-blue-700" : m.role === "user" ? "text-gray-800" : "text-gray-500"}>
-            <b>{m.role === "assistant" ? "AI" : m.role === "user" ? "You" : "System"}:</b> {m.content}
-          </div>
-        ))}
-      </div>
-      <form onSubmit={send} className="flex gap-2">
-        <input
-          id="loginHelpInput"
-          name="loginHelpInput"
-          aria-label="Ask about login issues"
-          className="border rounded px-2 py-1 flex-1"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about login issues…"
-          disabled={loading}
-        />
-        <button className="px-2 py-1 bg-blue-600 text-white rounded" disabled={loading}>Send</button>
-      </form>
-    </div>
-  );
+  return null;
 }
 
 // --- Main page ---
@@ -70,7 +19,6 @@ export default function LoginPage() {
   const [branding, setBranding] = useState<any>({ colorScheme: "light", branding: "GhostCRM" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [totp, setTotp] = useState(""); // optional 6-digit if user has 2FA
   const [showReset, setShowReset] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
@@ -84,11 +32,11 @@ export default function LoginPage() {
   useEffect(() => { fetchBranding().then(setBranding); }, []);
 
   useEffect(() => {
-    if (!password) return setPasswordStrength(null);
-    if (password.length < 6) setPasswordStrength("Weak (try more characters)");
-    else if (/^[a-zA-Z]+$/.test(password)) setPasswordStrength("Medium (add numbers/symbols)");
-    else if (password.length > 10 && /\d/.test(password) && /[^a-zA-Z0-9]/.test(password)) setPasswordStrength("Strong");
-    else setPasswordStrength("Good");
+  if (!password) return setPasswordStrength(null);
+  if (password.length < 6) setPasswordStrength("Weak (try more characters)");
+  else if (/^[a-zA-Z]+$/.test(password)) setPasswordStrength("Medium (add numbers/symbols)");
+  else if (password.length > 10 && /\d/.test(password)) setPasswordStrength("Strong");
+  else setPasswordStrength("Good");
   }, [password]);
 
   async function handleLogin(e: React.FormEvent) {
@@ -115,41 +63,11 @@ export default function LoginPage() {
   }
 
   async function startWebAuthn() {
-    setLoading(true);
-    setError("");
-    try {
-      // 1) Ask server for auth options
-      const r1 = await fetch("/api/security/webauthn-authenticate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const options = await r1.json();
-      if (!r1.ok) throw new Error(options?.error || "Biometric login unavailable");
-
-      // 2) Get assertion from authenticator
-      const cred: any = await (navigator as any).credentials.get({ publicKey: options });
-      const json = publicKeyCredentialToJSON(cred);
-
-      // 3) Verify on server, set cookie/JWT there
-      const r2 = await fetch("/api/security/webauthn-authenticate", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, assertionResponse: json }),
-      });
-      const done = await r2.json();
-      if (!r2.ok) throw new Error(done?.error || "Biometric verification failed");
-
-      router.push("/dashboard");
-    } catch (e: any) {
-      setError(e.message || "Biometric login failed");
-    } finally {
-      setLoading(false);
-    }
+    // Biometrics removed
   }
 
   return (
-    <main className={`min-h-screen flex items-center justify-center bg-${branding.colorScheme === "dark" ? "gray-900" : "gray-100"}`}>
+  <main className={`min-h-screen flex items-center justify-center bg-gray-100`}>
       {/* Reset modal */}
       {showReset && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -191,8 +109,7 @@ export default function LoginPage() {
       )}
 
       <div className="bg-white rounded shadow-lg p-6 w-full max-w-md flex flex-col items-center mx-2 sm:mx-auto">
-        {branding.logo && <img src={branding.logo} alt="Logo" className="h-16 mb-4" />}
-        <h1 className="text-2xl font-bold mb-2 text-center">{branding.branding} Login</h1>
+  <h1 className="text-2xl font-bold mb-2 text-center">Login</h1>
 
         <form className="w-full" onSubmit={handleLogin}>
           <div className="mb-4">
@@ -221,13 +138,6 @@ export default function LoginPage() {
             )}
           </div>
 
-          {/* Optional TOTP step (user types 6-digit if they have 2FA) */}
-          <div className="mb-2">
-            <label htmlFor="totp" className="block font-bold mb-1">TOTP (if enabled)</label>
-            <input id="totp" inputMode="numeric" pattern="[0-9]*" maxLength={6}
-                   className="border rounded px-3 py-2 w-full" value={totp}
-                   onChange={(e) => setTotp(e.target.value)} placeholder="123456" />
-          </div>
 
           <div className="mb-2 flex items-center">
             <input
@@ -254,17 +164,14 @@ export default function LoginPage() {
             <a href="/register" className="text-blue-600 underline text-sm">Create an account</a>
           </div>
 
-          <button type="button" className="px-4 py-2 mt-2 bg-green-600 text-white rounded w-full font-bold hover:bg-green-700 transition"
-                  disabled={loading} onClick={startWebAuthn}>
-            Login with biometrics
-          </button>
         </form>
 
         <div className="mt-4 text-xs text-gray-500 text-center">Powered by GhostCRM • White-label ready</div>
+  {/* Branding and white-label removed */}
       </div>
 
       <div className="fixed bottom-6 right-6 z-50">
-        <LoginAIHelp />
+  {/* AI help removed */}
       </div>
     </main>
   );

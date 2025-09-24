@@ -6,16 +6,13 @@ const defaultOnboarding = {
   contactName: "",
   email: "",
   phone: "",
-  logo: "",
-  role: "manager",
   openaiKey: "",
   supabaseDb: "",
   inventoryIntegration: "csv",
 };
 
 const onboardingTips = [
-  "Welcome! Let's get your company set up. Fill in your business details to personalize your CRM experience.",
-  "Branding matters! Upload your logo and select your role for tailored features.",
+  "Welcome! Let's get set up. Fill in your details to personalize your CRM experience.",
   "Integrate your tools for automation and AI-powered insights. Connect your inventory and enable AI features.",
 ];
 
@@ -51,22 +48,13 @@ export default function ClientOnboardingPage() {
 
   const steps = [
     {
-      label: "Company Info",
+      label: "User Info",
       content: (
         <>
           <div className="mb-2">
             <label className="font-bold">
-              Company Name
-              <Tooltip text="Your business or organization name.">
-                <span className="ml-1 cursor-pointer" aria-label="Info">ℹ️</span>
-              </Tooltip>
-            </label>
-            <input type="text" name="companyName" value={form.companyName} onChange={handleChange} className="border rounded px-2 py-1 ml-2 w-full" required />
-          </div>
-          <div className="mb-2">
-            <label className="font-bold">
-              Contact Name
-              <Tooltip text="Primary contact for onboarding.">
+              Name
+              <Tooltip text="Your name.">
                 <span className="ml-1 cursor-pointer" aria-label="Info">ℹ️</span>
               </Tooltip>
             </label>
@@ -89,35 +77,6 @@ export default function ClientOnboardingPage() {
               </Tooltip>
             </label>
             <input type="text" name="phone" value={form.phone} onChange={handleChange} className="border rounded px-2 py-1 ml-2 w-full" required />
-          </div>
-        </>
-      )
-    },
-    {
-      label: "Brand & Role",
-      content: (
-        <>
-          <div className="mb-2">
-            <label className="font-bold">
-              Logo URL
-              <Tooltip text="Paste a link to your company logo.">
-                <span className="ml-1 cursor-pointer" aria-label="Info">ℹ️</span>
-              </Tooltip>
-            </label>
-            <input type="text" name="logo" value={form.logo} onChange={handleChange} className="border rounded px-2 py-1 ml-2 w-full" placeholder="https://yourlogo.com/logo.png" />
-          </div>
-          <div className="mb-2">
-            <label className="font-bold">
-              Role
-              <Tooltip text="Select your primary role.">
-                <span className="ml-1 cursor-pointer" aria-label="Info">ℹ️</span>
-              </Tooltip>
-            </label>
-            <select name="role" value={form.role} onChange={handleChange} className="border rounded px-2 py-1 ml-2">
-              <option value="manager">Manager</option>
-              <option value="sales">Sales Representative</option>
-              <option value="admin">Admin</option>
-            </select>
           </div>
         </>
       )

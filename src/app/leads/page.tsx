@@ -1,15 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import useRibbonPage from "@/components/ribbon/useRibbonPage";
 import { createClient } from '@supabase/supabase-js';
-
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  throw new Error("NEXT_PUBLIC_SUPABASE_URL missing");
-}
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +26,19 @@ function getDefaultEmailMessage(type: string, lead: any) {
 }
 
 export default function Leads() {
+  useRibbonPage({
+    context: "leads",
+    enable: ["bulkOps", "quickActions", "export", "share"],
+    disable: ["saveLayout", "aiTools", "developer", "billing"]
+  });
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL missing");
+  }
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+
   // ...existing state...
   const [selectedOrg, setSelectedOrg] = useState("");
   const [bulkMode, setBulkMode] = useState(false);

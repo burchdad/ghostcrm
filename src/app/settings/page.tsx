@@ -1,10 +1,15 @@
 "use client";
 import React from "react";
+import useRibbonPage from "@/components/ribbon/useRibbonPage";
 import OrgSettingsTable from "./OrgSettingsTable";
 import TemplateLibrary from "./TemplateLibrary";
 
 export default function SettingsPage() {
-
+  useRibbonPage({
+    context: "settings",
+    enable: ["profile", "org", "theme", "language", "security", "compliance"],
+    disable: ["bulkOps", "saveLayout", "aiTools", "developer", "billing", "export", "share"]
+  });
   return (
     <div className="p-8 space-y-6">
       <h1 className="text-2xl font-bold mb-4">Settings</h1>
@@ -18,8 +23,9 @@ export default function SettingsPage() {
       </ul>
       <div className="bg-blue-50 p-4 rounded shadow text-blue-700 mb-6">Advanced settings and customization coming soon!</div>
 
-  <OrgSettingsTable orgId="1" />
-  <TemplateLibrary orgId="1" />
+      <OrgSettingsTable orgId="1" />
+      <TemplateLibrary orgId="1" />
     </div>
   );
 }
+

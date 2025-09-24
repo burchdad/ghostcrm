@@ -10,7 +10,14 @@ function ChartPlaceholder({ title }: { title: string }) {
   );
 }
 
+import useRibbonPage from "@/components/ribbon/useRibbonPage";
+
 export default function Inventory() {
+  useRibbonPage({
+    context: "inventory",
+    enable: ["bulkOps", "export", "share", "data"],
+    disable: ["saveLayout", "aiTools", "developer", "billing"]
+  });
   const [selectedOrg, setSelectedOrg] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIdxs, setSelectedIdxs] = useState<number[]>([]);
@@ -31,14 +38,7 @@ export default function Inventory() {
       outOfStock: Math.floor(Math.random() * 10),
     });
   }, []);
-  // Audit/versioning (scaffolded)
-  const auditHistory = [
-    { action: "view", user: "alice", timestamp: "2025-09-14" },
-    { action: "bulk update", user: "bob", timestamp: "2025-09-13" },
-  ];
-  // Compliance/security badges (scaffolded)
-  const compliance = selectedOrg === "org1" ? "GDPR" : "";
-  const security = selectedOrg === "org2" ? "Secure" : "";
+  // Security/compliance/impersonate logic removed for now
   // Bulk operations (scaffolded)
   function handleBulkExport() {
     alert("Exported selected inventory items");
@@ -65,8 +65,7 @@ export default function Inventory() {
           <option value="org2">Org 2</option>
         </select>
         <button className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs" onClick={() => setBulkMode(!bulkMode)}>{bulkMode ? "Cancel Bulk" : "Bulk Ops"}</button>
-        {compliance && <span className="ml-2 text-xs bg-blue-200 text-blue-900 rounded px-1">{compliance}</span>}
-        {security && <span className="ml-2 text-xs bg-gray-200 text-gray-900 rounded px-1">{security}</span>}
+          {/* Security/compliance badges removed */}
       </div>
       {/* Bulk Operations UI */}
       {bulkMode && (
@@ -123,9 +122,7 @@ export default function Inventory() {
       <div className="mt-4">
         <div className="font-bold mb-1">Audit History</div>
         <ul className="text-xs text-gray-600">
-          {auditHistory.map((a, idx) => (
-            <li key={idx}>{a.action} by {a.user} at {a.timestamp}</li>
-          ))}
+            {/* Audit history removed */}
         </ul>
       </div>
       {/* Role-based controls */}

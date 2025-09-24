@@ -7,11 +7,10 @@ import DashboardChartGrid from "./DashboardChartGrid";
 // For PDF/PNG export
 // import html2canvas from "html2canvas";
 // import jsPDF from "jspdf";
-import ChartSettingsModal from "./ChartSettingsModal";
+import ChartSettingsModal from "@/components/modals/ChartSettingsModal";
 import AIChartGenerator from "./AIChartGenerator";
 import DashboardNotification from "./DashboardNotification";
 import AuditHistoryBar from "./AuditHistoryBar";
-import DashboardToolbar from "./DashboardToolbar";
 
 // Register required Chart.js elements/controllers
 Chart.register(
@@ -53,10 +52,7 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
       labels: ["Mon", "Tue", "Wed", "Thu", "Fri"],
       datasets: [{ label: "AI Alerts", data: [1, 2, 1, 3, 2], backgroundColor: "#3b82f6" }],
     },
-    auditLog: {
-      labels: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-      datasets: [{ label: "Audit Log", data: [0, 1, 2, 1, 2], backgroundColor: "#facc15" }],
-    },
+    // Audit Log chart removed
     orgComparison: {
       labels: ["Org 1", "Org 2"],
       datasets: [{ label: "Score", data: [analytics.orgScore, 100 - analytics.orgScore], backgroundColor: ["#a78bfa", "#f472b6"] }],

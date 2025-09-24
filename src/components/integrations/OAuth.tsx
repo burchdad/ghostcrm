@@ -1,4 +1,3 @@
-
 import React from "react";
 
 interface OAuthConnection {
@@ -12,7 +11,6 @@ interface OAuthConnection {
   logoUrl?: string;
   analytics?: { syncCount?: number; errorCount?: number };
   auditHistory?: Array<{ action: string; timestamp: string; user: string }>;
-// End OAuthConnection interface
 }
 
 interface OAuthProps {
@@ -25,7 +23,6 @@ interface OAuthProps {
   addOAuthConnection: () => void;
   removeOAuthConnection: (idx: number) => void;
   userRole?: string;
-// End OAuthProps interface
 }
 
 const PROVIDERS = [

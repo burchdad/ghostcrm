@@ -1,149 +1,94 @@
 "use client";
-import React, { useState, useRef } from "react";
-import { FiChevronLeft, FiChevronRight, FiHome, FiBox, FiCalendar, FiBarChart2, FiSettings } from "react-icons/fi";
-import { Drawer } from "./Drawer";
+import React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { LucideHome, LucideUser, LucideCar, LucideCalendar, LucideSettings, LucideBarChart2 } from "lucide-react";
-import { SidebarAIAssistant } from "./SidebarAIAssistant";
+import { usePathname } from "next/navigation";
+import { LucideHome, LucideUser, LucideBarChart2, LucideCar, LucideCalendar } from "lucide-react";
+import SidebarAIAssistant from "./SidebarAIAssistant";
+import { CollapseToggle, useCollapse } from "@/components/collapse";
 
-const navItems = [
-  { name: "Dashboard", path: "/dashboard", icon: LucideHome, badge: 0, role: "all" },
-  { name: "Leads", path: "/leads", icon: LucideUser, badge: 2, role: "sales" },
-  { name: "Deals", path: "/deals", icon: LucideBarChart2, badge: 1, role: "sales" },
-  { name: "Inventory", path: "/inventory", icon: LucideCar, badge: 0, role: "admin" },
-  { name: "Appointments", path: "/appointments", icon: LucideCalendar, badge: 3, role: "all" },
-  { name: "Performance", path: "/performance", icon: LucideBarChart2, badge: 0, role: "admin" },
-  { name: "Admin", path: "/admin", icon: LucideSettings, badge: 0, role: "admin" }
-];
+const DEFAULT_ITEMS = [
+  { name: "Dashboard", path: "/dashboard", icon: LucideHome, badge: 0, role: ["admin","sales"] },
+  { name: "Leads", path: "/leads", icon: LucideUser, badge: 2, role: ["sales"] },
+  { name: "Deals", path: "/deals", icon: LucideBarChart2, badge: 1, role: ["sales"] },
+  { name: "Inventory", path: "/inventory", icon: LucideCar, badge: 0, role: ["admin"] },
+  { name: "Appointments", path: "/appointments", icon: LucideCalendar, badge: 3, role: ["admin"] },
+  { name: "Performance", path: "/performance", icon: LucideBarChart2, badge: 0, role: ["admin"] }
+]
 
-
-export function Sidebar() {
+export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
+  const { collapsed } = useCollapse();
+  const [role, setRole] = React.useState("Select Role");
+  const [search, setSearch] = React.useState("");
+  const items = DEFAULT_ITEMS;
+  const [order, setOrder] = React.useState(items.map((_, i) => i));
 
-  const [collapsed, setCollapsed] = useState(false);
-  const [role, setRole] = useState("all");
-  const [search, setSearch] = useState("");
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [navOrder, setNavOrder] = useState(navItems.map((_, i) => i));
-  const sidebarRef = useRef<HTMLDivElement>(null);
-
-  const filteredNav = navOrder
-    .map((i) => navItems[i])
-    .filter(
-      (item) =>
-        item.name.toLowerCase().includes(search.toLowerCase()) &&
-        (item.role === role || item.role === "all")
-    );
-
-  function handleDragStart(idx: number) {
-    setDragIdx(idx);
-  }
-
-  function handleDrop(idx: number) {
-    if (dragIdx === null || dragIdx === idx) return;
-    const newOrder = [...navOrder];
-    const [removed] = newOrder.splice(dragIdx, 1);
-    newOrder.splice(idx, 0, removed);
-    setNavOrder(newOrder);
-    setDragIdx(null);
-  }
-
-  function toggleCollapse() {
-    setCollapsed((c) => {
-      const next = !c;
-      if (typeof document !== "undefined") {
-        document.documentElement.classList.toggle("sidebar-collapsed", next);
-      }
-      return next;
-    });
-  }
+  const filtered =
+    role === "Select Role"
+      ? []
+      : order
+          .map((i) => items[i])
+          .filter((it) =>
+            (role === "admin" ? true : it.role.includes(role)) &&
+            it.name.toLowerCase().includes(search.toLowerCase())
+          );
 
   return (
-    // CONTENT-ONLY container (layout provides the fixed <aside>)
-    <div
-      ref={sidebarRef}
-      className="flex flex-col h-full bg-white rounded-r-2xl shadow-md border-r border-gray-200"
-      tabIndex={0}
-      aria-label="Sidebar Navigation"
-    >
-      {/* Header */}
-      <div className={`flex items-center justify-between px-4 pt-4 pb-2 ${collapsed ? "flex-col px-0 pt-2 pb-0" : ""}`}>
-        {!collapsed  
-        }
-
-        <button
-          className="ml-2 p-2 rounded-full bg-gray-100 hover:bg-blue-100 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onClick={toggleCollapse}
-          aria-label={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          title={collapsed ? "Expand" : "Collapse"}
-          style={{ transition: "background 0.2s" }}
-        >
-          {collapsed ? <FiChevronRight /> : <FiChevronLeft />}
-        </button>
-      </div>
-
-      {/* Filters */}
+    <div className="h-full w-full bg-white flex flex-col rounded-r-2xl shadow-md border-r border-gray-200">
+      <div className="pt-4 pb-2 px-3 flex items-center">
+        {!collapsed && <span className="font-bold text-xl text-blue-700 truncate">Ghost Auto CRM</span>}
+        <CollapseToggle className="ml-auto" />
+      </div>;
       {!collapsed && (
-        <div className="px-4 pb-2">
-          <label className="text-xs text-gray-500">Role Filter</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full mt-1 h-8 rounded-md border px-2 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            style={{ appearance: 'none' }}
-          >
-            <option value="all">All</option>
-            <option value="sales">Sales</option>
-            <option value="admin">Admin</option>
-          </select>
+        <div className="px-3 pb-3">
+          <div className="rounded-lg bg-gray-100 border border-gray-200 p-3 space-y-2">
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full h-9 rounded-md border px-2 text-xs text-center bg-white"
+            >
+              <option value="Select Role">Select Role</option>
+              <option value="admin">Admin</option>
+              <option value="sales">Sales</option>
+            </select>
+          </div>
         </div>
       )}
-
-      {/* Nav */}
-      <nav className="flex-1 px-2" role="navigation" aria-label="Main Navigation">
+    <div className="flex flex-col flex-1">
+      <nav className="px-1" role="navigation" aria-label="Main Navigation">
         <ul className="space-y-1">
-          {filteredNav.map(({ name, path, icon: Icon, badge }, idx) => (
-            <li
-              key={name}
-              draggable
-              onDragStart={() => handleDragStart(idx)}
-              onDrop={() => handleDrop(idx)}
-              onDragOver={(e) => e.preventDefault()}
-            >
-              <a
-                className={`flex items-center px-2 py-2 rounded hover:bg-blue-50 transition ${
-                  pathname === path ? "font-bold text-blue-700 bg-blue-100" : ""
-                } ${collapsed ? "justify-center" : ""}`}
-                href={path}
-                aria-label={name}
-                title={name}
-                onClick={(e) => {
-                  e.preventDefault();
-                  router.push(path);
-                }}
-              >
-                <Icon className="w-5 h-5 mr-2" />
-                {!collapsed && name}
-                {!collapsed && badge > 0 && (
-                  <span className="ml-2 px-2 h-8 flex items-center rounded-md border bg-red-500 text-white text-xs shadow-sm">
-                    {badge}
+          {filtered.map(({ name, path, icon: Icon, badge }) => {
+            const active = pathname === path;
+            return (
+              <li key={path}>
+                <Link
+                  href={path}
+                  className={["relative flex items-center rounded-md px-3 py-2 transition",
+                    collapsed ? "justify-center gap-0" : "justify-between gap-2",
+                    active ? "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-400" : "text-gray-800 hover:bg-gray-100",
+                  ].join(" ")}
+                >
+                  <span className={["flex items-center", collapsed ? "" : "gap-2"].join(" ")}>
+                    <Icon className="w-5 h-5" />
+                    {!collapsed && <span className="font-medium">{name}</span>}
                   </span>
-                )}
-              </a>
-            </li>
-          ))}
+                  {!collapsed && badge ? (
+                    <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">{badge}</span>
+                  ) : null}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
-      </nav>
-
-      {/* AI assistant */}
+      </nav>;
       {!collapsed && (
-        <div className="px-2 pt-4 pb-4">
-          <SidebarAIAssistant />
+        <div className="flex flex-1 items-center justify-center px-3">
+          <div className="w-full max-w-xs">
+            <SidebarAIAssistant />
+          </div>
         </div>
       )}
     </div>
-  );
-}
-
+  </div>
+  )
+};

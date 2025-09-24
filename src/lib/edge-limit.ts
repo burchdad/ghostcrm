@@ -4,7 +4,7 @@ import { Redis } from "@upstash/redis";
 const enabled = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 const limiter = enabled ? new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.fixedWindow(30, "1 m"), // 30 sends/min per org
+  limiter: Ratelimit.fixedWindow(30, "1 m"), // 30 sends/min
   analytics: true,
   prefix: "msg_send"
 }) : null;

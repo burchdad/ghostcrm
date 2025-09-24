@@ -5,7 +5,6 @@ export interface User {
   id: string;
   name: string;
   online: boolean;
-  org_id?: string;
 }
 
 export interface Notification {
@@ -15,10 +14,7 @@ export interface Notification {
   created_at?: string;
 }
 
-export interface Organization {
-  id: string;
-  name: string;
-}
+// Organization type removed
 
 // Config validation
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -28,23 +24,14 @@ if (!supabaseUrl || !supabaseKey) {
 }
 const supabase: SupabaseClient = createClient(supabaseUrl, supabaseKey);
 
-// Simple in-memory cache for orgs (can be replaced with Redis etc.)
-let orgCache: Organization[] | null = null;
-let orgCacheTimestamp: number = 0;
-const ORG_CACHE_TTL = 60 * 1000; // 1 minute
+// orgCache removed
 
-// Centralized error handler & audit logger
+// Centralized error handler
 function handleError(error: any, context: string): { error: true; message: string; context: string } {
   // Log error to monitoring service here
   console.error(`[API ERROR] ${context}:`, error);
   // Optionally send to external service
   return { error: true, message: error.message || 'Unknown error', context };
-}
-
-function auditLog(action: string, details?: any) {
-  // Log API call for compliance/debugging
-  // Replace with real logging service if needed
-  console.info(`[API AUDIT] ${action}`, details);
 }
 
 /**
@@ -53,16 +40,13 @@ function auditLog(action: string, details?: any) {
  * @param limit Max results to return (default 50)
  * @param offset Offset for pagination
  */
-export async function getOnlineUsers(orgId?: string, limit = 50, offset = 0): Promise<User[] | { error: true; message: string; context: string }> {
-  auditLog('getOnlineUsers', { orgId, limit, offset });
+export async function getOnlineUsers(limit = 50, offset = 0): Promise<User[] | { error: true; message: string; context: string }> {
   try {
-    let query = supabase
+    const { data, error } = await supabase
       .from('users')
-      .select('id, name, online, org_id')
+      .select('id, name, online')
       .eq('online', true)
       .range(offset, offset + limit - 1);
-    if (orgId) query = query.eq('org_id', orgId);
-    const { data, error } = await query;
     if (error) return handleError(error, 'getOnlineUsers');
     return (data as User[]) || [];
   } catch (error: any) {
@@ -85,7 +69,6 @@ export async function getNotifications(
   sortBy: keyof Notification = 'created_at',
   sortOrder: 'asc' | 'desc' = 'desc'
 ): Promise<Notification[] | { error: true; message: string; context: string }> {
-  auditLog('getNotifications', { userId, limit, offset, sortBy, sortOrder });
   if (!userId) return handleError(new Error('Missing userId'), 'getNotifications');
   try {
     const { data, error } = await supabase
@@ -105,23 +88,4 @@ export async function getNotifications(
  * Get organizations with caching and search
  * @param search Optional search string for org name
  */
-export async function getOrgs(search?: string): Promise<Organization[] | { error: true; message: string; context: string }> {
-  auditLog('getOrgs', { search });
-  const now = Date.now();
-  if (orgCache && now - orgCacheTimestamp < ORG_CACHE_TTL && !search) {
-    return orgCache;
-  }
-  try {
-    let query = supabase
-      .from('organizations')
-      .select('id, name');
-    if (search) query = query.ilike('name', `%${search}%`);
-    const { data, error } = await query;
-    if (error) return handleError(error, 'getOrgs');
-    orgCache = (data as Organization[]) || [];
-    orgCacheTimestamp = now;
-    return orgCache;
-  } catch (error: any) {
-    return handleError(error, 'getOrgs');
-  }
-}
+// getOrgs removed

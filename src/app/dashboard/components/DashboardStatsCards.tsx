@@ -5,7 +5,6 @@ interface DashboardStatsCardsProps {
   analytics: {
     messageCount: number;
     alertCount: number;
-    auditCount: number;
     orgScore: number;
   };
   bulkMode: boolean;
@@ -35,13 +34,7 @@ const cardMeta = [
     valueKey: "alertCount",
     tooltip: "AI-generated alerts",
   },
-  {
-    icon: <FiClipboard className="text-3xl text-yellow-600" />,
-    label: "Audit Log",
-    color: "yellow-100",
-    valueKey: "auditCount",
-    tooltip: "Audit log events",
-  },
+  // Audit Log card removed
   {
     icon: <FiAward className="text-3xl text-purple-600" />,
     label: "Org Score",
