@@ -2,9 +2,9 @@
 import React, { createContext, useContext, useMemo, useEffect, useState } from "react";
 
 const DEFAULTS = {
-  expanded: 256,
-  collapsed: 72,
-  min: 180,
+  expanded: 420,
+  collapsed: 60, // 50% of expanded
+  min: 200,
   max: 420,
   header: 64,
   ribbon: 40,
@@ -40,10 +40,21 @@ export function CollapseProvider({
   });
 
   const [widthState, setWidthState] = useState<number>(() => {
-    if (typeof window === "undefined") return initialWidth ?? T.expanded;
+    // Always use T.expanded (420) on server for initial render
+    if (typeof window === "undefined") return T.expanded;
+    // On client, use localStorage if available
     const saved = Number(localStorage.getItem("sidebarWidth"));
-    return Number.isFinite(saved) ? saved : (initialWidth ?? T.expanded);
+    return Number.isFinite(saved) ? saved : T.expanded;
   });
+
+  // After mount, update widthState from localStorage if needed
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = Number(localStorage.getItem("sidebarWidth"));
+    if (Number.isFinite(saved) && saved !== widthState) {
+      setWidthState(saved);
+    }
+  }, []);
 
   const [lastExpanded, setLastExpanded] = useState<number>(() => {
     if (typeof window === "undefined") return T.expanded;
@@ -103,54 +114,34 @@ export function CollapseToggle({ className = "", title }: { className?: string; 
       onClick={toggle}
       aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       title={title ?? (collapsed ? "Expand" : "Collapse")}
-      className={`ml-auto p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 ${className}`}
+      className={`p-2 rounded-full bg-black text-white focus:ring-1 focus:ring-blue-500 ${className}`}
     >
-      <span className="inline-block align-middle">{collapsed ? "›" : "‹"}</span>
+      <span className="inline-block align-middle">
+      {collapsed ? (
+        <span className="inline-block">
+          {/* Triple chevron right */}
+          <svg width="18" height="18" viewBox="7 3 10 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M11 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M15 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </span>
+      ) : (
+        <span className="inline-block scale-x-[-1]">
+          {/* Triple chevron left (mirrored to point right) */}
+          <svg width="18" height="18" viewBox="7 3 10 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M11 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M15 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </span>
+      )}
+      </span>
     </button>
-  );
-}
-
-export function CollapseResizer({ doubleClickToggle = true }: { doubleClickToggle?: boolean }) {
-  const { setWidth, toggle } = useCollapse();
-  const [resizing, setResizing] = useState(false);
-
-  useEffect(() => {
-    function onMove(e: MouseEvent) {
-      if (!resizing) return;
-      setWidth(e.clientX);
-    }
-    function onUp() {
-      if (resizing) setResizing(false);
-    }
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-    return () => {
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-    };
-  }, [resizing, setWidth]);
-
-  return (
-    <div
-      role="separator"
-      aria-orientation="vertical"
-      title="Drag to resize. Double-click to collapse/expand."
-      onMouseDown={() => setResizing(true)}
-      onDoubleClick={doubleClickToggle ? toggle : undefined}
-      style={{
-        position: "fixed",
-        top: "calc(var(--header-h) + var(--ribbon-h))",
-        bottom: 0,
-        left: "calc(var(--sidebar-w) - 2px)",
-        width: "4px",
-        cursor: "col-resize",
-        zIndex: 60,
-        background: "transparent",
-      }}
-    />
   );
 }
 
 function clamp(v: number, min: number, max: number) {
   return Math.max(min, Math.min(max, v));
 }
+

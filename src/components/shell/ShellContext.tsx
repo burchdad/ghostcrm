@@ -15,7 +15,7 @@ const Ctx = createContext<ShellCtx | null>(null);
 export const HEADER_H = 64;
 export const RIBBON_H = 40;
 export const COLLAPSED_W = 72;
-export const EXPANDED_DEFAULT = 256;
+export const EXPANDED_DEFAULT = 250;
 export const MIN_W = 180;
 export const MAX_W = 420;
 

@@ -9,8 +9,7 @@ import DashboardChartGrid from "./DashboardChartGrid";
 // import jsPDF from "jspdf";
 import ChartSettingsModal from "@/components/modals/ChartSettingsModal";
 import AIChartGenerator from "./AIChartGenerator";
-import DashboardNotification from "./DashboardNotification";
-import AuditHistoryBar from "./AuditHistoryBar";
+
 
 // Register required Chart.js elements/controllers
 Chart.register(

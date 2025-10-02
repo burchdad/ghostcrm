@@ -11,84 +11,115 @@ const DEFAULT_ITEMS = [
   { name: "Leads", path: "/leads", icon: LucideUser, badge: 2, role: ["sales"] },
   { name: "Deals", path: "/deals", icon: LucideBarChart2, badge: 1, role: ["sales"] },
   { name: "Inventory", path: "/inventory", icon: LucideCar, badge: 0, role: ["admin"] },
-  { name: "Appointments", path: "/appointments", icon: LucideCalendar, badge: 3, role: ["admin"] },
-  { name: "Performance", path: "/performance", icon: LucideBarChart2, badge: 0, role: ["admin"] }
+  { name: "Calendar", path: "/calendar", icon: LucideCalendar, badge: 0, role: ["admin"] },
+  { name: "Performance", path: "/performance", icon: LucideBarChart2, badge: 0, role: ["admin"] },
+  { name: "Finance", path: "/finance", icon: LucideBarChart2, badge: 0, role: ["admin"] }
 ]
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { collapsed } = useCollapse();
-  const [role, setRole] = React.useState("Select Role");
   const [search, setSearch] = React.useState("");
   const items = DEFAULT_ITEMS;
   const [order, setOrder] = React.useState(items.map((_, i) => i));
+  const [showAssistant, setShowAssistant] = React.useState(false);
 
-  const filtered =
-    role === "Select Role"
-      ? []
-      : order
-          .map((i) => items[i])
-          .filter((it) =>
-            (role === "admin" ? true : it.role.includes(role)) &&
-            it.name.toLowerCase().includes(search.toLowerCase())
-          );
+    const filtered = order.map((i) => items[i]);
 
   return (
-    <div className="h-full w-full bg-white flex flex-col rounded-r-2xl shadow-md border-r border-gray-200">
-      <div className="pt-4 pb-2 px-3 flex items-center">
-        {!collapsed && <span className="font-bold text-xl text-blue-700 truncate">Ghost Auto CRM</span>}
-        <CollapseToggle className="ml-auto" />
-      </div>;
+    <div
+      className={`bg-blue-500 flex flex-col shadow-md border-r border-gray-200 relative ${collapsed ? 'w-10' : 'w-45'}`}
+      style={{ height: 'calc(100vh - 80px)' }}
+    >
+      <div className="absolute top-0 right-0 z-20"></div>
+      <div className="pb-2 px-3 flex flex-col items-start">
+        {!collapsed && <span className="font-bold text-xl text-blue-700 truncate"></span>}
+      </div>
       {!collapsed && (
         <div className="px-3 pb-3">
-          <div className="rounded-lg bg-gray-100 border border-gray-200 p-3 space-y-2">
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full h-9 rounded-md border px-2 text-xs text-center bg-white"
-            >
-              <option value="Select Role">Select Role</option>
-              <option value="admin">Admin</option>
-              <option value="sales">Sales</option>
-            </select>
+          <div className="bg-gray-100 border border-gray-200 p-3 space-y-2">
           </div>
         </div>
       )}
-    <div className="flex flex-col flex-1">
-      <nav className="px-1" role="navigation" aria-label="Main Navigation">
-        <ul className="space-y-1">
-          {filtered.map(({ name, path, icon: Icon, badge }) => {
-            const active = pathname === path;
-            return (
-              <li key={path}>
-                <Link
-                  href={path}
-                  className={["relative flex items-center rounded-md px-3 py-2 transition",
-                    collapsed ? "justify-center gap-0" : "justify-between gap-2",
-                    active ? "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-400" : "text-gray-800 hover:bg-gray-100",
-                  ].join(" ")}
+        {/* Role select removed, all items shown */}
+      <div className="flex flex-col flex-1">
+        <nav className="px-1" role="navigation" aria-label="Main Navigation">
+          <ul className="space-y-1">
+            {filtered.map(({ name, path, icon: Icon, badge }) => {
+              const active = pathname === path;
+              return (
+                <li key={path}>
+                  <Link
+                    href={path}
+                    className={["relative flex items-center rounded-md px-3 py-2 transition",
+                      collapsed ? "justify-center gap-0" : "justify-between gap-2",
+                      active ? "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-400" : "text-gray-800 hover:bg-gray-100",
+                    ].join(" ")}
+                  >
+                    <span className={["flex items-center", collapsed ? "" : "gap-2"].join(" ")}>
+                      <Icon className="w-5 h-5" />
+                      {!collapsed && <span className="font-medium">{name}</span>}
+                    </span>
+                    {!collapsed && badge ? (
+                      <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">{badge}</span>
+                    ) : null}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+        {!collapsed ? (
+          <div className="flex flex-1 items-center justify-center px-3">
+            <div className="w-full max-w-xs">
+              <SidebarAIAssistant />
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-1 items-left justify-left px-3">
+              <button
+                className="flex items-center justify-left w-10 h-10 rounded-full bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                aria-label="Open AI Assistant"
+                onClick={() => setShowAssistant(true)}
+              >
+                {/* Help icon (LucideHelpCircle or similar) */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2" fill="none" />
+                  <path d="M12 16v-1m0-4a2 2 0 1 1 2 2c0 1-2 1-2 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+            {showAssistant && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-none bg-opacity-40"
+                onClick={(e) => {
+                  // Only close if clicking the overlay, not the modal itself
+                  if (e.target === e.currentTarget) {
+                    setShowAssistant(false);
+                  }
+                }}
+              >
+                <div
+                  className="bg-white rounded-lg shadow-lg p-6 max-w-xs w-full relative"
+                  onClick={e => e.stopPropagation()}
                 >
-                  <span className={["flex items-center", collapsed ? "" : "gap-2"].join(" ")}>
-                    <Icon className="w-5 h-5" />
-                    {!collapsed && <span className="font-medium">{name}</span>}
-                  </span>
-                  {!collapsed && badge ? (
-                    <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">{badge}</span>
-                  ) : null}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>;
-      {!collapsed && (
-        <div className="flex flex-1 items-center justify-center px-3">
-          <div className="w-full max-w-xs">
-            <SidebarAIAssistant />
-          </div>
-        </div>
-      )}
+                  <button
+                    className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                    aria-label="Minimize"
+                    onClick={() => {
+                      setShowAssistant(false);
+                    }}
+                  >
+                    &minus;
+                  </button>
+                  <SidebarAIAssistant />
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
-  </div>
-  )
-};
+  );
+}

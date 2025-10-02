@@ -1,14 +1,7 @@
 "use client";
 import { useState } from "react";
-// Placeholder chart component
-function ChartPlaceholder({ title }: { title: string }) {
-  return (
-    <div className="bg-white rounded shadow p-4 mb-4">
-      <div className="font-bold mb-2">{title}</div>
-      <div className="h-32 flex items-center justify-center text-gray-400">[Chart]</div>
-    </div>
-  );
-}
+import ChartPlaceholder from "@/components/charts/ChartPlaceholder";
+import BulkOperations from "@/components/charts/BulkOperations";
 
 export default function Deals() {
   const [bulkMode, setBulkMode] = useState(false);
@@ -44,12 +37,14 @@ export default function Deals() {
       </div>
       {/* Bulk Operations UI */}
       {bulkMode && (
-        <div className="mb-2 flex gap-2">
-          <button className="px-2 py-1 bg-blue-500 text-white rounded text-xs" onClick={handleBulkExport}>Export Selected</button>
-          <button className="px-2 py-1 bg-yellow-500 text-white rounded text-xs" onClick={handleBulkUpdate}>Bulk Update</button>
-          <button className="px-2 py-1 bg-red-500 text-white rounded text-xs" onClick={handleBulkDelete}>Delete Selected</button>
-          <button className="px-2 py-1 bg-gray-300 text-gray-700 rounded text-xs" onClick={() => setBulkMode(false)}>Cancel</button>
-        </div>
+        <BulkOperations
+          actions={[
+            { label: "Export Selected", onClick: handleBulkExport, color: "bg-blue-500" },
+            { label: "Bulk Update", onClick: handleBulkUpdate, color: "bg-yellow-500" },
+            { label: "Delete Selected", onClick: handleBulkDelete, color: "bg-red-500" },
+          ]}
+          onCancel={() => setBulkMode(false)}
+        />
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-green-100 rounded p-4">

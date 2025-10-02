@@ -3,7 +3,14 @@ export type RibbonContext = "dashboard" | "analytics" | "leads" | "inventory" | 
 export type ControlId =
   | "profile" | "notifications" | "theme" | "language"
   | "quickActions" | "bulkOps" | "saveLayout" | "share" | "export"
-  | "aiTools" | "automation" | "data" | "billing" | "developer";
+  | "aiTools" | "automation" | "data" | "billing" | "developer" | "salesPerformance" | "leadConversion" | "agentActivity" | "customReportBuilder" | "exportReport" | "scheduleReports"
+  | "userPreferences"
+  | "workspaceSettings"
+  | "notificationSettings"
+  | "themeAppearance"
+  | "appIntegrations"
+  | "manageTeams"
+  | "permissionsRoles";
 
 export type RibbonControl = {
   id: ControlId;
@@ -12,6 +19,9 @@ export type RibbonControl = {
   icon?: React.ReactNode;
   onClick?: () => void;
   render?: (args: RenderArgs) => React.ReactNode;
+  contexts?: RibbonContext[]; // if undefined, show in all contexts
+  requires?: ControlId[]; // all of these controls must be enabled to show this one
+  excludes?: ControlId[]; // if any of these controls are enabled, do not show this one
 };
 
 export type RenderArgs = {
@@ -26,4 +36,6 @@ export type RibbonState = {
   language: "en"|"es"|"fr"|"de";
   pageEnable: Set<ControlId>;
   pageDisable: Set<ControlId>;
+  userEnable: Set<ControlId>;
+  userDisable: Set<ControlId>;
 };

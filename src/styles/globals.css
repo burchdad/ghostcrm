@@ -14,7 +14,7 @@
 :root {
 	--header-h: 64px;   /* h-16 */
 	--ribbon-h: 40px;   /* new: global command bar */
-	--sidebar-w: 256px; /* w-64 */
+	--sidebar-w: 250px; /* w-64 */
 }
 
 @media (min-width: 1024px) { :root { --sidebar-w: 300px; } }

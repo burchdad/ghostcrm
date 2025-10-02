@@ -22,7 +22,13 @@ export function RibbonProvider({ children }: { children: React.ReactNode }) {
   const [pageDisable, setPageDisable] = useState<Set<ControlId>>(new Set());
 
   const state: RibbonState = useMemo(() => ({
-    context, theme, language, pageEnable, pageDisable
+    context,
+    theme,
+    language,
+    pageEnable,
+    pageDisable,
+    userEnable: new Set<ControlId>(), // Add default or actual value as needed
+    userDisable: new Set<ControlId>() // Add default or actual value as needed
   }), [context, theme, language, pageEnable, pageDisable]);
 
   const enable = (ids: ControlId[]) => setPageEnable(new Set(ids));
