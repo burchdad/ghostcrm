@@ -46,13 +46,16 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
       </aside>
 
       {/* Main content (to the right of sidebar; below header+ribbon) */}
-      <main className="pt-[calc(var(--header-h)+var(--ribbon-h))] md:pl-[var(--sidebar-w)]">
-        <div
-          className="overflow-y-auto"
-          style={{ height: "calc(100vh - var(--header-h) - var(--ribbon-h))" }}
-        >
-          <div className="max-w-screen-2xl mx-auto px-4 py-4">{children}</div>
-        </div>
+      <main 
+        className="overflow-y-auto"
+        style={{ 
+          paddingTop: "80px", // header (50px) + ribbon (30px)
+          paddingLeft: mounted ? `${width}px` : "420px",
+          height: "100vh",
+          transition: "padding-left 200ms ease"
+        }}
+      >
+        <div className="max-w-screen-2xl mx-auto px-4 py-4">{children}</div>
       </main>
     </div>
   );

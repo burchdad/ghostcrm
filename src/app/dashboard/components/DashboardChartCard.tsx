@@ -62,6 +62,23 @@ const DashboardChartCard: React.FC<DashboardChartCardProps> = ({
   };
   const s = chartSettings[chartKey];
   if (!s) return null;
+  
+  // Add null check for chartData and provide fallback
+  const safeChartData = chartData || {
+    labels: ["No Data"],
+    datasets: [{ label: "No Data", data: [0], backgroundColor: "#gray" }]
+  };
+  
+  // Add null check for ChartComponent
+  if (!ChartComponent) {
+    return (
+      <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <h3 className="font-bold text-md">{s.title || chartKey}</h3>
+        <div className="p-4 text-gray-500 text-center">Chart type "{s.type}" not found</div>
+      </div>
+    );
+  }
+  
   // Example data sources
   const dataSources = ["Default", "Google Sheets", "SQL Database"];
   // Drill-down handler for chart click
@@ -116,7 +133,7 @@ const DashboardChartCard: React.FC<DashboardChartCardProps> = ({
         )}
       </div>
       <div className="mb-2" onClick={handleChartClick} role="button" tabIndex={0} aria-label={`Drill down into ${s.title || chartKey}`}> 
-        <ChartComponent data={chartData} options={s.options} />
+        <ChartComponent data={safeChartData} options={s.options || {}} />
       </div>
   {/* Comments, Audit, Version History, Accessibility, Schedule, etc. can be added here as needed */}
       {/* Comments, Audit, Version History, Accessibility, Schedule, etc. can be added here as needed */}

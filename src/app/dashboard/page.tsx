@@ -1,7 +1,7 @@
 "use client";
 import { useRibbon } from "@/components/ribbon/RibbonProvider";
 import Ribbon from "@/components/ribbon/Ribbon";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import useRibbonPage from "@/components/ribbon/useRibbonPage";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -65,12 +65,14 @@ function DashboardPageContent() {
   const [analytics, setAnalytics] = useState({
     messageCount: messages.length,
     alertCount: aiAlerts.length,
-    orgScore: Math.floor(Math.random() * 100),
+    orgScore: 75, // Fixed value to avoid hydration mismatch
   });
+  
+  
   return (
     <I18nProvider>
       <ToastProvider>
-        <main className="space-y-6 p-4 md:p-8">
+        <main className="space-y-6 p-4 md:p-10">
           <CampaignAnalytics />
           {loading && <Skeleton className="h-10 w-full mb-4" />}
           <DashboardCustomization

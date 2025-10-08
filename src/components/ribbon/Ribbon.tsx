@@ -1,7 +1,17 @@
 "use client";
 import React, { useMemo, useRef, useState } from "react";
 import { useRibbon } from "./RibbonProvider";
-import { CONTROLS } from "./registry";
+import {
+  CONTROLS,
+  CONTROLS_AI,
+  CONTROLS_AUTOMATION,
+  CONTROLS_DATA,
+  CONTROLS_DEVELOPER,
+  CONTROLS_EDIT,
+  CONTROLS_FILE,
+  CONTROLS_REPORTS,
+  CONTROLS_SETTINGS
+} from "./registry";
 import type { RibbonControl } from "./types";
 
 function useOutsideClick(ref: React.RefObject<HTMLElement>, onClose: () => void) {
@@ -14,9 +24,20 @@ function useOutsideClick(ref: React.RefObject<HTMLElement>, onClose: () => void)
 
 export default function Ribbon() {
   // Remove all security/context logic for now, show all controls
+  const allControls: RibbonControl[] = [
+    ...CONTROLS,
+    ...CONTROLS_AI,
+    ...CONTROLS_AUTOMATION,
+    ...CONTROLS_DATA,
+    ...CONTROLS_DEVELOPER,
+    ...CONTROLS_EDIT,
+    ...CONTROLS_FILE,
+    ...CONTROLS_REPORTS,
+    ...CONTROLS_SETTINGS
+  ];
   const groups = useMemo(() => {
     const map = new Map<string, { ctrl: RibbonControl; enabled: boolean; disabled: boolean }[]>();
-    CONTROLS.forEach(c => {
+    allControls.forEach(c => {
       const arr = map.get(c.group) || [];
       arr.push({ ctrl: c, enabled: true, disabled: false });
       map.set(c.group, arr);

@@ -62,7 +62,15 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
   const [liveData, setLiveData] = useState(chartData);
   const [isOnline, setIsOnline] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [mounted, setMounted] = useState(false);
+  
   useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  useEffect(() => {
+    if (!mounted) return;
+    
     function updateOnlineStatus() {
       setIsOnline(navigator.onLine);
     }
@@ -73,8 +81,13 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
       fetch("/api/dashboard/live")
         .then(res => res.json())
         .then(data => {
-          setLiveData(data);
+          // Merge new data with existing chartData to ensure all keys exist
+          setLiveData(prev => ({ ...chartData, ...data }));
           setLastRefresh(new Date());
+        })
+        .catch(err => {
+          console.warn("Failed to fetch live data:", err);
+          // Keep existing data on error
         });
     }, 10000);
     return () => {
@@ -82,7 +95,7 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
       window.removeEventListener('online', updateOnlineStatus);
       window.removeEventListener('offline', updateOnlineStatus);
     };
-  }, []);
+  }, [mounted]);
 
     // --- Per-chart state (move this above chartOrder!) ---
     const [chartSettings, setChartSettings] = useState({
@@ -112,23 +125,6 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
         legend: false,
         grid: true,
         query: "SELECT * FROM ai_alerts",
-        formula: "",
-        comments: [],
-        schedule: { email: "", freq: "daily" },
-        accessibility: { contrast: false, screenReader: false },
-        aiInsights: "",
-        audit: [],
-        versions: [],
-      },
-      auditLog: {
-        type: "Bar",
-        colors: ["#facc15"],
-        title: "Audit Log Events",
-        xLabel: "Day",
-        yLabel: "Events",
-        legend: false,
-        grid: true,
-        query: "SELECT * FROM audit_log",
         formula: "",
         comments: [],
         schedule: { email: "", freq: "daily" },
@@ -167,10 +163,11 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
     // --- Filtered Chart Keys ---
     const filteredChartKeys = chartOrder.filter((key) => {
       const s = chartSettings[key];
+      const hasData = liveData[key]; // Only include charts that have data
       const matchesText = filterText === "" || (s.title?.toLowerCase().includes(filterText.toLowerCase()) || key.toLowerCase().includes(filterText.toLowerCase()));
       const matchesType = filterType === "" || s.type === filterType;
       const matchesSource = filterSource === "" || (s.dataSource?.toLowerCase().includes(filterSource.toLowerCase()) || "default".includes(filterSource.toLowerCase()));
-      return matchesText && matchesType && matchesSource;
+      return hasData && matchesText && matchesType && matchesSource;
     });
 
     // --- Move Chart Handler for Drag-and-Drop ---
