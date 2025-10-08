@@ -8,6 +8,9 @@ import { LeadCreate } from "@/lib/validators";
 import { getMembershipOrgId } from "@/lib/rbac";
 import { ok, bad, oops } from "@/lib/http";
 
+// Use Node.js runtime to avoid Edge Runtime issues with Supabase
+export const runtime = 'nodejs';
+
 export async function GET(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const url = new URL(req.url);

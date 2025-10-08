@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supaFromReq } from "@/lib/supa-ssr";
 import { createClient } from "@supabase/supabase-js";
+import { createHash } from "crypto";
+import { hash } from "bcryptjs";
 
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Runtime configuration to use Node.js runtime instead of Edge
+export const runtime = 'nodejs';
 
-export { supabaseAdmin };
+// Helper function to get admin client
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(req: NextRequest) {
   const { s, res } = supaFromReq(req);
@@ -29,12 +35,10 @@ export async function PUT(req: NextRequest) {
   return NextResponse.json({ success: true }, { headers: res.headers });
 }
 
-import { createHash } from "crypto";
-import { hash } from "bcryptjs";
-
 // Example PATCH handler for password reset confirmation
 export async function PATCH(req: NextRequest) {
   const { email, token, newPassword } = await req.json();
+  const supabaseAdmin = getSupabaseAdmin();
   const tokenHash = createHash("sha256").update(token).digest("hex");
   const { data: row } = await supabaseAdmin
     .from("password_resets")
