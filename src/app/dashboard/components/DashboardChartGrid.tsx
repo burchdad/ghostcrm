@@ -31,6 +31,8 @@ export interface DashboardChartGridProps {
   handlePredictiveAnalytics: any;
   chartKeys: string[];
   moveChart: (fromIdx: number, toIdx: number) => void;
+  chartConnectionStatus?: {[key: string]: 'online' | 'offline' | 'syncing'};
+  chartLastRefresh?: {[key: string]: Date};
 }
 
 const DashboardChartGrid: React.FC<DashboardChartGridProps> = ({
@@ -59,7 +61,9 @@ const DashboardChartGrid: React.FC<DashboardChartGridProps> = ({
   loadPreset,
   handlePredictiveAnalytics,
   chartKeys,
-  moveChart
+  moveChart,
+  chartConnectionStatus,
+  chartLastRefresh
 }) => {
   // Accept chartKeys prop for filtered charts
   const keysToRender = chartKeys !== undefined ? chartKeys : Object.keys(chartSettings);
@@ -133,6 +137,8 @@ const DashboardChartGrid: React.FC<DashboardChartGridProps> = ({
                 onConnectDataSource={connectDataSource}
                 onSavePreset={savePreset}
                 onLoadPreset={loadPreset}
+                connectionStatus={chartConnectionStatus?.[chartKey] || 'online'}
+                lastRefresh={chartLastRefresh?.[chartKey] || new Date()}
               />
             </div>
           );

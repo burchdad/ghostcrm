@@ -8,7 +8,6 @@ import DashboardChartGrid from "./DashboardChartGrid";
 // import html2canvas from "html2canvas";
 // import jsPDF from "jspdf";
 import ChartSettingsModal from "@/components/modals/ChartSettingsModal";
-import AIChartGenerator from "./AIChartGenerator";
 
 
 // Register required Chart.js elements/controllers
@@ -64,6 +63,18 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [mounted, setMounted] = useState(false);
   
+  // Connection status per chart
+  const [chartConnectionStatus, setChartConnectionStatus] = useState<{[key: string]: 'online' | 'offline' | 'syncing'}>({
+    messages: 'online',
+    aiAlerts: 'online',
+    orgComparison: 'online'
+  });
+  const [chartLastRefresh, setChartLastRefresh] = useState<{[key: string]: Date}>({
+    messages: new Date(),
+    aiAlerts: new Date(),
+    orgComparison: new Date()
+  });
+  
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -73,11 +84,30 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
     
     function updateOnlineStatus() {
       setIsOnline(navigator.onLine);
+      // Update all chart statuses when connection changes
+      const newStatus = navigator.onLine ? 'online' : 'offline';
+      setChartConnectionStatus(prev => 
+        Object.keys(prev).reduce((acc, key) => ({...acc, [key]: newStatus}), {})
+      );
     }
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
+    
+    // Simulate periodic chart data refreshes
     const interval = setInterval(() => {
+      const chartKeys = Object.keys(chartData);
+      const randomChart = chartKeys[Math.floor(Math.random() * chartKeys.length)];
+      
+      // Set chart to syncing
+      setChartConnectionStatus(prev => ({...prev, [randomChart]: 'syncing'}));
+      
+      // Simulate sync completion after 1-2 seconds
+      setTimeout(() => {
+        setChartConnectionStatus(prev => ({...prev, [randomChart]: 'online'}));
+        setChartLastRefresh(prev => ({...prev, [randomChart]: new Date()}));
+      }, 1000 + Math.random() * 1000);
+      
       fetch("/api/dashboard/live")
         .then(res => res.json())
         .then(data => {
@@ -532,30 +562,7 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
   return (
     <ErrorBoundary>
       {/* Top modular components only! */}
-      <AIChartGenerator
-        aiInput={aiInput}
-        setAiInput={setAiInput}
-        aiLoading={aiLoading}
-        aiError={aiError}
-        onGenerate={handleAiChartGenerate}
-        onPredictiveAnalytics={handlePredictiveAnalytics}
-      />
-      <div className="mb-2 flex gap-4 items-center">
-        <label htmlFor="high-contrast-toggle" className="text-xs">High Contrast Mode</label>
-        <input id="high-contrast-toggle" type="checkbox" onChange={e => document.body.classList.toggle('high-contrast', e.target.checked)} aria-label="Toggle high contrast mode" />
-        <span className={`px-2 py-1 rounded text-xs font-semibold ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
-          aria-live="polite">
-          {isOnline ? 'Online' : 'Offline'}
-        </span>
-        <span className="text-xs text-gray-500">Last refresh: {lastRefresh.toLocaleTimeString()}</span>
-        <button className="px-2 py-1 bg-blue-500 text-white rounded text-xs" onClick={() => { setLastRefresh(new Date()); fetch("/api/dashboard/live").then(res => res.json()).then(data => setLiveData(data)); }}>Refresh Now</button>
-      </div>
-      <div className="mb-4 flex gap-2 items-center">
-        <button className="px-3 py-1 bg-blue-600 text-white rounded text-xs" onClick={saveDashboardLayout}>Save Layout</button>
-        <button className="px-3 py-1 bg-green-600 text-white rounded text-xs" onClick={loadDashboardLayout}>Load Layout</button>
-        <button className="px-3 py-1 bg-gray-600 text-white rounded text-xs" onClick={resetDashboardLayout}>Reset Layout</button>
-        <span className="text-xs text-gray-500">Customize your dashboard layout and save for later.</span>
-      </div>
+
       <DashboardChartGrid
         chartSettings={chartSettings}
         chartData={liveData}
@@ -583,6 +590,8 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
         handlePredictiveAnalytics={handlePredictiveAnalytics}
         chartKeys={filteredChartKeys}
         moveChart={moveChart}
+        chartConnectionStatus={chartConnectionStatus}
+        chartLastRefresh={chartLastRefresh}
       />
       {settingsModal.chart && (
         <ChartSettingsModal

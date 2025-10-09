@@ -13,7 +13,6 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 import { useDashboardData } from "./hooks/useDashboardData";
 import IndustryAIRecommendDashboard from "./industry-ai-recommend";
 import DashboardBulkOps from "./components/DashboardBulkOps";
-import DashboardStatsCards from "./components/DashboardStatsCards";
 import DashboardCharts from "./components/DashboardCharts";
 import DashboardRoleControls from "./components/DashboardRoleControls";
 import DashboardImportedList from "./components/DashboardImportedList";
@@ -23,6 +22,8 @@ import DashboardAdminToolbar from "./components/DashboardAdminToolbar";
 // import Sidebar from "./components/Sidebar";
 import RealtimeOutreachFeed from "./components/RealtimeOutreachFeed";
 import CampaignAnalytics from "./components/CampaignAnalytics";
+import CombinedMetricsCard from "./components/CombinedMetricsCard";
+import InventoryOverview from "./components/InventoryOverview";
 
 export default function DashboardPage() {
   useRibbonPage({
@@ -66,6 +67,11 @@ function DashboardPageContent() {
     messageCount: messages.length,
     alertCount: aiAlerts.length,
     orgScore: 75, // Fixed value to avoid hydration mismatch
+    totalLeads: 247, // Add sample total leads count
+    revenue: 152000, // Sample revenue data
+    activeDeals: 34, // Sample active deals
+    conversionRate: 23.5, // Sample conversion rate
+    teamMembers: 12, // Sample team size
   });
   
   
@@ -73,7 +79,6 @@ function DashboardPageContent() {
     <I18nProvider>
       <ToastProvider>
         <main className="space-y-6 p-4 md:p-10">
-          <CampaignAnalytics />
           {loading && <Skeleton className="h-10 w-full mb-4" />}
           <DashboardCustomization
             widgets={[]}
@@ -107,17 +112,28 @@ function DashboardPageContent() {
             exampleTemplates={[]}
             t={t}
           />
-          <RealtimeOutreachFeed />
+          
+          {/* 2x2 Grid Layout: Four equal cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[400px]">
+            <CampaignAnalytics />
+            <RealtimeOutreachFeed />
+            <CombinedMetricsCard analytics={analytics} />
+            <InventoryOverview />
+          </div>
+          
+          {/* Separator between main cards and detailed charts */}
+          <div className="relative py-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-gray-50 text-gray-500 font-medium">Detailed Analytics</span>
+            </div>
+          </div>
+          
           <DashboardBulkOps
             bulkMode={bulkMode}
             setBulkMode={setBulkMode}
-            t={t}
-          />
-          <DashboardStatsCards
-            analytics={analytics}
-            bulkMode={bulkMode}
-            selectedIdxs={selectedIdxs}
-            setSelectedIdxs={setSelectedIdxs}
             t={t}
           />
           <DashboardCharts analytics={analytics} t={t} />

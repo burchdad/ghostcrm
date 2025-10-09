@@ -119,16 +119,12 @@ const DashboardCustomization: React.FC<DashboardCustomizationProps> = ({
 
   return (
     <div className="p-6" ref={gridRef}>
-      <div className="flex items-center gap-4 mb-4">
-        <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={() => handleAddWidget('chart')}>Add Chart Widget</button>
-        <button className="px-3 py-1 bg-green-500 text-white rounded" onClick={() => handleAddWidget('table')}>Add Table Widget</button>
-        <button className="px-3 py-1 bg-purple-500 text-white rounded" onClick={() => setShowTemplateModal(true)}>Templates</button>
-        <button className="px-3 py-1 bg-gray-700 text-white rounded" onClick={handleSaveTemplate}>Save Layout</button>
-        <button className="px-3 py-1 bg-indigo-500 text-white rounded" onClick={handleShareDashboard}>Share</button>
-        <button className="px-3 py-1 bg-yellow-500 text-black rounded" onClick={undo} disabled={historyIdx === 0}>Undo</button>
-        <button className="px-3 py-1 bg-yellow-500 text-black rounded" onClick={redo} disabled={historyIdx === history.length - 1}>Redo</button>
-        <span className="ml-4 text-xs text-gray-500">Online: {presence.join(", ")}</span>
-      </div>
+      {/* Dashboard controls moved to ribbon - keeping only essential info */}
+      {presence.length > 0 && (
+        <div className="mb-4">
+          <span className="text-xs text-gray-500">👥 Online: {presence.join(", ")}</span>
+        </div>
+      )}
       {/* Layout template selection modal */}
       {showTemplateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">

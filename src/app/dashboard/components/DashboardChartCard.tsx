@@ -26,6 +26,8 @@ interface DashboardChartCardProps {
   onConnectDataSource: (chartKey: string, source: string) => void;
   onSavePreset: (chartKey: string) => void;
   onLoadPreset: (chartKey: string) => void;
+  connectionStatus?: 'online' | 'offline' | 'syncing';
+  lastRefresh?: Date;
 }
 
 const DashboardChartCard: React.FC<DashboardChartCardProps> = ({
@@ -51,7 +53,9 @@ const DashboardChartCard: React.FC<DashboardChartCardProps> = ({
   onDrillDown,
   onConnectDataSource,
   onSavePreset,
-  onLoadPreset
+  onLoadPreset,
+  connectionStatus = 'online',
+  lastRefresh = new Date()
 }) => {
   const [showActions, setShowActions] = React.useState(false);
   // Hide dropdown before export
@@ -97,7 +101,31 @@ const DashboardChartCard: React.FC<DashboardChartCardProps> = ({
       style={s.accessibility?.contrast ? { background: '#000', color: '#fff' } : undefined}
     >
       <div className="flex justify-between items-center mb-2">
-        <h3 className="font-bold text-md">{s.title || t(chartKey)}</h3>
+        <div className="flex items-center gap-3">
+          <h3 className="font-bold text-md">{s.title || t(chartKey)}</h3>
+          
+          {/* Connection Status Indicator */}
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${
+              connectionStatus === 'online' ? 'bg-green-500' :
+              connectionStatus === 'syncing' ? 'bg-yellow-500 animate-pulse' :
+              'bg-red-500'
+            }`} />
+            <span className={`text-xs ${
+              connectionStatus === 'online' ? 'text-green-600' :
+              connectionStatus === 'syncing' ? 'text-yellow-600' :
+              'text-red-600'
+            }`}>
+              {connectionStatus === 'online' ? 'Live' :
+               connectionStatus === 'syncing' ? 'Sync' :
+               'Offline'}
+            </span>
+            <span className="text-xs text-gray-400">
+              {lastRefresh.toLocaleTimeString()}
+            </span>
+          </div>
+        </div>
+        
         {canEdit && (
           <div className="flex items-center gap-2">
             <div className="relative group">
