@@ -7,7 +7,7 @@ import TemplateLibrary from "./TemplateLibrary";
 export default function SettingsPage() {
   useRibbonPage({
     context: "settings",
-    enable: ["profile", "org", "theme", "language", "security", "compliance"],
+    enable: ["profile", "theme", "language"],
     disable: ["bulkOps", "saveLayout", "aiTools", "developer", "billing", "export", "share"]
   });
   return (

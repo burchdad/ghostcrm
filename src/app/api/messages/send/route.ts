@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     if (channel === "sms") {
       const adapter = await getSmsAdapterFor(org_id, from ?? undefined);
       const res = await adapter.sendSms({ orgId: org_id, to, from, body });
-      if (!res.ok) throw new Error(res.error);
+      if (!res.ok) throw new Error("SMS send failed");
       provider_id = res.providerId ?? null;
     } else {
       // email path (e.g., SendGrid) – call your existing code or /api/messages/send with channel 'email'

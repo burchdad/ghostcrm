@@ -8,6 +8,7 @@ import DashboardChartGrid from "./DashboardChartGrid";
 // import html2canvas from "html2canvas";
 // import jsPDF from "jspdf";
 import ChartSettingsModal from "@/components/modals/ChartSettingsModal";
+import DynamicChartBuilder, { DynamicChart, type ChartSuggestion } from "./DynamicChartBuilder";
 
 
 // Register required Chart.js elements/controllers
@@ -27,8 +28,16 @@ import { Bar, Line, Pie } from "react-chartjs-2";
 interface DashboardChartsProps {
   analytics: {
     orgScore: number;
+    messageCount?: number;
+    alertCount?: number;
+    totalLeads?: number;
+    revenue?: number;
+    activeDeals?: number;
+    conversionRate?: number;
+    teamMembers?: number;
   };
   t: (key: string) => React.ReactNode;
+  onBuildChart?: (suggestion: ChartSuggestion) => void;
 }
 
 function ErrorBoundary({ children }: { children: React.ReactNode }) {
@@ -39,7 +48,12 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
 
 const chartTypes = ["Bar", "Line", "Pie"];
 
-const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
+const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t, onBuildChart }) => {
+  // Dynamic charts state
+  const [dynamicCharts, setDynamicCharts] = useState<DynamicChart[]>([]);
+  const [showMarketplace, setShowMarketplace] = useState(false);
+  const [chartMode, setChartMode] = useState<'legacy' | 'dynamic'>('dynamic');
+
   // Chart data (now inside component, uses analytics)
   const chartData = {
     messages: {
@@ -56,6 +70,49 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
       datasets: [{ label: "Score", data: [analytics.orgScore, 100 - analytics.orgScore], backgroundColor: ["#a78bfa", "#f472b6"] }],
     },
   };
+
+  // Prepare real data for dynamic charts
+  const currentData = {
+    sales: {
+      labels: ["Q1", "Q2", "Q3", "Q4"],
+      data: [analytics.revenue ? [analytics.revenue * 0.2, analytics.revenue * 0.3, analytics.revenue * 0.3, analytics.revenue * 0.2] : [30000, 45000, 45000, 30000]]
+    },
+    marketing: {
+      labels: ["Leads", "Qualified", "Opportunities", "Closed"],
+      data: [analytics.totalLeads || 247, (analytics.totalLeads || 247) * 0.4, analytics.activeDeals || 34, (analytics.activeDeals || 34) * 0.6]
+    },
+    inventory: {
+      labels: ["In Stock", "Low Stock", "Out of Stock"],
+      data: [150, 25, 5]
+    }
+  };
+
+  // Build chart from AI suggestion
+  const handleBuildFromAI = (suggestion: ChartSuggestion) => {
+    const newChart: DynamicChart = {
+      id: `ai-chart-${Date.now()}`,
+      name: suggestion.title,
+      type: suggestion.chartType,
+      config: suggestion.config,
+      data: suggestion.sampleData,
+      position: { x: 0, y: dynamicCharts.length, width: 1, height: 1 },
+      created: new Date().toISOString(),
+      source: 'ai',
+      category: suggestion.category
+    };
+    setDynamicCharts(prev => [...prev, newChart]);
+  };
+
+  // Expose build chart function via callback
+  useEffect(() => {
+    if (onBuildChart) {
+      // This connects the AI Assistant's build chart functionality
+      window.buildChartFromAI = handleBuildFromAI;
+    }
+    return () => {
+      delete window.buildChartFromAI;
+    };
+  }, [onBuildChart, dynamicCharts.length]);
 
   // --- Real-time Data Updates & Status ---
   const [liveData, setLiveData] = useState(chartData);
@@ -558,41 +615,91 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t }) => {
   const online = true;
   const isAdmin = userRole === "admin";
 
-  // Customizable layout: use DashboardChartGrid for chart cards
+  // Customizable layout: use DashboardChartGrid for chart cards or Dynamic Chart Builder
   return (
     <ErrorBoundary>
-      {/* Top modular components only! */}
+      {/* Chart Mode Toggle */}
+      <div className="mb-6 bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+            <span className="text-2xl">📊</span>
+            Dashboard Charts
+          </h2>
+          <div className="flex items-center gap-4">
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setChartMode('dynamic')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  chartMode === 'dynamic'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                🚀 Dynamic Charts
+              </button>
+              <button
+                onClick={() => setChartMode('legacy')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  chartMode === 'legacy'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                📈 Legacy Charts
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {chartMode === 'dynamic' && (
+          <div className="mt-3 text-sm text-gray-600">
+            <p>✨ Browse the marketplace, get AI suggestions, and build charts with one click!</p>
+          </div>
+        )}
+      </div>
 
-      <DashboardChartGrid
-        chartSettings={chartSettings}
-        chartData={liveData}
-        chartTypes={chartTypes}
-        chartRefs={chartRefs}
-        setSettingsModal={setSettingsModal}
-        handleExportChart={handleExportChart}
-        exportChartAsImage={exportChartAsImage}
-        handleAiChartGenerate={handleAiChartGenerate}
-        handleAiAutoLabel={handleAiAutoLabel}
-        handleAiErrorFix={handleAiErrorFix}
-        handleAddComment={handleAddComment}
-        handleSchedule={handleSchedule}
-        handleAccessibility={handleAccessibility}
-        handleAiInsights={handleAiInsights}
-        rollbackVersion={rollbackVersion}
-        t={t}
-        aiLoading={aiLoading}
-        chartComponents={chartComponents}
-        canEditChart={canEditChart}
-        handleDrillDown={handleDrillDownNotification}
-        connectDataSource={handleConnectDataSource}
-        savePreset={handleSavePresetNotification}
-        loadPreset={handleLoadPresetNotification}
-        handlePredictiveAnalytics={handlePredictiveAnalytics}
-        chartKeys={filteredChartKeys}
-        moveChart={moveChart}
-        chartConnectionStatus={chartConnectionStatus}
-        chartLastRefresh={chartLastRefresh}
-      />
+      {/* Dynamic Chart Builder or Legacy Charts */}
+      {chartMode === 'dynamic' ? (
+        <DynamicChartBuilder
+          charts={dynamicCharts}
+          onChartsChange={setDynamicCharts}
+          showMarketplace={showMarketplace}
+          onToggleMarketplace={() => setShowMarketplace(!showMarketplace)}
+          currentData={currentData}
+        />
+      ) : (
+        <DashboardChartGrid
+          chartSettings={chartSettings}
+          chartData={liveData}
+          chartTypes={chartTypes}
+          chartRefs={chartRefs}
+          setSettingsModal={setSettingsModal}
+          handleExportChart={handleExportChart}
+          exportChartAsImage={exportChartAsImage}
+          handleAiChartGenerate={handleAiChartGenerate}
+          handleAiAutoLabel={handleAiAutoLabel}
+          handleAiErrorFix={handleAiErrorFix}
+          handleAddComment={handleAddComment}
+          handleSchedule={handleSchedule}
+          handleAccessibility={handleAccessibility}
+          handleAiInsights={handleAiInsights}
+          rollbackVersion={rollbackVersion}
+          t={t}
+          aiLoading={aiLoading}
+          chartComponents={chartComponents}
+          canEditChart={canEditChart}
+          handleDrillDown={handleDrillDownNotification}
+          connectDataSource={handleConnectDataSource}
+          savePreset={handleSavePresetNotification}
+          loadPreset={handleLoadPresetNotification}
+          handlePredictiveAnalytics={handlePredictiveAnalytics}
+          chartKeys={filteredChartKeys}
+          moveChart={moveChart}
+          chartConnectionStatus={chartConnectionStatus}
+          chartLastRefresh={chartLastRefresh}
+        />
+      )}
+
       {settingsModal.chart && (
         <ChartSettingsModal
           chartKey={settingsModal.chart}

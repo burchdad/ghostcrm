@@ -136,7 +136,14 @@ function DashboardPageContent() {
             setBulkMode={setBulkMode}
             t={t}
           />
-          <DashboardCharts analytics={analytics} t={t} />
+          <DashboardCharts 
+            analytics={analytics} 
+            t={t} 
+            onBuildChart={(suggestion) => {
+              // Chart building is handled within DashboardCharts via global function
+              console.log('Chart suggestion received:', suggestion);
+            }}
+          />
           <DashboardImportedList importedDashboards={importedDashboards} t={t} />
         </main>
       </ToastProvider>

@@ -2,6 +2,28 @@ import React, { useState, useEffect } from "react";
 import { FiRefreshCw } from "react-icons/fi";
 import { usePathname } from "next/navigation";
 
+interface ChartSuggestion {
+  id: string;
+  title: string;
+  description: string;
+  chartType: 'bar' | 'line' | 'pie' | 'doughnut' | 'radar' | 'scatter';
+  category: string;
+  config: any;
+  sampleData: any;
+  confidence: number;
+}
+
+interface AIMessage {
+  sender: 'user' | 'assistant';
+  text: string;
+  chartSuggestions?: ChartSuggestion[];
+  timestamp?: string;
+}
+
+interface SidebarAIAssistantProps {
+  onBuildChart?: (suggestion: ChartSuggestion) => void;
+}
+
 function getSectionPrompt(pathname: string) {
   if (pathname.includes("leads")) {
     return "Give 3 actionable recommendations for a CRM user working in the Leads section. Focus on lead management, follow-up, and conversion.";
@@ -22,22 +44,169 @@ function formatAIResponse(text: string) {
   return text.replace(/\d+\.\s+/g, '\n• ').replace(/\n{2,}/g, '\n');
 }
 
-function SidebarAIAssistant() {
+// Detect if user message is requesting a chart
+function detectChartRequest(message: string): boolean {
+  const chartKeywords = ['chart', 'graph', 'plot', 'visualization', 'dashboard', 'show', 'display', 'analyze', 'compare', 'trend'];
+  const dataKeywords = ['sales', 'revenue', 'performance', 'conversion', 'leads', 'customers', 'inventory', 'metrics'];
+  
+  const lowerMessage = message.toLowerCase();
+  const hasChartKeyword = chartKeywords.some(keyword => lowerMessage.includes(keyword));
+  const hasDataKeyword = dataKeywords.some(keyword => lowerMessage.includes(keyword));
+  
+  return hasChartKeyword || hasDataKeyword;
+}
+
+// Generate chart suggestions based on user request
+function generateChartSuggestions(message: string): ChartSuggestion[] {
+  const lowerMessage = message.toLowerCase();
+  const suggestions: ChartSuggestion[] = [];
+
+  // Revenue/Sales trends
+  if (lowerMessage.includes('revenue') || lowerMessage.includes('sales') || lowerMessage.includes('trend')) {
+    suggestions.push({
+      id: 'revenue-trend',
+      title: 'Revenue Trend Analysis',
+      description: 'Track sales revenue over time with growth indicators',
+      chartType: 'line',
+      category: 'sales',
+      confidence: 0.9,
+      config: {
+        type: 'line',
+        options: {
+          responsive: true,
+          plugins: { title: { display: true, text: 'Revenue Trend' } },
+          scales: { y: { beginAtZero: true } }
+        }
+      },
+      sampleData: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+          label: 'Revenue',
+          data: [50000, 65000, 72000, 68000, 81000, 95000],
+          borderColor: 'rgb(34, 197, 94)',
+          backgroundColor: 'rgba(34, 197, 94, 0.1)'
+        }]
+      }
+    });
+  }
+
+  // Conversion/Funnel analysis
+  if (lowerMessage.includes('conversion') || lowerMessage.includes('funnel') || lowerMessage.includes('pipeline')) {
+    suggestions.push({
+      id: 'conversion-funnel',
+      title: 'Conversion Funnel',
+      description: 'Visualize lead conversion through pipeline stages',
+      chartType: 'bar',
+      category: 'sales',
+      confidence: 0.85,
+      config: {
+        type: 'bar',
+        options: {
+          responsive: true,
+          plugins: { title: { display: true, text: 'Sales Funnel' } }
+        }
+      },
+      sampleData: {
+        labels: ['Leads', 'Qualified', 'Proposal', 'Negotiation', 'Closed'],
+        datasets: [{
+          label: 'Count',
+          data: [1000, 650, 420, 280, 150],
+          backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#10b981']
+        }]
+      }
+    });
+  }
+
+  // Team/Performance comparison
+  if (lowerMessage.includes('team') || lowerMessage.includes('performance') || lowerMessage.includes('compare')) {
+    suggestions.push({
+      id: 'team-performance',
+      title: 'Team Performance Radar',
+      description: 'Compare team member performance across metrics',
+      chartType: 'radar',
+      category: 'analytics',
+      confidence: 0.8,
+      config: {
+        type: 'radar',
+        options: {
+          responsive: true,
+          plugins: { title: { display: true, text: 'Team Performance' } },
+          scales: { r: { beginAtZero: true, max: 100 } }
+        }
+      },
+      sampleData: {
+        labels: ['Calls', 'Emails', 'Deals', 'Revenue', 'Satisfaction'],
+        datasets: [{
+          label: 'Team Average',
+          data: [85, 92, 78, 88, 94],
+          borderColor: 'rgb(34, 197, 94)',
+          backgroundColor: 'rgba(34, 197, 94, 0.2)'
+        }]
+      }
+    });
+  }
+
+  // Customer segments
+  if (lowerMessage.includes('customer') || lowerMessage.includes('segment') || lowerMessage.includes('distribution')) {
+    suggestions.push({
+      id: 'customer-segments',
+      title: 'Customer Segmentation',
+      description: 'Analyze customer distribution by segments',
+      chartType: 'pie',
+      category: 'marketing',
+      confidence: 0.75,
+      config: {
+        type: 'pie',
+        options: {
+          responsive: true,
+          plugins: { title: { display: true, text: 'Customer Segments' } }
+        }
+      },
+      sampleData: {
+        labels: ['Enterprise', 'Mid-Market', 'SMB', 'Startup'],
+        datasets: [{
+          data: [35, 28, 25, 12],
+          backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+        }]
+      }
+    });
+  }
+
+  return suggestions;
+}
+
+function SidebarAIAssistant({ onBuildChart }: SidebarAIAssistantProps) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState([
-    { sender: "assistant", text: "How can I help?" }
+  const [messages, setMessages] = useState<AIMessage[]>([
+    { sender: "assistant", text: "How can I help? I can suggest charts, analyze data, or provide CRM recommendations." }
   ]);
   const [tab, setTab] = useState("Recommended");
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const pathname = usePathname();
 
-  // Trigger recommendation as a message
-  async function handleSendRec(rec: string) {
+  // Send user message and get AI response
+  async function handleSendMessage() {
+    if (!input.trim()) return;
+    
+    const userMessage = input.trim();
     setInput("");
-    setMessages(prev => [...prev, { sender: "user", text: rec }]);
+    setMessages(prev => [...prev, { sender: "user", text: userMessage }]);
     setLoading(true);
+
+    // Check if this is a chart request
+    const isChartRequest = detectChartRequest(userMessage);
+    let chartSuggestions: ChartSuggestion[] = [];
+
+    if (isChartRequest) {
+      chartSuggestions = generateChartSuggestions(userMessage);
+    }
+
     try {
+      const systemPrompt = isChartRequest 
+        ? "You are GhostCRM's AI assistant. The user is asking about charts or data visualization. Provide helpful context about the data they want to visualize, and mention that you've prepared some chart suggestions they can build with one click."
+        : "You are GhostCRM's sidebar assistant. Help with CRM, sales, analytics, and org-specific tasks.";
+
       const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -47,33 +216,58 @@ function SidebarAIAssistant() {
         body: JSON.stringify({
           model: "gpt-3.5-turbo",
           messages: [
-            { role: "system", content: "You are GhostCRM's sidebar assistant. Help with CRM, sales, analytics, and org-specific tasks." },
+            { role: "system", content: systemPrompt },
             ...messages.filter(m => m.sender === "user").map(m => ({ role: "user", content: m.text })),
-            { role: "user", content: rec }
+            { role: "user", content: userMessage }
           ]
         })
       });
+
       if (!res.ok) {
         const errorText = await res.text();
-        setMessages(prev => [...prev, { sender: "assistant", text: `Error: ${res.status} - ${errorText}` }]);
+        setMessages(prev => [...prev, { 
+          sender: "assistant", 
+          text: `Error: ${res.status} - ${errorText}`,
+          timestamp: new Date().toISOString()
+        }]);
         setLoading(false);
         return;
       }
+
       const data = await res.json();
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        setMessages(prev => [...prev, { sender: "assistant", text: "No response returned by OpenAI." }]);
+        setMessages(prev => [...prev, { 
+          sender: "assistant", 
+          text: "No response returned by OpenAI.",
+          timestamp: new Date().toISOString()
+        }]);
         setLoading(false);
         return;
       }
+
       const aiText = data.choices[0].message.content || "Sorry, no response.";
-      setMessages(prev => [...prev, { sender: "assistant", text: aiText }]);
+      
+      setMessages(prev => [...prev, { 
+        sender: "assistant", 
+        text: aiText,
+        chartSuggestions: chartSuggestions.length > 0 ? chartSuggestions : undefined,
+        timestamp: new Date().toISOString()
+      }]);
     } catch (err) {
-      setMessages(prev => [...prev, { sender: "assistant", text: "Error connecting to OpenAI." }]);
+      setMessages(prev => [...prev, { 
+        sender: "assistant", 
+        text: "Error connecting to OpenAI.",
+        timestamp: new Date().toISOString()
+      }]);
     }
     setLoading(false);
   }
 
-  // Analyze current page context
+  // Trigger recommendation as a message
+  async function handleSendRec(rec: string) {
+    setInput(rec);
+    await handleSendMessage();
+  }
   async function handleAnalyze() {
     setLoading(true);
     setMessages(prev => [...prev, { sender: "user", text: "Analyze this page" }]);
@@ -263,9 +457,50 @@ function SidebarAIAssistant() {
       </div>
       <div className="mt-4 max-h-48 overflow-y-auto text-xs space-y-4">
         {messages.map((msg, idx) => (
-          msg.sender === "assistant"
-            ? <div key={idx} className="text-blue-700 whitespace-pre-line">{formatAIResponse(msg.text)}</div>
-            : <div key={idx} className="text-gray-700 text-right">{msg.text}</div>
+          <div key={idx}>
+            {msg.sender === "assistant" ? (
+              <div className="text-blue-700">
+                <div className="whitespace-pre-line">{formatAIResponse(msg.text)}</div>
+                {msg.chartSuggestions && msg.chartSuggestions.length > 0 && (
+                  <div className="mt-3 space-y-2 border-t border-blue-200 pt-2">
+                    <div className="font-semibold text-blue-800">📊 Chart Suggestions:</div>
+                    {msg.chartSuggestions.map((suggestion, suggIdx) => (
+                      <div key={suggIdx} className="bg-blue-50 border border-blue-200 rounded p-2">
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="font-medium text-blue-900">{suggestion.title}</div>
+                          <span className="text-xs bg-blue-200 text-blue-700 px-1 rounded">
+                            {Math.round(suggestion.confidence * 100)}%
+                          </span>
+                        </div>
+                        <div className="text-blue-700 text-xs mb-2">{suggestion.description}</div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-blue-600">
+                            {suggestion.chartType.charAt(0).toUpperCase() + suggestion.chartType.slice(1)} Chart
+                          </span>
+                          {(onBuildChart || window.buildChartFromAI) && (
+                            <button
+                              onClick={() => {
+                                if (window.buildChartFromAI) {
+                                  window.buildChartFromAI(suggestion);
+                                } else if (onBuildChart) {
+                                  onBuildChart(suggestion);
+                                }
+                              }}
+                              className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
+                            >
+                              🔨 Build Chart
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-gray-700 text-right">{msg.text}</div>
+            )}
+          </div>
         ))}
         {loading && <div className="text-center text-gray-400">...</div>}
       </div>
@@ -274,7 +509,7 @@ function SidebarAIAssistant() {
         placeholder="Ask or build anything..."
         value={input}
         onChange={e => setInput(e.target.value)}
-        onKeyDown={e => e.key === "Enter" && handleSend()}
+        onKeyDown={e => e.key === "Enter" && handleSendMessage()}
         disabled={loading}
         style={{ marginTop: 'auto' }}
       />
