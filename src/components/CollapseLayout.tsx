@@ -4,13 +4,10 @@ import React from "react";
 import Topbar from "@/components/Topbar";
 import Ribbon from "@/components/ribbon/Ribbon";
 import Sidebar from "@/components/Sidebar";
-import { CollapseToggle, useCollapse } from "@/components/collapse";
+
+const FIXED_SIDEBAR_WIDTH = 280; // Fixed width in pixels
 
 export default function CollapseLayout({ children }: { children: React.ReactNode }) {
-  const { width } = useCollapse();
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => { setMounted(true); }, []);
-
   return (
     <div className="min-h-screen overflow-hidden bg-gray-50">
       {/* Topbar */}
@@ -29,17 +26,14 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
         <Ribbon />
       </div>
 
-      {/* Sidebar (width via collapse state, smooth animation) */}
+      {/* Sidebar - Fixed width, no collapse */}
       <aside
-        className="fixed left-0 bottom-0 z-30 bg-none shadow-none border-r"
+        className="fixed left-0 bottom-0 z-30 bg-white"
         style={{
           top: "80px",
-          width: `${mounted ? width : 420}px`,
-          transition: "width 200ms ease",
+          width: `${FIXED_SIDEBAR_WIDTH}px`,
         }}
       >
-        {/* Toggle on right edge */}
-        <CollapseToggle className="absolute right-0 top-2 z-20 shadow" />
         <div className="h-full overflow-y-auto">
           <Sidebar />
         </div>
@@ -50,9 +44,8 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
         className="overflow-y-auto"
         style={{ 
           paddingTop: "80px", // header (50px) + ribbon (30px)
-          paddingLeft: mounted ? `${width}px` : "420px",
+          paddingLeft: `${FIXED_SIDEBAR_WIDTH}px`,
           height: "100vh",
-          transition: "padding-left 200ms ease"
         }}
       >
         <div className="max-w-screen-2xl mx-auto px-4 py-4">{children}</div>

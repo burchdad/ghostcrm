@@ -72,9 +72,35 @@ function DashboardPageContent() {
   return (
     <I18nProvider>
       <ToastProvider>
-        <main className="space-y-6 p-4 md:p-10">
-          <CampaignAnalytics />
+        <main className="dashboard-main">
+          <div className="dashboard-section">
+            <h2 className="dashboard-section-title">Key Metrics</h2>
+            <DashboardStatsCards
+              analytics={analytics}
+              bulkMode={bulkMode}
+              selectedIdxs={selectedIdxs}
+              setSelectedIdxs={setSelectedIdxs}
+              t={t}
+            />
+          </div>
+          
+          <div className="dashboard-section">
+            <CampaignAnalytics />
+          </div>
+          
           {loading && <Skeleton className="h-10 w-full mb-4" />}
+          
+          <div className="dashboard-section">
+            <h2 className="dashboard-section-title">Analytics & Charts</h2>
+            <DashboardCharts analytics={analytics} t={t} />
+          </div>
+          
+          <DashboardBulkOps
+            bulkMode={bulkMode}
+            setBulkMode={setBulkMode}
+            t={t}
+          />
+          
           <DashboardCustomization
             widgets={[]}
             layoutTemplate={"grid"}
@@ -107,20 +133,8 @@ function DashboardPageContent() {
             exampleTemplates={[]}
             t={t}
           />
+          
           <RealtimeOutreachFeed />
-          <DashboardBulkOps
-            bulkMode={bulkMode}
-            setBulkMode={setBulkMode}
-            t={t}
-          />
-          <DashboardStatsCards
-            analytics={analytics}
-            bulkMode={bulkMode}
-            selectedIdxs={selectedIdxs}
-            setSelectedIdxs={setSelectedIdxs}
-            t={t}
-          />
-          <DashboardCharts analytics={analytics} t={t} />
           <DashboardImportedList importedDashboards={importedDashboards} t={t} />
         </main>
       </ToastProvider>

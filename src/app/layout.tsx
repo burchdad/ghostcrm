@@ -7,6 +7,9 @@ import "../styles/globals.css";  // <— REQUIRED
 export const metadata = {
   title: "GhostCRM",
   description: "AI-powered CRM platform",
+  icons: {
+    icon: "/images/ghost-favicon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { FiMessageSquare, FiBell, FiClipboard, FiAward, FiDownload, FiSettings } from "react-icons/fi";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEnvelope, faBell, faTrophy, faArrowUp, faArrowDown, faDownload, faCog } from "@fortawesome/free-solid-svg-icons";
 
 interface DashboardStatsCardsProps {
   analytics: {
@@ -21,26 +22,28 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
 
 const cardMeta = [
   {
-    icon: <FiMessageSquare className="text-3xl text-green-600" />,
+    icon: faEnvelope,
     label: "Messages",
-    color: "green-100",
     valueKey: "messageCount",
     tooltip: "Total messages received",
+    trend: "+12%",
+    trendDirection: "up",
   },
   {
-    icon: <FiBell className="text-3xl text-blue-600" />,
+    icon: faBell,
     label: "AI Alerts",
-    color: "blue-100",
     valueKey: "alertCount",
     tooltip: "AI-generated alerts",
+    trend: "+8%",
+    trendDirection: "up",
   },
-  // Audit Log card removed
   {
-    icon: <FiAward className="text-3xl text-purple-600" />,
+    icon: faTrophy,
     label: "Org Score",
-    color: "purple-100",
     valueKey: "orgScore",
     tooltip: "Organization performance score",
+    trend: "+5%",
+    trendDirection: "up",
   },
 ];
 
@@ -54,7 +57,6 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
   const [showSettings, setShowSettings] = useState<number | null>(null);
 
   function handleExport(idx: number) {
-    // Export logic (CSV)
     const key = cardMeta[idx].valueKey;
     const csv = `${cardMeta[idx].label},${analytics[key]}`;
     const blob = new Blob([csv], { type: "text/csv" });
@@ -68,17 +70,27 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
 
   return (
     <ErrorBoundary>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="stats-grid">
         {cardMeta.map((meta, idx) => (
           <div
             key={meta.label}
-            className={`rounded-xl p-6 shadow-lg bg-gradient-to-br from-${meta.color} to-${meta.color.replace("100", "200")} hover:scale-105 transition-transform cursor-pointer flex flex-col items-start gap-2 relative`}
+            className="stat-card"
             tabIndex={0}
             aria-label={String(t(meta.label))}
           >
-            <span title={String(t(meta.tooltip))}>{meta.icon}</span>
-            <div className={`font-bold text-${meta.color.replace("100", "800")} text-lg`}>{t(meta.label)}</div>
-            <div className={`text-4xl font-extrabold text-${meta.color.replace("100", "900")}`}>{analytics[meta.valueKey]}</div>
+            <div className="stat-card-content">
+              <div className="stat-card-icon">
+                <FontAwesomeIcon icon={meta.icon} />
+              </div>
+              <div className="stat-card-info">
+                <div className="stat-card-label">{String(t(meta.label))}</div>
+                <div className="stat-card-value">{analytics[meta.valueKey]}</div>
+                <div className={`stat-card-change ${meta.trendDirection === 'up' ? 'positive' : 'negative'}`}>
+                  <FontAwesomeIcon icon={meta.trendDirection === 'up' ? faArrowUp : faArrowDown} />
+                  {meta.trend} from last week
+                </div>
+              </div>
+            </div>
             {bulkMode && (
               <input
                 type="checkbox"
@@ -87,18 +99,23 @@ const DashboardStatsCards: React.FC<DashboardStatsCardsProps> = ({
                   setSelectedIdxs(e.target.checked ? [...selectedIdxs, idx] : selectedIdxs.filter(i => i !== idx));
                 }}
                 aria-label={`Select ${meta.label}`}
+                style={{ position: 'absolute', top: '1rem', right: '1rem' }}
               />
             )}
-            <div className="absolute top-2 right-2 flex gap-2">
-              <button className="text-blue-500 hover:text-blue-700" title={String(t("Export"))} onClick={() => handleExport(idx)}><FiDownload /></button>
-              <button className="text-gray-500 hover:text-gray-700" title={String(t("Settings"))} onClick={() => setShowSettings(idx)}><FiSettings /></button>
+            <div style={{ position: 'absolute', bottom: '1rem', right: '1rem', display: 'flex', gap: '0.5rem' }}>
+              <button className="btn-icon" title={String(t("Export"))} onClick={() => handleExport(idx)}>
+                <FontAwesomeIcon icon={faDownload} />
+              </button>
+              <button className="btn-icon" title={String(t("Settings"))} onClick={() => setShowSettings(idx)}>
+                <FontAwesomeIcon icon={faCog} />
+              </button>
             </div>
             {showSettings === idx && (
-              <div className="absolute left-1/2 top-1/2 z-50" style={{ transform: 'translate(-50%, -50%)' }}>
-                <div className="bg-white rounded-lg shadow-lg p-6 min-w-[320px] border border-gray-200">
-                  <h2 className="font-bold text-lg mb-4">{t(meta.label + " Settings")}</h2>
-                  <div className="mb-2 text-sm">{t("Advanced settings coming soon...")}</div>
-                  <button className="px-3 py-1 bg-gray-700 text-white rounded" onClick={() => setShowSettings(null)}>{t("Close")}</button>
+              <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9999 }}>
+                <div className="dashboard-card" style={{ minWidth: '320px', padding: '2rem' }}>
+                  <h2 style={{ fontWeight: 'bold', fontSize: '1.25rem', marginBottom: '1rem' }}>{t(meta.label + " Settings")}</h2>
+                  <div style={{ marginBottom: '1rem', fontSize: '0.875rem' }}>{t("Advanced settings coming soon...")}</div>
+                  <button className="btn-primary" onClick={() => setShowSettings(null)}>{t("Close")}</button>
                 </div>
               </div>
             )}

@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { FiRefreshCw } from "react-icons/fi";
+import React, { useState, useEffect, useRef } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPaperPlane, faRotateRight, faUser, faLightbulb } from "@fortawesome/free-solid-svg-icons";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 function getSectionPrompt(pathname: string) {
   if (pathname.includes("leads")) {
@@ -15,104 +17,23 @@ function getSectionPrompt(pathname: string) {
   return "Give 3 actionable recommendations for a CRM user in this section.";
 }
 
-// Format AI response for better readability
-function formatAIResponse(text: string) {
-  if (!text) return "";
-  // Replace numbered points with bullet points and add line breaks
-  return text.replace(/\d+\.\s+/g, '\n• ').replace(/\n{2,}/g, '\n');
-}
-
 function SidebarAIAssistant() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([
-    { sender: "assistant", text: "How can I help?" }
+    { sender: "assistant", text: "Hi! I'm your Ghost CRM AI assistant. How can I help you today?" }
   ]);
   const [tab, setTab] = useState("Recommended");
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const pathname = usePathname();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Trigger recommendation as a message
-  async function handleSendRec(rec: string) {
-    setInput("");
-    setMessages(prev => [...prev, { sender: "user", text: rec }]);
-    setLoading(true);
-    try {
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [
-            { role: "system", content: "You are GhostCRM's sidebar assistant. Help with CRM, sales, analytics, and org-specific tasks." },
-            ...messages.filter(m => m.sender === "user").map(m => ({ role: "user", content: m.text })),
-            { role: "user", content: rec }
-          ]
-        })
-      });
-      if (!res.ok) {
-        const errorText = await res.text();
-        setMessages(prev => [...prev, { sender: "assistant", text: `Error: ${res.status} - ${errorText}` }]);
-        setLoading(false);
-        return;
-      }
-      const data = await res.json();
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        setMessages(prev => [...prev, { sender: "assistant", text: "No response returned by OpenAI." }]);
-        setLoading(false);
-        return;
-      }
-      const aiText = data.choices[0].message.content || "Sorry, no response.";
-      setMessages(prev => [...prev, { sender: "assistant", text: aiText }]);
-    } catch (err) {
-      setMessages(prev => [...prev, { sender: "assistant", text: "Error connecting to OpenAI." }]);
-    }
-    setLoading(false);
-  }
+  // Auto scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  // Analyze current page context
-  async function handleAnalyze() {
-    setLoading(true);
-    setMessages(prev => [...prev, { sender: "user", text: "Analyze this page" }]);
-    try {
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [
-            { role: "system", content: `You are GhostCRM's sidebar assistant. Analyze the current CRM page and provide actionable insights. The user is on the '${pathname}' page.` },
-            ...messages.filter(m => m.sender === "user").map(m => ({ role: "user", content: m.text })),
-            { role: "user", content: `Analyze the current page: ${pathname}` }
-          ]
-        })
-      });
-      if (!res.ok) {
-        const errorText = await res.text();
-        setMessages(prev => [...prev, { sender: "assistant", text: `Error: ${res.status} - ${errorText}` }]);
-        setLoading(false);
-        return;
-      }
-      const data = await res.json();
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        setMessages(prev => [...prev, { sender: "assistant", text: "No response returned by OpenAI." }]);
-        setLoading(false);
-        return;
-      }
-      const aiText = data.choices[0].message.content || "Sorry, no response.";
-      setMessages(prev => [...prev, { sender: "assistant", text: aiText }]);
-    } catch (err) {
-      setMessages(prev => [...prev, { sender: "assistant", text: "Error connecting to OpenAI." }]);
-    }
-    setLoading(false);
-  }
-
+  // Fetch recommendations on mount and pathname change
   useEffect(() => {
     async function fetchRecommendations() {
       setLoading(true);
@@ -132,36 +53,33 @@ function SidebarAIAssistant() {
           })
         });
         if (!res.ok) {
-          const errorText = await res.text();
-          console.error("OpenAI API error:", res.status, errorText);
-          setRecommendations([`Error: ${res.status} - ${errorText}`]);
+          console.error("OpenAI API error:", res.status);
+          setRecommendations(["Unable to load recommendations at this time."]);
           setLoading(false);
           return;
         }
         const data = await res.json();
-        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-          console.error("OpenAI API response missing choices:", data);
-          setRecommendations(["No recommendations returned by OpenAI."]);
-          setLoading(false);
-          return;
-        }
-        const aiText = data.choices[0].message.content || "No recommendations.";
-        // Split into list if possible
+        const aiText = data.choices?.[0]?.message?.content || "No recommendations.";
         const recs = aiText.split(/\d+\.\s+/).filter(r => r.trim()).map(r => r.trim());
         setRecommendations(recs.length > 0 ? recs : [aiText]);
       } catch (err) {
         console.error("Error fetching recommendations:", err);
-        setRecommendations(["Error fetching recommendations."]);
+        setRecommendations(["Unable to load recommendations."]);
       }
       setLoading(false);
     }
     fetchRecommendations();
   }, [pathname]);
 
+
   async function handleSend() {
-    if (!input.trim()) return;
+    if (!input.trim() || loading) return;
+    
+    const userMessage = input.trim();
+    setInput("");
+    setMessages(prev => [...prev, { sender: "user", text: userMessage }]);
     setLoading(true);
-    setMessages(prev => [...prev, { sender: "user", text: input }]);
+
     try {
       const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -172,112 +90,187 @@ function SidebarAIAssistant() {
         body: JSON.stringify({
           model: "gpt-3.5-turbo",
           messages: [
-            { role: "system", content: "You are GhostCRM's sidebar assistant. Help with CRM, sales, analytics, and org-specific tasks." },
-            ...messages.filter(m => m.sender === "user").map(m => ({ role: "user", content: m.text })),
-            { role: "user", content: input }
+            { role: "system", content: "You are GhostCRM's AI assistant. Help with CRM, sales, analytics, and business tasks. Be concise and actionable." },
+            ...messages.map(m => ({ 
+              role: m.sender === "user" ? "user" : "assistant", 
+              content: m.text 
+            })),
+            { role: "user", content: userMessage }
           ]
         })
       });
+      
       if (!res.ok) {
         const errorText = await res.text();
-        console.error("OpenAI API error:", res.status, errorText);
-        setMessages(prev => [...prev, { sender: "assistant", text: `Error: ${res.status} - ${errorText}` }]);
+        setMessages(prev => [...prev, { 
+          sender: "assistant", 
+          text: "Sorry, I'm having trouble connecting. Please try again." 
+        }]);
         setLoading(false);
-        setInput("");
         return;
       }
+      
       const data = await res.json();
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        console.error("OpenAI API response missing choices:", data);
-        setMessages(prev => [...prev, { sender: "assistant", text: "No response returned by OpenAI." }]);
-        setLoading(false);
-        setInput("");
-        return;
-      }
-      const aiText = data.choices[0].message.content || "Sorry, no response.";
+      const aiText = data.choices?.[0]?.message?.content || "Sorry, I couldn't generate a response.";
       setMessages(prev => [...prev, { sender: "assistant", text: aiText }]);
     } catch (err) {
-      console.error("Error connecting to OpenAI:", err);
-      setMessages(prev => [...prev, { sender: "assistant", text: "Error connecting to OpenAI." }]);
+      setMessages(prev => [...prev, { 
+        sender: "assistant", 
+        text: "Error connecting to AI service. Please try again." 
+      }]);
     }
+    
     setLoading(false);
-    setInput("");
   }
 
   function handleReset() {
-    setMessages([{ sender: "assistant", text: "How can I help?" }]);
+    setMessages([{ sender: "assistant", text: "Hi! I'm your Ghost CRM AI assistant. How can I help you today?" }]);
     setInput("");
   }
 
   return (
-    <div className="bg-white border rounded-lg p-3 mb-4 shadow-sm relative" style={{ maxHeight: '420px', overflowY: 'auto' }}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="font-semibold text-sm">How can I help?</span>
-        <button
-          className="text-gray-400 hover:text-blue-600 p-1 rounded-full focus:outline-none"
-          title="Reset chat"
-          aria-label="Reset chat"
+    <div className="ai-chatbot">
+      <div className="ai-chatbot-header">
+        <div className="ai-chatbot-header-content">
+          <div className="ai-chatbot-icon">
+            <Image 
+              src="/images/ghost-favicon.png" 
+              alt="Ghost AI" 
+              width={28} 
+              height={28}
+              className="ai-chatbot-ghost-icon"
+            />
+          </div>
+          <div className="ai-chatbot-title">
+            <div className="ai-chatbot-name">AI Assistant</div>
+            <div className="ai-chatbot-status">
+              <span className="ai-chatbot-status-dot"></span>
+              Online
+            </div>
+          </div>
+        </div>
+        <button 
+          className="ai-chatbot-reset-btn" 
           onClick={handleReset}
+          title="Reset conversation"
         >
-          <FiRefreshCw size={16} />
-        </button>
-      </div>      
-      <div className="flex gap-2 mb-2 text-xs">
-        {["Recommended", "Ask", "Analyze", "Build"].map(tabName => (
-          <button
-            key={tabName}
-            className={`px-2 py-1 rounded ${tab === tabName ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"}`}
-            onClick={() => setTab(tabName)}
-          >
-            {tabName}
-          </button>
-        ))}
-        <button
-          className="px-2 py-1 rounded bg-purple-100 text-purple-700 ml-auto"
-          onClick={handleAnalyze}
-          disabled={loading}
-          title="Analyze current page"
-        >
-          Analyze Page
+          <FontAwesomeIcon icon={faRotateRight} />
         </button>
       </div>
-      <div className="text-xs mb-2">
-        {tab === "Recommended" && (
-          <ul className="space-y-2">
-            {loading ? (
-              <li className="text-gray-400">Loading recommendations...</li>
-            ) : (
-              recommendations.map((rec, idx) => (
-                <li key={idx} className="border-b pb-2 cursor-pointer hover:bg-blue-50 transition" onClick={() => handleSendRec(rec)}>
-                  <button className="w-full text-left px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs">
-                    {rec}
-                  </button>
-                </li>
-              ))
+
+      {/* Tab Navigation */}
+      <div className="ai-chatbot-tabs">
+        <button 
+          className={`ai-chatbot-tab ${tab === "chat" ? "active" : ""}`}
+          onClick={() => setTab("chat")}
+        >
+          Chat
+        </button>
+        <button 
+          className={`ai-chatbot-tab ${tab === "recommendations" ? "active" : ""}`}
+          onClick={() => setTab("recommendations")}
+        >
+          <FontAwesomeIcon icon={faLightbulb} /> Tips
+        </button>
+      </div>
+
+      {/* Messages Area */}
+      {tab === "chat" ? (
+        <>
+          <div className="ai-chatbot-messages">
+            {messages.map((msg, idx) => (
+              <div 
+                key={idx} 
+                className={`ai-message ${msg.sender === "user" ? "ai-message-user" : "ai-message-assistant"}`}
+              >
+                <div className="ai-message-avatar">
+                  {msg.sender === "user" ? (
+                    <FontAwesomeIcon icon={faUser} />
+                  ) : (
+                    <Image 
+                      src="/images/ghost-favicon.png" 
+                      alt="AI" 
+                      width={20} 
+                      height={20}
+                      className="ai-message-ghost-avatar"
+                    />
+                  )}
+                </div>
+                <div className="ai-message-content">
+                  <div className="ai-message-text">{msg.text}</div>
+                </div>
+              </div>
+            ))}
+            
+            {loading && tab === "chat" && (
+              <div className="ai-message ai-message-assistant">
+                <div className="ai-message-avatar">
+                  <Image 
+                    src="/images/ghost-favicon.png" 
+                    alt="AI" 
+                    width={20} 
+                    height={20}
+                    className="ai-message-ghost-avatar"
+                  />
+                </div>
+                <div className="ai-message-content">
+                  <div className="ai-typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              </div>
             )}
-          </ul>
-        )}
-        {tab !== "Recommended" && (
-          <div className="text-gray-400">Type your request above and press Enter.</div>
-        )}
-      </div>
-      <div className="mt-4 max-h-48 overflow-y-auto text-xs space-y-4">
-        {messages.map((msg, idx) => (
-          msg.sender === "assistant"
-            ? <div key={idx} className="text-blue-700 whitespace-pre-line">{formatAIResponse(msg.text)}</div>
-            : <div key={idx} className="text-gray-700 text-right">{msg.text}</div>
-        ))}
-        {loading && <div className="text-center text-gray-400">...</div>}
-      </div>
-      <input
-        className="border rounded px-2 py-1 w-full text-xs mt-2"
-        placeholder="Ask or build anything..."
-        value={input}
-        onChange={e => setInput(e.target.value)}
-        onKeyDown={e => e.key === "Enter" && handleSend()}
-        disabled={loading}
-        style={{ marginTop: 'auto' }}
-      />
+            
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input Area */}
+          <div className="ai-chatbot-input-area">
+            <input
+              type="text"
+              className="ai-chatbot-input"
+              placeholder="Type your message..."
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSend()}
+              disabled={loading}
+            />
+            <button 
+              className="ai-chatbot-send-btn" 
+              onClick={handleSend}
+              disabled={loading || !input.trim()}
+            >
+              <FontAwesomeIcon icon={faPaperPlane} />
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="ai-chatbot-recommendations">
+          {loading ? (
+            <div className="ai-recommendations-loading">
+              <div className="ai-typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <p>Loading recommendations...</p>
+            </div>
+          ) : (
+            <div className="ai-recommendations-list">
+              {recommendations.map((rec, idx) => (
+                <div key={idx} className="ai-recommendation-item">
+                  <div className="ai-recommendation-icon">
+                    <FontAwesomeIcon icon={faLightbulb} />
+                  </div>
+                  <div className="ai-recommendation-text">{rec}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
