@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
+import ComingSoonWrapper from '@/components/ComingSoonWrapper';
 
 import ChartPlaceholder from "@/components/charts/ChartPlaceholder";
 import BulkOperations from "@/components/charts/BulkOperations";
 
-export default function Performance() {
+function PerformanceContent() {
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIdxs, setSelectedIdxs] = useState<number[]>([]);
   const analytics = {
@@ -96,5 +97,18 @@ export default function Performance() {
       <ChartPlaceholder title="Rep Leaderboard" />
       <ChartPlaceholder title="Pipeline Conversion Trends" />
     </div>
+  );
+}
+
+export default function PerformancePage() {
+  return (
+    <ComingSoonWrapper 
+      feature="performance" 
+      enabled={false}
+      comingSoonDate="February 2026"
+      description="Advanced performance analytics with team leaderboards, conversion tracking, and AI-powered insights"
+    >
+      <PerformanceContent />
+    </ComingSoonWrapper>
   );
 }

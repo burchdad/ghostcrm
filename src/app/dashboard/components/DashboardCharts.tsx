@@ -9,6 +9,7 @@ import DashboardChartGrid from "./DashboardChartGrid";
 // import jsPDF from "jspdf";
 import ChartSettingsModal from "@/components/modals/ChartSettingsModal";
 import DynamicChartBuilder, { DynamicChart, type ChartSuggestion } from "./DynamicChartBuilder";
+import { Modal } from "@/components/Modal";
 
 
 // Register required Chart.js elements/controllers
@@ -51,7 +52,6 @@ const chartTypes = ["Bar", "Line", "Pie"];
 const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t, onBuildChart }) => {
   // Dynamic charts state
   const [dynamicCharts, setDynamicCharts] = useState<DynamicChart[]>([]);
-  const [showMarketplace, setShowMarketplace] = useState(false);
   const [chartMode, setChartMode] = useState<'legacy' | 'dynamic'>('dynamic');
 
   // Chart data (now inside component, uses analytics)
@@ -660,13 +660,13 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ analytics, t, onBuild
 
       {/* Dynamic Chart Builder or Legacy Charts */}
       {chartMode === 'dynamic' ? (
-        <DynamicChartBuilder
-          charts={dynamicCharts}
-          onChartsChange={setDynamicCharts}
-          showMarketplace={showMarketplace}
-          onToggleMarketplace={() => setShowMarketplace(!showMarketplace)}
-          currentData={currentData}
-        />
+        <>
+          <DynamicChartBuilder
+            charts={dynamicCharts}
+            onChartsChange={setDynamicCharts}
+            currentData={currentData}
+          />
+        </>
       ) : (
         <DashboardChartGrid
           chartSettings={chartSettings}

@@ -263,6 +263,7 @@ export default function ChartMarketplace({ onSelectChart, onInstallChart, curren
   const [selectedCategory, setSelectedCategory] = useState<string>(currentCategory || 'all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'rating' | 'downloads' | 'recent'>('rating');
+  const [showPreview, setShowPreview] = useState<string | null>(null);
   const { show: showToast } = useToast();
 
   // Load charts from marketplace API
@@ -341,8 +342,17 @@ export default function ChartMarketplace({ onSelectChart, onInstallChart, curren
     { id: 'custom', name: 'Custom', icon: '🎨' }
   ];
 
+  const getComplexityColor = (complexity: string) => {
+    switch (complexity) {
+      case 'beginner': return 'text-green-600 bg-green-100';
+      case 'intermediate': return 'text-yellow-600 bg-yellow-100';
+      case 'advanced': return 'text-red-600 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 w-full max-w-6xl max-h-[85vh] overflow-y-auto flex flex-col">
+    <div className="bg-white rounded-xl shadow-lg border border-gray-200 h-full flex flex-col">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-200">
         <h2 className="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">
@@ -383,7 +393,7 @@ export default function ChartMarketplace({ onSelectChart, onInstallChart, curren
           ))}
         </div>
 
-        {/* Sort options - Simplified */}
+        {/* Sort options */}
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600">Sort by:</span>
           <select
@@ -391,8 +401,9 @@ export default function ChartMarketplace({ onSelectChart, onInstallChart, curren
             onChange={(e) => setSortBy(e.target.value as any)}
             className="text-sm border border-gray-300 rounded px-2 py-1"
           >
-            <option value="rating">Name</option>
-            <option value="recent">Recent</option>
+            <option value="rating">⭐ Rating</option>
+            <option value="downloads">⬇️ Downloads</option>
+            <option value="recent">🕒 Recent</option>
           </select>
         </div>
       </div>
@@ -412,15 +423,42 @@ export default function ChartMarketplace({ onSelectChart, onInstallChart, curren
 
               {/* Chart info */}
               <h3 className="font-semibold text-gray-800 mb-1">{chart.name}</h3>
-              <p className="text-sm text-gray-600 mb-4 line-clamp-2">{chart.description}</p>
+              <p className="text-sm text-gray-600 mb-3 line-clamp-2">{chart.description}</p>
 
-              {/* Actions - Single Install Button */}
+              {/* Tags */}
+              <div className="flex flex-wrap gap-1 mb-3">
+                {chart.tags.slice(0, 3).map(tag => (
+                  <span key={tag} className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+                    {tag}
+                  </span>
+                ))}
+                {chart.tags.length > 3 && (
+                  <span className="text-xs text-gray-500">+{chart.tags.length - 3} more</span>
+                )}
+              </div>
+
+              {/* Stats */}
+              <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
+                <span>⭐ {chart.rating}</span>
+                <span>⬇️ {chart.downloads.toLocaleString()}</span>
+                <span className={`px-2 py-0.5 rounded ${getComplexityColor(chart.complexity)}`}>
+                  {chart.complexity}
+                </span>
+              </div>
+
+              {/* Actions */}
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleInstallChart(chart)}
-                  className="w-full px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600 transition-colors font-medium"
+                  onClick={() => onSelectChart(chart)}
+                  className="flex-1 px-3 py-1.5 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
                 >
-                  ⬇️ Install Chart
+                  📊 Preview
+                </button>
+                <button
+                  onClick={() => handleInstallChart(chart)}
+                  className="flex-1 px-3 py-1.5 bg-green-500 text-white rounded text-sm hover:bg-green-600 transition-colors"
+                >
+                  ⬇️ Install
                 </button>
               </div>
             </div>

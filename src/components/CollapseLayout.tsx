@@ -47,11 +47,14 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
 
       {/* Main content (to the right of sidebar; below header+ribbon) */}
       <main 
-        className="overflow-y-auto"
+        className=""
         style={{ 
-          paddingTop: "80px", // header (50px) + ribbon (30px)
+          paddingTop: "85px", // header (50px) + ribbon (30px)
           paddingLeft: mounted ? `${width}px` : "420px",
-          height: "100vh",
+          height: "100vh", // full viewport height
+          overflowY: "auto",
+          backgroundColor: "white",
+          borderLeft: "1px solid #eee",
           transition: "padding-left 200ms ease"
         }}
       >

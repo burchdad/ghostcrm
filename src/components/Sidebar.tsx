@@ -6,14 +6,22 @@ import { LucideHome, LucideUser, LucideBarChart2, LucideCar, LucideCalendar } fr
 import SidebarAIAssistant from "./SidebarAIAssistant";
 import { CollapseToggle, useCollapse } from "@/components/collapse";
 
+// MVP Feature Configuration
+const ENABLED_FEATURES = new Set([
+  '/dashboard',
+  '/leads', 
+  '/deals',
+  '/ai'
+]);
+
 const DEFAULT_ITEMS = [
-  { name: "Dashboard", path: "/dashboard", icon: LucideHome, badge: 0, role: ["admin","sales"] },
-  { name: "Leads", path: "/leads", icon: LucideUser, badge: 2, role: ["sales"] },
-  { name: "Deals", path: "/deals", icon: LucideBarChart2, badge: 1, role: ["sales"] },
-  { name: "Inventory", path: "/inventory", icon: LucideCar, badge: 0, role: ["admin"] },
-  { name: "Calendar", path: "/calendar", icon: LucideCalendar, badge: 0, role: ["admin"] },
-  { name: "Performance", path: "/performance", icon: LucideBarChart2, badge: 0, role: ["admin"] },
-  { name: "Finance", path: "/finance", icon: LucideBarChart2, badge: 0, role: ["admin"] }
+  { name: "Dashboard", path: "/dashboard", icon: LucideHome, badge: 0, role: ["admin","sales"], enabled: true },
+  { name: "Leads", path: "/leads", icon: LucideUser, badge: 2, role: ["sales"], enabled: true },
+  { name: "Deals", path: "/deals", icon: LucideBarChart2, badge: 1, role: ["sales"], enabled: true },
+  { name: "Inventory", path: "/inventory", icon: LucideCar, badge: 0, role: ["admin"], enabled: false, comingSoon: "Dec 2025" },
+  { name: "Calendar", path: "/calendar", icon: LucideCalendar, badge: 0, role: ["admin"], enabled: false, comingSoon: "Nov 2025" },
+  { name: "Performance", path: "/performance", icon: LucideBarChart2, badge: 0, role: ["admin"], enabled: false, comingSoon: "Jan 2026" },
+  { name: "Finance", path: "/finance", icon: LucideBarChart2, badge: 0, role: ["admin"], enabled: false, comingSoon: "Dec 2025" }
 ]
 
 export default function Sidebar() {
@@ -45,8 +53,35 @@ export default function Sidebar() {
       <div className="flex flex-col flex-1">
         <nav className="px-1" role="navigation" aria-label="Main Navigation">
           <ul className="space-y-1">
-            {filtered.map(({ name, path, icon: Icon, badge }) => {
+            {filtered.map(({ name, path, icon: Icon, badge, enabled, comingSoon }) => {
               const active = pathname === path;
+              
+              if (!enabled) {
+                // Coming Soon Item
+                return (
+                  <li key={path}>
+                    <div
+                      className={["relative flex items-center rounded-md px-3 py-2 transition cursor-not-allowed opacity-60",
+                        collapsed ? "justify-center gap-0" : "justify-between gap-2",
+                        "text-gray-500 bg-gray-50 border border-dashed border-gray-300"
+                      ].join(" ")}
+                      title={`${name} - Coming ${comingSoon}`}
+                    >
+                      <span className={["flex items-center", collapsed ? "" : "gap-2"].join(" ")}>
+                        <Icon className="w-5 h-5" />
+                        {!collapsed && <span className="font-medium">{name}</span>}
+                      </span>
+                      {!collapsed && (
+                        <span className="ml-2 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">
+                          Soon
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                );
+              }
+              
+              // Enabled Item
               return (
                 <li key={path}>
                   <Link

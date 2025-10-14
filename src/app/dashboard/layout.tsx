@@ -11,7 +11,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <CollapseProvider>
       <div className="min-h-screen overflow-hidden bg-gray-50">
         {/* Only dashboard-specific content and resizer */}
-        <div style={{ display: "flex", height: "100vh" }}>
+        <div style={{ display: "flex", height: "200vh" }}>
           {/* Removed CollapseResizer, file no longer exists */}
           <main className="flex-1">
             <div className="overflow-y-auto" style={{ height: "100%" }}>

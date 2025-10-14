@@ -1,5 +1,6 @@
  "use client";
 import { useState, useEffect } from "react";
+import ComingSoonWrapper from "@/components/ComingSoonWrapper";
 // Placeholder chart component
 function ChartPlaceholder({ title }: { title: string }) {
   return (
@@ -12,7 +13,7 @@ function ChartPlaceholder({ title }: { title: string }) {
 
 import useRibbonPage from "@/components/ribbon/useRibbonPage";
 
-export default function Inventory() {
+function InventoryContent() {
   useRibbonPage({
     context: "inventory",
     enable: ["bulkOps", "export", "share", "data"],
@@ -132,5 +133,19 @@ export default function Inventory() {
         </div>
       )}
     </div>
+  );
+}
+
+// Main export with feature gating
+export default function Inventory() {
+  return (
+    <ComingSoonWrapper 
+      feature="inventory" 
+      enabled={false}
+      comingSoonDate="December 2025"
+      description="Smart inventory tracking with predictive restocking and analytics"
+    >
+      <InventoryContent />
+    </ComingSoonWrapper>
   );
 }

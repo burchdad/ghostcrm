@@ -1,9 +1,11 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { Chart as ChartJS, ArcElement, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend, RadialLinearScale } from 'chart.js';
 import { Bar, Line, Pie, Doughnut, Radar, Scatter } from "react-chartjs-2";
-import ChartMarketplace, { ChartTemplate } from "./ChartMarketplace";
+import { useDrag, useDrop } from 'react-dnd';
 import { useToast } from "@/components/ToastProvider";
+import ChartMarketplaceDropdown from "./ChartMarketplaceDropdown";
 
 // Register Chart.js components
 ChartJS.register(
@@ -18,6 +20,11 @@ ChartJS.register(
   Tooltip,
   Legend
 );
+
+// Drag and drop item types
+const ItemTypes = {
+  CHART: 'chart'
+};
 
 export interface DynamicChart {
   id: string;
@@ -52,56 +59,141 @@ declare global {
 interface DynamicChartBuilderProps {
   charts: DynamicChart[];
   onChartsChange: (charts: DynamicChart[]) => void;
-  showMarketplace?: boolean;
-  onToggleMarketplace?: () => void;
   currentData?: any; // Real data from dashboard
+}
+
+// Draggable Chart Component
+interface DraggableChartProps {
+  chart: DynamicChart;
+  index: number;
+  editMode: boolean;
+  onMove: (dragIndex: number, hoverIndex: number) => void;
+  onExport: (chart: DynamicChart) => void;
+  onRemove: (chartId: string) => void;
+  renderChart: (chart: DynamicChart) => React.ReactNode;
+}
+
+function DraggableChart({ 
+  chart, 
+  index, 
+  editMode, 
+  onMove, 
+  onExport, 
+  onRemove, 
+  renderChart 
+}: DraggableChartProps) {
+  const [{ isDragging }, drag] = useDrag({
+    type: ItemTypes.CHART,
+    item: { id: chart.id, index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+    // Always allow dragging, no edit mode required
+    canDrag: true,
+  });
+
+  const [{ isOver }, drop] = useDrop({
+    accept: ItemTypes.CHART,
+    hover: (item: { id: string; index: number }, monitor) => {
+      const dragIndex = item.index;
+      const hoverIndex = index;
+
+      // Don't replace items with themselves
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+
+      onMove(dragIndex, hoverIndex);
+      item.index = hoverIndex;
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
+  });
+
+  return (
+    <div
+      ref={(node) => {
+        drag(node);
+        drop(node);
+      }}
+      className={`bg-white rounded-lg border border-gray-200 p-4 transition-all cursor-move relative group ${
+        isDragging ? 'opacity-50 rotate-2 scale-105 shadow-2xl z-50' : 'hover:shadow-lg'
+      } ${isOver ? 'ring-2 ring-blue-300 bg-blue-50' : ''}`}
+      style={{
+        transform: isDragging ? 'rotate(2deg) scale(1.05)' : undefined,
+      }}
+    >
+      {/* Delete Button - Always visible in top right corner */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove(chart.id);
+        }}
+        className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+        title="Remove chart"
+      >
+        ✕
+      </button>
+
+      {/* Drag Handle Indicator */}
+      <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <div className="bg-gray-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+          <span>⋮⋮</span>
+          <span className="text-xs">Drag</span>
+        </div>
+      </div>
+
+      {/* Chart Header */}
+      <div className="flex justify-between items-start mb-3 mt-2">
+        <div>
+          <h4 className="font-medium text-gray-800 text-sm">{chart.name}</h4>
+          <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+            <span className={`px-1.5 py-0.5 rounded ${
+              chart.source === 'ai' ? 'bg-purple-100 text-purple-700' :
+              chart.source === 'marketplace' ? 'bg-blue-100 text-blue-700' :
+              'bg-gray-100 text-gray-700'
+            }`}>
+              {chart.source === 'ai' ? '🤖 AI' : chart.source === 'marketplace' ? '🏪 Store' : '🎨 Custom'}
+            </span>
+            <span>{chart.type}</span>
+          </div>
+        </div>
+        <div className="flex gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onExport(chart);
+            }}
+            className="p-1 text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            title="Export chart"
+          >
+            �
+          </button>
+        </div>
+      </div>
+
+      {/* Chart Canvas */}
+      <div className="h-48 mb-2">
+        {renderChart(chart)}
+      </div>
+
+      {/* Chart Footer */}
+      <div className="text-xs text-gray-500 text-center">
+        Created {new Date(chart.created).toLocaleDateString()}
+      </div>
+    </div>
+  );
 }
 
 export default function DynamicChartBuilder({ 
   charts, 
   onChartsChange, 
-  showMarketplace = false,
-  onToggleMarketplace,
   currentData 
 }: DynamicChartBuilderProps) {
   const [selectedChart, setSelectedChart] = useState<DynamicChart | null>(null);
-  const [editMode, setEditMode] = useState(false);
+  const [isMarketplaceOpen, setIsMarketplaceOpen] = useState(false);
   const { show: showToast } = useToast();
-
-  // Build chart from marketplace template
-  const handleInstallFromMarketplace = async (template: ChartTemplate) => {
-    try {
-      const newChart: DynamicChart = {
-        id: `chart-${Date.now()}`,
-        name: template.name,
-        type: template.type,
-        config: {
-          ...template.config,
-          options: {
-            ...template.config.options,
-            responsive: true,
-            maintainAspectRatio: false
-          }
-        },
-        data: mergeWithRealData(template.dataStructure.sampleData, template.category),
-        position: getNextChartPosition(),
-        created: new Date().toISOString(),
-        source: 'marketplace',
-        category: template.category
-      };
-
-      const updatedCharts = [...charts, newChart];
-      onChartsChange(updatedCharts);
-      showToast(`Chart "${template.name}" added to dashboard`, 'success');
-      
-      // Close marketplace after install
-      if (onToggleMarketplace) {
-        onToggleMarketplace();
-      }
-    } catch (error) {
-      showToast(`Failed to install chart: ${error}`, 'error');
-    }
-  };
 
   // Build chart from AI suggestion
   const handleBuildFromAI = (suggestion: ChartSuggestion) => {
@@ -206,6 +298,60 @@ export default function DynamicChartBuilder({
     showToast('Chart removed from dashboard', 'info');
   };
 
+  // Install chart from marketplace
+  const handleInstallFromMarketplace = (template: any) => {
+    try {
+      const newChart: DynamicChart = {
+        id: `marketplace-${Date.now()}`,
+        name: template.name,
+        type: template.type,
+        config: {
+          data: template.data,
+          options: {
+            ...template.options,
+            responsive: true,
+            maintainAspectRatio: false
+          }
+        },
+        data: template.data,
+        position: { x: 0, y: 0, width: 400, height: 300 },
+        created: new Date().toISOString(),
+        source: 'marketplace',
+        category: template.category
+      };
+
+      const updatedCharts = [...charts, newChart];
+      onChartsChange(updatedCharts);
+      showToast(`${template.name} installed successfully!`, 'success');
+    } catch (error) {
+      console.error('Error installing chart:', error);
+      showToast('Failed to install chart', 'error');
+    }
+  };
+
+  // Move chart (drag and drop)
+  const handleMoveChart = useCallback((dragIndex: number, hoverIndex: number) => {
+    const draggedChart = charts[dragIndex];
+    const updatedCharts = [...charts];
+    
+    // Remove the dragged chart from its current position
+    updatedCharts.splice(dragIndex, 1);
+    
+    // Insert it at the new position
+    updatedCharts.splice(hoverIndex, 0, draggedChart);
+    
+    // Update positions to match the new order
+    const reorderedCharts = updatedCharts.map((chart, index) => ({
+      ...chart,
+      position: {
+        ...chart.position,
+        y: index // Update Y position to maintain order
+      }
+    }));
+    
+    onChartsChange(reorderedCharts);
+  }, [charts, onChartsChange]);
+
   // Render specific chart type
   const renderChart = (chart: DynamicChart) => {
     const commonProps = {
@@ -279,26 +425,6 @@ export default function DynamicChartBuilder({
     showToast('Chart configuration exported', 'success');
   };
 
-  if (showMarketplace) {
-    return (
-      <ChartMarketplace
-        onSelectChart={(template) => setSelectedChart({
-          id: 'preview',
-          name: template.name,
-          type: template.type,
-          config: template.config,
-          data: template.dataStructure.sampleData,
-          position: { x: 0, y: 0, width: 1, height: 1 },
-          created: new Date().toISOString(),
-          source: 'marketplace',
-          category: template.category
-        })}
-        onInstallChart={handleInstallFromMarketplace}
-        currentCategory={undefined}
-      />
-    );
-  }
-
   return (
     <div className="space-y-4">
       {/* Chart Builder Header */}
@@ -309,24 +435,12 @@ export default function DynamicChartBuilder({
             Dynamic Charts ({charts.length})
           </h3>
           <div className="flex gap-2">
-            {onToggleMarketplace && (
-              <button
-                onClick={onToggleMarketplace}
-                className="px-3 py-1.5 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
-              >
-                🏪 Browse Marketplace
-              </button>
-            )}
-            <button
-              onClick={() => setEditMode(!editMode)}
-              className={`px-3 py-1.5 rounded text-sm transition-colors ${
-                editMode 
-                  ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+            <a
+              href="/dashboard/chart-marketplace"
+              className="px-3 py-1.5 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors inline-block"
             >
-              {editMode ? '❌ Exit Edit' : '✏️ Edit Mode'}
-            </button>
+              🏪 Browse Marketplace
+            </a>
           </div>
         </div>
 
@@ -335,14 +449,12 @@ export default function DynamicChartBuilder({
             <div className="text-4xl mb-2">📈</div>
             <div className="text-lg mb-2">No charts yet</div>
             <div className="text-sm mb-4">Browse the marketplace or ask the AI assistant to suggest charts</div>
-            {onToggleMarketplace && (
-              <button
-                onClick={onToggleMarketplace}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-              >
-                🏪 Browse Chart Marketplace
-              </button>
-            )}
+            <button
+              onClick={() => setIsMarketplaceOpen(true)}
+              className="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            >
+              🏪 Browse Chart Marketplace
+            </button>
           </div>
         )}
       </div>
@@ -350,59 +462,27 @@ export default function DynamicChartBuilder({
       {/* Charts Grid */}
       {charts.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {charts.map((chart) => (
-            <div
+          {charts.map((chart, index) => (
+            <DraggableChart
               key={chart.id}
-              className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all"
-            >
-              {/* Chart Header */}
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h4 className="font-medium text-gray-800 text-sm">{chart.name}</h4>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                    <span className={`px-1.5 py-0.5 rounded ${
-                      chart.source === 'ai' ? 'bg-purple-100 text-purple-700' :
-                      chart.source === 'marketplace' ? 'bg-blue-100 text-blue-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                      {chart.source === 'ai' ? '🤖 AI' : chart.source === 'marketplace' ? '🏪 Store' : '🎨 Custom'}
-                    </span>
-                    <span>{chart.type}</span>
-                  </div>
-                </div>
-                {editMode && (
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => handleExportChart(chart)}
-                      className="p-1 text-gray-400 hover:text-blue-600"
-                      title="Export chart"
-                    >
-                      📤
-                    </button>
-                    <button
-                      onClick={() => handleRemoveChart(chart.id)}
-                      className="p-1 text-gray-400 hover:text-red-600"
-                      title="Remove chart"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Chart Canvas */}
-              <div className="h-48 mb-2">
-                {renderChart(chart)}
-              </div>
-
-              {/* Chart Footer */}
-              <div className="text-xs text-gray-500 text-center">
-                Created {new Date(chart.created).toLocaleDateString()}
-              </div>
-            </div>
+              chart={chart}
+              index={index}
+              editMode={true}
+              onMove={handleMoveChart}
+              onExport={handleExportChart}
+              onRemove={handleRemoveChart}
+              renderChart={renderChart}
+            />
           ))}
         </div>
       )}
+
+      {/* Chart Marketplace Dropdown */}
+      <ChartMarketplaceDropdown
+        isOpen={isMarketplaceOpen}
+        onClose={() => setIsMarketplaceOpen(false)}
+        onInstallChart={handleInstallFromMarketplace}
+      />
     </div>
   );
 }
