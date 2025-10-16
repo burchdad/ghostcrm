@@ -2,12 +2,12 @@
 import React, { createContext, useContext, useMemo, useEffect, useState } from "react";
 
 const DEFAULTS = {
-  expanded: 420,
-  collapsed: 60, // 50% of expanded
+  expanded: 280,
+  collapsed: 72,
   min: 200,
-  max: 420,
-  header: 64,
-  ribbon: 40,
+  max: 400,
+  header: 60,
+  ribbon: 45,
 };
 
 type Ctx = {

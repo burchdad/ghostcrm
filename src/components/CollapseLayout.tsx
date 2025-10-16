@@ -16,7 +16,7 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
       {/* Topbar */}
       <header
         className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm"
-        style={{ height: "50px" }}
+        style={{ height: "var(--header-h, 60px)" }}
       >
         <Topbar />
       </header>
@@ -24,17 +24,17 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
       {/* Ribbon under the header */}
       <div
         className="fixed z-40 right-0 left-0 bg-gray-100 border-b flex items-center px-3"
-        style={{ top: "50px", height: "30px" }}
+        style={{ top: "var(--header-h, 60px)", height: "var(--ribbon-h, 45px)" }}
       >
         <Ribbon />
       </div>
 
       {/* Sidebar (width via collapse state, smooth animation) */}
       <aside
-        className="fixed left-0 bottom-0 z-30 bg-none shadow-none border-r"
+        className="fixed left-0 bottom-0 z-30 bg-white shadow-lg border-r border-gray-200"
         style={{
-          top: "80px",
-          width: `${mounted ? width : 420}px`,
+          top: "calc(var(--header-h, 60px) + var(--ribbon-h, 45px))",
+          width: `${mounted ? width : 280}px`,
           transition: "width 200ms ease",
         }}
       >
@@ -47,18 +47,15 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
 
       {/* Main content (to the right of sidebar; below header+ribbon) */}
       <main 
-        className=""
+        className="bg-gray-50"
         style={{ 
-          paddingTop: "85px", // header (50px) + ribbon (30px)
-          paddingLeft: mounted ? `${width}px` : "420px",
-          height: "100vh", // full viewport height
-          overflowY: "auto",
-          backgroundColor: "white",
-          borderLeft: "1px solid #eee",
+          paddingTop: "calc(var(--header-h, 60px) + var(--ribbon-h, 45px) + 10px)",
+          paddingLeft: mounted ? `${width}px` : "280px",
+          minHeight: "100vh",
           transition: "padding-left 200ms ease"
         }}
       >
-        <div className="max-w-screen-2xl mx-auto px-4 py-4">{children}</div>
+        <div className="max-w-screen-2xl mx-auto px-6 py-6">{children}</div>
       </main>
     </div>
   );

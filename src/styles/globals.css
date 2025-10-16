@@ -13,13 +13,13 @@
 }
 
 :root {
-	--header-h: 64px;   /* h-16 */
-	--ribbon-h: 40px;   /* new: global command bar */
-	--sidebar-w: 250px; /* w-64 */
+	--header-h: 60px;   /* Slightly smaller for cleaner look */
+	--ribbon-h: 45px;   /* Increased for better button spacing */
+	--sidebar-w: 280px; /* Optimized sidebar width */
 }
 
-@media (min-width: 1024px) { :root { --sidebar-w: 300px; } }
-@media (max-width: 767px) { :root { --ribbon-h: 0px; } }
+@media (min-width: 1024px) { :root { --sidebar-w: 320px; } }
+@media (max-width: 767px) { :root { --ribbon-h: 0px; --sidebar-w: 250px; } }
 
 .sidebar-collapsed { --sidebar-w: 72px; }
 
