@@ -27,7 +27,19 @@ import {
   CreditCard,
   BarChart3
 } from "lucide-react";
-import { BaseIntegration, IntegrationTemplate, INTEGRATION_TEMPLATES, IntegrationCategory, CredentialField } from "@/types/integrations";
+import { 
+  BaseIntegration, 
+  IntegrationTemplate, 
+  IntegrationCategory, 
+  CredentialField,
+  getAllIntegrations, 
+  searchIntegrations, 
+  getIntegrationsByCategory,
+  getFeaturedIntegrations,
+  getPopularIntegrations,
+  getAllCategories,
+  TOTAL_INTEGRATION_COUNT
+} from "@/integrations";
 
 // Mock data for existing integrations
 const mockActiveIntegrations: BaseIntegration[] = [
@@ -157,7 +169,7 @@ export default function IntegrationsPage() {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  const filteredTemplates = INTEGRATION_TEMPLATES.filter(template => {
+  const filteredTemplates = getAllIntegrations().filter(template => {
     const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          template.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === 'all' || template.category === filterCategory;
@@ -508,7 +520,7 @@ export default function IntegrationsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-purple-100">Available</p>
-              <p className="text-2xl font-bold">{INTEGRATION_TEMPLATES.length}</p>
+              <p className="text-2xl font-bold">{TOTAL_INTEGRATION_COUNT}</p>
             </div>
             <Database className="w-8 h-8 text-purple-200" />
           </div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { INTEGRATION_TEMPLATES } from "@/types/integrations";
+import { getAllIntegrations, searchIntegrations, getIntegrationsByCategory, getFeaturedIntegrations, getPopularIntegrations } from "@/integrations";
 
 // Use Node.js runtime to avoid Edge Runtime issues
 export const runtime = 'nodejs';
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const featured = searchParams.get('featured');
     const popular = searchParams.get('popular');
 
-    let filteredTemplates = [...INTEGRATION_TEMPLATES];
+    let filteredTemplates = getAllIntegrations();
 
     // Apply filters
     if (category && category !== 'all') {
@@ -48,12 +48,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       templates: filteredTemplates,
       total: filteredTemplates.length,
-      categories: [...new Set(INTEGRATION_TEMPLATES.map(t => t.category))],
+      categories: [...new Set(getAllIntegrations().map(t => t.category))],
       stats: {
-        total: INTEGRATION_TEMPLATES.length,
-        featured: INTEGRATION_TEMPLATES.filter(t => t.featured).length,
-        popular: INTEGRATION_TEMPLATES.filter(t => t.popular).length,
-        byCategory: INTEGRATION_TEMPLATES.reduce((acc, template) => {
+        total: getAllIntegrations().length,
+        featured: getFeaturedIntegrations().length,
+        popular: getPopularIntegrations().length,
+        byCategory: getAllIntegrations().reduce((acc, template) => {
           acc[template.category] = (acc[template.category] || 0) + 1;
           return acc;
         }, {} as Record<string, number>)
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const template = INTEGRATION_TEMPLATES.find(t => t.id === templateId);
+    const template = getAllIntegrations().find(t => t.id === templateId);
     
     if (!template) {
       return NextResponse.json(

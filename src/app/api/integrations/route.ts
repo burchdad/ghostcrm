@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { BaseIntegration, IntegrationTemplate, INTEGRATION_TEMPLATES } from "@/types/integrations";
+import { BaseIntegration, IntegrationTemplate, getAllIntegrations, searchIntegrations, getIntegrationById } from "@/integrations";
 
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
 export const runtime = 'nodejs';
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     const { templateId, name, credentials, settings } = body;
 
     // Find the template
-    const template = INTEGRATION_TEMPLATES.find(t => t.id === templateId);
+    const template = getIntegrationById(templateId);
     if (!template) {
       return NextResponse.json(
         { error: 'Template not found' },

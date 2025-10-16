@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BaseIntegration } from "@/types/integrations";
+import { BaseIntegration } from "@/integrations";
 
 // Use Node.js runtime to avoid Edge Runtime issues
 export const runtime = 'nodejs';
