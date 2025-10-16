@@ -9,6 +9,11 @@ export const metadata = {
   description: "AI-powered CRM platform",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
