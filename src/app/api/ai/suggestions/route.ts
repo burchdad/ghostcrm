@@ -3,9 +3,18 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
+    // Check if we're in a build environment or missing required environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.warn("Missing Supabase configuration, using mock suggestions");
+      return NextResponse.json({
+        suggestions: generateMockSuggestions()
+      });
+    }
+
     // Fetch leads and recent activity to generate suggestions
     const { data: leads, error: leadsError } = await supabaseAdmin
       .from("leads")
