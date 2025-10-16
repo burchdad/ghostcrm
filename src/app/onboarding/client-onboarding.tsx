@@ -1,4 +1,7 @@
+"use client";
+
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Tooltip } from "@/components/Tooltip";
 
 const defaultOnboarding = {
@@ -21,7 +24,7 @@ export default function ClientOnboardingPage() {
   const [submitted, setSubmitted] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [step, setStep] = useState(0);
-  const router = require('next/navigation').useRouter?.() ?? null;
+  const router = useRouter();
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setForm({ ...form, [e.target.name]: e.target.value });

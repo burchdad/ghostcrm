@@ -3,6 +3,9 @@ import { createServerClient } from "@supabase/ssr";
 import { jwtVerify } from "jose";
 import { limitKey } from "@/lib/rateLimitEdge";
 
+// Force Node.js runtime for middleware to avoid Edge Runtime limitations
+export const runtime = 'nodejs';
+
 const PUBLIC_PATHS = [
   "/login",
   "/reset-password",
