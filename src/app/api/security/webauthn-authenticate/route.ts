@@ -7,8 +7,15 @@ import jwt from "jsonwebtoken";
 
 const rpID = process.env.WEBAUTHN_RP_ID || "localhost";
 const expectedOrigin = process.env.WEBAUTHN_EXPECTED_ORIGIN || "http://localhost:3000";
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) throw new Error("JWT_SECRET must be set");
+
+// Get JWT secret with runtime validation
+function getJWTSecret() {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    throw new Error("JWT_SECRET must be set");
+  }
+  return JWT_SECRET;
+}
 
 export async function POST(req: Request) {
   // CSRF origin check
@@ -118,7 +125,7 @@ export async function PUT(req: Request) {
   await queryDb("UPDATE users SET webauthn_auth_challenge=NULL WHERE email=@param0", [email]);
 
   // issue session
-  const token = jwt.sign({ sub: String(userRow.id), email, role: userRow.role }, JWT_SECRET, { expiresIn: "2h" });
+  const token = jwt.sign({ sub: String(userRow.id), email, role: userRow.role }, getJWTSecret(), { expiresIn: "2h" });
   const res = NextResponse.json({ success: true });
   res.headers.set("Set-Cookie", `ghostcrm_jwt=${token}; HttpOnly; Secure; Path=/; Max-Age=7200; SameSite=Strict`);
   return res;

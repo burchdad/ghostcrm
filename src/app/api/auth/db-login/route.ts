@@ -5,8 +5,14 @@ import { compare, hash } from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) throw new Error("JWT_SECRET must be set");
+// Get JWT secret with runtime validation
+function getJWTSecret() {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    throw new Error("JWT_SECRET must be set");
+  }
+  return JWT_SECRET;
+}
 
 // simple in-memory limiter; replace with Redis if needed
 const attempts: Record<string, { c: number; t: number }> = {};
@@ -54,7 +60,7 @@ export async function POST(req: Request) {
   const orgId = process.env.DEFAULT_ORG_ID!; // TEMP until Supabase Auth
   const token = jwt.sign(
     { sub: String(user.id), email: user.email, role: user.role, org_id: orgId },
-    JWT_SECRET,
+    getJWTSecret(),
     { expiresIn: rememberMe ? "30d" : "2h" }
   );
   const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 2 * 60 * 60; // 30 days or 2 hours in seconds
