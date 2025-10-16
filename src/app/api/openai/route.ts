@@ -1,6 +1,6 @@
 
 import { NextRequest } from "next/server";
-import { openai } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
 import { NextResponse } from "next/server";
 
 // Simulate inventory fetch (replace with Supabase or real DB/API in production)
@@ -18,30 +18,52 @@ async function getInventoryContext() {
 
 
 export async function POST(req: NextRequest) {
-  const { messages } = await req.json();
-  if (!messages || !Array.isArray(messages)) {
-    return new Response(JSON.stringify({ error: "Missing messages array" }), { status: 400 });
-  }
-  // Fetch inventory context
-  const inventory = await getInventoryContext();
-  // Build context string for prompt
-  const inventoryContext = inventory.map(v => `${v.year} ${v.make} ${v.model} - ${v.status}`).join("; ");
-  // Inject inventory context as system prompt
-  const systemPrompt = `You are an advanced automotive CRM assistant. You have access to real-time dealership inventory. Here is the current inventory: ${inventoryContext}. Use this data to answer questions about vehicle availability, status (pre-order, in-transit, on-hold, scheduled for delivery, ordered, sold, available, pending), and provide helpful, context-aware responses. If a vehicle is not found, say so. Always be professional and helpful.`;
-  const fullMessages = [
-    { role: "system", content: systemPrompt },
-    ...messages
-  ];
   try {
+    const { messages } = await req.json();
+    if (!messages || !Array.isArray(messages)) {
+      return new Response(JSON.stringify({ error: "Missing messages array" }), { status: 400 });
+    }
+
+    // Check if OpenAI is configured
+    if (!process.env.OPENAI_API_KEY) {
+      // Return a helpful mock response when OpenAI is not configured
+      return new Response(JSON.stringify({ 
+        message: "AI Assistant is currently unavailable. Please configure OpenAI API key for full functionality. However, I can help you with general CRM inquiries using our knowledge base.",
+        fallback: true 
+      }), { status: 200 });
+    }
+
+    // Get OpenAI instance (lazy loaded)
+    const openai = getOpenAI();
+
+    // Fetch inventory context
+    const inventory = await getInventoryContext();
+    // Build context string for prompt
+    const inventoryContext = inventory.map(v => `${v.year} ${v.make} ${v.model} - ${v.status}`).join("; ");
+    // Inject inventory context as system prompt
+    const systemPrompt = `You are an advanced automotive CRM assistant. You have access to real-time dealership inventory. Here is the current inventory: ${inventoryContext}. Use this data to answer questions about vehicle availability, status (pre-order, in-transit, on-hold, scheduled for delivery, ordered, sold, available, pending), and provide helpful, context-aware responses. If a vehicle is not found, say so. Always be professional and helpful.`;
+    
+    const fullMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages
+    ];
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: fullMessages,
       max_tokens: 256,
       temperature: 0.7,
     });
+    
     const aiMessage = completion.choices[0]?.message?.content || "";
     return new Response(JSON.stringify({ message: aiMessage }), { status: 200 });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+  } catch (err: any) {
+    console.error("OpenAI API error:", err);
+    // Return a graceful fallback response
+    return new Response(JSON.stringify({ 
+      message: "AI Assistant is temporarily unavailable. Please try again later or contact support for assistance.",
+      error: "service_unavailable",
+      fallback: true 
+    }), { status: 200 }); // Return 200 to avoid breaking the UI
   }
 }

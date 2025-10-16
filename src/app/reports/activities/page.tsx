@@ -34,6 +34,7 @@ import {
   AlertCircle,
   Activity
 } from "lucide-react";
+import { generateActivityData, generateTeamData, generateActivityBreakdown } from "@/lib/mockDataGenerators";
 
 interface ActivityMetrics {
   totalActivities: number;
@@ -83,79 +84,10 @@ const mockMetrics: ActivityMetrics = {
   topPerformer: "Sarah Johnson"
 };
 
-const mockActivityData: ActivityData[] = [
-  { date: "Oct 1", calls: 45, emails: 89, meetings: 23, tasks: 67, total: 224 },
-  { date: "Oct 2", calls: 52, emails: 94, meetings: 19, tasks: 71, total: 236 },
-  { date: "Oct 3", calls: 38, emails: 76, meetings: 31, tasks: 58, total: 203 },
-  { date: "Oct 4", calls: 61, emails: 102, meetings: 27, tasks: 83, total: 273 },
-  { date: "Oct 5", calls: 44, emails: 87, meetings: 25, tasks: 69, total: 225 },
-  { date: "Oct 8", calls: 55, emails: 91, meetings: 22, tasks: 74, total: 242 },
-  { date: "Oct 9", calls: 48, emails: 85, meetings: 29, tasks: 66, total: 228 },
-  { date: "Oct 10", calls: 59, emails: 98, meetings: 33, tasks: 81, total: 271 },
-  { date: "Oct 11", calls: 42, emails: 79, meetings: 21, tasks: 63, total: 205 },
-  { date: "Oct 12", calls: 51, emails: 93, meetings: 26, tasks: 77, total: 247 },
-  { date: "Oct 15", calls: 47, emails: 88, meetings: 24, tasks: 72, total: 231 }
-];
-
-const mockTeamData: TeamMember[] = [
-  {
-    id: "1",
-    name: "Sarah Johnson",
-    role: "Senior Sales Rep",
-    totalActivities: 387,
-    completed: 321,
-    pending: 51,
-    completionRate: 82.9,
-    avgResponseTime: 2.3
-  },
-  {
-    id: "2",
-    name: "Mike Chen",
-    role: "Sales Rep",
-    totalActivities: 342,
-    completed: 267,
-    pending: 58,
-    completionRate: 78.1,
-    avgResponseTime: 3.1
-  },
-  {
-    id: "3",
-    name: "Emily Davis",
-    role: "Account Manager",
-    totalActivities: 298,
-    completed: 231,
-    pending: 45,
-    completionRate: 77.5,
-    avgResponseTime: 2.8
-  },
-  {
-    id: "4",
-    name: "Alex Rodriguez",
-    role: "Sales Rep",
-    totalActivities: 267,
-    completed: 192,
-    pending: 61,
-    completionRate: 71.9,
-    avgResponseTime: 4.2
-  },
-  {
-    id: "5",
-    name: "Jessica Wang",
-    role: "Inside Sales",
-    totalActivities: 234,
-    completed: 189,
-    pending: 32,
-    completionRate: 80.8,
-    avgResponseTime: 2.1
-  }
-];
-
-const mockBreakdown: ActivityBreakdown[] = [
-  { type: "Emails", count: 1247, percentage: 43.8, color: "#3B82F6" },
-  { type: "Calls", count: 698, percentage: 24.5, color: "#10B981" },
-  { type: "Tasks", count: 567, percentage: 19.9, color: "#F59E0B" },
-  { type: "Meetings", count: 335, percentage: 11.8, color: "#EF4444" }
-];
+// Generate data dynamically to reduce bundle size
+const mockActivityData = generateActivityData(30);
+const mockTeamData = generateTeamData(5);
+const mockBreakdown = generateActivityBreakdown();
 
 export default function ActivitiesReportPage() {
   const [dateRange, setDateRange] = useState('last7days');
