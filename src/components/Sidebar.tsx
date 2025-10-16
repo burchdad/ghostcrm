@@ -31,7 +31,7 @@ export default function Sidebar() {
   const [order, setOrder] = React.useState(items.map((_, i) => i));
   const [showAssistant, setShowAssistant] = React.useState(false);
 
-  const filtered = order.map((i) => items[i]);
+  const filtered = order.map((i) => items[i]).filter((item) => item.enabled);
 
   return (
     <div
@@ -40,33 +40,8 @@ export default function Sidebar() {
       <div className="flex flex-col flex-1 overflow-hidden">
         <nav className="px-1 py-2 flex-1" role="navigation" aria-label="Main Navigation">
           <ul className="space-y-1 h-full">
-            {filtered.map(({ name, path, icon: Icon, badge, enabled, comingSoon }) => {
+            {filtered.map(({ name, path, icon: Icon, badge }) => {
               const active = pathname === path;
-              
-              if (!enabled) {
-                // Coming Soon Item
-                return (
-                  <li key={path}>
-                    <div
-                      className={["relative flex items-center rounded-md px-3 py-2 transition cursor-not-allowed opacity-60",
-                        collapsed ? "justify-center gap-0" : "justify-between gap-2",
-                        "text-gray-500 bg-gray-50 border border-dashed border-gray-300"
-                      ].join(" ")}
-                      title={`${name} - Coming ${comingSoon}`}
-                    >
-                      <span className={["flex items-center", collapsed ? "" : "gap-2"].join(" ")}>
-                        <Icon className="w-5 h-5" />
-                        {!collapsed && <span className="font-medium">{name}</span>}
-                      </span>
-                      {!collapsed && (
-                        <span className="ml-2 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">
-                          Soon
-                        </span>
-                      )}
-                    </div>
-                  </li>
-                );
-              }
               
               // Enabled Item
               return (

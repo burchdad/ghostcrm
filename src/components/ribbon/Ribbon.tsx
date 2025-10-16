@@ -367,19 +367,45 @@ function RibbonGroup({ title, items }: { title: string; items: { ctrl: any; disa
   const [open, setOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Only show group button if at least one item is visible for this role/context
   const hasVisible = items.some(({ ctrl, disabled }) => !disabled);
+  
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    // Add a small delay before closing to allow cursor movement to dropdown
+    timeoutRef.current = setTimeout(() => {
+      setOpen(false);
+      setHoveredItem(null);
+    }, 150);
+  };
+
+  const handleDropdownMouseEnter = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const handleDropdownMouseLeave = () => {
+    setOpen(false);
+    setHoveredItem(null);
+  };
   
   return (
     <div
       ref={ref}
       className="relative group"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => {
-        setOpen(false);
-        setHoveredItem(null);
-      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <button
         type="button"
@@ -393,7 +419,11 @@ function RibbonGroup({ title, items }: { title: string; items: { ctrl: any; disa
         {title}
       </button>
       {open && (
-        <div className="absolute z-50 mt-2 left-0 w-64 bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-lg shadow-xl backdrop-blur-sm">
+        <div 
+          className="absolute z-50 mt-2 left-0 w-64 bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-lg shadow-xl backdrop-blur-sm"
+          onMouseEnter={handleDropdownMouseEnter}
+          onMouseLeave={handleDropdownMouseLeave}
+        >
           <ul className="py-2">
             {hasVisible ? (
               items.filter(({ ctrl, disabled }) => !disabled).map(({ ctrl }) => (
@@ -425,7 +455,16 @@ function RibbonGroup({ title, items }: { title: string; items: { ctrl: any; disa
                   
                   {/* VS Code style submenu - appears to the right when hovering */}
                   {ctrl.submenu && hoveredItem === ctrl.id && (
-                    <div className="absolute left-full top-0 ml-1 w-60 bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-lg shadow-xl backdrop-blur-sm z-60">
+                    <div 
+                      className="absolute left-full top-0 ml-1 w-60 bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-lg shadow-xl backdrop-blur-sm z-60"
+                      onMouseEnter={() => {
+                        if (timeoutRef.current) {
+                          clearTimeout(timeoutRef.current);
+                          timeoutRef.current = null;
+                        }
+                      }}
+                      onMouseLeave={() => setHoveredItem(null)}
+                    >
                       <ul className="py-2">
                         {ctrl.submenu.map((item: any, idx: number) => (
                           <li key={idx} className="mx-2">

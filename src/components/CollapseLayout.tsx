@@ -47,11 +47,11 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
 
       {/* Main content (to the right of sidebar; below header+ribbon) */}
       <main 
-        className="bg-gray-50"
+        className="bg-gray-50 overflow-y-auto"
         style={{ 
           paddingTop: "calc(var(--header-h, 60px) + var(--ribbon-h, 45px) + 10px)",
           paddingLeft: mounted ? `${width}px` : "280px",
-          minHeight: "100vh",
+          height: "100vh",
           transition: "padding-left 200ms ease"
         }}
       >
