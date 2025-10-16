@@ -404,7 +404,7 @@ function SidebarAIAssistant({ onBuildChart }: SidebarAIAssistantProps) {
   }
 
   return (
-    <div className="bg-white border rounded-lg p-3 mb-4 shadow-sm relative" style={{ maxHeight: '420px', overflowY: 'auto' }}>
+    <div className="bg-white border rounded-lg p-3 mb-4 shadow-sm relative">
       <div className="flex items-center justify-between mb-2">
         <span className="font-semibold text-sm">How can I help?</span>
         <button
@@ -455,7 +455,7 @@ function SidebarAIAssistant({ onBuildChart }: SidebarAIAssistantProps) {
           <div className="text-gray-400">Type your request above and press Enter.</div>
         )}
       </div>
-      <div className="mt-4 max-h-48 overflow-y-auto text-xs space-y-4">
+      <div className="mt-4 text-xs space-y-4" style={{ maxHeight: 'calc(100vh - 400px)', overflowY: messages.length > 3 ? 'auto' : 'visible' }}>
         {messages.map((msg, idx) => (
           <div key={idx}>
             {msg.sender === "assistant" ? (

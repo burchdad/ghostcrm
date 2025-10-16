@@ -40,7 +40,7 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
       >
         {/* Toggle on right edge */}
         <CollapseToggle className="absolute right-0 top-2 z-20 shadow" />
-        <div className="h-full overflow-y-auto">
+        <div className="h-full overflow-hidden">
           <Sidebar />
         </div>
       </aside>

@@ -27,32 +27,19 @@ const DEFAULT_ITEMS = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { collapsed } = useCollapse();
-  const [search, setSearch] = React.useState("");
   const items = DEFAULT_ITEMS;
   const [order, setOrder] = React.useState(items.map((_, i) => i));
   const [showAssistant, setShowAssistant] = React.useState(false);
 
-    const filtered = order.map((i) => items[i]);
+  const filtered = order.map((i) => items[i]);
 
   return (
     <div
-      className={`bg-blue-500 flex flex-col shadow-md border-r border-gray-200 relative ${collapsed ? 'w-10' : 'w-45'}`}
-      style={{ height: 'calc(100vh - 80px)' }}
+      className={`bg-blue-500 flex flex-col h-full relative ${collapsed ? 'w-10' : 'w-45'}`}
     >
-      <div className="absolute top-0 right-0 z-20"></div>
-      <div className="pb-2 px-3 flex flex-col items-start">
-        {!collapsed && <span className="font-bold text-xl text-blue-700 truncate"></span>}
-      </div>
-      {!collapsed && (
-        <div className="px-3 pb-3">
-          <div className="bg-gray-100 border border-gray-200 p-3 space-y-2">
-          </div>
-        </div>
-      )}
-        {/* Role select removed, all items shown */}
-      <div className="flex flex-col flex-1">
-        <nav className="px-1" role="navigation" aria-label="Main Navigation">
-          <ul className="space-y-1">
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <nav className="px-1 py-2 flex-1" role="navigation" aria-label="Main Navigation">
+          <ul className="space-y-1 h-full">
             {filtered.map(({ name, path, icon: Icon, badge, enabled, comingSoon }) => {
               const active = pathname === path;
               
