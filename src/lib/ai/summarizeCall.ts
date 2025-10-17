@@ -1,5 +1,13 @@
 import fetch from "node-fetch";
 
+interface OpenAIResponse {
+  choices?: Array<{
+    message?: {
+      content?: string;
+    };
+  }>;
+}
+
 export async function summarizeCall(transcript: string): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return "";
@@ -9,9 +17,9 @@ export async function summarizeCall(transcript: string): Promise<string> {
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
     body: JSON.stringify({
       model: "gpt-4o-mini",
-  messages: [{ content: prompt }],
+      messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
     }),
-  }).then(r=>r.json());
+  }).then(r=>r.json()) as OpenAIResponse;
   return resp.choices?.[0]?.message?.content?.trim() || "";
 }

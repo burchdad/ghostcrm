@@ -3,6 +3,14 @@ import type { RibbonControl, ControlId } from "./types";
 // Advanced Automation controls: add real navigation and feature logic
 export const CONTROLS_AUTOMATION: RibbonControl[] = [
   {
+    id: "automationHub" as ControlId,
+    group: "Automation",
+    label: "Automation Hub",
+    onClick: () => {
+      window.location.href = "/automation";
+    }
+  },
+  {
     id: "workflowBuilder" as ControlId,
     group: "Automation",
     label: "Workflow Builder",

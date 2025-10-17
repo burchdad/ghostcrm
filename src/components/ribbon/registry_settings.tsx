@@ -7,7 +7,7 @@ export const CONTROLS_SETTINGS: RibbonControl[] = [
     group: "Settings",
     label: "User Preferences",
     onClick: () => {
-      window.location.href = "/settings/user-preferences";
+      window.location.href = "/settings/preferences";
     }
   },
   {

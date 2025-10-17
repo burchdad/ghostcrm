@@ -1,7 +1,7 @@
 import { RibbonProvider } from "@/components/ribbon/RibbonProvider";
 import GlobalErrorBoundary from "@/components/GlobalErrorBoundary";
-import { CollapseProvider } from "@/components/collapse";
 import CollapseLayout from "@/components/CollapseLayout";
+import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import "../styles/globals.css";  // <— REQUIRED
 
 export const metadata = {
@@ -19,11 +19,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <GlobalErrorBoundary>
-          <RibbonProvider>
-            <CollapseProvider>
+          <ThemeProvider>
+            <RibbonProvider>
               <CollapseLayout>{children}</CollapseLayout>
-            </CollapseProvider>
-          </RibbonProvider>
+            </RibbonProvider>
+          </ThemeProvider>
         </GlobalErrorBoundary>
       </body>
     </html>

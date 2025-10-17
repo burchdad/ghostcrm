@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import SecurityDashboard from '../../../components/SecurityDashboard';
 import { 
   Shield, 
   Key, 
@@ -23,7 +24,8 @@ import {
   Clock,
   Globe,
   User,
-  RefreshCw
+  RefreshCw,
+  Database
 } from "lucide-react";
 
 interface SecuritySetting {
@@ -258,7 +260,8 @@ export default function SecuritySettings() {
               { id: 'overview', label: 'Overview', icon: Shield },
               { id: 'authentication', label: 'Authentication', icon: Lock },
               { id: 'sessions', label: 'Login Sessions', icon: Globe },
-              { id: 'api-keys', label: 'API Keys', icon: Key }
+              { id: 'api-keys', label: 'API Keys', icon: Key },
+              { id: 'credentials', label: 'Encrypted Credentials', icon: Database }
             ].map(tab => {
               const IconComponent = tab.icon;
               return (
@@ -523,6 +526,10 @@ export default function SecuritySettings() {
             ))}
           </div>
         </div>
+      )}
+
+      {activeTab === 'credentials' && (
+        <SecurityDashboard />
       )}
     </div>
   );

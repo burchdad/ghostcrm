@@ -1,0 +1,1289 @@
+// Integration types and interfaces for comprehensive integration system
+export interface BaseIntegration {
+  id: string;
+  name: string;
+  description: string;
+  category: IntegrationCategory;
+  type: IntegrationType;
+  icon: string;
+  color: string;
+  isConnected: boolean;
+  status: 'active' | 'error' | 'pending' | 'disabled' | 'testing';
+  lastSync?: string;
+  connectedAt?: string;
+  syncCount?: number;
+  errorCount?: number;
+  settings: Record<string, any>;
+  credentials?: IntegrationCredentials;
+  webhookUrl?: string;
+  customConfig?: CustomIntegrationConfig;
+}
+
+export type IntegrationCategory = 
+  | 'Database'
+  | 'AI & ML'
+  | 'Communication'
+  | 'Email'
+  | 'Productivity'
+  | 'Finance'
+  | 'CRM'
+  | 'Marketing'
+  | 'Automation'
+  | 'Analytics'
+  | 'Storage'
+  | 'API'
+  | 'Webhook'
+  | 'Custom';
+
+export type IntegrationType = 
+  | 'oauth'
+  | 'api-key'
+  | 'database'
+  | 'webhook'
+  | 'custom-api'
+  | 'credentials'
+  | 'connection-string';
+
+export interface IntegrationCredentials {
+  type: IntegrationType;
+  fields: CredentialField[];
+  encrypted: boolean;
+}
+
+export interface CredentialField {
+  key: string;
+  label: string;
+  type: 'text' | 'password' | 'url' | 'number' | 'select' | 'textarea' | 'json';
+  required: boolean;
+  placeholder?: string;
+  description?: string;
+  options?: string[]; // For select fields
+  validation?: {
+    pattern?: string;
+    minLength?: number;
+    maxLength?: number;
+  };
+}
+
+export interface CustomIntegrationConfig {
+  endpoints: APIEndpoint[];
+  authentication: AuthConfig;
+  dataMapping: DataMapping[];
+  scheduleSync?: boolean;
+  syncFrequency?: string;
+}
+
+export interface APIEndpoint {
+  id: string;
+  name: string;
+  url: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  headers?: Record<string, string>;
+  params?: Record<string, string>;
+  dataType: 'leads' | 'deals' | 'contacts' | 'companies' | 'activities' | 'custom';
+}
+
+export interface AuthConfig {
+  type: 'none' | 'api-key' | 'bearer' | 'basic' | 'oauth2' | 'custom';
+  keyLocation?: 'header' | 'query' | 'body';
+  keyName?: string;
+}
+
+export interface DataMapping {
+  sourceField: string;
+  targetField: string;
+  transform?: 'lowercase' | 'uppercase' | 'date' | 'number' | 'custom';
+  customTransform?: string;
+}
+
+export interface IntegrationTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: IntegrationCategory;
+  type: IntegrationType;
+  icon: string;
+  color: string;
+  popular: boolean;
+  featured: boolean;
+  credentialFields: CredentialField[];
+  defaultSettings: Record<string, any>;
+  testConnection?: {
+    endpoint: string;
+    method: string;
+    expectedResponse?: any;
+  };
+}
+
+// Predefined integration templates
+export const INTEGRATION_TEMPLATES: IntegrationTemplate[] = [
+  // Database Integrations
+  {
+    id: 'mysql',
+    name: 'MySQL Database',
+    description: 'Connect to MySQL database for custom data synchronization',
+    category: 'Database',
+    type: 'database',
+    icon: '🗄️',
+    color: 'bg-orange-500',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'host', label: 'Host', type: 'text', required: true, placeholder: 'localhost' },
+      { key: 'port', label: 'Port', type: 'number', required: true, placeholder: '3306' },
+      { key: 'database', label: 'Database', type: 'text', required: true },
+      { key: 'username', label: 'Username', type: 'text', required: true },
+      { key: 'password', label: 'Password', type: 'password', required: true },
+      { key: 'ssl', label: 'Use SSL', type: 'select', required: false, options: ['true', 'false'] }
+    ],
+    defaultSettings: {
+      syncFrequency: '1hour',
+      autoSync: true
+    }
+  },
+  {
+    id: 'postgresql',
+    name: 'PostgreSQL Database',
+    description: 'Connect to PostgreSQL database for enterprise data integration',
+    category: 'Database',
+    type: 'database',
+    icon: '🐘',
+    color: 'bg-blue-600',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'host', label: 'Host', type: 'text', required: true, placeholder: 'localhost' },
+      { key: 'port', label: 'Port', type: 'number', required: true, placeholder: '5432' },
+      { key: 'database', label: 'Database', type: 'text', required: true },
+      { key: 'username', label: 'Username', type: 'text', required: true },
+      { key: 'password', label: 'Password', type: 'password', required: true },
+      { key: 'schema', label: 'Schema', type: 'text', required: false, placeholder: 'public' }
+    ],
+    defaultSettings: {
+      syncFrequency: '30min',
+      autoSync: true
+    }
+  },
+  {
+    id: 'mongodb',
+    name: 'MongoDB',
+    description: 'Connect to MongoDB for NoSQL data integration',
+    category: 'Database',
+    type: 'connection-string',
+    icon: '🍃',
+    color: 'bg-green-600',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'connectionString', label: 'Connection String', type: 'text', required: true, placeholder: 'mongodb://localhost:27017/mydb' },
+      { key: 'database', label: 'Database', type: 'text', required: true },
+      { key: 'collection', label: 'Collection', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncFrequency: '15min',
+      autoSync: true
+    }
+  },
+
+  // AI & ML Services
+  {
+    id: 'openai',
+    name: 'OpenAI API',
+    description: 'Integrate OpenAI models for AI-powered features',
+    category: 'AI & ML',
+    type: 'api-key',
+    icon: '🤖',
+    color: 'bg-black',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true, placeholder: 'sk-...' },
+      { key: 'organization', label: 'Organization ID', type: 'text', required: false },
+      { key: 'model', label: 'Default Model', type: 'select', required: false, options: ['gpt-4', 'gpt-3.5-turbo', 'gpt-4-turbo'] }
+    ],
+    defaultSettings: {
+      temperature: 0.7,
+      maxTokens: 1000
+    }
+  },
+  {
+    id: 'anthropic',
+    name: 'Anthropic Claude',
+    description: 'Integrate Claude AI for advanced language processing',
+    category: 'AI & ML',
+    type: 'api-key',
+    icon: '🧠',
+    color: 'bg-purple-600',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { key: 'model', label: 'Model', type: 'select', required: false, options: ['claude-3-opus', 'claude-3-sonnet'] }
+    ],
+    defaultSettings: {
+      maxTokens: 1000
+    }
+  },
+
+  // API Integrations
+  {
+    id: 'custom-api',
+    name: 'Custom API',
+    description: 'Connect to any REST API with custom configuration',
+    category: 'API',
+    type: 'custom-api',
+    icon: '🔌',
+    color: 'bg-gray-600',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'baseUrl', label: 'Base URL', type: 'url', required: true, placeholder: 'https://api.example.com' },
+      { key: 'authType', label: 'Authentication', type: 'select', required: true, options: ['none', 'api-key', 'bearer', 'basic'] },
+      { key: 'apiKey', label: 'API Key', type: 'password', required: false },
+      { key: 'username', label: 'Username', type: 'text', required: false },
+      { key: 'password', label: 'Password', type: 'password', required: false }
+    ],
+    defaultSettings: {
+      timeout: 30000,
+      retries: 3
+    }
+  },
+
+  // Communication
+  {
+    id: 'slack',
+    name: 'Slack',
+    description: 'Team communication and notifications',
+    category: 'Communication',
+    type: 'oauth',
+    icon: '💬',
+    color: 'bg-purple-500',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'webhookUrl', label: 'Webhook URL', type: 'url', required: true },
+      { key: 'channels', label: 'Channels', type: 'text', required: false, placeholder: '#general,#sales' }
+    ],
+    defaultSettings: {
+      notifications: ['deal-closed', 'new-lead']
+    }
+  },
+
+  // Email Services
+  {
+    id: 'sendgrid',
+    name: 'SendGrid',
+    description: 'Email delivery and marketing automation',
+    category: 'Email',
+    type: 'api-key',
+    icon: '📧',
+    color: 'bg-blue-500',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { key: 'fromEmail', label: 'From Email', type: 'text', required: true },
+      { key: 'fromName', label: 'From Name', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      trackOpens: true,
+      trackClicks: true
+    }
+  },
+
+  // Webhooks
+  {
+    id: 'webhook',
+    name: 'Generic Webhook',
+    description: 'Send data to any webhook endpoint',
+    category: 'Webhook',
+    type: 'webhook',
+    icon: '🔗',
+    color: 'bg-indigo-500',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'url', label: 'Webhook URL', type: 'url', required: true },
+      { key: 'secret', label: 'Secret', type: 'password', required: false },
+      { key: 'events', label: 'Events', type: 'text', required: false, placeholder: 'lead.created,deal.closed' }
+    ],
+    defaultSettings: {
+      retries: 3,
+      timeout: 10000
+    }
+  },
+
+  // CRM Integrations
+  {
+    id: 'hubspot',
+    name: 'HubSpot',
+    description: 'Marketing, sales, and service software that helps your business grow',
+    category: 'CRM',
+    type: 'api-key',
+    icon: '🧡',
+    color: 'bg-orange-500',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { key: 'portalId', label: 'Portal ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncContacts: true,
+      syncDeals: true,
+      syncCompanies: true
+    }
+  },
+  {
+    id: 'salesforce',
+    name: 'Salesforce',
+    description: 'World\'s leading customer relationship management (CRM) platform',
+    category: 'CRM',
+    type: 'oauth',
+    icon: '☁️',
+    color: 'bg-blue-600',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'instanceUrl', label: 'Instance URL', type: 'url', required: true, placeholder: 'https://your-instance.salesforce.com' },
+      { key: 'username', label: 'Username', type: 'text', required: true },
+      { key: 'password', label: 'Password', type: 'password', required: true },
+      { key: 'securityToken', label: 'Security Token', type: 'password', required: true }
+    ],
+    defaultSettings: {
+      syncObjects: ['Lead', 'Contact', 'Opportunity', 'Account']
+    }
+  },
+  {
+    id: 'pipedrive',
+    name: 'Pipedrive',
+    description: 'Sales CRM and pipeline management tool designed by salespeople',
+    category: 'CRM',
+    type: 'api-key',
+    icon: '🟢',
+    color: 'bg-green-600',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { key: 'domain', label: 'Company Domain', type: 'text', required: true, placeholder: 'yourcompany' }
+    ],
+    defaultSettings: {
+      syncDeals: true,
+      syncPersons: true,
+      syncOrganizations: true
+    }
+  },
+
+  // Google Services
+  {
+    id: 'google-sheets',
+    name: 'Google Sheets',
+    description: 'Create and edit spreadsheets online, for free',
+    category: 'Productivity',
+    type: 'oauth',
+    icon: '📊',
+    color: 'bg-green-500',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'spreadsheetId', label: 'Spreadsheet ID', type: 'text', required: false },
+      { key: 'sheetName', label: 'Sheet Name', type: 'text', required: false, placeholder: 'Sheet1' }
+    ],
+    defaultSettings: {
+      autoSync: true,
+      createHeaders: true
+    }
+  },
+  {
+    id: 'google-calendar',
+    name: 'Google Calendar',
+    description: 'Time-management and scheduling calendar service',
+    category: 'Productivity',
+    type: 'oauth',
+    icon: '📅',
+    color: 'bg-blue-500',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'calendarId', label: 'Calendar ID', type: 'text', required: false, placeholder: 'primary' }
+    ],
+    defaultSettings: {
+      syncEvents: true,
+      createMeetings: true
+    }
+  },
+  {
+    id: 'google-drive',
+    name: 'Google Drive',
+    description: 'File storage and synchronization service',
+    category: 'Storage',
+    type: 'oauth',
+    icon: '📁',
+    color: 'bg-yellow-500',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'folderId', label: 'Default Folder ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      autoUpload: false,
+      folderStructure: 'organized'
+    }
+  },
+  {
+    id: 'gmail',
+    name: 'Gmail',
+    description: 'Email service developed by Google',
+    category: 'Email',
+    type: 'oauth',
+    icon: '✉️',
+    color: 'bg-red-500',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'fromName', label: 'From Name', type: 'text', required: false },
+      { key: 'signature', label: 'Email Signature', type: 'textarea', required: false }
+    ],
+    defaultSettings: {
+      trackOpens: true,
+      trackClicks: true,
+      autoReply: false
+    }
+  },
+
+  // Microsoft Services
+  {
+    id: 'outlook',
+    name: 'Microsoft Outlook',
+    description: 'Personal information manager from Microsoft',
+    category: 'Email',
+    type: 'oauth',
+    icon: '📧',
+    color: 'bg-blue-600',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'tenantId', label: 'Tenant ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncCalendar: true,
+      syncContacts: true
+    }
+  },
+  {
+    id: 'microsoft-teams',
+    name: 'Microsoft Teams',
+    description: 'Unified communication and collaboration platform',
+    category: 'Communication',
+    type: 'oauth',
+    icon: '🟦',
+    color: 'bg-blue-700',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'teamId', label: 'Team ID', type: 'text', required: false },
+      { key: 'channelId', label: 'Channel ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      notifications: ['lead-created', 'deal-closed']
+    }
+  },
+  {
+    id: 'onedrive',
+    name: 'OneDrive',
+    description: 'File hosting service operated by Microsoft',
+    category: 'Storage',
+    type: 'oauth',
+    icon: '☁️',
+    color: 'bg-blue-500',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'folderId', label: 'Default Folder ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      autoSync: true
+    }
+  },
+
+  // Social Media & Advertising
+  {
+    id: 'facebook-lead-ads',
+    name: 'Facebook Lead Ads',
+    description: 'Collect leads directly from Facebook and Instagram ads',
+    category: 'Marketing',
+    type: 'oauth',
+    icon: '📘',
+    color: 'bg-blue-600',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'pageId', label: 'Facebook Page ID', type: 'text', required: true },
+      { key: 'formId', label: 'Lead Form ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      autoImportLeads: true,
+      leadQuality: 'all'
+    }
+  },
+  {
+    id: 'linkedin',
+    name: 'LinkedIn',
+    description: 'Professional networking platform',
+    category: 'Marketing',
+    type: 'oauth',
+    icon: '💼',
+    color: 'bg-blue-700',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'companyId', label: 'Company Page ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncConnections: false,
+      postUpdates: false
+    }
+  },
+  {
+    id: 'twitter',
+    name: 'Twitter/X',
+    description: 'Social networking and microblogging service',
+    category: 'Marketing',
+    type: 'oauth',
+    icon: '🐦',
+    color: 'bg-black',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'username', label: 'Twitter Username', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      autoTweet: false,
+      monitoring: true
+    }
+  },
+  {
+    id: 'instagram',
+    name: 'Instagram',
+    description: 'Photo and video sharing social networking service',
+    category: 'Marketing',
+    type: 'oauth',
+    icon: '📷',
+    color: 'bg-gradient-to-r from-purple-500 to-pink-500',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'businessAccountId', label: 'Business Account ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      autoPost: false,
+      trackMentions: true
+    }
+  },
+
+  // E-commerce Platforms
+  {
+    id: 'shopify',
+    name: 'Shopify',
+    description: 'Multinational e-commerce company',
+    category: 'E-commerce',
+    type: 'api-key',
+    icon: '🛍️',
+    color: 'bg-green-600',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'shopName', label: 'Shop Name', type: 'text', required: true, placeholder: 'yourshop.myshopify.com' },
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { key: 'apiSecret', label: 'API Secret', type: 'password', required: true }
+    ],
+    defaultSettings: {
+      syncOrders: true,
+      syncCustomers: true,
+      syncProducts: false
+    }
+  },
+  {
+    id: 'woocommerce',
+    name: 'WooCommerce',
+    description: 'E-commerce plugin for WordPress',
+    category: 'E-commerce',
+    type: 'api-key',
+    icon: '🛒',
+    color: 'bg-purple-600',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'siteUrl', label: 'Site URL', type: 'url', required: true },
+      { key: 'consumerKey', label: 'Consumer Key', type: 'password', required: true },
+      { key: 'consumerSecret', label: 'Consumer Secret', type: 'password', required: true }
+    ],
+    defaultSettings: {
+      syncOrders: true,
+      syncCustomers: true
+    }
+  },
+  {
+    id: 'square',
+    name: 'Square',
+    description: 'Financial services and mobile payment company',
+    category: 'Finance',
+    type: 'api-key',
+    icon: '⬜',
+    color: 'bg-gray-800',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'applicationId', label: 'Application ID', type: 'text', required: true },
+      { key: 'accessToken', label: 'Access Token', type: 'password', required: true },
+      { key: 'environment', label: 'Environment', type: 'select', required: true, options: ['sandbox', 'production'] }
+    ],
+    defaultSettings: {
+      syncPayments: true,
+      syncCustomers: true
+    }
+  },
+
+  // Accounting & Finance
+  {
+    id: 'quickbooks',
+    name: 'QuickBooks Online',
+    description: 'Business accounting software developed and marketed by Intuit',
+    category: 'Finance',
+    type: 'oauth',
+    icon: '📊',
+    color: 'bg-blue-600',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'companyId', label: 'Company ID', type: 'text', required: true },
+      { key: 'environment', label: 'Environment', type: 'select', required: true, options: ['sandbox', 'production'] }
+    ],
+    defaultSettings: {
+      syncCustomers: true,
+      syncInvoices: true,
+      syncPayments: true
+    }
+  },
+  {
+    id: 'xero',
+    name: 'Xero',
+    description: 'Cloud-based accounting software for small and medium-sized businesses',
+    category: 'Finance',
+    type: 'oauth',
+    icon: '💙',
+    color: 'bg-blue-500',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'tenantId', label: 'Tenant ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncContacts: true,
+      syncInvoices: true
+    }
+  },
+  {
+    id: 'stripe',
+    name: 'Stripe',
+    description: 'Online payment processing platform',
+    category: 'Finance',
+    type: 'api-key',
+    icon: '💳',
+    color: 'bg-indigo-600',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'secretKey', label: 'Secret Key', type: 'password', required: true },
+      { key: 'publishableKey', label: 'Publishable Key', type: 'text', required: false },
+      { key: 'webhookSecret', label: 'Webhook Secret', type: 'password', required: false }
+    ],
+    defaultSettings: {
+      syncPayments: true,
+      syncCustomers: true,
+      syncSubscriptions: true
+    }
+  },
+  {
+    id: 'paypal',
+    name: 'PayPal',
+    description: 'Online payments system',
+    category: 'Finance',
+    type: 'oauth',
+    icon: '🅿️',
+    color: 'bg-blue-600',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'clientId', label: 'Client ID', type: 'text', required: true },
+      { key: 'clientSecret', label: 'Client Secret', type: 'password', required: true },
+      { key: 'environment', label: 'Environment', type: 'select', required: true, options: ['sandbox', 'live'] }
+    ],
+    defaultSettings: {
+      syncPayments: true,
+      syncSubscriptions: true
+    }
+  },
+
+  // Project Management
+  {
+    id: 'asana',
+    name: 'Asana',
+    description: 'Web and mobile application designed to help teams organize and manage their work',
+    category: 'Productivity',
+    type: 'api-key',
+    icon: '🔴',
+    color: 'bg-red-500',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'accessToken', label: 'Personal Access Token', type: 'password', required: true },
+      { key: 'workspaceId', label: 'Workspace ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncTasks: true,
+      syncProjects: true
+    }
+  },
+  {
+    id: 'trello',
+    name: 'Trello',
+    description: 'Web-based Kanban-style list-making application',
+    category: 'Productivity',
+    type: 'api-key',
+    icon: '📋',
+    color: 'bg-blue-600',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { key: 'token', label: 'Token', type: 'password', required: true },
+      { key: 'boardId', label: 'Board ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncCards: true,
+      syncLists: true
+    }
+  },
+  {
+    id: 'clickup',
+    name: 'ClickUp',
+    description: 'All-in-one productivity platform',
+    category: 'Productivity',
+    type: 'api-key',
+    icon: '⚡',
+    color: 'bg-purple-600',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { key: 'teamId', label: 'Team ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncTasks: true,
+      syncGoals: false
+    }
+  },
+  {
+    id: 'monday',
+    name: 'monday.com',
+    description: 'Work management platform that simplifies how teams manage projects',
+    category: 'Productivity',
+    type: 'api-key',
+    icon: '📅',
+    color: 'bg-blue-500',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { key: 'boardId', label: 'Board ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncItems: true,
+      syncBoards: false
+    }
+  },
+  {
+    id: 'notion',
+    name: 'Notion',
+    description: 'All-in-one workspace for notes, docs, wikis, and project management',
+    category: 'Productivity',
+    type: 'api-key',
+    icon: '📝',
+    color: 'bg-gray-800',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { key: 'databaseId', label: 'Database ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncPages: true,
+      syncDatabases: false
+    }
+  },
+
+  // Customer Support
+  {
+    id: 'zendesk',
+    name: 'Zendesk',
+    description: 'Customer service software and support ticketing system',
+    category: 'Support',
+    type: 'api-key',
+    icon: '🎧',
+    color: 'bg-green-600',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'subdomain', label: 'Subdomain', type: 'text', required: true, placeholder: 'yourcompany' },
+      { key: 'email', label: 'Email', type: 'text', required: true },
+      { key: 'apiToken', label: 'API Token', type: 'password', required: true }
+    ],
+    defaultSettings: {
+      syncTickets: true,
+      syncUsers: true
+    }
+  },
+  {
+    id: 'intercom',
+    name: 'Intercom',
+    description: 'Customer messaging platform',
+    category: 'Support',
+    type: 'api-key',
+    icon: '💬',
+    color: 'bg-blue-600',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'accessToken', label: 'Access Token', type: 'password', required: true }
+    ],
+    defaultSettings: {
+      syncConversations: true,
+      syncContacts: true
+    }
+  },
+  {
+    id: 'freshdesk',
+    name: 'Freshdesk',
+    description: 'Cloud-based customer support software',
+    category: 'Support',
+    type: 'api-key',
+    icon: '🆘',
+    color: 'bg-green-500',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'domain', label: 'Domain', type: 'text', required: true, placeholder: 'yourcompany.freshdesk.com' },
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true }
+    ],
+    defaultSettings: {
+      syncTickets: true,
+      syncContacts: true
+    }
+  },
+
+  // Marketing & Email
+  {
+    id: 'mailchimp',
+    name: 'Mailchimp',
+    description: 'Marketing automation platform and email marketing service',
+    category: 'Marketing',
+    type: 'api-key',
+    icon: '🐵',
+    color: 'bg-yellow-500',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { key: 'listId', label: 'Audience ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncSubscribers: true,
+      doubleoptin: true
+    }
+  },
+  {
+    id: 'constantcontact',
+    name: 'Constant Contact',
+    description: 'Email marketing and online survey tool',
+    category: 'Marketing',
+    type: 'oauth',
+    icon: '📮',
+    color: 'bg-blue-600',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true }
+    ],
+    defaultSettings: {
+      syncContacts: true
+    }
+  },
+  {
+    id: 'klaviyo',
+    name: 'Klaviyo',
+    description: 'Email marketing and SMS platform',
+    category: 'Marketing',
+    type: 'api-key',
+    icon: '📧',
+    color: 'bg-orange-500',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'apiKey', label: 'Private API Key', type: 'password', required: true }
+    ],
+    defaultSettings: {
+      syncProfiles: true,
+      syncLists: true
+    }
+  },
+  {
+    id: 'activecampaign',
+    name: 'ActiveCampaign',
+    description: 'Email marketing, marketing automation, and CRM platform',
+    category: 'Marketing',
+    type: 'api-key',
+    icon: '🎯',
+    color: 'bg-blue-700',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'apiUrl', label: 'API URL', type: 'url', required: true },
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true }
+    ],
+    defaultSettings: {
+      syncContacts: true,
+      syncDeals: true
+    }
+  },
+
+  // Forms & Surveys
+  {
+    id: 'typeform',
+    name: 'Typeform',
+    description: 'Online form and survey builder',
+    category: 'Productivity',
+    type: 'api-key',
+    icon: '📝',
+    color: 'bg-gray-800',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'apiKey', label: 'Personal Access Token', type: 'password', required: true },
+      { key: 'formId', label: 'Form ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncResponses: true,
+      realTimeSync: true
+    }
+  },
+  {
+    id: 'jotform',
+    name: 'JotForm',
+    description: 'Online form builder',
+    category: 'Productivity',
+    type: 'api-key',
+    icon: '📋',
+    color: 'bg-orange-500',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true }
+    ],
+    defaultSettings: {
+      syncSubmissions: true
+    }
+  },
+  {
+    id: 'surveymonkey',
+    name: 'SurveyMonkey',
+    description: 'Online survey development cloud-based software',
+    category: 'Analytics',
+    type: 'oauth',
+    icon: '🐒',
+    color: 'bg-green-600',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'surveyId', label: 'Survey ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncResponses: true
+    }
+  },
+  {
+    id: 'google-forms',
+    name: 'Google Forms',
+    description: 'Survey administration software',
+    category: 'Productivity',
+    type: 'oauth',
+    icon: '📋',
+    color: 'bg-purple-600',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'formId', label: 'Form ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncResponses: true
+    }
+  },
+
+  // Scheduling & Calendar
+  {
+    id: 'calendly',
+    name: 'Calendly',
+    description: 'Scheduling infrastructure for absolutely everyone',
+    category: 'Productivity',
+    type: 'oauth',
+    icon: '📅',
+    color: 'bg-blue-600',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'organizationUri', label: 'Organization URI', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncEvents: true,
+      syncInvitees: true
+    }
+  },
+  {
+    id: 'acuity-scheduling',
+    name: 'Acuity Scheduling',
+    description: 'Online appointment scheduling software',
+    category: 'Productivity',
+    type: 'api-key',
+    icon: '⏰',
+    color: 'bg-green-600',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'userId', label: 'User ID', type: 'text', required: true },
+      { key: 'apiKey', label: 'API Key', type: 'password', required: true }
+    ],
+    defaultSettings: {
+      syncAppointments: true
+    }
+  },
+
+  // Video & Communication
+  {
+    id: 'zoom',
+    name: 'Zoom',
+    description: 'Video communications platform',
+    category: 'Communication',
+    type: 'oauth',
+    icon: '📹',
+    color: 'bg-blue-600',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'accountId', label: 'Account ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncMeetings: true,
+      recordMeetings: false
+    }
+  },
+  {
+    id: 'discord',
+    name: 'Discord',
+    description: 'VoIP and instant messaging social platform',
+    category: 'Communication',
+    type: 'webhook',
+    icon: '🎮',
+    color: 'bg-indigo-600',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'webhookUrl', label: 'Webhook URL', type: 'url', required: true },
+      { key: 'botToken', label: 'Bot Token', type: 'password', required: false }
+    ],
+    defaultSettings: {
+      notifications: ['lead-created', 'deal-closed']
+    }
+  },
+
+  // SMS & Phone
+  {
+    id: 'twilio',
+    name: 'Twilio',
+    description: 'Cloud communications platform as a service',
+    category: 'Communication',
+    type: 'api-key',
+    icon: '📱',
+    color: 'bg-red-600',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'accountSid', label: 'Account SID', type: 'text', required: true },
+      { key: 'authToken', label: 'Auth Token', type: 'password', required: true },
+      { key: 'phoneNumber', label: 'Twilio Phone Number', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      sendSms: true,
+      sendVoice: false
+    }
+  },
+  {
+    id: 'whatsapp-business',
+    name: 'WhatsApp Business',
+    description: 'Business messaging on WhatsApp',
+    category: 'Communication',
+    type: 'api-key',
+    icon: '💬',
+    color: 'bg-green-600',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'accessToken', label: 'Access Token', type: 'password', required: true },
+      { key: 'phoneNumberId', label: 'Phone Number ID', type: 'text', required: true }
+    ],
+    defaultSettings: {
+      sendMessages: true,
+      receiveMessages: true
+    }
+  },
+
+  // Analytics & Tracking
+  {
+    id: 'google-analytics',
+    name: 'Google Analytics',
+    description: 'Web analytics service offered by Google',
+    category: 'Analytics',
+    type: 'oauth',
+    icon: '📊',
+    color: 'bg-orange-500',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'propertyId', label: 'Property ID', type: 'text', required: false },
+      { key: 'viewId', label: 'View ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      syncMetrics: true,
+      realTime: false
+    }
+  },
+  {
+    id: 'mixpanel',
+    name: 'Mixpanel',
+    description: 'Business analytics service company',
+    category: 'Analytics',
+    type: 'api-key',
+    icon: '📈',
+    color: 'bg-purple-600',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'projectToken', label: 'Project Token', type: 'password', required: true },
+      { key: 'apiSecret', label: 'API Secret', type: 'password', required: true }
+    ],
+    defaultSettings: {
+      trackEvents: true,
+      trackPeople: true
+    }
+  },
+
+  // File Storage & Documents
+  {
+    id: 'dropbox',
+    name: 'Dropbox',
+    description: 'File hosting service',
+    category: 'Storage',
+    type: 'oauth',
+    icon: '📦',
+    color: 'bg-blue-600',
+    popular: true,
+    featured: false,
+    credentialFields: [
+      { key: 'folderId', label: 'Default Folder', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      autoSync: true
+    }
+  },
+  {
+    id: 'box',
+    name: 'Box',
+    description: 'Cloud content management and file sharing service',
+    category: 'Storage',
+    type: 'oauth',
+    icon: '📁',
+    color: 'bg-blue-700',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'folderId', label: 'Default Folder ID', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      autoSync: true
+    }
+  },
+
+  // More AI Services
+  {
+    id: 'chatgpt',
+    name: 'ChatGPT',
+    description: 'Conversational AI by OpenAI (GPT-3.5/GPT-4)',
+    category: 'AI & ML',
+    type: 'api-key',
+    icon: '🤖',
+    color: 'bg-green-600',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'apiKey', label: 'OpenAI API Key', type: 'password', required: true },
+      { key: 'model', label: 'Model', type: 'select', required: false, options: ['gpt-4', 'gpt-3.5-turbo', 'gpt-4-turbo'] },
+      { key: 'systemPrompt', label: 'System Prompt', type: 'textarea', required: false }
+    ],
+    defaultSettings: {
+      temperature: 0.7,
+      maxTokens: 1000
+    }
+  },
+
+  // More Databases
+  {
+    id: 'redis',
+    name: 'Redis',
+    description: 'In-memory data structure store',
+    category: 'Database',
+    type: 'connection-string',
+    icon: '🔴',
+    color: 'bg-red-600',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'host', label: 'Host', type: 'text', required: true },
+      { key: 'port', label: 'Port', type: 'number', required: true, placeholder: '6379' },
+      { key: 'password', label: 'Password', type: 'password', required: false },
+      { key: 'database', label: 'Database Number', type: 'number', required: false, placeholder: '0' }
+    ],
+    defaultSettings: {
+      timeout: 5000
+    }
+  },
+  {
+    id: 'elasticsearch',
+    name: 'Elasticsearch',
+    description: 'Distributed search and analytics engine',
+    category: 'Database',
+    type: 'api-key',
+    icon: '🔍',
+    color: 'bg-yellow-600',
+    popular: false,
+    featured: false,
+    credentialFields: [
+      { key: 'host', label: 'Host', type: 'url', required: true },
+      { key: 'username', label: 'Username', type: 'text', required: false },
+      { key: 'password', label: 'Password', type: 'password', required: false },
+      { key: 'index', label: 'Default Index', type: 'text', required: false }
+    ],
+    defaultSettings: {
+      bulkSize: 100
+    }
+  }
+];

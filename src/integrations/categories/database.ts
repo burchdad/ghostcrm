@@ -52,6 +52,27 @@ export const databaseIntegrations: IntegrationTemplate[] = [
     }
   },
   {
+    id: 'supabase',
+    name: 'Supabase',
+    description: 'Connect to Supabase for real-time database, authentication, and API integration',
+    category: 'Database',
+    type: 'api-key',
+    icon: '🚀',
+    color: 'bg-green-500',
+    popular: true,
+    featured: true,
+    credentialFields: [
+      { key: 'url', label: 'Project URL', type: 'text', required: true, placeholder: 'https://your-project.supabase.co' },
+      { key: 'anonKey', label: 'API Key (anon/public)', type: 'password', required: true, placeholder: 'Your anon public key' },
+      { key: 'serviceKey', label: 'Service Role Key', type: 'password', required: false, placeholder: 'Your service role key (optional)' }
+    ],
+    defaultSettings: {
+      syncFrequency: '5min',
+      autoSync: true,
+      realTimeEnabled: true
+    }
+  },
+  {
     id: 'mssql',
     name: 'Microsoft SQL Server',
     description: 'Connect to Microsoft SQL Server for enterprise data management',

@@ -20,7 +20,7 @@
     "@sendgrid/mail": "^8.1.5",
     "@sentry/react": "^10.11.0",
     "@supabase/ssr": "^0.7.0",
-    "@supabase/supabase-js": "^2.57.4",
+    "@supabase/supabase-js": "^2.75.1",
     "@types/pg": "^8.15.5",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.4",
@@ -32,6 +32,7 @@
     "lucide-react": "^0.292.0",
     "mssql": "^11.0.1",
     "next": "^14.2.32",
+    "node-fetch": "^3.3.2",
     "openai": "^5.20.2",
     "pg": "^8.16.3",
     "react": "^18.2.0",
@@ -45,7 +46,7 @@
     "redis": "^5.8.2",
     "telnyx": "^2.1.1",
     "twilio": "^5.9.0",
-    "zod": "^3.23.8"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

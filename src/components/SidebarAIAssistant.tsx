@@ -404,47 +404,47 @@ function SidebarAIAssistant({ onBuildChart }: SidebarAIAssistantProps) {
   }
 
   return (
-    <div className="bg-white border rounded-lg p-3 mb-4 shadow-sm relative">
+    <div className="bg-white border rounded-lg p-2 mb-4 shadow-sm relative w-full overflow-hidden">
       <div className="flex items-center justify-between mb-2">
-        <span className="font-semibold text-sm">How can I help?</span>
+        <span className="font-semibold text-sm truncate flex-1 mr-2">How can I help?</span>
         <button
-          className="text-gray-400 hover:text-blue-600 p-1 rounded-full focus:outline-none"
+          className="text-gray-400 hover:text-blue-600 p-1 rounded-full focus:outline-none flex-shrink-0"
           title="Reset chat"
           aria-label="Reset chat"
           onClick={handleReset}
         >
-          <FiRefreshCw size={16} />
+          <FiRefreshCw size={14} />
         </button>
       </div>      
-      <div className="flex gap-2 mb-2 text-xs">
+      <div className="flex gap-1 mb-2 text-xs overflow-x-auto scrollbar-hide">
         {["Recommended", "Ask", "Analyze", "Build"].map(tabName => (
           <button
             key={tabName}
-            className={`px-2 py-1 rounded ${tab === tabName ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"}`}
+            className={`px-2 py-1 rounded whitespace-nowrap flex-shrink-0 text-xs ${tab === tabName ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"}`}
             onClick={() => setTab(tabName)}
           >
             {tabName}
           </button>
         ))}
         <button
-          className="px-2 py-1 rounded bg-purple-100 text-purple-700 ml-auto"
+          className="px-2 py-1 rounded bg-purple-100 text-purple-700 ml-auto flex-shrink-0 whitespace-nowrap text-xs"
           onClick={handleAnalyze}
           disabled={loading}
           title="Analyze current page"
         >
-          Analyze Page
+          Analyze
         </button>
       </div>
-      <div className="text-xs mb-2">
+      <div className="text-xs mb-2 w-full overflow-hidden">
         {tab === "Recommended" && (
-          <ul className="space-y-2">
+          <ul className="space-y-1 w-full">
             {loading ? (
-              <li className="text-gray-400">Loading recommendations...</li>
+              <li className="text-gray-400 text-xs">Loading...</li>
             ) : (
               recommendations.map((rec, idx) => (
-                <li key={idx} className="border-b pb-2 cursor-pointer hover:bg-blue-50 transition" onClick={() => handleSendRec(rec)}>
-                  <button className="w-full text-left px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs">
-                    {rec}
+                <li key={idx} className="border-b pb-1 cursor-pointer hover:bg-blue-50 transition w-full" onClick={() => handleSendRec(rec)}>
+                  <button className="w-full text-left px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs break-words overflow-hidden">
+                    <div className="truncate">{rec}</div>
                   </button>
                 </li>
               ))
@@ -452,30 +452,31 @@ function SidebarAIAssistant({ onBuildChart }: SidebarAIAssistantProps) {
           </ul>
         )}
         {tab !== "Recommended" && (
-          <div className="text-gray-400">Type your request above and press Enter.</div>
+          <div className="text-gray-400 text-xs">Type your request above and press Enter.</div>
         )}
       </div>
-      <div className="mt-4 text-xs space-y-4" style={{ maxHeight: 'calc(100vh - 400px)', overflowY: messages.length > 3 ? 'auto' : 'visible' }}>
+      <div className="mt-2 text-xs space-y-1 max-h-24 overflow-y-auto overflow-x-hidden w-full">
         {messages.map((msg, idx) => (
-          <div key={idx}>
+          <div key={idx} className="break-words w-full overflow-hidden">
             {msg.sender === "assistant" ? (
-              <div className="text-blue-700">
-                <div className="whitespace-pre-line">{formatAIResponse(msg.text)}</div>
+              <div className="text-blue-700 w-full">
+                <div className="whitespace-pre-wrap break-words overflow-hidden text-xs">{formatAIResponse(msg.text)}</div>
                 {msg.chartSuggestions && msg.chartSuggestions.length > 0 && (
-                  <div className="mt-3 space-y-2 border-t border-blue-200 pt-2">
-                    <div className="font-semibold text-blue-800">📊 Chart Suggestions:</div>
+                  <div className="mt-1 space-y-1 border-t border-blue-200 pt-1">
+                    <div className="font-semibold text-blue-800 text-xs">📊 Charts:</div>
                     {msg.chartSuggestions.map((suggestion, suggIdx) => (
-                      <div key={suggIdx} className="bg-blue-50 border border-blue-200 rounded p-2">
+                      <div key={suggIdx} className="bg-blue-50 border border-blue-200 rounded p-1 w-full overflow-hidden">
                         <div className="flex justify-between items-start mb-1">
-                          <div className="font-medium text-blue-900">{suggestion.title}</div>
-                          <span className="text-xs bg-blue-200 text-blue-700 px-1 rounded">
+                          <div className="font-medium text-blue-900 break-words flex-1 mr-1 text-xs overflow-hidden">
+                            <div className="truncate">{suggestion.title}</div>
+                          </div>
+                          <span className="text-xs bg-blue-200 text-blue-700 px-1 rounded flex-shrink-0">
                             {Math.round(suggestion.confidence * 100)}%
                           </span>
                         </div>
-                        <div className="text-blue-700 text-xs mb-2">{suggestion.description}</div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-blue-600">
-                            {suggestion.chartType.charAt(0).toUpperCase() + suggestion.chartType.slice(1)} Chart
+                        <div className="flex justify-between items-center gap-1">
+                          <span className="text-xs text-blue-600 truncate flex-1">
+                            {suggestion.chartType.charAt(0).toUpperCase() + suggestion.chartType.slice(1)}
                           </span>
                           {(onBuildChart || window.buildChartFromAI) && (
                             <button
@@ -486,9 +487,9 @@ function SidebarAIAssistant({ onBuildChart }: SidebarAIAssistantProps) {
                                   onBuildChart(suggestion);
                                 }
                               }}
-                              className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
+                              className="px-1 py-0.5 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors flex-shrink-0"
                             >
-                              🔨 Build Chart
+                              Build
                             </button>
                           )}
                         </div>
@@ -498,20 +499,21 @@ function SidebarAIAssistant({ onBuildChart }: SidebarAIAssistantProps) {
                 )}
               </div>
             ) : (
-              <div className="text-gray-700 text-right">{msg.text}</div>
+              <div className="text-gray-700 text-right break-words text-xs overflow-hidden">
+                <div className="truncate">{msg.text}</div>
+              </div>
             )}
           </div>
         ))}
-        {loading && <div className="text-center text-gray-400">...</div>}
+        {loading && <div className="text-center text-gray-400 text-xs">...</div>}
       </div>
       <input
-        className="border rounded px-2 py-1 w-full text-xs mt-2"
-        placeholder="Ask or build anything..."
+        className="border rounded px-2 py-1 w-full text-xs mt-1 min-w-0 max-w-full"
+        placeholder="Ask anything..."
         value={input}
         onChange={e => setInput(e.target.value)}
         onKeyDown={e => e.key === "Enter" && handleSendMessage()}
         disabled={loading}
-        style={{ marginTop: 'auto' }}
       />
     </div>
   );

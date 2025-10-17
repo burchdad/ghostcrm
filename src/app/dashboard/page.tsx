@@ -24,6 +24,7 @@ import RealtimeOutreachFeed from "./components/RealtimeOutreachFeed";
 import CampaignAnalytics from "./components/CampaignAnalytics";
 import CombinedMetricsCard from "./components/CombinedMetricsCard";
 import InventoryOverview from "./components/InventoryOverview";
+import AutomationQuickAccess from "./components/AutomationQuickAccess";
 
 export default function DashboardPage() {
   useRibbonPage({
@@ -116,7 +117,7 @@ function DashboardPageContent() {
           {/* 2x2 Grid Layout: Four equal cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[400px]">
             <CampaignAnalytics />
-            <RealtimeOutreachFeed />
+            <AutomationQuickAccess />
             <CombinedMetricsCard analytics={analytics} />
             <InventoryOverview />
           </div>

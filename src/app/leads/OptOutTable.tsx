@@ -1,28 +1,16 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-export default function OptOutTable() {
-  const [leads, setLeads] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string|null>(null);
+interface OptOutTableProps {
+  optedOutLeads: any[];
+}
+
+export default function OptOutTable({ optedOutLeads }: OptOutTableProps) {
   const [filter, setFilter] = useState("");
 
-  useEffect(() => {
-    fetch("/api/leads/opt-outs")
-      .then(res => res.json())
-      .then(data => {
-        setLeads(data.leads || []);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError(String(err));
-        setLoading(false);
-      });
-  }, []);
-
-  const filtered = leads.filter(l =>
-    l.full_name.toLowerCase().includes(filter.toLowerCase()) ||
-    l.phone_number?.toLowerCase().includes(filter.toLowerCase()) ||
-    l.email_address?.toLowerCase().includes(filter.toLowerCase())
+  const filtered = optedOutLeads.filter(l =>
+    l["Full Name"]?.toLowerCase().includes(filter.toLowerCase()) ||
+    l["Phone Number"]?.toLowerCase().includes(filter.toLowerCase()) ||
+    l["Email Address"]?.toLowerCase().includes(filter.toLowerCase())
   );
 
   return (
@@ -34,23 +22,29 @@ export default function OptOutTable() {
         value={filter}
         onChange={e => setFilter(e.target.value)}
       />
-      {loading ? <div>Loading...</div> : error ? <div className="text-red-600">{error}</div> : (
+      {filtered.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          {optedOutLeads.length === 0 ? "No opted-out leads" : "No opted-out leads match your search"}
+        </div>
+      ) : (
         <table className="w-full text-sm">
           <thead>
-            <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Opted Out At</th>
+            <tr className="border-b">
+              <th className="text-left p-2">Name</th>
+              <th className="text-left p-2">Phone</th>
+              <th className="text-left p-2">Email</th>
+              <th className="text-left p-2">Company</th>
+              <th className="text-left p-2">Opted Out At</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map(lead => (
-              <tr key={lead.id}>
-                <td>{lead.full_name}</td>
-                <td>{lead.phone_number}</td>
-                <td>{lead.email_address}</td>
-                <td>{lead.updated_at}</td>
+              <tr key={lead.id} className="border-b hover:bg-gray-50">
+                <td className="p-2 font-medium text-red-600">{lead["Full Name"]}</td>
+                <td className="p-2">{lead["Phone Number"] || "-"}</td>
+                <td className="p-2">{lead["Email Address"] || "-"}</td>
+                <td className="p-2">{lead["Company"] || "-"}</td>
+                <td className="p-2">{lead["Created Date"] ? new Date(lead["Created Date"]).toLocaleDateString() : "-"}</td>
               </tr>
             ))}
           </tbody>
