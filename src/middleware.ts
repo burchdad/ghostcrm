@@ -24,12 +24,8 @@ const PUBLIC_PATHS = [
 ];
 
 // Marketing site public paths (routes in (marketing) group)  
-const MARKETING_PATHS = [
-  "/features",
-  "/pricing", 
-  "/contact",
-  "/about"
-];
+// Removed to eliminate client component manifest issues on Vercel
+const MARKETING_PATHS: string[] = [];
 
 // Shared public paths (outside route groups)
 const SHARED_PATHS = [
@@ -90,17 +86,6 @@ function isMarketingRequest(hostname: string, subdomain: string | null): boolean
 function handleMarketingRequest(req: NextRequest, pathname: string): NextResponse {
   // Handle shared paths (login, register, etc.) - these are outside route groups
   if (SHARED_PATHS.includes(pathname)) {
-    return NextResponse.next();
-  }
-  
-  // Handle marketing paths (need to be rewritten to marketing route group)
-  if (MARKETING_PATHS.includes(pathname)) {
-    // Rewrite to marketing route group if not already there
-    if (!pathname.startsWith('/(marketing)')) {
-      const url = req.nextUrl.clone();
-      url.pathname = `/(marketing)${pathname}`;
-      return NextResponse.rewrite(url);
-    }
     return NextResponse.next();
   }
   
