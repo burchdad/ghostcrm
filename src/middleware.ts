@@ -23,9 +23,110 @@ const PUBLIC_PATHS = [
   "/icon.svg"
 ];
 
+// Marketing site public paths
+const MARKETING_PATHS = [
+  "/",
+  "/features",
+  "/pricing", 
+  "/contact",
+  "/about",
+  "/login"
+];
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const hostname = req.headers.get('host') || '';
   
+  // Parse subdomain for tenant identification
+  const subdomain = getSubdomain(hostname);
+  const isMarketingSite = isMarketingRequest(hostname, subdomain);
+  const isTenantSite = !isMarketingSite && subdomain && subdomain !== 'www';
+  
+  console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: ${isMarketingSite} | Tenant: ${isTenantSite}`);
+
+  // Handle marketing site routing
+  if (isMarketingSite) {
+    return handleMarketingRequest(req, pathname);
+  }
+  
+  // Handle tenant site routing  
+  if (isTenantSite) {
+    return handleTenantRequest(req, pathname, subdomain);
+  }
+  
+  // Fallback to existing auth logic for other requests
+  return await handleDefaultRequest(req, pathname);
+}
+
+// Helper functions for tenant routing
+function getSubdomain(hostname: string): string | null {
+  // Handle localhost development
+  if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+    return null; // No subdomain in local development
+  }
+  
+  const parts = hostname.split('.');
+  if (parts.length > 2) {
+    return parts[0];
+  }
+  return null;
+}
+
+function isMarketingRequest(hostname: string, subdomain: string | null): boolean {
+  // Main domain or www subdomain = marketing site
+  return !subdomain || 
+         subdomain === 'www' || 
+         hostname === 'ghostautocrm.com' ||
+         hostname === 'www.ghostautocrm.com' ||
+         hostname.includes('localhost'); // Local development = marketing
+}
+
+function handleMarketingRequest(req: NextRequest, pathname: string): NextResponse {
+  // Route marketing paths to marketing route group
+  if (MARKETING_PATHS.includes(pathname) || pathname.startsWith('/_next') || pathname.startsWith('/api')) {
+    // Rewrite to marketing route group if not already there
+    if (!pathname.startsWith('/(marketing)') && MARKETING_PATHS.includes(pathname) && pathname !== '/login') {
+      const url = req.nextUrl.clone();
+      url.pathname = `/(marketing)${pathname}`;
+      return NextResponse.rewrite(url);
+    }
+    return NextResponse.next();
+  }
+  
+  // For other paths, redirect to homepage
+  return NextResponse.redirect(new URL('/', req.url));
+}
+
+function handleTenantRequest(req: NextRequest, pathname: string, tenantId: string): NextResponse {
+  // Add tenant context to headers
+  const response = NextResponse.next();
+  response.headers.set('x-tenant-id', tenantId);
+  response.headers.set('x-tenant-slug', tenantId);
+  
+  // Rewrite to app route group if accessing root paths
+  if (pathname === '/' || pathname === '') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/(app)/dashboard';
+    return NextResponse.rewrite(url);
+  }
+  
+  // For tenant sites, ensure we're in the app route group
+  if (!pathname.startsWith('/(app)') && 
+      !pathname.startsWith('/_next') && 
+      !pathname.startsWith('/api') &&
+      !pathname.startsWith('/login')) {
+    const url = req.nextUrl.clone();
+    url.pathname = `/(app)${pathname}`;
+    const tenantResponse = NextResponse.rewrite(url);
+    tenantResponse.headers.set('x-tenant-id', tenantId);
+    tenantResponse.headers.set('x-tenant-slug', tenantId);
+    return tenantResponse;
+  }
+  
+  return response;
+}
+
+async function handleDefaultRequest(req: NextRequest, pathname: string): Promise<NextResponse> {
   // Allow public paths and API routes during build
   if (PUBLIC_PATHS.some(path => pathname.startsWith(path))) {
     return NextResponse.next();
