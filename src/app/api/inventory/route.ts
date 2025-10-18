@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { ClientConfigManager, FieldMapper } from "@/lib/client-config";
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+
 // Dynamic database adapter interface
 interface DatabaseAdapter {
   findMany(params: any): Promise<any[]>;

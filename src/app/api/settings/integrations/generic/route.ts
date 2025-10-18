@@ -4,6 +4,9 @@ import { IntegrationTemplate } from '../../../../../integrations/types';
 import { connectionStorage } from '../../../../../lib/crypto/secure-storage';
 import { credentialManager } from '../../../../../lib/crypto/secure-credentials';
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+
 interface ConnectionRequest {
   integrationId: string;
   configuration: Record<string, any>;

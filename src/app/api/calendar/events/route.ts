@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CalendarEvent } from '@/lib/calendar/providers';
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+
 // Mock calendar events - replace with actual calendar API calls
 const mockEvents: CalendarEvent[] = [
   {
