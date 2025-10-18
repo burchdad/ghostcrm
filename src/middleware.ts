@@ -23,14 +23,20 @@ const PUBLIC_PATHS = [
   "/icon.svg"
 ];
 
-// Marketing site public paths
+// Marketing site public paths (routes in (marketing) group)
 const MARKETING_PATHS = [
   "/",
   "/features",
   "/pricing", 
   "/contact",
-  "/about",
-  "/login"
+  "/about"
+];
+
+// Shared public paths (outside route groups)
+const SHARED_PATHS = [
+  "/login",
+  "/register",
+  "/reset-password"
 ];
 
 export async function middleware(req: NextRequest) {
@@ -82,14 +88,24 @@ function isMarketingRequest(hostname: string, subdomain: string | null): boolean
 }
 
 function handleMarketingRequest(req: NextRequest, pathname: string): NextResponse {
-  // Route marketing paths to marketing route group
-  if (MARKETING_PATHS.includes(pathname) || pathname.startsWith('/_next') || pathname.startsWith('/api')) {
+  // Handle shared paths (login, register, etc.) - these are outside route groups
+  if (SHARED_PATHS.includes(pathname)) {
+    return NextResponse.next();
+  }
+  
+  // Handle marketing paths (need to be rewritten to marketing route group)
+  if (MARKETING_PATHS.includes(pathname)) {
     // Rewrite to marketing route group if not already there
-    if (!pathname.startsWith('/(marketing)') && MARKETING_PATHS.includes(pathname) && pathname !== '/login') {
+    if (!pathname.startsWith('/(marketing)')) {
       const url = req.nextUrl.clone();
       url.pathname = `/(marketing)${pathname}`;
       return NextResponse.rewrite(url);
     }
+    return NextResponse.next();
+  }
+  
+  // Handle Next.js internal paths and API routes
+  if (pathname.startsWith('/_next') || pathname.startsWith('/api')) {
     return NextResponse.next();
   }
   
