@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ALL_INTEGRATIONS, getIntegrationsByCategory, getIntegrationStats } from '@/integrations';
 import { IntegrationTemplate, IntegrationCategory } from '@/integrations/types';
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+
 interface ConnectedIntegration {
   id: string;
   name: string;

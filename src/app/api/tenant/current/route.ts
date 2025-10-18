@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getTenantBySubdomain } from "@/lib/tenant/database";
 import { getSubdomain } from "@/lib/tenant/utils";
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     // Extract tenant info from request

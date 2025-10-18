@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ALL_INTEGRATIONS } from '../../../../../../integrations';
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+
 interface OAuthState {
   integrationId: string;
   userId: string;
