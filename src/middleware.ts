@@ -23,9 +23,8 @@ const PUBLIC_PATHS = [
   "/icon.svg"
 ];
 
-// Marketing site public paths (routes in (marketing) group)
+// Marketing site public paths (routes in (marketing) group)  
 const MARKETING_PATHS = [
-  "/",
   "/features",
   "/pricing", 
   "/contact",
@@ -34,8 +33,9 @@ const MARKETING_PATHS = [
 
 // Shared public paths (outside route groups)
 const SHARED_PATHS = [
+  "/", 
   "/login",
-  "/register",
+  "/register", 
   "/reset-password"
 ];
 
