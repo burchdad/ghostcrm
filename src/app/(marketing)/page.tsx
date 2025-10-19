@@ -319,3 +319,6 @@ export default function MarketingHomePage() {
     </div>
   );
 }
+
+// Ensure this page is treated as a server component
+export const runtime = 'nodejs';
