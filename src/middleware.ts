@@ -93,8 +93,23 @@ function handleMarketingRequest(req: NextRequest, pathname: string): NextRespons
     return NextResponse.next();
   }
   
-  // Handle Next.js internal paths and API routes
-  if (pathname.startsWith('/_next') || pathname.startsWith('/api')) {
+  // Block tenant-specific API calls on marketing site (they should return 404)
+  if (pathname.startsWith('/api/tenant/') || 
+      pathname.startsWith('/api/dashboard/') ||
+      pathname.startsWith('/api/leads/') ||
+      pathname.startsWith('/api/deals/') ||
+      pathname.startsWith('/api/collab/')) {
+    return NextResponse.json(
+      { error: "API not available on marketing site" },
+      { status: 404 }
+    );
+  }
+  
+  // Handle Next.js internal paths and allowed API routes
+  if (pathname.startsWith('/_next') || 
+      pathname.startsWith('/api/health') ||
+      pathname.startsWith('/api/auth') ||
+      pathname.startsWith('/api/contact')) {
     return NextResponse.next();
   }
   
