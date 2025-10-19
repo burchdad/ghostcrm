@@ -23,11 +23,12 @@ const PUBLIC_PATHS = [
   "/icon.svg"
 ];
 
-// Marketing site public paths (routes in (marketing) group)  
+// Marketing site public paths  
 const MARKETING_PATHS = [
-  "/features",
-  "/pricing", 
-  "/about"
+  "/marketing",
+  "/marketing/features",
+  "/marketing/pricing", 
+  "/marketing/about"
 ];
 
 // Shared public paths (outside route groups)
@@ -92,22 +93,34 @@ function handleMarketingRequest(req: NextRequest, pathname: string): NextRespons
     return NextResponse.next();
   }
   
-  // Handle marketing pages - rewrite to (marketing) route group
-  if (MARKETING_PATHS.includes(pathname)) {
-    const url = req.nextUrl.clone();
-    url.pathname = `/(marketing)${pathname}`;
-    return NextResponse.rewrite(url);
-  }
-  
   // Handle Next.js internal paths and API routes
   if (pathname.startsWith('/_next') || pathname.startsWith('/api')) {
     return NextResponse.next();
   }
   
-  // Homepage - rewrite to marketing route group
+  // Homepage - rewrite to marketing folder
   if (pathname === '/' || pathname === '') {
     const url = req.nextUrl.clone();
-    url.pathname = '/(marketing)';
+    url.pathname = '/marketing';
+    return NextResponse.rewrite(url);
+  }
+  
+  // Handle individual marketing pages
+  if (pathname === '/features') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/marketing/features';
+    return NextResponse.rewrite(url);
+  }
+  
+  if (pathname === '/pricing') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/marketing/pricing';
+    return NextResponse.rewrite(url);
+  }
+  
+  if (pathname === '/about') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/marketing/about';
     return NextResponse.rewrite(url);
   }
   

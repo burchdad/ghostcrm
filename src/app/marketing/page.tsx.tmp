@@ -1,5 +1,4 @@
 import React from "react";
-import Link from "next/link";
 import { 
   ArrowRight, CheckCircle, Star, Users, TrendingUp, Zap, Shield,
   BarChart3, Calendar, Workflow, Database, Globe, Target
@@ -25,19 +24,19 @@ export default function MarketingHomePage() {
               customer experiences with our comprehensive automotive CRM platform.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-              <Link
+              <a
                 href="/login"
                 className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors inline-flex items-center"
               >
                 Start Free Trial
                 <ArrowRight className="w-5 h-5 ml-2" />
-              </Link>
-              <Link
+              </a>
+              <a
                 href="#demo"
                 className="border border-gray-300 text-gray-700 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-colors"
               >
                 Watch Demo
-              </Link>
+              </a>
             </div>
             
             {/* Social Proof */}
@@ -126,9 +125,9 @@ export default function MarketingHomePage() {
               <p className="text-gray-600 mb-4">
                 Capture, qualify, and convert leads with intelligent automation and personalized follow-ups.
               </p>
-              <Link href="/features#lead-management" className="text-blue-600 hover:text-blue-700 font-medium">
+              <a href="/features#lead-management" className="text-blue-600 hover:text-blue-700 font-medium">
                 Learn more →
-              </Link>
+              </a>
             </div>
 
             {/* Feature 2 */}
@@ -140,9 +139,9 @@ export default function MarketingHomePage() {
               <p className="text-gray-600 mb-4">
                 Automate repetitive tasks and create powerful workflows with our visual builder.
               </p>
-              <Link href="/features#automation" className="text-blue-600 hover:text-blue-700 font-medium">
+              <a href="/features#automation" className="text-blue-600 hover:text-blue-700 font-medium">
                 Learn more →
-              </Link>
+              </a>
             </div>
 
             {/* Feature 3 */}
@@ -154,20 +153,20 @@ export default function MarketingHomePage() {
               <p className="text-gray-600 mb-4">
                 Real-time insights and performance tracking to optimize your sales process.
               </p>
-              <Link href="/features#analytics" className="text-blue-600 hover:text-blue-700 font-medium">
+              <a href="/features#analytics" className="text-blue-600 hover:text-blue-700 font-medium">
                 Learn more →
-              </Link>
+              </a>
             </div>
           </div>
 
           <div className="text-center mt-12">
-            <Link
+            <a
               href="/features"
               className="bg-gray-100 text-gray-900 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-200 transition-colors inline-flex items-center"
             >
               View All Features
               <ArrowRight className="w-5 h-5 ml-2" />
-            </Link>
+            </a>
           </div>
         </div>
       </section>
@@ -297,19 +296,19 @@ export default function MarketingHomePage() {
             Join thousands of successful dealerships using Ghost Auto CRM. Start your free trial today - no credit card required.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
+            <a
               href="/login"
               className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors inline-flex items-center"
             >
               Start Free Trial
               <ArrowRight className="w-5 h-5 ml-2" />
-            </Link>
-            <Link
+            </a>
+            <a
               href="/pricing"
               className="border border-gray-300 text-gray-700 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-colors"
             >
               View Pricing
-            </Link>
+            </a>
           </div>
           <p className="text-sm text-gray-500 mt-6">
             30-day free trial • No setup fees • Cancel anytime
