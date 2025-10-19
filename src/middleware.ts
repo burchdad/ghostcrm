@@ -24,8 +24,11 @@ const PUBLIC_PATHS = [
 ];
 
 // Marketing site public paths (routes in (marketing) group)  
-// Removed to eliminate client component manifest issues on Vercel
-const MARKETING_PATHS: string[] = [];
+const MARKETING_PATHS = [
+  "/features",
+  "/pricing", 
+  "/about"
+];
 
 // Shared public paths (outside route groups)
 const SHARED_PATHS = [
@@ -89,9 +92,23 @@ function handleMarketingRequest(req: NextRequest, pathname: string): NextRespons
     return NextResponse.next();
   }
   
+  // Handle marketing pages - rewrite to (marketing) route group
+  if (MARKETING_PATHS.includes(pathname)) {
+    const url = req.nextUrl.clone();
+    url.pathname = `/(marketing)${pathname}`;
+    return NextResponse.rewrite(url);
+  }
+  
   // Handle Next.js internal paths and API routes
   if (pathname.startsWith('/_next') || pathname.startsWith('/api')) {
     return NextResponse.next();
+  }
+  
+  // Homepage - rewrite to marketing route group
+  if (pathname === '/' || pathname === '') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/(marketing)';
+    return NextResponse.rewrite(url);
   }
   
   // For other paths, redirect to homepage
