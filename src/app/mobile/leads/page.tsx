@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 interface Lead {
   id: string;
@@ -16,7 +16,7 @@ interface Lead {
 }
 
 export default function MobileLeads() {
-  const { user, organization } = useAuth();
+  const { user, tenant } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filter, setFilter] = useState<'all' | 'new' | 'hot' | 'scheduled'>('all');
   const [loading, setLoading] = useState(true);

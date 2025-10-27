@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 interface Vehicle {
   id: string;
@@ -19,7 +19,7 @@ interface Vehicle {
 }
 
 export default function MobileInventory() {
-  const { user, organization } = useAuth();
+  const { user, tenant } = useAuth();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [filter, setFilter] = useState<'all' | 'available' | 'pending' | 'sold'>('all');
   const [searchTerm, setSearchTerm] = useState('');

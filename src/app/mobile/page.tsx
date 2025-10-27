@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 interface DealershipStats {
@@ -21,7 +21,7 @@ interface RecentActivity {
 }
 
 export default function MobileDashboard() {
-  const { user, organization } = useAuth();
+  const { user, tenant } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<DealershipStats>({
     totalLeads: 0,
@@ -34,14 +34,14 @@ export default function MobileDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !organization) {
+    if (!user || !tenant) {
       router.push('/login?redirect=/mobile');
       return;
     }
 
     // Load dealership stats
     loadDashboardData();
-  }, [user, organization, router]);
+  }, [user, tenant, router]);
 
   const loadDashboardData = async () => {
     try {
@@ -145,10 +145,10 @@ export default function MobileDashboard() {
       {/* Welcome Header */}
       <div className="bg-white rounded-lg shadow p-4">
         <h2 className="text-xl font-bold text-gray-900">
-          Welcome back, {user?.name || 'Sales Rep'}!
+          Welcome back, {user?.firstName || 'Sales Rep'}!
         </h2>
         <p className="text-gray-600 text-sm mt-1">
-          {organization?.name || 'Your Dealership'} • {new Date().toLocaleDateString()}
+          {tenant?.name || 'Your Dealership'} • {new Date().toLocaleDateString()}
         </p>
       </div>
 
