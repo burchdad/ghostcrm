@@ -4,21 +4,47 @@ import { TenantManagementAgent } from '@/ai-agents/agents/TenantManagementAgent'
 // Runtime configuration
 export const runtime = 'nodejs';
 
-// Initialize agent
-const tenantAgent = new TenantManagementAgent();
-
-// Initialize the agent when the module loads
-(async () => {
+// Function to safely get or create agent instance
+function getSafeTenantAgent() {
   try {
-    await tenantAgent.initialize();
-    console.log('🏢 Tenant Management Agent initialized successfully');
+    // Only create agent if OpenAI is configured
+    if (!process.env.OPENAI_API_KEY) {
+      console.log('🔄 OpenAI API key not configured, agent features disabled');
+      return null;
+    }
+    return new TenantManagementAgent();
   } catch (error) {
-    console.error('🏢 Failed to initialize Tenant Management Agent:', error);
+    console.error('🏢 Failed to create Tenant Management Agent:', error);
+    return null;
   }
-})();
+}
 
 export async function GET(request: NextRequest) {
   try {
+    const tenantAgent = getSafeTenantAgent();
+    
+    if (!tenantAgent) {
+      return NextResponse.json({
+        success: true,
+        agent: {
+          id: 'tenant-management',
+          name: 'Tenant Management Agent',
+          description: 'Multi-tenant resource management (OpenAI API key required)',
+          version: '1.0.0',
+          status: 'unavailable',
+          lastCheck: new Date().toISOString(),
+          tenantSummary: [],
+          resourceUtilization: {},
+          scalingNeeds: [],
+          recentAlerts: [],
+          recommendations: ['Configure OpenAI API key to enable tenant management features']
+        }
+      });
+    }
+
+    // Initialize the agent if needed
+    await tenantAgent.initialize();
+    
     const status = await tenantAgent.getTenantManagementStatus();
     
     return NextResponse.json({
@@ -52,6 +78,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const tenantAgent = getSafeTenantAgent();
+    
+    if (!tenantAgent) {
+      return NextResponse.json({
+        success: false,
+        error: 'Tenant Management Agent unavailable. OpenAI API key required.',
+      }, { status: 503 });
+    }
+
     const body = await request.json();
     const { action, params } = body;
 
@@ -61,6 +96,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Initialize the agent if needed
+    await tenantAgent.initialize();
 
     const result = await tenantAgent.performAction(action, params);
 
