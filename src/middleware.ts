@@ -178,7 +178,8 @@ function isMarketingRequest(hostname: string, subdomain: string | null): boolean
          hostname === 'ghostdefenses.com' ||
          hostname === 'www.ghostdefenses.com' ||
          hostname.includes('localhost') || 
-         hostname.includes('127.0.0.1'); // Local development = marketing
+         hostname.includes('127.0.0.1') || // Local development = marketing
+         hostname.includes('vercel.app'); // Vercel deployments = marketing
 }
 
 function handleMarketingRequest(req: NextRequest, pathname: string): NextResponse {
@@ -207,11 +208,9 @@ function handleMarketingRequest(req: NextRequest, pathname: string): NextRespons
     return NextResponse.next();
   }
   
-  // Homepage - rewrite to marketing folder
+  // Homepage - allow it to be served normally
   if (pathname === '/' || pathname === '') {
-    const url = req.nextUrl.clone();
-    url.pathname = '/marketing';
-    return NextResponse.rewrite(url);
+    return NextResponse.next();
   }
   
   // Handle individual marketing pages
