@@ -17,6 +17,8 @@ const defaultConfig: CORSConfig = {
     process.env.NODE_ENV === 'production' 
       ? 'https://ghostdefenses.com'
       : 'http://localhost:3000',
+    // Allow Vercel deployment domains
+    'https://ghostcrm-liard.vercel.app',
     // Add specific tenant domains if needed
     ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [])
   ],
@@ -46,6 +48,16 @@ export function isOriginAllowed(origin: string | null, config: CORSConfig = defa
   // Check against exact matches first
   if (config.allowedOrigins.includes(origin)) {
     return true;
+  }
+
+  // Allow Vercel deployment domains
+  try {
+    const url = new URL(origin);
+    if (url.hostname.endsWith('.vercel.app')) {
+      return true;
+    }
+  } catch {
+    // Invalid URL, continue with other checks
   }
 
   // For development, allow localhost with any port
