@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
 import twilio from 'twilio';
 import sgMail from '@sendgrid/mail';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
+import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
 export async function POST(req: Request) {
   try {
@@ -16,6 +12,8 @@ export async function POST(req: Request) {
 
     console.log('Received action:', action, 'for lead:', leadId);
 
+    const supabase = createSafeSupabaseClient();
+    
     if (action === 'sms' && (!phone || !message)) {
       return NextResponse.json({ error: 'Missing phone or message' }, { status: 400 });
     }

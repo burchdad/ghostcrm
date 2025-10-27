@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
-import { createSafeSupabaseClient } from '@/lib/supabase-safe';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(req: Request) {
-  const supabase = createSafeSupabaseClient();
-  if (!supabase) {
+  // Check if we have valid Supabase credentials
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ status: 'error', error: 'Supabase not configured' }, { status: 500 });
   }
 

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
 /**
  * 🧪 Simple Database Connection Test
@@ -23,18 +24,15 @@ export async function GET() {
         testResult.environment.serviceKey === 'configured') {
       
       try {
-        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createSafeSupabaseClient();
         
-        const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!,
-          {
-            auth: {
-              autoRefreshToken: false,
-              persistSession: false
-            }
-          }
-        );
+        if (!supabase) {
+          return NextResponse.json({
+            ...testResult,
+            status: 'ERROR',
+            message: 'Supabase client not available'
+          });
+        }
 
         // Simple test query
         const { data, error } = await supabase

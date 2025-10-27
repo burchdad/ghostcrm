@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
 export async function POST(req: Request) {
   try {
+    const supabase = createSafeSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Database service unavailable' },
+        { status: 503 }
+      );
+    }
     const data = await req.json(); // Robust body parsing
     console.log('[RECEIVED PAYLOAD]', JSON.stringify(data, null, 2));
 

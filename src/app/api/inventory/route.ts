@@ -209,11 +209,11 @@ interface ClientConfig {
 function createDatabaseAdapter(config: any): DatabaseAdapter {
   switch (config.database_type) {
     case 'supabase':
-      const { createClient } = require('@supabase/supabase-js');
-      const supabase = createClient(
-        config.connection_config.url,
-        config.connection_config.key
-      );
+      const { createSafeSupabaseClient } = require('@/lib/supabase-safe');
+      const supabase = createSafeSupabaseClient();
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       return new SupabaseAdapter(supabase);
       
     case 'rest_api':

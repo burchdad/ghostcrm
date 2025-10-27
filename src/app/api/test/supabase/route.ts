@@ -1,62 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
     console.log('🔍 Testing Supabase connection...');
-    console.log('URL:', supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'MISSING');
-    console.log('Service Key:', supabaseServiceKey ? `${supabaseServiceKey.substring(0, 20)}...` : 'MISSING');
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({
-        success: false,
-        error: 'Supabase configuration missing',
-        config: {
-          url: !!supabaseUrl,
-          serviceKey: !!supabaseServiceKey
-        }
-      }, { status: 500 });
-    }
-
-    // Test basic HTTP connectivity to Supabase
-    const healthUrl = `${supabaseUrl}/rest/v1/`;
-    console.log('Testing basic connectivity to:', healthUrl);
     
-    const response = await fetch(healthUrl, {
-      method: 'GET',
-      headers: {
-        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}`
-      },
-      // Add timeout
-      signal: AbortSignal.timeout(10000)
-    });
-
-    console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.log('Error response:', errorText);
-      
+    const supabase = createSafeSupabaseClient();
+    if (!supabase) {
       return NextResponse.json({
-        success: false,
-        error: `Supabase HTTP error: ${response.status}`,
-        details: errorText,
-        url: supabaseUrl
+        status: 'error',
+        message: 'Supabase client not available - check environment variables',
+        timestamp: new Date().toISOString()
+      }, { status: 503 });
+    }
+    
+    console.log('Supabase client created successfully');
+
+    // Test basic connectivity by querying a simple endpoint
+    const { data, error } = await supabase
+      .from('organizations')
+      .select('id')
+      .limit(1);
+
+    if (error) {
+      console.log('Query error:', error);
+      return NextResponse.json({
+        status: 'error',
+        message: 'Database query failed',
+        error: error.message,
+        timestamp: new Date().toISOString()
       }, { status: 500 });
     }
 
+    console.log('✅ Supabase connection test successful');
+    
     return NextResponse.json({
       success: true,
       message: 'Supabase connection successful',
       config: {
-        url: supabaseUrl,
+        url: process.env.NEXT_PUBLIC_SUPABASE_URL || 'not configured',
         connected: true,
-        status: response.status
+        status: 200
       }
     });
 

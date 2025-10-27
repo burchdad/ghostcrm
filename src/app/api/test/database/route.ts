@@ -1,16 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
+import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
 /**
  * 🧪 Database Schema Test API
@@ -18,6 +7,16 @@ const supabase = createClient(
  */
 export async function GET() {
   try {
+    const supabase = createSafeSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json({
+        error: 'Database service unavailable',
+        timestamp: new Date().toISOString(),
+        tests: [],
+        summary: { passed: 0, failed: 1, total: 1 }
+      }, { status: 503 });
+    }
+
     const results = {
       timestamp: new Date().toISOString(),
       tests: [] as any[],
@@ -201,6 +200,15 @@ export async function GET() {
  */
 export async function POST() {
   try {
+    const supabase = createSafeSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json({
+        error: 'Database service unavailable',
+        timestamp: new Date().toISOString(),
+        isolationTest: { status: 'FAILED', steps: [] }
+      }, { status: 503 });
+    }
+
     const testResults = {
       timestamp: new Date().toISOString(),
       isolationTest: {

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
+import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
 export async function POST(req: Request) {
+  const supabase = createSafeSupabaseClient();
+  if (!supabase) {
+    return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
+  }
+
   // SendGrid Inbound Parse sends multipart/form-data
   // For MVP, assume JSON body with 'from', 'to', 'subject', 'text'
   const data = await req.json();

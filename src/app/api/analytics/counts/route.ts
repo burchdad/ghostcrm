@@ -1,15 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-let supabase: any = null;
-
-if (supabaseUrl && supabaseServiceKey) {
-  supabase = createClient(supabaseUrl, supabaseServiceKey);
-}
+import { createSafeSupabaseClient, withSupabase } from '@/lib/supabase-safe';
 
 interface AnalyticsCounts {
   leads: number;
@@ -24,38 +14,43 @@ interface AnalyticsCounts {
 }
 
 async function getCountsFromDatabase(tenantId?: string): Promise<AnalyticsCounts> {
-  if (!supabase) {
-    console.log('📊 Supabase not configured, using mock data for development');
-    return getMockCounts();
-  }
+  return await withSupabase(
+    async (supabase) => {
+      try {
+        // Get counts from database
+        const { data: leadsData } = await supabase
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId);
 
-  try {
-    // Test connection with a simple query first
-    const { error: connectionError } = await supabase
-      .from('organizations')
-      .select('id')
-      .limit(1);
+        const { data: dealsData } = await supabase
+          .from('deals')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId);
 
-    if (connectionError) {
-      console.log('📊 Supabase connection failed, falling back to mock data:', connectionError.message);
-      return getMockCounts();
-    }
+        const { data: inventoryData } = await supabase
+          .from('inventory')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId);
 
-    // TODO: Replace with actual database queries when schema is ready
-    // For now, return mock data while database schema is being set up
-    
-    // Example of how the queries would look:
-    // const { data: leads } = await supabase
-    //   .from('leads')
-    //   .select('id', { count: 'exact' })
-    //   .eq('tenant_id', tenantId);
-    
-    console.log('📊 Supabase connected successfully, returning mock data for development');
-    return getMockCounts();
-  } catch (error) {
-    console.error('📊 Error fetching analytics counts:', error);
-    return getMockCounts();
-  }
+        return {
+          leads: leadsData?.length || 0,
+          deals: dealsData?.length || 0,
+          dashboard: 1,
+          inventory: inventoryData?.length || 0,
+          calendar: 0,
+          automation: 0,
+          collaboration: 0,
+          performance: 0,
+          finance: 0,
+        };
+      } catch (error) {
+        console.error('Database query error:', error);
+        return getMockCounts();
+      }
+    },
+    getMockCounts() // Fallback to mock data
+  );
 }
 
 function getMockCounts(): AnalyticsCounts {

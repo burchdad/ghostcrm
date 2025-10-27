@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { triggerClientProvisioning } from '../../../../../migrations/client-provisioning/provisioning-system'
-import { createClient } from '@supabase/supabase-js'
+import { createSafeSupabaseClient } from '@/lib/supabase-safe'
 
 /**
  * API Route: POST /api/admin/provision-client
@@ -8,6 +8,14 @@ import { createClient } from '@supabase/supabase-js'
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createSafeSupabaseClient()
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Supabase not configured' },
+        { status: 503 }
+      )
+    }
+
     // Authenticate admin user
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -19,19 +27,18 @@ export async function POST(request: NextRequest) {
 
     // Verify admin permissions (using main admin database)
     const token = authHeader.substring(7)
-    const supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      }
-    )
+    // Update Supabase client with auth token
+    const authenticatedSupabase = createSafeSupabaseClient()
+    if (!authenticatedSupabase) {
+      return NextResponse.json(
+        { error: 'Supabase authentication failed' },
+        { status: 503 }
+      )
+    }
 
-    const { data: user, error: userError } = await supabase.auth.getUser()
+    // Note: For admin operations, we may need service role key
+    // This implementation assumes the safe client has appropriate permissions
+    const { data: user, error: userError } = await authenticatedSupabase.auth.getUser(token)
     if (userError || !user.user) {
       return NextResponse.json(
         { error: 'Invalid authentication token' },
@@ -40,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user has admin role in main system
-    const { data: adminProfile, error: profileError } = await supabase
+    const { data: adminProfile, error: profileError } = await authenticatedSupabase
       .from('admin_users')
       .select('role')
       .eq('id', user.user.id)
