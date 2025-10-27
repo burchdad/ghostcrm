@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createTrialSubscription, STRIPE_CONFIG } from '@/lib/stripe';
-import { supabase } from '@/lib/supabase';
+import { createSafeStripeClient, withStripe } from '@/lib/stripe-safe';
+import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
 // Define Subscription type based on expected properties
 type Subscription = {
@@ -13,6 +13,22 @@ type Subscription = {
 
 export async function POST(request: NextRequest) {
   try {
+    const stripe = createSafeStripeClient();
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Billing system not configured' },
+        { status: 503 }
+      );
+    }
+
+    const supabase = createSafeSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
     const { customerId, paymentMethodId, userId, priceId } = await request.json();
 
     if (!customerId || !userId) {
@@ -22,8 +38,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create trial subscription
-    const subscription: Subscription = await createTrialSubscription(customerId, priceId);
+    // Create trial subscription using safe Stripe client
+    const subscription = await withStripe(async (stripe) => {
+      return await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{ price: priceId }],
+        trial_period_days: 14, // Default trial period
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['latest_invoice.payment_intent'],
+      });
+    }, null);
+
+    if (!subscription) {
+      return NextResponse.json(
+        { error: 'Failed to create subscription' },
+        { status: 500 }
+      );
+    }
 
     // Update user billing record with subscription info
     const { error: dbError } = await supabase
@@ -47,7 +79,7 @@ export async function POST(request: NextRequest) {
     // Calculate trial end timestamp
     const trialEnd = subscription.trial_end 
       ? new Date(subscription.trial_end * 1000) 
-      : new Date(Date.now() + (STRIPE_CONFIG.TRIAL_PERIOD_DAYS * 24 * 60 * 60 * 1000));
+      : new Date(Date.now() + (14 * 24 * 60 * 60 * 1000)); // 14 day trial
 
     return NextResponse.json({
       success: true,

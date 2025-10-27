@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe, STRIPE_CONFIG } from '@/lib/stripe';
-import { supabase } from '@/lib/supabase';
+import { createSafeStripeClient, STRIPE_CONFIG } from '@/lib/stripe-safe';
+import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 import { headers } from 'next/headers';
 
 export async function POST(request: NextRequest) {
   try {
+    const stripe = createSafeStripeClient();
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Stripe not configured' },
+        { status: 503 }
+      );
+    }
+
+    const supabase = createSafeSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
     const body = await request.text();
     const headersList = headers();
     const signature = headersList.get('stripe-signature');
@@ -27,30 +43,28 @@ export async function POST(request: NextRequest) {
     // Handle different event types
     switch (event.type) {
       case 'customer.subscription.trial_will_end':
-        await handleTrialWillEnd(event.data.object);
+        await handleTrialWillEnd(event.data.object, supabase);
         break;
-
+      
       case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(event.data.object);
+        await handleSubscriptionUpdated(event.data.object, supabase);
         break;
-
+      
       case 'invoice.payment_succeeded':
-        await handlePaymentSucceeded(event.data.object);
+        await handlePaymentSucceeded(event.data.object, supabase);
         break;
-
+      
       case 'invoice.payment_failed':
-        await handlePaymentFailed(event.data.object);
+        await handlePaymentFailed(event.data.object, supabase);
         break;
-
+      
       case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event.data.object);
+        await handleSubscriptionDeleted(event.data.object, supabase);
         break;
-
+      
       case 'setup_intent.succeeded':
-        await handleSetupIntentSucceeded(event.data.object);
-        break;
-
-      default:
+        await handleSetupIntentSucceeded(event.data.object, supabase);
+        break;      default:
         console.log(`Unhandled event type: ${event.type}`);
     }
 
@@ -65,7 +79,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleTrialWillEnd(subscription: any) {
+async function handleTrialWillEnd(subscription: any, supabase: any) {
   console.log('Trial will end for subscription:', subscription.id);
   
   // Update billing status to indicate trial ending soon
@@ -85,7 +99,7 @@ async function handleTrialWillEnd(subscription: any) {
   // await sendTrialEndingEmail(subscription.customer);
 }
 
-async function handleSubscriptionUpdated(subscription: any) {
+async function handleSubscriptionUpdated(subscription: any, supabase: any) {
   console.log('Subscription updated:', subscription.id, 'Status:', subscription.status);
 
   let billingStatus = 'active';
@@ -125,7 +139,7 @@ async function handleSubscriptionUpdated(subscription: any) {
   }
 }
 
-async function handlePaymentSucceeded(invoice: any) {
+async function handlePaymentSucceeded(invoice: any, supabase: any) {
   console.log('Payment succeeded for invoice:', invoice.id);
 
   if (invoice.subscription) {
@@ -144,7 +158,7 @@ async function handlePaymentSucceeded(invoice: any) {
   }
 }
 
-async function handlePaymentFailed(invoice: any) {
+async function handlePaymentFailed(invoice: any, supabase: any) {
   console.log('Payment failed for invoice:', invoice.id);
 
   if (invoice.subscription) {
@@ -162,7 +176,7 @@ async function handlePaymentFailed(invoice: any) {
   }
 }
 
-async function handleSubscriptionDeleted(subscription: any) {
+async function handleSubscriptionDeleted(subscription: any, supabase: any) {
   console.log('Subscription deleted:', subscription.id);
 
   const { error } = await supabase
@@ -179,7 +193,7 @@ async function handleSubscriptionDeleted(subscription: any) {
   }
 }
 
-async function handleSetupIntentSucceeded(setupIntent: any) {
+async function handleSetupIntentSucceeded(setupIntent: any, supabase: any) {
   console.log('Setup intent succeeded:', setupIntent.id);
 
   const { error } = await supabase

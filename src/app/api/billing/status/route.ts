@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSubscription, isTrialExpired } from '@/lib/stripe';
-import { supabase } from '@/lib/supabase';
+import { getSubscription, isTrialExpired, getMockSubscription, isStripeConfigured } from '@/lib/stripe-safe';
+import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
 // Define the Subscription type if not imported from elsewhere
 type Subscription = {
@@ -13,6 +13,14 @@ type Subscription = {
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = createSafeSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get('userId');
 
@@ -21,6 +29,16 @@ export async function GET(request: NextRequest) {
         { error: 'User ID is required' },
         { status: 400 }
       );
+    }
+
+    // Check if Stripe is configured
+    if (!isStripeConfigured()) {
+      return NextResponse.json({
+        billing_status: 'not_configured',
+        trial: null,
+        subscription: null,
+        message: 'Billing system not configured'
+      });
     }
 
     // Get billing record from database

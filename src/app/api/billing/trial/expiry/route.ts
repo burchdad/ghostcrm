@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { stripe, updateSubscriptionPaymentMethod, getSubscription } from '@/lib/stripe';
+import { createSafeStripeClient, withStripe } from '@/lib/stripe-safe';
 
 // This endpoint should be called by a cron job or background service
 // to process expired trials and convert them to paid subscriptions
@@ -49,7 +49,9 @@ export async function POST(request: NextRequest) {
         }
 
         // Get the current subscription from Stripe
-        const subscription = await getSubscription(trial.stripe_subscription_id);
+        const subscription = await withStripe(async (stripe) => {
+          return await stripe.subscriptions.retrieve(trial.stripe_subscription_id);
+        }, null);
 
         if (!subscription) {
           console.log(`Subscription not found in Stripe for user ${trial.user_id}`);
@@ -92,7 +94,9 @@ export async function POST(request: NextRequest) {
           console.log(`User ${trial.user_id} has no payment method, canceling subscription`);
 
           try {
-            await stripe.subscriptions.cancel(trial.stripe_subscription_id);
+            await withStripe(async (stripe) => {
+              return await stripe.subscriptions.cancel(trial.stripe_subscription_id);
+            }, null);
           } catch (stripeError) {
             console.error(`Error canceling subscription for user ${trial.user_id}:`, stripeError);
           }
