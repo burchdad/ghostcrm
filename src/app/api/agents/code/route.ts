@@ -5,21 +5,48 @@ import path from 'path';
 // Runtime configuration
 export const runtime = 'nodejs';
 
-// Initialize agent
-const codeAgent = new CodeIntelligenceAgent();
-
-// Initialize the agent when the module loads
-(async () => {
+// Function to safely get or create agent instance
+function getSafeCodeAgent() {
   try {
-    await codeAgent.initialize();
-    console.log('💻 Code Intelligence Agent initialized successfully');
+    // Only create agent if OpenAI is configured
+    if (!process.env.OPENAI_API_KEY) {
+      console.log('🔄 OpenAI API key not configured, agent features disabled');
+      return null;
+    }
+    return new CodeIntelligenceAgent();
   } catch (error) {
-    console.error('💻 Failed to initialize Code Intelligence Agent:', error);
+    console.error('💻 Failed to create Code Intelligence Agent:', error);
+    return null;
   }
-})();
+}
 
 export async function GET(request: NextRequest) {
   try {
+    const codeAgent = getSafeCodeAgent();
+    
+    if (!codeAgent) {
+      return NextResponse.json({
+        success: true,
+        agent: {
+          id: 'code-intelligence',
+          name: 'Code Intelligence Agent',
+          description: 'Code analysis and improvement (OpenAI API key required)',
+          version: '1.0.0',
+          status: 'unavailable',
+          lastScan: new Date().toISOString(),
+          codebaseHealth: 'unknown',
+          issues: [],
+          features: [],
+          improvements: [],
+          metrics: {},
+          recommendations: ['Configure OpenAI API key to enable code intelligence features']
+        }
+      });
+    }
+
+    // Initialize the agent if needed
+    await codeAgent.initialize();
+    
     const status = await codeAgent.getCodeAnalysisStatus();
     
     return NextResponse.json({
@@ -54,6 +81,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const codeAgent = getSafeCodeAgent();
+    
+    if (!codeAgent) {
+      return NextResponse.json({
+        success: false,
+        error: 'Code Intelligence Agent unavailable. OpenAI API key required.',
+      }, { status: 503 });
+    }
+
     const body = await request.json();
     const { action, params } = body;
 
@@ -63,6 +99,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Initialize the agent if needed
+    await codeAgent.initialize();
 
     const result = await codeAgent.performAction(action, params);
 
@@ -84,9 +123,21 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Additional endpoints for specific code intelligence features
+//  Additional endpoints for specific code intelligence features
 export async function PUT(request: NextRequest) {
   try {
+    const codeAgent = getSafeCodeAgent();
+    
+    if (!codeAgent) {
+      return NextResponse.json({
+        success: false,
+        error: 'Code Intelligence Agent unavailable. OpenAI API key required.',
+      }, { status: 503 });
+    }
+
+    // Initialize the agent if needed
+    await codeAgent.initialize();
+
     const body = await request.json();
     const { type, data } = body;
 
