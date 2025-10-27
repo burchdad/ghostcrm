@@ -6,18 +6,78 @@ import { limitKey } from "@/lib/rateLimitEdge";
 // Force Node.js runtime for middleware to avoid Edge Runtime limitations
 export const runtime = 'nodejs';
 
+// Define public paths that don't require authentication
 const PUBLIC_PATHS = [
   "/",
   "/login",
+  "/pricing",
   "/reset-password", 
   "/register",
+  "/billing",
   "/onboarding",
   "/api/health",
   "/api/auth/db-login",
   "/api/auth/request-reset", 
   "/api/auth/register",
+  "/inventory/qr-vehicle-profile", // Public QR vehicle profiles
+  "/terms",
+  "/privacy",
+  "/demo"
+];
+
+// Define role-based route access
+const ROLE_BASED_ROUTES = {
+  "/owner": ["owner"],
+  "/admin": ["owner", "admin"],
+  "/agent-control-panel": ["owner", "admin"],
+  "/bi": ["owner", "admin", "manager"],
+  "/reports": ["owner", "admin", "manager"],
+  "/settings": ["owner", "admin", "manager"],
+  "/billing": ["owner", "admin"],
+  "/marketing": ["owner", "admin", "manager"],
+  "/automation": ["owner", "admin", "manager"],
+  "/workflow": ["owner", "admin", "manager"],
+  "/finance": ["owner", "admin", "manager"],
+  "/compliance": ["owner", "admin", "manager"],
+  "/performance": ["owner", "admin", "manager"],
+  "/charts": ["owner", "admin", "manager"]
+};
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.some(path => {
+    if (path.endsWith("*")) {
+      return pathname.startsWith(path.slice(0, -1));
+    }
+    return pathname === path || pathname.startsWith(path + "/");
+  });
+}
+
+function getUserFromToken(token: string) {
+  try {
+    // Simple JWT decode for demo - in production use proper verification
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function hasRoleAccess(pathname: string, userRole: string): boolean {
+  for (const [routePrefix, allowedRoles] of Object.entries(ROLE_BASED_ROUTES)) {
+    if (pathname.startsWith(routePrefix)) {
+      return allowedRoles.includes(userRole);
+    }
+  }
+  // If no specific role restriction, allow access
+  return true;
+}
+
+// Additional API and static paths
+const ADDITIONAL_PUBLIC_PATHS = [
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/billing/mock-checkout",
+  "/api/billing/create-checkout",
   "/_next",
   "/favicon.ico",
   "/icon.svg"
@@ -27,7 +87,7 @@ const PUBLIC_PATHS = [
 const MARKETING_PATHS = [
   "/marketing",
   "/marketing/features",
-  "/marketing/pricing", 
+  "/marketing/pricing",
   "/marketing/about"
 ];
 
@@ -43,24 +103,57 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hostname = req.headers.get('host') || '';
   
-  // Parse subdomain for tenant identification
-  const subdomain = getSubdomain(hostname);
-  const isMarketingSite = isMarketingRequest(hostname, subdomain);
-  const isTenantSite = !isMarketingSite && subdomain && subdomain !== 'www';
-  
-  console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: ${isMarketingSite} | Tenant: ${isTenantSite}`);
+  // Check if path is public (no authentication required)
+  const allPublicPaths = [...PUBLIC_PATHS, ...ADDITIONAL_PUBLIC_PATHS];
+  if (isPublicPath(pathname) || allPublicPaths.some(path => pathname.startsWith(path))) {
+    // Parse subdomain for tenant identification for existing logic
+    const subdomain = getSubdomain(hostname);
+    const isMarketingSite = isMarketingRequest(hostname, subdomain);
+    
+    // For localhost, also check if user has tenant info in JWT
+    let hasTenant = false;
+    if (hostname.includes('localhost')) {
+      const jwtToken = req.cookies.get('ghostcrm_jwt')?.value;
+      if (jwtToken) {
+        const user = getUserFromToken(jwtToken);
+        hasTenant = !!(user?.organizationId || user?.tenantId);
+      }
+    } else {
+      hasTenant = !isMarketingSite && subdomain && subdomain !== 'www';
+    }
+    
+    console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: ${isMarketingSite} | Tenant: ${hasTenant}`);
 
-  // Handle marketing site routing
-  if (isMarketingSite) {
-    return handleMarketingRequest(req, pathname);
+    // Handle marketing site routing
+    if (isMarketingSite) {
+      return handleMarketingRequest(req, pathname);
+    }
+    
+    // Handle tenant site routing  
+    if (hasTenant && subdomain) {
+      return handleTenantRequest(req, pathname, subdomain);
+    }
+    
+    return NextResponse.next();
   }
-  
-  // Handle tenant site routing  
-  if (isTenantSite) {
-    return handleTenantRequest(req, pathname, subdomain);
+
+  // For localhost development, use JWT auth check
+  if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+    // Check for JWT token
+    const jwtToken = req.cookies.get('ghostcrm_jwt')?.value;
+    
+    if (!jwtToken) {
+      // Redirect to login if no auth token
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('from', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // For development, allow access if JWT token exists
+    return NextResponse.next();
   }
-  
-  // Fallback to existing auth logic for other requests
+
+  // For production, use the original JWT-based auth
   return await handleDefaultRequest(req, pathname);
 }
 
@@ -82,9 +175,10 @@ function isMarketingRequest(hostname: string, subdomain: string | null): boolean
   // Main domain or www subdomain = marketing site
   return !subdomain || 
          subdomain === 'www' || 
-         hostname === 'ghostautocrm.com' ||
-         hostname === 'www.ghostautocrm.com' ||
-         hostname.includes('localhost'); // Local development = marketing
+         hostname === 'ghostdefenses.com' ||
+         hostname === 'www.ghostdefenses.com' ||
+         hostname.includes('localhost') || 
+         hostname.includes('127.0.0.1'); // Local development = marketing
 }
 
 function handleMarketingRequest(req: NextRequest, pathname: string): NextResponse {
@@ -139,8 +233,8 @@ function handleMarketingRequest(req: NextRequest, pathname: string): NextRespons
     return NextResponse.rewrite(url);
   }
   
-  // For other paths, redirect to homepage
-  return NextResponse.redirect(new URL('/', req.url));
+  // Allow other marketing paths to continue
+  return NextResponse.next();
 }
 
 function handleTenantRequest(req: NextRequest, pathname: string, tenantId: string): NextResponse {
@@ -173,6 +267,20 @@ function handleTenantRequest(req: NextRequest, pathname: string, tenantId: strin
 }
 
 async function handleDefaultRequest(req: NextRequest, pathname: string): Promise<NextResponse> {
+  // Apply rate limiting to sensitive endpoints
+  if (pathname.startsWith('/api/auth/')) {
+    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const rateKey = `auth:${clientIP}`;
+    
+    const rateResult = await limitKey(rateKey);
+    if (!rateResult.allowed) {
+      return NextResponse.json(
+        { error: "Too many authentication requests. Please try again later." }, 
+        { status: 429 }
+      );
+    }
+  }
+
   // Allow public paths and API routes during build
   if (PUBLIC_PATHS.some(path => pathname.startsWith(path))) {
     return NextResponse.next();

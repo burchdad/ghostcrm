@@ -207,7 +207,8 @@ export class ClientConfigManager {
       database_type: 'supabase',
       connection_config: {
         url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        key: process.env.SUPABASE_SERVICE_ROLE_KEY!
+        // SECURITY: Never expose service role key in API responses
+        key: '[PROTECTED]'
       },
       field_mappings: {},
       custom_validations: {},

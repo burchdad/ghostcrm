@@ -82,11 +82,11 @@ export async function GET(request: NextRequest) {
     const available = searchParams.get('available') === 'true';
 
     if (available) {
-      // Return available users, roles, and permissions
+      // Return empty arrays for new tenants - no mock data
       return NextResponse.json({
         success: true,
         data: {
-          users: mockUsers,
+          users: [], // No mock users for new tenants
           roles: availableRoles,
           permissions: availablePermissions
         }
@@ -100,13 +100,12 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // In a real app, fetch team and members from database
-    // For now, return mock data
+    // Return empty members for new tenants - no mock data
     return NextResponse.json({
       success: true,
       data: {
         teamId,
-        members: [], // Would be populated from database
+        members: [], // Empty for new tenants
         roles: availableRoles,
         permissions: availablePermissions
       }

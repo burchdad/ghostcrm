@@ -65,28 +65,28 @@ export async function GET(req: NextRequest) {
     );
   } catch (err) {
     console.warn("Dashboard live API error:", err);
-    // Return mock data if tables don't exist
+    // Return zero metrics for new tenants - no mock data
     return NextResponse.json(
       {
         ok: true,
         metrics: {
-          leads: 5,
-          deals: 3,
-          messagesToday: 12,
-          leadStages: { new: 2, working: 1, qualified: 1, lost: 1 },
+          leads: 0,
+          deals: 0,
+          messagesToday: 0,
+          leadStages: { new: 0, working: 0, qualified: 0, lost: 0 },
         },
-        // Mock chart data
+        // Return empty chart data for new tenants
         messages: {
           labels: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-          datasets: [{ label: "Messages", data: [2, 4, 3, 5, 6], backgroundColor: "#22c55e" }],
+          datasets: [{ label: "Messages", data: [0, 0, 0, 0, 0], backgroundColor: "#22c55e" }],
         },
         aiAlerts: {
           labels: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-          datasets: [{ label: "AI Alerts", data: [1, 2, 1, 3, 2], backgroundColor: "#3b82f6" }],
+          datasets: [{ label: "AI Alerts", data: [0, 0, 0, 0, 0], backgroundColor: "#3b82f6" }],
         },
         orgComparison: {
-          labels: ["Org 1", "Org 2"],
-          datasets: [{ label: "Score", data: [75, 25], backgroundColor: ["#a78bfa", "#f472b6"] }],
+          labels: ["Your Organization"],
+          datasets: [{ label: "Score", data: [0], backgroundColor: ["#a78bfa"] }],
         },
       },
       { headers: res.headers }

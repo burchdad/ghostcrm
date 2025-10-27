@@ -1,10 +1,15 @@
-import { RibbonProvider } from "@/components/ribbon/RibbonProvider";
-import GlobalErrorBoundary from "@/components/GlobalErrorBoundary";
-import CollapseLayout from "@/components/CollapseLayout";
+import { RibbonProvider } from "@/components/ribbon";
+import GlobalErrorBoundary from "@/components/feedback/GlobalErrorBoundary";
+import CollapseLayout from "@/components/layout/CollapseLayout";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
-import { AuthProvider } from "@/lib/auth/AuthContext";
-import { TenantProvider } from "@/lib/tenant/context";
+import { AuthProvider } from "@/context/AuthContext";
+import { RouteGuard } from "@/middleware/PermissionMiddleware";
+import { I18nProvider } from "@/components/utils/I18nProvider";
+import GlobalAIAssistant from "@/components/global/GlobalAIAssistant";
+import QuickAddButton from "@/components/navigation/QuickAddButton";
+import { Toaster } from "@/components/ui/toaster";
 import "../styles/globals.css";  // <— REQUIRED
+import "../styles/modal.css";    // <— Modal styles
 
 export const metadata = {
   title: "GhostCRM",
@@ -19,17 +24,25 @@ export const viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="bg-gray-900">
         <GlobalErrorBoundary>
-          <TenantProvider>
-            <AuthProvider>
-              <ThemeProvider>
-                <RibbonProvider>
-                  <CollapseLayout>{children}</CollapseLayout>
-                </RibbonProvider>
-              </ThemeProvider>
-            </AuthProvider>
-          </TenantProvider>
+          <I18nProvider>
+              <AuthProvider>
+                {/* <ThemeProvider> */}
+                    <RibbonProvider>
+                      <RouteGuard>
+                        <CollapseLayout>{children}</CollapseLayout>
+                        {/* Global AI Assistant - available on all pages */}
+                        <GlobalAIAssistant />
+                        {/* Quick Add Button - available on all pages */}
+                        <QuickAddButton />
+                        {/* Toast notifications */}
+                        <Toaster />
+                      </RouteGuard>
+                    </RibbonProvider>
+                {/* </ThemeProvider> */}
+              </AuthProvider>
+          </I18nProvider>
         </GlobalErrorBoundary>
       </body>
     </html>

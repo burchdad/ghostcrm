@@ -1,76 +1,138 @@
 'use client'
 
+import { useState } from 'react'
 import { Users, Workflow, BarChart3 } from 'lucide-react'
+import Link from 'next/link'
+import FeatureModal from '../FeatureModal'
 
 const features = [
   {
+    id: 'lead-management',
     Icon: Users,
     bgColor: 'bg-blue-100',
     hoverColor: 'group-hover:bg-blue-200',
     title: 'Lead Management',
     description: 'Capture, qualify, and convert leads with intelligent automation and personalized follow-ups.',
-    link: '/features#lead-management'
+    benefits: [
+      'Automated lead scoring and qualification',
+      'Multi-channel lead capture (web, social, referrals)',
+      'Intelligent lead distribution and routing',
+      'Personalized follow-up campaigns',
+      'Lead source tracking and analytics'
+    ],
+    details: [
+      'Import leads from multiple sources including your website, social media, and third-party platforms',
+      'Use AI-powered lead scoring to prioritize high-value prospects automatically',
+      'Set up automated workflows for immediate lead response and nurturing',
+      'Track lead interactions across all touchpoints for complete visibility',
+      'Create custom lead qualification criteria tailored to your business'
+    ]
   },
   {
+    id: 'workflow-automation',
     Icon: Workflow,
     bgColor: 'bg-purple-100',
     hoverColor: 'group-hover:bg-purple-200',
     title: 'Workflow Automation',
     description: 'Automate repetitive tasks and create powerful workflows with our visual builder.',
-    link: '/features#workflow-automation'
+    benefits: [
+      'Visual drag-and-drop workflow designer',
+      'Pre-built templates for common processes',
+      'Custom triggers and conditional logic',
+      'Integration with external tools and services',
+      'Real-time workflow monitoring and optimization'
+    ],
+    details: [
+      'Design complex workflows using our intuitive visual builder interface',
+      'Set up automated tasks like sending emails, updating records, and scheduling follow-ups',
+      'Create conditional branches based on customer behavior and data',
+      'Connect with popular tools like email platforms, calendars, and marketing automation',
+      'Monitor workflow performance with detailed analytics and optimization suggestions'
+    ]
   },
   {
+    id: 'sales-analytics',
     Icon: BarChart3,
     bgColor: 'bg-green-100',
     hoverColor: 'group-hover:bg-green-200',
     title: 'Sales Analytics',
     description: 'Real-time insights and performance tracking to optimize your sales process.',
-    link: '/features#sales-analytics'
+    benefits: [
+      'Real-time sales performance dashboards',
+      'Customizable reports and KPI tracking',
+      'Sales forecasting and trend analysis',
+      'Team performance comparisons',
+      'Revenue attribution and source analysis'
+    ],
+    details: [
+      'Access comprehensive dashboards showing your sales metrics in real-time',
+      'Generate custom reports for any time period or specific criteria',
+      'Use predictive analytics to forecast sales and identify trends',
+      'Compare individual and team performance with detailed breakdowns',
+      'Track revenue sources and attribution to optimize your marketing spend'
+    ]
   }
 ];
 
 export default function FeaturesGrid() {
+  const [selectedFeature, setSelectedFeature] = useState<typeof features[0] | null>(null)
+
   return (
-    <section className="py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Everything You Need to Dominate Auto Sales
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            From lead capture to deal closing, our platform handles every aspect of your sales process.
-          </p>
-        </div>
+    <>
+      <section className="features-section">
+        <div className="features-container">
+          <div className="features-header">
+            <h2 className="features-title">
+              Everything You Need to Dominate Auto Sales
+            </h2>
+            <p className="features-subtitle">
+              From lead capture to deal closing, our platform handles every aspect of your sales process.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => {
-            const Icon = feature.Icon
-            return (
-              <div key={index} className="group p-8 rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all">
-                <div className={`w-12 h-12 ${feature.bgColor} rounded-xl flex items-center justify-center mb-6 ${feature.hoverColor} transition-colors`}>
-                  {Icon ? <Icon className="w-6 h-6 text-blue-600" /> : null}
+          <div className="features-grid">
+            {features.map((feature, index) => {
+              const Icon = feature.Icon
+              return (
+                <div key={index} className="feature-card">
+                  <div className="feature-icon-wrapper">
+                    <div className={`feature-icon ${feature.bgColor}`}>
+                      {Icon ? <Icon className="w-6 h-6 text-blue-600" /> : null}
+                    </div>
+                  </div>
+                  <h3 className="feature-title">{feature.title}</h3>
+                  <p className="feature-description">
+                    {feature.description}
+                  </p>
+                  <button 
+                    onClick={() => setSelectedFeature(feature)}
+                    className="feature-link"
+                  >
+                    Learn more →
+                  </button>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">{feature.title}</h3>
-                <p className="text-gray-600 mb-4">
-                  {feature.description}
-                </p>
-                <div className="text-blue-600 hover:text-blue-700 font-medium cursor-pointer">
-                  Learn more →
-                </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
 
-        <div className="text-center mt-12">
-          <div className="bg-gray-100 text-gray-900 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-200 transition-colors inline-flex items-center cursor-pointer">
-            View All Features
-            <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+          <div className="features-cta">
+            <Link href="/marketing/features" className="btn features-btn">
+              View All Features
+              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {selectedFeature && (
+        <FeatureModal
+          isOpen={!!selectedFeature}
+          feature={selectedFeature}
+          onClose={() => setSelectedFeature(null)}
+        />
+      )}
+    </>
   );
 }

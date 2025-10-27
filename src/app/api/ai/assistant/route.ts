@@ -25,6 +25,12 @@ export async function POST(req: NextRequest) {
       - Performance analytics and reporting
       - Integration setup and troubleshooting
       - General CRM best practices for automotive dealerships
+      - Chart and data visualization recommendations
+
+      SPECIAL FEATURES:
+      - When users ask about charts, graphs, or data visualization, explain that you can help them create charts by describing what they want to visualize. The system has AI chart building capabilities that can create interactive charts from their data.
+      - For analysis requests, provide insights and suggest visiting the dashboard or reports section for detailed analytics.
+      - If they ask about current page analysis, provide contextual recommendations based on the page they're viewing.
 
       Be helpful, professional, and specific to automotive dealership needs. If users ask about specific data or records, explain that they can use the CRM's data analysis features or provide guidance on where to find that information in the system.`
       
@@ -35,6 +41,7 @@ export async function POST(req: NextRequest) {
       - How the platform can help improve dealership operations
       - General automotive industry insights
       - Encouraging them to sign up to access full functionality
+      - Highlighting advanced features like AI-powered analytics and chart building
 
       Be welcoming, informative, and focus on the value proposition without accessing any specific user data.`;
 

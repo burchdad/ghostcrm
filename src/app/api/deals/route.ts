@@ -122,104 +122,19 @@ export async function GET(req: NextRequest) {
     const { data, error } = await q;
     if (error) {
       console.warn("Deals table error:", error.message);
-      // Return comprehensive mock data for auto dealership
-      const mockDeals = [
-        {
-          id: 1,
-          title: "2024 Toyota Camry LE - John Miller",
-          amount: 32500,
-          stage: "negotiation",
-          probability: 60,
-          pipeline: "new_vehicle",
-          vehicle_details: {
-            year: 2024,
-            make: "Toyota",
-            model: "Camry",
-            trim: "LE",
-            vin: "4T1C11AK5MU123456",
-            condition: "new",
-            selling_price: 32500,
-            msrp: 34200,
-            color_exterior: "Midnight Black",
-            mileage: 12
-          },
-          financing: {
-            type: "finance",
-            loan_amount: 29500,
-            down_payment: 3000,
-            apr: 4.9,
-            term_months: 60,
-            monthly_payment: 556
-          },
-          trade_in: {
-            has_trade: true,
-            trade_make: "Honda",
-            trade_model: "Accord",
-            trade_year: 2019,
-            trade_value_estimate: 18500
-          },
-          negotiation: {
-            test_drive_completed: true,
-            credit_application_submitted: true,
-            initial_offer: 30000,
-            final_price: 32500
-          },
-          close_date: "2024-01-25",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: 2,
-          title: "2023 Honda CR-V EX (CPO) - Sarah Johnson",
-          amount: 28900,
-          stage: "financing",
-          probability: 80,
-          pipeline: "certified_pre_owned",
-          vehicle_details: {
-            year: 2023,
-            make: "Honda",
-            model: "CR-V",
-            trim: "EX",
-            condition: "certified_pre_owned",
-            selling_price: 28900,
-            color_exterior: "Crystal Blue Pearl",
-            mileage: 18500
-          },
-          financing: {
-            type: "lease",
-            lease_term_months: 36,
-            lease_payment: 389,
-            lease_miles_per_year: 12000,
-            down_payment: 2500
-          },
-          trade_in: {
-            has_trade: false
-          },
-          negotiation: {
-            test_drive_completed: true,
-            credit_application_submitted: true,
-            documents_signed: false
-          },
-          close_date: "2024-01-22",
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ];
-      
+      // Return empty data for new tenants - no mock data
       return ok({ 
-        records: mockDeals.filter(deal => {
-          if (stage && deal.stage !== stage) return false;
-          if (minAmount && deal.amount < minAmount) return false;
-          if (vehicleType && deal.vehicle_details?.condition !== vehicleType) return false;
-          if (make && deal.vehicle_details?.make !== make) return false;
-          if (financingType && deal.financing?.type !== financingType) return false;
-          return true;
-        }),
-        total: mockDeals.length,
+        records: [],
+        total: 0,
         limit,
         offset,
         stages: DEALERSHIP_DEAL_STAGES,
-        stage_probabilities: STAGE_PROBABILITIES
+        stage_probabilities: STAGE_PROBABILITIES,
+        summary: {
+          total_value: 0,
+          average_deal_size: 0,
+          stage_distribution: {}
+        }
       }, res.headers);
     }
 
@@ -302,31 +217,7 @@ export async function POST(req: NextRequest) {
     }
     
     if (!org_id) {
-      // Return comprehensive mock deal for demo
-      const mockDeal = {
-        id: Math.floor(Math.random() * 1000) + 200,
-        title: dealTitle || "New Deal",
-        amount: dealAmount,
-        probability,
-        stage: d.stage || "prospect",
-        pipeline,
-        vehicle_details: d.vehicle_details || null,
-        financing: d.financing || null,
-        trade_in: d.trade_in || null,
-        negotiation: d.negotiation || null,
-        tax_title_fees: d.tax_title_fees || null,
-        delivery: d.delivery || null,
-        services: d.services || null,
-        customer_info: d.customer_info || null,
-        deal_metrics: d.deal_metrics || null,
-        calculated_amounts: calculatedAmounts,
-        close_date: d.close_date || null,
-        owner_id: d.owner_id || null,
-        lead_id: d.lead_id || null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      return ok(mockDeal, res.headers);
+      return bad("no_membership");
     }
 
     try {
@@ -455,29 +346,8 @@ export async function POST(req: NextRequest) {
       }, res.headers);
       
     } catch (dbError) {
-      // Enhanced mock success with all dealership features
-      console.log("Database error in deal creation, returning enhanced mock data:", dbError);
-      const mockDeal = {
-        id: Math.floor(Math.random() * 1000) + 200,
-        title: dealTitle || "New Deal",
-        amount: dealAmount,
-        probability,
-        stage: d.stage || "prospect",
-        pipeline,
-        vehicle_details: d.vehicle_details || null,
-        financing: d.financing || null,
-        trade_in: d.trade_in || null,
-        calculated_amounts: calculatedAmounts,
-        org_id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        auto_actions: {
-          pipeline_assigned: pipeline,
-          probability_calculated: probability,
-          amount_calculated: dealAmount !== d.amount
-        }
-      };
-      return ok(mockDeal, res.headers);
+      console.error("Database error in deal creation:", dbError);
+      return oops("Failed to create deal - database error");
     }
   } catch (e: any) {
     console.error("Deal creation error:", e);

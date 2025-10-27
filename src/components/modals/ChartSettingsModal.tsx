@@ -51,7 +51,14 @@ const ChartSettingsModal: React.FC<ChartSettingsModalProps> = ({
 }) => {
   const s = chartSettings[chartKey];
   if (!s) return null;
-  const dataSources = ["Default", "Google Sheets", "SQL Database"];
+  
+  // Get available data sources from configuration or API
+  const dataSources = process.env.NEXT_PUBLIC_CHART_DATA_SOURCES?.split(',') || [
+    "Database", 
+    "API", 
+    "Spreadsheet Import", 
+    "Real-time Feed"
+  ];
   const tabs = [
     { key: "chart", label: "Chart" },
     { key: "data", label: "Data" },

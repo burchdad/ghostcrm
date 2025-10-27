@@ -1,0 +1,77 @@
+/* Grid wrapper */
+.dashboard-grid {
+  display: grid;
+  gap: 12px;             /* spacing between cards */
+  align-items: stretch;
+}
+
+/* Optional: responsive fallback if you don't pass columns prop dynamically */
+@media (max-width: 1400px) {
+  .dashboard-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 1024px) {
+  .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+}
+
+/* Card shell */
+.chart-card {
+  min-width: 0;          /* allow shrinking inside grid cell */
+  width: 100%;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  background: #fff;
+  backdrop-filter: saturate(120%) blur(2px);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Optional accent variants (replace with your design tokens) */
+.chart-card--blue   { background-image: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(99,102,241,0.06)); }
+.chart-card--green  { background-image: linear-gradient(135deg, rgba(16,185,129,0.06), rgba(34,197,94,0.06)); }
+.chart-card--amber  { background-image: linear-gradient(135deg, rgba(245,158,11,0.06), rgba(251,191,36,0.06)); }
+.chart-card--violet { background-image: linear-gradient(135deg, rgba(139,92,246,0.06), rgba(236,72,153,0.06)); }
+
+/* High contrast accessibility mode */
+.chart-card--contrast {
+  background: #000;
+  color: #fff;
+  border-color: #222;
+}
+
+/* Card header/body */
+.chart-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.chart-card__title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+}
+.chart-card--contrast .chart-card__title { color: #fff; }
+
+.chart-card__icon {
+  width: 12px;
+  height: 12px;
+  color: #9ca3af;
+  cursor: pointer;
+}
+.chart-card__icon:hover { color: #4b5563; }
+
+/* Chart area height — adjust as needed */
+.chart-card__body {
+  height: 100px;   /* simple grid small cards */
+}
+
+/* If you want taller cards in complex mode: */
+.dashboard-grid--complex .chart-card__body {
+  height: 210px;
+}

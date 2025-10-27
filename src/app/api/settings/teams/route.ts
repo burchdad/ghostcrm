@@ -180,55 +180,29 @@ const validateMaxMembers = (maxMembers: number): string | null => {
 // GET /api/settings/teams?department=Sales - Filter by department
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search');
-    const department = searchParams.get('department');
-    const includeMembers = searchParams.get('includeMembers') === 'true';
-
-    let filteredTeams = [...mockTeams];
-
-    // Apply search filter
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredTeams = filteredTeams.filter(team =>
-        team.name.toLowerCase().includes(searchLower) ||
-        team.description.toLowerCase().includes(searchLower) ||
-        team.department.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Apply department filter
-    if (department) {
-      filteredTeams = filteredTeams.filter(team => team.department === department);
-    }
-
-    // Optionally exclude member details for performance
-    if (!includeMembers) {
-      filteredTeams = filteredTeams.map(team => ({
-        ...team,
-        members: team.members.map(member => ({
-          id: member.id,
-          name: member.name,
-          email: member.email,
-          role: member.role,
-          status: member.status
-        } as any))
-      }));
-    }
-
+    // Return empty teams array for new tenants - no mock data
+    // TODO: Replace with actual database queries based on tenant
+    
     return NextResponse.json({
       success: true,
-      data: filteredTeams,
-      total: filteredTeams.length,
-      departments: ['Sales', 'Marketing', 'Support', 'Development', 'Operations', 'Finance', 'HR']
+      data: [],
+      pagination: {
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0
+      }
     });
-
   } catch (error) {
-    console.error('Teams API Error:', error);
-    return NextResponse.json({
-      success: false,
-      error: 'Failed to fetch teams'
-    }, { status: 500 });
+    console.error('Error fetching teams:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Failed to fetch teams',
+        data: []
+      },
+      { status: 500 }
+    );
   }
 }
 

@@ -3,6 +3,7 @@ import { supaFromReq } from "@/lib/supa-ssr";
 import { createClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
 import { hash } from "bcryptjs";
+import { limitKey } from "@/lib/rateLimitEdge";
 
 // Runtime configuration to use Node.js runtime instead of Edge
 export const runtime = 'nodejs';
@@ -18,6 +19,18 @@ function getSupabaseAdmin() {
 export async function POST(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const { email } = await req.json();
+  
+  // Apply rate limiting for password reset requests
+  const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  const rateKey = `reset:${clientIP}:${email}`;
+  
+  const rateResult = await limitKey(rateKey);
+  if (!rateResult.allowed) {
+    return NextResponse.json(
+      { error: "Too many password reset attempts. Please try again later." }, 
+      { status: 429 }
+    );
+  }
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
 
   const { error } = await s.auth.resetPasswordForEmail(email, {

@@ -24,37 +24,37 @@ const testimonials = [
 
 export default function TestimonialsSection() {
   return (
-    <section className="py-24 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+    <section className="testimonials-section">
+      <div className="testimonials-container">
+        <div className="testimonials-header">
+          <h2 className="testimonials-title">
             What Our Customers Say
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="testimonials-subtitle">
             Don't take our word for it - hear from dealership owners and sales managers who have transformed their business
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="testimonials-grid">
           {testimonials.map((testimonial, index) => (
-            <div key={index} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="flex items-center mb-4">
+            <div key={index} className="testimonial-card">
+              <div className="testimonial-stars">
                 {Array.from({ length: 5 }).map((_, starIndex) => (
-                  <Star key={starIndex} className="w-5 h-5 text-yellow-400 fill-current" />
+                  <Star key={starIndex} className="star-icon" />
                 ))}
               </div>
               
-              <p className="text-gray-600 mb-6 italic">
+              <p className="testimonial-quote">
                 "{testimonial.quote}"
               </p>
               
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center text-white font-semibold mr-4">
+              <div className="testimonial-author">
+                <div className="author-avatar">
                   {testimonial.initials}
                 </div>
-                <div>
-                  <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                  <div className="text-gray-500 text-sm">{testimonial.title}</div>
+                <div className="author-info">
+                  <div className="author-name">{testimonial.name}</div>
+                  <div className="author-title">{testimonial.title}</div>
                 </div>
               </div>
             </div>

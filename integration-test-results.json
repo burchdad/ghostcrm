@@ -1,0 +1,211 @@
+{
+  "timestamp": "2025-10-25T15:09:38.675Z",
+  "overall_status": "critical",
+  "tests_run": 20,
+  "tests_passed": 3,
+  "tests_failed": 17,
+  "categories": {
+    "internal_apis": {
+      "total": 6,
+      "passed": 0,
+      "failed": 6,
+      "tests": [
+        {
+          "name": "Health Check",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        },
+        {
+          "name": "Demo Login API Info",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        },
+        {
+          "name": "Integrations List",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        },
+        {
+          "name": "Demo Admin Info",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        },
+        {
+          "name": "Templates API",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        },
+        {
+          "name": "WebSocket Health",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        }
+      ]
+    },
+    "authentication": {
+      "total": 3,
+      "passed": 0,
+      "failed": 3,
+      "tests": [
+        {
+          "name": "Demo Login",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        },
+        {
+          "name": "Login Endpoint",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        },
+        {
+          "name": "Logout Endpoint",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        }
+      ]
+    },
+    "external_services": {
+      "total": 4,
+      "passed": 3,
+      "failed": 1,
+      "tests": [
+        {
+          "name": "Supabase Health",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "Body is unusable: Body has already been read"
+        },
+        {
+          "name": "SendGrid API",
+          "status": "pass",
+          "response_code": 401,
+          "response_data": {
+            "errors": [
+              {
+                "field": null,
+                "message": "authorization required"
+              }
+            ]
+          },
+          "error": null
+        },
+        {
+          "name": "OpenAI API Health",
+          "status": "pass",
+          "response_code": 401,
+          "response_data": {
+            "error": {
+              "message": "Missing bearer authentication in header",
+              "type": "invalid_request_error",
+              "param": null,
+              "code": null
+            }
+          },
+          "error": null
+        },
+        {
+          "name": "Stripe API Health",
+          "status": "pass",
+          "response_code": 401,
+          "response_data": {
+            "error": {
+              "message": "You did not provide an API key. You need to provide your API key in the Authorization header, using Bearer auth (e.g. 'Authorization: Bearer YOUR_SECRET_KEY'). See https://stripe.com/docs/api#authentication for details, or we can help at https://support.stripe.com/.",
+              "type": "invalid_request_error"
+            }
+          },
+          "error": null
+        }
+      ]
+    },
+    "integration_apis": {
+      "total": 2,
+      "passed": 0,
+      "failed": 2,
+      "tests": [
+        {
+          "name": "Integration Test Endpoint",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        },
+        {
+          "name": "Generic Integration Connect",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        }
+      ]
+    },
+    "webhooks": {
+      "total": 2,
+      "passed": 0,
+      "failed": 2,
+      "tests": [
+        {
+          "name": "Stripe Webhook",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        },
+        {
+          "name": "SendGrid Webhook",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        }
+      ]
+    },
+    "data_apis": {
+      "total": 3,
+      "passed": 0,
+      "failed": 3,
+      "tests": [
+        {
+          "name": "Inventory API",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        },
+        {
+          "name": "User Settings API",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        },
+        {
+          "name": "Organization Users API",
+          "status": "fail",
+          "response_code": null,
+          "response_data": null,
+          "error": "fetch failed"
+        }
+      ]
+    }
+  },
+  "pass_rate": "15.0%"
+}

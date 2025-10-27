@@ -17,21 +17,14 @@ export async function GET(req: NextRequest) {
     
     if (error) {
       console.warn("Audit events table error:", error.message);
-      // Return mock data if table doesn't exist
-      const mockAuditEvents = [
-        { id: 1, action: "login", user_id: "demo", details: "User logged in", created_at: new Date().toISOString() },
-        { id: 2, action: "view_dashboard", user_id: "demo", details: "Viewed dashboard", created_at: new Date().toISOString() }
-      ];
-      return NextResponse.json(mockAuditEvents, { headers: res.headers });
+      // Return empty array for new tenants - no mock data
+      return NextResponse.json([], { headers: res.headers });
     }
     
-    return NextResponse.json(data, { headers: res.headers });
+    return NextResponse.json(data || [], { headers: res.headers });
   } catch (err) {
     console.warn("Audit log API error:", err);
-    const mockAuditEvents = [
-      { id: 1, action: "login", user_id: "demo", details: "User logged in", created_at: new Date().toISOString() },
-      { id: 2, action: "view_dashboard", user_id: "demo", details: "Viewed dashboard", created_at: new Date().toISOString() }
-    ];
-    return NextResponse.json(mockAuditEvents, { headers: res.headers });
+    // Return empty array for new tenants - no mock data
+    return NextResponse.json([], { headers: res.headers });
   }
 }
