@@ -220,39 +220,38 @@ async function registerHandler(req: Request) {
       organizationId = orgResult.data.id;
       console.log("✅ [REGISTER] Organization created:", organizationId, "with subdomain:", finalSubdomain);
 
-        // Create organization membership as owner
-        const membershipResult = await supabaseAdmin
-          .from("organization_memberships")
-          .insert({
-            organization_id: organizationId,
-            user_id: user.id,
-            role: "owner", // All registrations are owners
-            status: "active",
-          });
+      // Create organization membership as owner
+      const membershipResult = await supabaseAdmin
+        .from("organization_memberships")
+        .insert({
+          organization_id: organizationId,
+          user_id: user.id,
+          role: "owner", // All registrations are owners
+          status: "active",
+        });
 
-        if (membershipResult.error) {
-          console.error("❌ [REGISTER] Failed to create membership:", membershipResult.error);
-          throw new Error(`Membership creation failed: ${membershipResult.error.message}`);
-        }
-        
-        console.log("✅ [REGISTER] Organization membership created");
-
-        // Update user record with organization info as owner
-        const { error: updateError } = await supabaseAdmin
-          .from("users")
-          .update({ 
-            organization_id: organizationId,
-            role: "owner" // Always owner for registrations
-          })
-          .eq("id", user.id);
-          
-        if (updateError) {
-          console.error("❌ [REGISTER] Failed to update user with organization:", updateError);
-          throw new Error(`User update failed: ${updateError.message}`);
-        }
-        
-        console.log("✅ [REGISTER] User updated with organization");
+      if (membershipResult.error) {
+        console.error("❌ [REGISTER] Failed to create membership:", membershipResult.error);
+        throw new Error(`Membership creation failed: ${membershipResult.error.message}`);
       }
+      
+      console.log("✅ [REGISTER] Organization membership created");
+
+      // Update user record with organization info as owner
+      const { error: updateError } = await supabaseAdmin
+        .from("users")
+        .update({ 
+          organization_id: organizationId,
+          role: "owner" // Always owner for registrations
+        })
+        .eq("id", user.id);
+        
+      if (updateError) {
+        console.error("❌ [REGISTER] Failed to update user with organization:", updateError);
+        throw new Error(`User update failed: ${updateError.message}`);
+      }
+      
+      console.log("✅ [REGISTER] User updated with organization");
     } catch (orgError) {
       console.error("❌ [REGISTER] Organization setup failed:", orgError);
       
