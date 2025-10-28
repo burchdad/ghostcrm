@@ -195,6 +195,11 @@ export async function middleware(req: NextRequest) {
 
   // For localhost development, use JWT auth check
   if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+    // SPECIAL CASE: allow any authenticated user to access /billing (localhost)
+    if ((pathname === "/billing" || pathname.startsWith("/billing/")) && hasValidToken) {
+      return NextResponse.next();
+    }
+    
     if (!hasValidToken) {
       // Redirect to login if no auth token
       const loginUrl = new URL('/login', req.url);
