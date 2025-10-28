@@ -56,7 +56,7 @@ export default function RoleDebugPage() {
         <h2 className="font-semibold mb-2">Permissions Check:</h2>
         <p>Has billing permission: {hasPermission("billing") ? "✅ Yes" : "❌ No"}</p>
         <p>User role: {user?.role || "No role"}</p>
-        <p>Organization ID: {user?.organizationId || "No organization"}</p>
+        <p>Tenant ID: {user?.tenantId || "No tenant"}</p>
       </div>
 
       <div className="space-y-4">
