@@ -64,13 +64,26 @@ function getUserFromToken(token: string) {
 
 function parseJwtCookie(req: NextRequest) {
   const token = req.cookies.get("ghostcrm_jwt")?.value;
-  if (!token) return { token: null, user: null };
+  if (!token) {
+    console.log("❌ [JWT] No ghostcrm_jwt cookie found");
+    return { token: null, user: null };
+  }
+  
   try {
     const payload = JSON.parse(
       Buffer.from(token.split(".")[1], "base64").toString()
     );
+    console.log("✅ [JWT] Successfully decoded cookie payload:", {
+      userId: payload.userId,
+      email: payload.email,
+      role: payload.role,
+      organizationId: payload.organizationId,
+      tenantId: payload.tenantId,
+      exp: payload.exp ? new Date(payload.exp * 1000).toISOString() : "no expiry"
+    });
     return { token, user: payload };
-  } catch {
+  } catch (error) {
+    console.log("❌ [JWT] Failed to decode cookie:", error);
     return { token, user: null };
   }
 }
@@ -129,6 +142,20 @@ export async function middleware(req: NextRequest) {
   const { token: jwtToken, user } = parseJwtCookie(req);
   const hasValidToken = !!(jwtToken && user);
   const userRole = (user?.role as string) || "sales_rep";
+  
+  // Enhanced debugging for JWT cookie issues
+  console.log("🔍 [MIDDLEWARE DEBUG] JWT Analysis:", {
+    pathname,
+    hostname,
+    hasCookie: !!jwtToken,
+    cookieLength: jwtToken?.length || 0,
+    hasUser: !!user,
+    userRole,
+    organizationId: user?.organizationId,
+    tenantId: user?.tenantId,
+    hasValidToken,
+    cookiePreview: jwtToken ? jwtToken.substring(0, 50) + "..." : "none"
+  });
   
   // Check if path is public (no authentication required)
   const allPublicPaths = [...PUBLIC_PATHS, ...ADDITIONAL_PUBLIC_PATHS];
@@ -340,8 +367,19 @@ function handleTenantRequest(req: NextRequest, pathname: string, tenantId: strin
     return NextResponse.rewrite(url);
   }
   
+  // Special case: billing goes to (business) route group
+  if (pathname === '/billing' || pathname.startsWith('/billing/')) {
+    const url = req.nextUrl.clone();
+    url.pathname = `/(business)${pathname}`;
+    const tenantResponse = NextResponse.rewrite(url);
+    tenantResponse.headers.set('x-tenant-id', tenantId);
+    tenantResponse.headers.set('x-tenant-slug', tenantId);
+    return tenantResponse;
+  }
+  
   // For tenant sites, ensure we're in the app route group
   if (!pathname.startsWith('/(app)') && 
+      !pathname.startsWith('/(business)') &&
       !pathname.startsWith('/_next') && 
       !pathname.startsWith('/api') &&
       !pathname.startsWith('/login')) {

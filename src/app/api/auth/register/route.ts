@@ -340,6 +340,20 @@ async function registerHandler(req: Request) {
     }
 
     // --- Keep your ghostcrm_jwt too
+    console.log("🍪 [REGISTRATION] Setting JWT cookie:", {
+      tokenLength: token.length,
+      tokenPreview: token.substring(0, 50) + "...",
+      environment: process.env.NODE_ENV,
+      isSecure: process.env.NODE_ENV === "production",
+      cookieSettings: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24,
+        path: "/"
+      }
+    });
+    
     res.cookies.set("ghostcrm_jwt", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
