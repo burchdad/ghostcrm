@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   try {
     const supabase = createSafeSupabaseClient();
@@ -70,3 +72,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
+

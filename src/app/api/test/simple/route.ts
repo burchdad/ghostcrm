@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
+
+export const dynamic = 'force-dynamic';
 /**
  * 🧪 Simple Database Connection Test
  * Basic connectivity test without complex operations

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { createSafeStripeClient, withStripe } from '@/lib/stripe-safe';
 
+
+export const dynamic = 'force-dynamic';
 // This endpoint should be called by a cron job or background service
 // to process expired trials and convert them to paid subscriptions
 export async function POST(request: NextRequest) {

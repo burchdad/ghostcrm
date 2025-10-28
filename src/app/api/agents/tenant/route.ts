@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TenantManagementAgent } from '@/ai-agents/agents/TenantManagementAgent';
 
+
+export const dynamic = 'force-dynamic';
 // Runtime configuration
 export const runtime = 'nodejs';
 

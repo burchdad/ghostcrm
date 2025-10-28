@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+
+export const dynamic = 'force-dynamic';
 export async function GET() {
   // Mock AI alerts data
   return NextResponse.json({
@@ -9,3 +11,4 @@ export async function GET() {
     ]
   });
 }
+

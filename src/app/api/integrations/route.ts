@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { BaseIntegration, IntegrationTemplate, getAllIntegrations, searchIntegrations, getIntegrationById } from "@/integrations";
 
+
+export const dynamic = 'force-dynamic';
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
 export const runtime = 'nodejs';
 

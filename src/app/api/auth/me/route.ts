@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { verifyJwtToken, hasJwtSecret } from '@/lib/jwt';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-fallback-secret-key';
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   try {
     console.log('🔍 [AUTH/ME] Checking authentication status...');
+    
+    // Check for JWT_SECRET
+    if (!hasJwtSecret()) {
+      console.error('❌ [AUTH/ME] JWT_SECRET not configured in environment');
+      return NextResponse.json({ 
+        error: 'Server configuration error',
+        user: null 
+      }, { status: 500 });
+    }
     
     // Get JWT cookie
     const token = req.cookies.get('ghostcrm_jwt')?.value;
@@ -15,8 +26,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ user: null }, { status: 401 });
     }
     
-    // Decode JWT
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    // Decode JWT using shared utility
+    const decoded = verifyJwtToken(token);
     
     if (!decoded) {
       console.log('❌ [AUTH/ME] Invalid JWT token');

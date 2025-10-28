@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { jwtVerify, JWTPayload } from 'jose';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 type RolePayload = JWTPayload & { role?: string };
 

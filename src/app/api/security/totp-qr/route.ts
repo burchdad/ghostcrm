@@ -16,3 +16,4 @@ export async function GET(req: NextRequest) {
   const b64 = png.split(",")[1];
   return new NextResponse(Buffer.from(b64, "base64"), { status: 200, headers: { "Content-Type": "image/png" } });
 }
+

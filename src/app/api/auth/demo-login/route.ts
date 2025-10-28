@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supaFromReq } from '@/lib/supa-ssr';
 import { isDemoLogin, handleDemoLogin, DEMO_CREDENTIALS } from '@/lib/demo/demo-data-provider';
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

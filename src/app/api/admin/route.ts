@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+
+export const dynamic = 'force-dynamic';
 // Scaffolded superadmin/org check
 function isSuperAdmin(req: NextRequest) {
   // TODO: Replace with real auth logic
@@ -52,3 +54,4 @@ export async function PATCH(req: NextRequest) {
   // Simulate bulk role assign
   return NextResponse.json({ success: true });
 }
+

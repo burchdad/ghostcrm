@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/app/lib/supabaseClient';
 
+
+export const dynamic = 'force-dynamic';
 const WARM_TABLE_BASE = 'activity_log_warm';
 const MAX_ROWS = 100000; // threshold for splitting table
 
@@ -59,3 +61,4 @@ export async function GET() {
   }
   return NextResponse.json({ records: data, table: tableName });
 }
+

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSafeSupabaseClient, withSupabase } from '@/lib/supabase-safe';
 
+
+export const dynamic = 'force-dynamic';
 interface AnalyticsCounts {
   leads: number;
   deals: number;

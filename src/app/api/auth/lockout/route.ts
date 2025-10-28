@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { queryDb } from "@/db/mssql";
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   const { email } = await req.json();
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
@@ -19,3 +21,4 @@ export async function PUT(req: Request) {
   await queryDb("UPDATE users SET lockout_until = NULL, failed_attempts = 0 WHERE email = @param0", [email]);
   return NextResponse.json({ success: true });
 }
+

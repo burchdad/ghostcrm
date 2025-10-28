@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supaFromReq } from "@/lib/supa-ssr";
 
+
+export const dynamic = 'force-dynamic';
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
 export const runtime = 'nodejs';
 
@@ -35,3 +37,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(mockMessages, { headers: res.headers });
   }
 }
+

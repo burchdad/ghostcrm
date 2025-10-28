@@ -3,6 +3,8 @@ import { supaFromReq } from "@/lib/supa-ssr";
 import { getMembershipOrgId } from "@/lib/rbac";
 import { ok, bad, oops } from "@/lib/http";
 
+
+export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const url = new URL(req.url);

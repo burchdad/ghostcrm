@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { ok, bad, oops } from "@/lib/http";
 import { z } from "zod";
 
+
+export const dynamic = 'force-dynamic';
 // Use Node.js runtime to avoid Edge Runtime issues
 export const runtime = 'nodejs';
 

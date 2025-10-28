@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+
+export const dynamic = 'force-dynamic';
 // Notification Settings Interface
 interface NotificationSettings {
   // Email Notifications

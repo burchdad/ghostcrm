@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSafeStripeClient, withStripe } from '@/lib/stripe-safe';
 import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const stripe = createSafeStripeClient();

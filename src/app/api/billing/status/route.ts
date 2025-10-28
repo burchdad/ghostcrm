@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSubscription, isTrialExpired, getMockSubscription, isStripeConfigured } from '@/lib/stripe-safe';
 import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // Define the Subscription type if not imported from elsewhere
 type Subscription = {
   id: string;

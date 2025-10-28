@@ -343,3 +343,4 @@ function broadcastUpdate(type: 'test_progress' | 'test_completed' | 'test_failed
   // TODO: Implement WebSocket/SSE to notify clients
   console.log('Broadcasting update:', type, data);
 }
+

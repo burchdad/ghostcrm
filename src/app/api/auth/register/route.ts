@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
-import jwt from "jsonwebtoken";
+import { signJwtToken, hasJwtSecret } from "@/lib/jwt";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { limitKey } from "@/lib/rateLimitEdge";
 import { withCORS } from "@/lib/cors";
@@ -261,21 +261,21 @@ async function registerHandler(req: Request) {
     }
 
     // --- Create JWT (auto-login)
-    const JWT_SECRET = process.env.JWT_SECRET;
-    if (!JWT_SECRET) {
-      console.warn("⚠️ [REGISTER] Missing JWT_SECRET; using ephemeral fallback");
+    if (!hasJwtSecret()) {
+      console.error("❌ [REGISTER] JWT_SECRET not configured in environment");
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
     }
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        role: user.role || userRole,
-        organizationId: organizationId,
-        tenantId: organizationId, // For backward compatibility
-      },
-      JWT_SECRET || "ephemeral-dev-secret", // never use fallback in prod
-      { expiresIn: "24h" }
-    );
+    
+    const token = signJwtToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role || userRole,
+      organizationId: organizationId,
+      tenantId: organizationId, // For backward compatibility
+    });
 
     // --- Create Supabase Auth user and establish session
     console.log("🔐 [REGISTER] Creating Supabase Auth user...");

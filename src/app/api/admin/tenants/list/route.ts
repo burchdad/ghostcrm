@@ -282,3 +282,4 @@ function getTenantUrl(tenantId: string): string {
   // TODO: resolve tenant subdomain from DB/config
   return `https://${tenantId}.ghostcrm.com`;
 }
+

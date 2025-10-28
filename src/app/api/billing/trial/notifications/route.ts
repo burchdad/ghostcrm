@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
+
+export const dynamic = 'force-dynamic';
 // This endpoint handles sending trial reminder notifications
 export async function POST(request: NextRequest) {
   try {

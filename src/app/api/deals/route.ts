@@ -590,3 +590,4 @@ export async function DELETE(req: NextRequest) {
     return oops(e?.message || "Unknown error during deal deletion");
   }
 }
+

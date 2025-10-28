@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   console.log("🚪 [LOGOUT] Processing logout request...");
   
@@ -76,3 +78,4 @@ export async function POST(req: Request) {
     return res;
   }
 }
+

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supaFromReq } from '@/lib/supa-ssr';
 import { DemoUtils } from '@/lib/demo/demo-utils';
 
+
+export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action');

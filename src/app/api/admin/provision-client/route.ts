@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { triggerClientProvisioning } from '../../../../../migrations/client-provisioning/provisioning-system'
 import { createSafeSupabaseClient } from '@/lib/supabase-safe'
 
+
+export const dynamic = 'force-dynamic';
 /**
  * API Route: POST /api/admin/provision-client
  * Triggers automated database provisioning for new clients

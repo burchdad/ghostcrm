@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAI } from "@/lib/openai";
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const { message, isAuthenticated, conversationHistory } = await req.json();

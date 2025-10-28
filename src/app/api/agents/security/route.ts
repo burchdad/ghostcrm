@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SecurityComplianceAgent } from '@/ai-agents/agents/SecurityComplianceAgent';
 
+
+export const dynamic = 'force-dynamic';
 // Runtime configuration
 export const runtime = 'nodejs';
 

@@ -3,6 +3,8 @@ import { createSafeStripeClient, STRIPE_CONFIG } from '@/lib/stripe-safe';
 import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 import { headers } from 'next/headers';
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const stripe = createSafeStripeClient();

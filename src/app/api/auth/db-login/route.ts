@@ -2,17 +2,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { compare, hash } from "bcryptjs";
-import jwt from "jsonwebtoken";
+import { signJwtToken, hasJwtSecret } from "@/lib/jwt";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-
-// Get JWT secret with runtime validation
-function getJWTSecret() {
-  const JWT_SECRET = process.env.JWT_SECRET;
-  if (!JWT_SECRET) {
-    throw new Error("JWT_SECRET must be set");
-  }
-  return JWT_SECRET;
-}
 
 // simple in-memory limiter; replace with Redis if needed
 const attempts: Record<string, { c: number; t: number }> = {};
@@ -57,11 +48,25 @@ export async function POST(req: Request) {
     if (!ok) return NextResponse.json({ error: "Invalid TOTP code" }, { status: 401 });
   }
 
+  // Check JWT secret availability
+  if (!hasJwtSecret()) {
+    console.error("❌ [DB-LOGIN] JWT_SECRET not configured in environment");
+    return NextResponse.json(
+      { error: "Server configuration error" },
+      { status: 500 }
+    );
+  }
+
   const orgId = process.env.DEFAULT_ORG_ID!; // TEMP until Supabase Auth
-  const token = jwt.sign(
-    { sub: String(user.id), email: user.email, role: user.role, org_id: orgId },
-    getJWTSecret(),
-    { expiresIn: rememberMe ? "30d" : "2h" }
+  const token = signJwtToken(
+    { 
+      userId: String(user.id), 
+      email: user.email, 
+      role: user.role, 
+      organizationId: orgId,
+      tenantId: orgId
+    },
+    rememberMe ? "30d" : "2h"
   );
   const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 2 * 60 * 60; // 30 days or 2 hours in seconds
   const isProd = process.env.NODE_ENV === "production";

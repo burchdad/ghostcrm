@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BillingIntelligenceAgent } from '@/ai-agents/agents/BillingIntelligenceAgent';
 
+
+export const dynamic = 'force-dynamic';
 // Runtime configuration
 export const runtime = 'nodejs';
 

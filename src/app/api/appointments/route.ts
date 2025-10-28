@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { supaFromReq } from "@/lib/supa-ssr";
 import { ApptCreate } from "@/lib/schemas/appointments";
+
+export const dynamic = 'force-dynamic';
 // If the correct export is 'getMembershipOrgId', ensure it is exported in '@/lib/rbac'.
 // Otherwise, import the correct function or member, e.g.:
 // If the correct export is 'getMembershipOrgId', ensure it is exported in '@/lib/rbac'.
@@ -82,3 +84,4 @@ export async function DELETE(req: NextRequest) {
   await s.from("audit_events").insert({ entity: "appointment", entity_id: id, action: "delete" });
   return ok({ ok: true }, res.headers);
 }
+

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CodeIntelligenceAgent } from '@/ai-agents/agents/CodeIntelligenceAgent';
 import path from 'path';
 
+
+export const dynamic = 'force-dynamic';
 // Runtime configuration
 export const runtime = 'nodejs';
 

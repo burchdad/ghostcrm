@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+
+export const dynamic = 'force-dynamic';
 // Scaffolded admin/org check
 function isAdmin(req: NextRequest) {
   // TODO: Replace with real auth logic
@@ -51,3 +53,4 @@ export async function PATCH(req: NextRequest) {
   // Simulate compare/schedule
   return NextResponse.json({ success: true });
 }
+

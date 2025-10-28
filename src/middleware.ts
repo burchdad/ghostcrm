@@ -19,6 +19,7 @@ const PUBLIC_PATHS = [
   "/api/auth/db-login",
   "/api/auth/request-reset", 
   "/api/auth/register",
+  "/api/auth/me",
   "/inventory/qr-vehicle-profile", // Public QR vehicle profiles
   "/terms",
   "/privacy",
@@ -111,6 +112,7 @@ function isRoleAllowed(pathname: string, role: string): boolean {
 const ADDITIONAL_PUBLIC_PATHS = [
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/auth/me",
   "/api/billing/mock-checkout",
   "/api/billing/create-checkout",
   "/_next",

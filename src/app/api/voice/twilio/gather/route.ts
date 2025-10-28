@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const body = await req.formData();
   const digit = (body.get("Digits") || "").toString();
@@ -10,3 +12,4 @@ export async function POST(req: NextRequest) {
   twiml += '</Response>';
   return new NextResponse(twiml, { status:200, headers:{ "Content-Type":"text/xml" }});
 }
+

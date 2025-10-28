@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+
+export const dynamic = 'force-dynamic';
 // Helper to get git SHA and build time
 function getVersionInfo() {
   // Try to get from env, fallback to unknown
@@ -12,3 +14,4 @@ export async function GET() {
   const version = getVersionInfo();
   return NextResponse.json(version, { status: 200 });
 }
+

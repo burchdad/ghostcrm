@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { queryDb } from "@/db/mssql";
 
+
+export const dynamic = 'force-dynamic';
 export async function GET(req: Request) {
   const { userId } = Object.fromEntries(new URL(req.url).searchParams);
   if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
@@ -22,3 +24,4 @@ export async function PUT(req: Request) {
   );
   return NextResponse.json({ success: true });
 }
+

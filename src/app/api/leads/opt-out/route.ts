@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supaFromReq } from "@/lib/supa-ssr";
 import { updateLeadOptOut } from "@/lib/mock-leads";
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const { lead_id, opt_out } = await req.json();
@@ -34,3 +36,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: e.message || "Unknown error" }, { status: 500 });
   }
 }
+

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSafeStripeClient, withStripe } from '@/lib/stripe-safe';
 import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
+
+export const dynamic = 'force-dynamic';
 // Define Subscription type based on expected properties
 type Subscription = {
   id: string;

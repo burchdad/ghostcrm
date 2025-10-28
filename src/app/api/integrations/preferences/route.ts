@@ -4,6 +4,7 @@ import { IntegrationPreferences } from '@/lib/integrations'
 
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 // Helper function to extract user from Authorization header or JWT token
 async function getAuthenticatedUser(request: NextRequest) {

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supaFromReq } from "@/lib/supa-ssr";
 import crypto from "node:crypto";
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const { email, role } = await req.json();
@@ -18,3 +20,4 @@ export async function POST(req: NextRequest) {
   console.log("Invite link:", link);
   return NextResponse.json({ ok:true, link }, { headers: res.headers });
 }
+

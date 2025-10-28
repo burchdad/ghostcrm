@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supaFromReq } from "@/lib/supa-ssr";
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const { filename } = await req.json();
@@ -13,3 +15,4 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ key, url: data.signedUrl }, { headers: res.headers });
 }
+

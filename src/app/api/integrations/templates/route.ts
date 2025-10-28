@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllIntegrations, searchIntegrations, getIntegrationsByCategory, getFeaturedIntegrations, getPopularIntegrations } from "@/integrations";
 
+
+export const dynamic = 'force-dynamic';
 // Use Node.js runtime to avoid Edge Runtime issues
 export const runtime = 'nodejs';
 

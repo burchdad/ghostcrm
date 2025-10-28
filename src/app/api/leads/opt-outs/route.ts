@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+
+export const dynamic = 'force-dynamic';
 // GET: List all opted-out leads
 export async function GET(req: NextRequest) {
   const { data, error } = await supabaseAdmin
@@ -11,3 +13,4 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ leads: data });
 }
+

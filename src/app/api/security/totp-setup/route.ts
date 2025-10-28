@@ -14,3 +14,4 @@ export async function POST(req: NextRequest) {
   const otpauth = `otpauth://totp/GhostCRM:${user}?secret=${secret.base32}&issuer=GhostCRM`;
   return NextResponse.json({ otpauth }, { headers: res.headers });
 }
+

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supaFromReq } from "@/lib/supa-ssr";
 
+
+export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   const { s } = supaFromReq(req);
   const token = new URL(req.url).searchParams.get("token") || "";
@@ -9,3 +11,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "invalid_or_expired" }, { status: 400 });
   return NextResponse.json({ org_id: data.org_id, role: data.role });
 }
+

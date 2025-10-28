@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   const supabase = createSafeSupabaseClient();
   if (!supabase) {
@@ -30,3 +32,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ status: 'ok', data });
   }
 }
+

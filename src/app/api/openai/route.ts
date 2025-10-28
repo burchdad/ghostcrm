@@ -67,3 +67,4 @@ export async function POST(req: NextRequest) {
     }), { status: 200 }); // Return 200 to avoid breaking the UI
   }
 }
+

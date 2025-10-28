@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+
+export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   const script = new URL(req.url).searchParams.get("script") || "Hello, this is GhostCRM calling to follow up.";
   // For conversational voice, you can stream to LLM here
@@ -14,3 +16,4 @@ export async function GET(req: NextRequest) {
 }
 
 function escapeXml(s:string){return s.replace(/[<>&'"]/g,c=>({ '<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;' } as any)[c]);}
+

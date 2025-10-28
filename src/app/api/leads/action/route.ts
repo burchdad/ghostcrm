@@ -3,6 +3,8 @@ import twilio from 'twilio';
 import sgMail from '@sendgrid/mail';
 import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   try {
     const data = await req.json();

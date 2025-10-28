@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
+
+export const dynamic = 'force-dynamic';
 /**
  * 🧪 Database Schema Test API
  * Tests all tables and basic CRUD operations

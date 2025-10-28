@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supaFromReq } from "@/lib/supa-ssr";
 import { verifyNumberOwnership } from "@/lib/telephony/verify";
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const { e164, provider_account_id } = await req.json();
@@ -19,3 +21,4 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201, headers: res.headers });
 }
+

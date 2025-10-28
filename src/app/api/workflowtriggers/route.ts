@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
+
+export const dynamic = 'force-dynamic';
 // Scaffolded admin/org check (replace with real logic)
 function isAdmin(req: NextRequest) {
   // TODO: Replace with real auth logic
@@ -57,3 +59,4 @@ export async function PATCH(req: NextRequest) {
   const results = ids.map(id => ({ id, result: "success" }));
   return NextResponse.json({ results });
 }
+

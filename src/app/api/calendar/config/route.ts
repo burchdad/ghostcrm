@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CALENDAR_PROVIDERS, CalendarConfig, CalendarProvider } from '@/lib/calendar/providers';
 
+
+export const dynamic = 'force-dynamic';
 // Mock storage - replace with actual database
 let userCalendarConfigs: CalendarConfig[] = [];
 

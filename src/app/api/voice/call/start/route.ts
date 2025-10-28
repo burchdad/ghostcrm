@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Twilio from "twilio";
 import { supaFromReq } from "@/lib/supa-ssr";
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const { to, script } = await req.json();
@@ -17,3 +19,4 @@ export async function POST(req: NextRequest) {
   const call = await client.calls.create({ to, from, url: answerUrl });
   return NextResponse.json({ ok:true, sid: call.sid }, { headers: res.headers });
 }
+

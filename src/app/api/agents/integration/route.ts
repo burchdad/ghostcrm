@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { IntegrationHealthAgent } from '@/ai-agents/agents/IntegrationHealthAgent';
 
+
+export const dynamic = 'force-dynamic';
 // Runtime configuration
 export const runtime = 'nodejs';
 

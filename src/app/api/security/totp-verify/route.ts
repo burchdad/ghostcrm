@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { queryDb } from "@/db/mssql";
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   const { email, token } = await req.json();
   if (!email || !token) return NextResponse.json({ error: "Email and token required" }, { status: 400 });
@@ -16,3 +18,4 @@ export async function POST(req: Request) {
   await queryDb("UPDATE users SET totp_secret=@param0, totp_temp_secret=NULL WHERE email=@param1", [temp, email]);
   return NextResponse.json({ success: true });
 }
+

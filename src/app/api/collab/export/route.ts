@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createSafeSupabaseClient } from '@/lib/supabase-safe';
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   const supabase = createSafeSupabaseClient();
   if (!supabase) {
@@ -19,3 +21,4 @@ export async function POST(req: Request) {
   const csv = data.map(a => `${a.action},${a.target || a.source || ''},${a.created_at}`).join('\n');
   return NextResponse.json({ status: 'ok', csv });
 }
+

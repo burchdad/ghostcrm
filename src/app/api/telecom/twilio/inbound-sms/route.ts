@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Twilio from "twilio";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   // Twilio sends application/x-www-form-urlencoded
   const rawBody = await req.text();
@@ -28,3 +30,4 @@ export async function POST(req: NextRequest) {
   // 200 with empty TwiML is ok
   return new NextResponse("<Response></Response>", { status: 200, headers: { "Content-Type": "text/xml" } });
 }
+

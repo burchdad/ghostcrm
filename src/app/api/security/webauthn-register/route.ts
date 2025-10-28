@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
 import { queryDb } from "@/db/mssql";
 
+
+export const dynamic = 'force-dynamic';
 // Set these in env for prod
 const rpID = process.env.WEBAUTHN_RP_ID || "localhost"; // e.g. app.ghostcrm.com
 const expectedOrigin = process.env.WEBAUTHN_EXPECTED_ORIGIN || "http://localhost:3000"; // EXACT origin incl. scheme/port
@@ -73,3 +75,4 @@ export async function PUT(req: Request) {
 
   return NextResponse.json({ success: true });
 }
+

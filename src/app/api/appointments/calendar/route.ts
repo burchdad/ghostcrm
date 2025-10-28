@@ -1,3 +1,7 @@
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 import { NextRequest } from "next/server";
 import { supaFromReq } from "@/lib/supa-ssr";
 import { getMembershipOrgId } from "@/lib/rbac";
