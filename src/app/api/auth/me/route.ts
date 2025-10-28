@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const token = req.cookies.get('ghostcrm_jwt')?.value;
     
     if (!token) {
-      // This is normal for unauthenticated users - don't log as error
+      // Silent return for unauthenticated users - this is normal behavior
       return NextResponse.json({ user: null }, { status: 200 });
     }
     
@@ -28,10 +28,12 @@ export async function GET(req: NextRequest) {
     const decoded = verifyJwtToken(token);
     
     if (!decoded) {
-      console.log('❌ [AUTH/ME] Invalid JWT token');
+      // Only log errors for invalid tokens, not missing ones
+      console.log('⚠️ [AUTH/ME] Invalid JWT token found');
       return NextResponse.json({ user: null }, { status: 401 });
     }
     
+    // Only log successful authentications to reduce noise
     console.log('✅ [AUTH/ME] User authenticated:', {
       userId: decoded.userId,
       email: decoded.email,

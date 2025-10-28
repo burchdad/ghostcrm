@@ -2,7 +2,7 @@ import { RibbonProvider } from "@/components/ribbon";
 import GlobalErrorBoundary from "@/components/feedback/GlobalErrorBoundary";
 import CollapseLayout from "@/components/layout/CollapseLayout";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
-import { AuthProvider } from "@/context/AuthContext";
+import { ConditionalAuthProvider } from "@/components/auth/ConditionalAuthProvider";
 import { RouteGuard } from "@/middleware/PermissionMiddleware";
 import { I18nProvider } from "@/components/utils/I18nProvider";
 import GlobalAIAssistant from "@/components/global/GlobalAIAssistant";
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-gray-900">
         <GlobalErrorBoundary>
           <I18nProvider>
-              <AuthProvider>
+              <ConditionalAuthProvider>
                 {/* <ThemeProvider> */}
                     <RibbonProvider>
                       <RouteGuard>
@@ -41,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       </RouteGuard>
                     </RibbonProvider>
                 {/* </ThemeProvider> */}
-              </AuthProvider>
+              </ConditionalAuthProvider>
           </I18nProvider>
         </GlobalErrorBoundary>
       </body>

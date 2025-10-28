@@ -195,14 +195,7 @@ export async function middleware(req: NextRequest) {
     
     console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: ${finalIsMarketing} | Tenant: ${!finalIsMarketing}`);
 
-    // SPECIAL CASE: allow any authenticated user to access /billing
-    // so newly-registered accounts can pick a plan even if not owner/admin yet.
-    if ((pathname === "/billing" || pathname.startsWith("/billing/")) && hasValidToken) {
-      const tenantId = subdomain || (hostname.includes("vercel.app") ? hostname.split(".")[0] : "default");
-      return handleTenantRequest(req, pathname, tenantId);
-    }
-    
-    // For other protected routes, enforce role access (send to /unauthorized instead of /login)
+    // Enforce role-based access for protected routes
     if (hasValidToken && !isRoleAllowed(pathname, userRole)) {
       const url = req.nextUrl.clone();
       url.pathname = "/unauthorized";
@@ -224,11 +217,6 @@ export async function middleware(req: NextRequest) {
 
   // For localhost development, use JWT auth check
   if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
-    // SPECIAL CASE: allow any authenticated user to access /billing (localhost)
-    if ((pathname === "/billing" || pathname.startsWith("/billing/")) && hasValidToken) {
-      return NextResponse.next();
-    }
-    
     if (!hasValidToken) {
       // Redirect to login if no auth token
       const loginUrl = new URL('/login', req.url);
@@ -236,32 +224,28 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // For development, allow access if JWT token exists
+    // Enforce role-based access for protected routes
+    if (!isRoleAllowed(pathname, userRole)) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/unauthorized";
+      return NextResponse.rewrite(url);
+    }
+
+    // For development, allow access if JWT token exists and role is allowed
     return NextResponse.next();
   }
 
   // For production/Vercel domains, handle authenticated users properly
   if (hasValidToken) {
-    // SPECIAL CASE: allow any authenticated user to access /billing
-    if (pathname === "/billing" || pathname.startsWith("/billing/")) {
-      const subdomain = getSubdomain(hostname) || (hostname.includes("vercel.app") ? hostname.split(".")[0] : null);
-      const tenantId = subdomain || "default";
-      return handleTenantRequest(req, pathname, tenantId);
-    }
-    
-    // For other protected routes, enforce role access
+    // Enforce role-based access for protected routes
     if (!isRoleAllowed(pathname, userRole)) {
       const url = req.nextUrl.clone();
       url.pathname = "/unauthorized";
       return NextResponse.rewrite(url);
     }
     
-    // Authenticated user on production - treat as tenant user
-    const subdomain = getSubdomain(hostname);
-    console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: false | Tenant: true`);
-    
-    // Use hostname as tenant ID for Vercel deployments
-    const tenantId = hostname.includes('vercel.app') ? hostname.split('.')[0] : (subdomain || 'default');
+    const subdomain = getSubdomain(hostname) || (hostname.includes("vercel.app") ? hostname.split(".")[0] : null);
+    const tenantId = subdomain || "default";
     return handleTenantRequest(req, pathname, tenantId);
   }
 
