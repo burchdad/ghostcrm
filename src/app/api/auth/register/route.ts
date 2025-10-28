@@ -62,11 +62,17 @@ async function registerHandler(req: Request) {
       return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
     }
 
-    // --- Constrain role (no owner via open registration)
+    // --- Determine user role (first user creating org gets owner role)
     const allowedRoles = ["sales_rep", "manager", "admin"] as const;
-    const userRole = (allowedRoles as readonly string[]).includes(role || "")
+    let userRole = (allowedRoles as readonly string[]).includes(role || "")
       ? (role as (typeof allowedRoles)[number])
       : "sales_rep";
+    
+    // If user is creating an organization (admin/manager), they become the owner
+    const isCreatingOrganization = userRole === "admin" || userRole === "manager";
+    if (isCreatingOrganization) {
+      userRole = "owner"; // First user of a new organization becomes owner
+    }
 
     // --- Validate Supabase env
     if (
@@ -163,10 +169,10 @@ async function registerHandler(req: Request) {
     const user = insertResult.data!;
     console.log("✅ [REGISTER] User created successfully:", user.id);
 
-    // --- Create organization/tenant for admin and manager roles
+    // --- Create organization/tenant for users creating organizations
     let organizationId: string | null = null;
-    if (userRole === "admin" || userRole === "manager") {
-      console.log("🏢 [REGISTER] Creating organization for", userRole, "role...");
+    if (isCreatingOrganization) {
+      console.log("🏢 [REGISTER] Creating organization for owner role...");
       
       // Generate a subdomain from company name
       const subdomain = companyName 
@@ -197,13 +203,13 @@ async function registerHandler(req: Request) {
           organizationId = orgResult.data.id;
           console.log("✅ [REGISTER] Organization created:", organizationId);
 
-          // Create organization membership
+          // Create organization membership with owner role
           const membershipResult = await supabaseAdmin
             .from("organization_memberships")
             .insert({
               organization_id: organizationId,
               user_id: user.id,
-              role: userRole === "admin" ? "admin" : "member",
+              role: "owner", // Organization creator becomes owner
               status: "active",
             });
 
@@ -213,11 +219,14 @@ async function registerHandler(req: Request) {
             console.log("✅ [REGISTER] Organization membership created");
           }
 
-          // Update user with organization_id
-          await supabaseAdmin
-            .from("users")
-            .update({ organization_id: organizationId })
-            .eq("id", user.id);
+        // Update user record with organization info and owner role
+        await supabaseAdmin
+          .from("users")
+          .update({ 
+            organization_id: organizationId,
+            role: "owner" // Ensure role is set to owner in users table
+          })
+          .eq("id", user.id);
         }
       } catch (orgError) {
         console.error("❌ [REGISTER] Organization creation error:", orgError);
@@ -305,7 +314,7 @@ async function registerHandler(req: Request) {
       organization: organizationId ? {
         id: organizationId,
         name: companyName || `${firstName}'s Organization`,
-        role: userRole === "admin" ? "admin" : "member"
+        role: "owner" // Organization creator is owner
       } : null,
       trial_mode: true,
     });
