@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('sales_rep'); // Default to sales_rep
+  const [role, setRole] = useState('owner'); // Always owner for new registrations
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -358,53 +358,6 @@ export default function RegisterPage() {
                   onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.5)')}
                   onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)')}
                 />
-              </div>
-
-              {/* Role Selection */}
-              <div style={{ marginBottom: '0.5rem' }}>
-                <label
-                  style={{
-                    display: 'block',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    marginBottom: '0.5rem',
-                  }}
-                >
-                  Role
-                </label>
-                <p style={{ 
-                  fontSize: '0.75rem', 
-                  color: 'rgba(255, 255, 255, 0.6)', 
-                  marginBottom: '0.5rem',
-                  fontStyle: 'italic' 
-                }}>
-                  Select "Company Owner" for full access including billing and admin features
-                </p>
-                <select
-                  id="role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '0.75rem',
-                    color: 'white',
-                    fontSize: '1rem',
-                    outline: 'none',
-                    transition: 'all 0.2s',
-                  }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.5)')}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)')}
-                >
-                  <option value="sales_rep" style={{ background: '#1a1a2e', color: 'white' }}>Sales Representative</option>
-                  <option value="manager" style={{ background: '#1a1a2e', color: 'white' }}>Manager</option>
-                  <option value="admin" style={{ background: '#1a1a2e', color: 'white' }}>Dealership Admin</option>
-                  <option value="owner" style={{ background: '#1a1a2e', color: 'white' }}>🏢 Company Owner (Full Access)</option>
-                </select>
               </div>
 
               {/* Email */}

@@ -26,23 +26,12 @@ const PUBLIC_PATHS = [
   "/demo"
 ];
 
-// Define role-based route access
-const ROLE_BASED_ROUTES = {
-  "/owner": ["owner"],
-  "/admin": ["owner", "admin"],
-  "/agent-control-panel": ["owner", "admin"],
-  "/bi": ["owner", "admin", "manager"],
-  "/reports": ["owner", "admin", "manager"],
-  "/settings": ["owner", "admin", "manager"],
-  "/billing": ["owner", "admin"],
-  "/marketing": ["owner", "admin", "manager"],
-  "/automation": ["owner", "admin", "manager"],
-  "/workflow": ["owner", "admin", "manager"],
-  "/finance": ["owner", "admin", "manager"],
-  "/compliance": ["owner", "admin", "manager"],
-  "/performance": ["owner", "admin", "manager"],
-  "/charts": ["owner", "admin", "manager"]
-};
+// Simplified: Direct registration users are owners, subdomain users have different flow
+// Only need to protect a few owner-specific routes
+const OWNER_ONLY_ROUTES = [
+  "/billing",     // Only owners can access billing
+  "/owner"        // Owner-specific admin panel
+];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(path => {
@@ -89,23 +78,17 @@ function parseJwtCookie(req: NextRequest) {
   }
 }
 
-function hasRoleAccess(pathname: string, userRole: string): boolean {
-  for (const [routePrefix, allowedRoles] of Object.entries(ROLE_BASED_ROUTES)) {
-    if (pathname.startsWith(routePrefix)) {
-      return allowedRoles.includes(userRole);
-    }
-  }
-  // If no specific role restriction, allow access
-  return true;
+function isOwnerOnlyRoute(pathname: string): boolean {
+  return OWNER_ONLY_ROUTES.some(route => 
+    pathname === route || pathname.startsWith(route + "/")
+  );
 }
 
-function isRoleAllowed(pathname: string, role: string): boolean {
-  for (const [prefix, roles] of Object.entries(ROLE_BASED_ROUTES)) {
-    if (pathname === prefix || pathname.startsWith(prefix + "/")) {
-      return roles.includes(role);
-    }
-  }
-  return true; // no explicit restriction
+function canAccessOwnerRoute(role: string): boolean {
+  console.log(`🔍 [OWNER ROUTE CHECK] User Role: ${role}`);
+  const isOwner = role === "owner";
+  console.log(`🔍 [OWNER ROUTE CHECK] Is Owner: ${isOwner ? '✅ YES' : '❌ NO'}`);
+  return isOwner;
 }
 
 // Additional API and static paths
@@ -195,8 +178,9 @@ export async function middleware(req: NextRequest) {
     
     console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: ${finalIsMarketing} | Tenant: ${!finalIsMarketing}`);
 
-    // Enforce role-based access for protected routes
-    if (hasValidToken && !isRoleAllowed(pathname, userRole)) {
+    // Simple owner-only route protection
+    if (hasValidToken && isOwnerOnlyRoute(pathname) && !canAccessOwnerRoute(userRole)) {
+      console.log(`❌ [ACCESS DENIED] Owner-only route ${pathname} blocked for role: ${userRole}`);
       const url = req.nextUrl.clone();
       url.pathname = "/unauthorized";
       return NextResponse.rewrite(url);
@@ -224,8 +208,9 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Enforce role-based access for protected routes
-    if (!isRoleAllowed(pathname, userRole)) {
+    // Simple owner-only route protection for localhost
+    if (isOwnerOnlyRoute(pathname) && !canAccessOwnerRoute(userRole)) {
+      console.log(`❌ [LOCALHOST ACCESS DENIED] Owner-only route ${pathname} blocked for role: ${userRole}`);
       const url = req.nextUrl.clone();
       url.pathname = "/unauthorized";
       return NextResponse.rewrite(url);
@@ -237,8 +222,9 @@ export async function middleware(req: NextRequest) {
 
   // For production/Vercel domains, handle authenticated users properly
   if (hasValidToken) {
-    // Enforce role-based access for protected routes
-    if (!isRoleAllowed(pathname, userRole)) {
+    // Simple owner-only route protection for production
+    if (isOwnerOnlyRoute(pathname) && !canAccessOwnerRoute(userRole)) {
+      console.log(`❌ [PRODUCTION ACCESS DENIED] Owner-only route ${pathname} blocked for role: ${userRole}`);
       const url = req.nextUrl.clone();
       url.pathname = "/unauthorized";
       return NextResponse.rewrite(url);
