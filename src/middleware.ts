@@ -110,6 +110,13 @@ export async function middleware(req: NextRequest) {
     
     // Check if user has valid JWT token for authentication status
     const jwtToken = req.cookies.get('ghostcrm_jwt')?.value;
+    console.log("🍪 [MIDDLEWARE] Cookie check:", {
+      hasCookie: !!jwtToken,
+      cookieLength: jwtToken?.length || 0,
+      hostname: hostname,
+      pathname: pathname
+    });
+    
     const hasValidToken = !!(jwtToken && getUserFromToken(jwtToken));
     
     const isMarketingSite = isMarketingRequest(hostname, subdomain, hasValidToken);

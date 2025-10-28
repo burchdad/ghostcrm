@@ -284,7 +284,14 @@ async function registerHandler(req: Request) {
       path: "/",
     });
 
-    console.log("🎉 [REGISTER] Registration completed:", user.id);
+    console.log("� [REGISTER] JWT cookie set:", {
+      tokenLength: token.length,
+      domain: req.headers.get('host'),
+      secure: process.env.NODE_ENV === "production",
+      hasJwtSecret: !!process.env.JWT_SECRET
+    });
+
+    console.log("�🎉 [REGISTER] Registration completed:", user.id);
     return res;
   } catch (e: any) {
     console.error("💥 [REGISTER] Unexpected error:", e);
