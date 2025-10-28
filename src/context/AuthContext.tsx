@@ -230,7 +230,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    // Return default values for public pages where AuthProvider isn't available
+    return {
+      user: null,
+      tenant: null,
+      isLoading: false,
+      login: async () => ({ success: false, message: 'Auth not available' }),
+      logout: () => {},
+      hasPermission: () => false,
+      hasAnyPermission: () => false,
+      canAccessTenant: () => false,
+      switchTenant: async () => false,
+    };
   }
   return context;
 }
