@@ -121,6 +121,14 @@ export async function middleware(req: NextRequest) {
     
     const isMarketingSite = isMarketingRequest(hostname, subdomain, hasValidToken);
     
+    // Override for specific marketing paths - always treat as marketing regardless of auth
+    const marketingPaths = ['/', '/login', '/register', '/pricing', '/demo', '/marketing', '/features', '/about'];
+    const isMarketingPath = marketingPaths.some(path => 
+      pathname === path || pathname.startsWith(path + '/')
+    );
+    
+    const finalIsMarketing = isMarketingPath ? true : isMarketingSite;
+    
     // Determine if this is a tenant request
     let hasTenant = false;
     if (hostname.includes('localhost')) {
@@ -134,10 +142,10 @@ export async function middleware(req: NextRequest) {
       hasTenant = hasValidToken;
     }
     
-    console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: ${isMarketingSite} | Tenant: ${hasTenant}`);
+    console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: ${finalIsMarketing} | Tenant: ${!finalIsMarketing}`);
 
     // Handle marketing site routing
-    if (isMarketingSite) {
+    if (finalIsMarketing) {
       return handleMarketingRequest(req, pathname);
     }
     
@@ -198,9 +206,13 @@ function getSubdomain(hostname: string): string | null {
 }
 
 function isMarketingRequest(hostname: string, subdomain: string | null, hasValidToken: boolean = false): boolean {
-  // For Vercel deployments, if user is authenticated, treat as tenant site
+  // For Vercel deployments, check if this is a marketing page vs app page
   if (hostname.includes('vercel.app')) {
-    return !hasValidToken; // Marketing if no auth token, tenant if authenticated
+    // Marketing pages should always be marketing regardless of auth status
+    const marketingPaths = ['/', '/login', '/register', '/pricing', '/demo', '/marketing', '/features', '/about'];
+    // If we're on a marketing path, always treat as marketing
+    // This will be checked in the main middleware function
+    return !hasValidToken; // Default logic for non-marketing paths
   }
   
   // Main domain or www subdomain = marketing site
