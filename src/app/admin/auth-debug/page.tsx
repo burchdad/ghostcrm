@@ -4,9 +4,9 @@ import { useAuth } from '@/context/AuthContext'
 import { useEffect, useState } from 'react'
 
 export default function AuthDebugPage() {
-  const { user, loading } = useAuth()
-  const [authMeData, setAuthMeData] = useState(null)
-  const [error, setError] = useState(null)
+  const { user, isLoading } = useAuth()
+  const [authMeData, setAuthMeData] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // Fetch directly from /api/auth/me to see what we get
@@ -22,7 +22,7 @@ export default function AuthDebugPage() {
       })
   }, [])
 
-  if (loading) {
+  if (isLoading) {
     return <div className="p-8">Loading authentication state...</div>
   }
 
@@ -37,10 +37,10 @@ export default function AuthDebugPage() {
           <pre className="bg-white p-3 rounded text-sm overflow-auto">
             {JSON.stringify({ 
               user, 
-              loading,
+              isLoading,
               hasUser: !!user,
               userRole: user?.role,
-              organizationId: user?.organizationId 
+              tenantId: user?.tenantId 
             }, null, 2)}
           </pre>
         </div>
@@ -63,8 +63,8 @@ export default function AuthDebugPage() {
           <h2 className="text-lg font-semibold mb-3">Cookie Information</h2>
           <pre className="bg-white p-3 rounded text-sm overflow-auto">
             {JSON.stringify({
-              hasGhostcrmJwt: document.cookie.includes('ghostcrm_jwt'),
-              allCookies: document.cookie || 'No cookies found'
+              hasGhostcrmJwt: typeof document !== 'undefined' ? document.cookie.includes('ghostcrm_jwt') : 'SSR',
+              allCookies: typeof document !== 'undefined' ? (document.cookie || 'No cookies found') : 'SSR mode'
             }, null, 2)}
           </pre>
         </div>
@@ -83,7 +83,7 @@ export default function AuthDebugPage() {
               <strong>Expected role:</strong> owner
             </div>
             <div>
-              <strong>Organization ID:</strong> {user?.organizationId || 'No org'}
+              <strong>Organization/Tenant ID:</strong> {user?.tenantId || 'No tenant ID'}
             </div>
           </div>
           
