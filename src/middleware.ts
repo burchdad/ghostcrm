@@ -291,13 +291,16 @@ function isMarketingRequest(hostname: string, subdomain: string | null, hasValid
     return !hasValidToken; // Default logic for non-marketing paths
   }
   
+  // For localhost, if user has valid token, treat as tenant request
+  if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+    return !hasValidToken; // If has valid token = tenant, no token = marketing
+  }
+  
   // Main domain or www subdomain = marketing site
   return !subdomain || 
          subdomain === 'www' || 
          hostname === 'ghostdefenses.com' ||
-         hostname === 'www.ghostdefenses.com' ||
-         hostname.includes('localhost') || 
-         hostname.includes('127.0.0.1'); // Local development = marketing
+         hostname === 'www.ghostdefenses.com';
 }
 
 function handleMarketingRequest(req: NextRequest, pathname: string): NextResponse {
@@ -355,6 +358,12 @@ function handleMarketingRequest(req: NextRequest, pathname: string): NextRespons
 }
 
 function handleTenantRequest(req: NextRequest, pathname: string, tenantId: string): NextResponse {
+  console.log("🏢 [TENANT REQUEST] Handling tenant request:", {
+    pathname,
+    tenantId,
+    routeType: pathname === '/billing' ? 'billing-root-level' : 'app-route-group'
+  });
+  
   // Add tenant context to headers
   const response = NextResponse.next();
   response.headers.set('x-tenant-id', tenantId);
@@ -364,14 +373,14 @@ function handleTenantRequest(req: NextRequest, pathname: string, tenantId: strin
   if (pathname === '/' || pathname === '') {
     const url = req.nextUrl.clone();
     url.pathname = '/(app)/dashboard';
+    console.log("🏢 [TENANT REQUEST] Rewriting root to dashboard:", url.pathname);
     return NextResponse.rewrite(url);
   }
   
-  // Special case: billing goes to (business) route group
+  // Billing page is now at root level - allow natural routing
   if (pathname === '/billing' || pathname.startsWith('/billing/')) {
-    const url = req.nextUrl.clone();
-    url.pathname = `/(business)${pathname}`;
-    const tenantResponse = NextResponse.rewrite(url);
+    console.log("🏢 [TENANT REQUEST] Processing billing route - allowing natural routing");
+    const tenantResponse = NextResponse.next();
     tenantResponse.headers.set('x-tenant-id', tenantId);
     tenantResponse.headers.set('x-tenant-slug', tenantId);
     return tenantResponse;

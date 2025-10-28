@@ -47,14 +47,6 @@ const PROTECTED_ROUTES: RoutePermission[] = [
     requireTenantAccess: true
   },
 
-  // Billing
-  {
-    path: '/billing',
-    requiredPermissions: ['finance.manage'],
-    allowedRoles: ['owner', 'admin'],
-    requireTenantAccess: true
-  },
-
   // Inventory Management
   {
     path: '/inventory',

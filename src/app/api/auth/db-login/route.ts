@@ -64,8 +64,19 @@ export async function POST(req: Request) {
     { expiresIn: rememberMe ? "30d" : "2h" }
   );
   const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 2 * 60 * 60; // 30 days or 2 hours in seconds
+  const isProd = process.env.NODE_ENV === "production";
   const res = NextResponse.json({ user: { id: user.id, email: user.email, role: user.role, org_id: orgId } });
-  res.headers.set("Set-Cookie", `ghostcrm_jwt=${token}; HttpOnly; Secure; Path=/; Max-Age=${maxAge}; SameSite=Strict`);
+  
+  const cookieOptions = [
+    `ghostcrm_jwt=${token}`,
+    "HttpOnly",
+    isProd ? "Secure" : "", // Only secure in production
+    "Path=/",
+    `Max-Age=${maxAge}`,
+    "SameSite=Lax" // Changed from Strict to Lax for better redirect handling
+  ].filter(Boolean).join("; ");
+  
+  res.headers.set("Set-Cookie", cookieOptions);
   // audit log
   const device = req.headers.get("user-agent") || "";
   await supabaseAdmin.from("audit_events").insert({

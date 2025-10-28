@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Tenant, AuthService, sampleUsers, sampleTenants } from '@/lib/auth';
+import { User, Tenant, UserRole, AuthService, sampleUsers, sampleTenants } from '@/lib/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -30,22 +30,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Check for existing session
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        const payload = AuthService.parseSessionToken(token);
-        if (payload && payload.userId) {
-          const userData = sampleUsers.find(u => u.id === payload.userId);
-          const tenantData = sampleTenants.find(t => t.id === payload.tenantId);
+      // Check for JWT cookie instead of localStorage
+      const response = await fetch('/api/auth/me', {
+        method: 'GET',
+        credentials: 'include' // Include cookies
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        if (userData.user) {
+          // Convert database user to AuthProvider format
+          const authUser: User = {
+            id: userData.user.userId,
+            email: userData.user.email,
+            firstName: userData.user.email.split('@')[0], // Use email prefix as firstName
+            lastName: '', // No lastName from JWT
+            role: userData.user.role as UserRole,
+            tenantId: userData.user.tenantId,
+            isActive: true,
+            lastLogin: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            profile: {
+              permissions: [], // Will be handled by role-based permissions
+              settings: {
+                theme: 'light',
+                notifications: {
+                  email: true,
+                  push: true,
+                  sms: false
+                },
+                language: 'en',
+                timezone: 'UTC'
+              }
+            }
+          };
           
-          if (userData && tenantData) {
-            setUser(userData);
-            setTenant(tenantData);
-          } else {
-            // Invalid session, clear it
-            localStorage.removeItem('auth_token');
-          }
+          const authTenant: Tenant = {
+            id: userData.user.tenantId,
+            name: userData.user.organizationId || 'Default Organization',
+            domain: 'localhost',
+            type: 'dealership',
+            isActive: true,
+            subscription: {
+              plan: 'professional',
+              status: 'active',
+              expiresAt: '2025-12-31'
+            },
+            settings: {
+              branding: {
+                primaryColor: '#3B82F6',
+                secondaryColor: '#1E40AF',
+                companyName: userData.user.organizationId || 'Default Organization'
+              },
+              features: {
+                inventory: true,
+                crm: true,
+                finance: true,
+                reports: true,
+                aiAgents: true,
+                collaboration: true
+              },
+              limits: {
+                maxUsers: 100,
+                maxVehicles: 1000,
+                maxStorage: 10
+              }
+            },
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          
+          setUser(authUser);
+          setTenant(authTenant);
         }
+      } else {
+        // No valid JWT cookie found
+        setUser(null);
+        setTenant(null);
       }
     } catch (error) {
       console.error('Error initializing auth:', error);
@@ -193,6 +255,10 @@ export function withAuth<T extends object>(
     }
     
     if (!user) {
+      // Don't redirect from billing page - let middleware handle it
+      if (typeof window !== 'undefined' && window.location.pathname === '/billing') {
+        return <div>Loading...</div>;
+      }
       window.location.href = '/login';
       return null;
     }

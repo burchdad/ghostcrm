@@ -47,8 +47,19 @@ export async function POST(req: Request) {
     }
   }
   const token = jwt.sign({ userId: user.id, username: user.username, role: user.role }, getJWTSecret(), { expiresIn: "2h" });
-  // Set JWT in httpOnly, Secure cookie
+  
+  const isProd = process.env.NODE_ENV === "production";
+  const cookieOptions = [
+    `ghostcrm_jwt=${token}`,
+    "HttpOnly",
+    isProd ? "Secure" : "", // Only secure in production
+    "Path=/",
+    "Max-Age=7200",
+    "SameSite=Lax" // Changed from Strict to Lax for better redirect handling
+  ].filter(Boolean).join("; ");
+  
+  // Set JWT in httpOnly cookie
   const response = NextResponse.json({ user: { id: user.id, username: user.username, role: user.role } });
-  response.headers.set("Set-Cookie", `ghostcrm_jwt=${token}; HttpOnly; Secure; Path=/; Max-Age=7200; SameSite=Strict`);
+  response.headers.set("Set-Cookie", cookieOptions);
   return response;
 }

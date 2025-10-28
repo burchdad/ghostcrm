@@ -43,16 +43,36 @@ export async function POST(req: Request) {
     
     console.log("✅ [LOGOUT] Logout processed successfully");
     
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = [
+      "ghostcrm_jwt=",
+      "HttpOnly",
+      isProd ? "Secure" : "", // Only secure in production
+      "Path=/",
+      "Max-Age=0",
+      "SameSite=Lax"
+    ].filter(Boolean).join("; ");
+    
     const res = NextResponse.json({ ok: true });
-    res.headers.set("Set-Cookie", "ghostcrm_jwt=; HttpOnly; Secure; Path=/; Max-Age=0; SameSite=Strict");
+    res.headers.set("Set-Cookie", cookieOptions);
     
     console.log("🍪 [LOGOUT] JWT cookie cleared");
     return res;
     
   } catch (error: any) {
     console.error("❌ [LOGOUT] Error:", error);
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = [
+      "ghostcrm_jwt=",
+      "HttpOnly", 
+      isProd ? "Secure" : "", // Only secure in production
+      "Path=/",
+      "Max-Age=0",
+      "SameSite=Lax"
+    ].filter(Boolean).join("; ");
+    
     const res = NextResponse.json({ ok: true }); // Still return ok for logout
-    res.headers.set("Set-Cookie", "ghostcrm_jwt=; HttpOnly; Secure; Path=/; Max-Age=0; SameSite=Strict");
+    res.headers.set("Set-Cookie", cookieOptions);
     return res;
   }
 }
