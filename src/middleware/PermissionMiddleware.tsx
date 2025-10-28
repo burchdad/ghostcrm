@@ -227,6 +227,12 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     const routeConfig = PROTECTED_ROUTES.find(route => pathname.startsWith(route.path));
     
     if (!routeConfig) {
+      // Special handling for billing - only require login, no complex permissions
+      if (pathname.startsWith('/billing')) {
+        setIsAuthorized(true);
+        return;
+      }
+      
       // No specific route protection, allow access
       setIsAuthorized(true);
       return;
