@@ -10,6 +10,7 @@ import { limitKey } from "@/lib/rateLimitEdge";
 import { withCORS } from "@/lib/cors";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import speakeasy from "speakeasy";
 
 type RegisterBody = {
   email?: string;
@@ -117,8 +118,17 @@ async function registerHandler(req: Request) {
     // --- Hash and insert
     console.log("🔐 [REGISTER] Hashing password…");
     const password_hash = await hash(password, 10);
+    
+    // --- Generate security fields for complete user setup
+    console.log("� [REGISTER] Generating security fields...");
+    const tenant_id = crypto.randomUUID();
+    const totp_secret = speakeasy.generateSecret({
+      name: `GhostCRM (${emailNorm})`,
+      issuer: 'GhostCRM'
+    }).base32;
+    const jwt_token = crypto.randomUUID(); // Placeholder token field
 
-    console.log("💾 [REGISTER] Inserting new user into database…");
+    console.log("�💾 [REGISTER] Inserting new user into database…");
     const insertResult = await supabaseAdmin
       .from("users")
       .insert({
@@ -128,8 +138,13 @@ async function registerHandler(req: Request) {
         first_name: firstName ?? "",
         last_name: lastName ?? "",
         company_name: companyName ?? "",
+        tenant_id: tenant_id,
+        totp_secret: totp_secret,
+        webauthn_credentials: JSON.stringify([]), // Empty array for new users
+        jwt_token: jwt_token,
+        organization_id: null // Will be set after organization creation
       })
-      .select("id,email,role")
+      .select("id,email,role,tenant_id,totp_secret,webauthn_credentials,jwt_token")
       .single();
 
     if (insertResult.error) {
