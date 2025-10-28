@@ -312,7 +312,7 @@ async function registerHandler(req: Request) {
     const token = signJwtToken({
       userId: user.id,
       email: user.email,
-      role: user.role || userRole,
+      role: "owner", // Always owner for registrations - don't rely on user.role which may not be updated yet
       organizationId: organizationId,
       tenantId: organizationId, // For backward compatibility
     });
