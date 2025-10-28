@@ -8,6 +8,8 @@ import jwt from "jsonwebtoken";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { limitKey } from "@/lib/rateLimitEdge";
 import { withCORS } from "@/lib/cors";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 type RegisterBody = {
   email?: string;
@@ -260,7 +262,24 @@ async function registerHandler(req: Request) {
       { expiresIn: "24h" }
     );
 
-    const res = NextResponse.json({
+    // --- Create Supabase Auth user and establish session
+    console.log("🔐 [REGISTER] Creating Supabase Auth user...");
+    
+    // Create Supabase Auth user if not already existing
+    const { data: adminUser, error: adminErr } = await supabaseAdmin.auth.admin.createUser({
+      email: emailNorm,
+      password: password, // use the plaintext password the user posted
+      email_confirm: true // mark confirmed to avoid verify step
+    });
+    
+    if (adminErr && adminErr.status !== 422 /* user already exists */) {
+      console.warn("⚠️ [REGISTER] createUser failed:", adminErr);
+    } else {
+      console.log("✅ [REGISTER] Supabase Auth user created/exists");
+    }
+
+    // Build a response that we can attach Supabase cookies to
+    let res = NextResponse.json({
       success: true,
       user: { 
         id: user.id, 
@@ -276,6 +295,36 @@ async function registerHandler(req: Request) {
       trial_mode: true,
     });
 
+    // --- Attach Supabase session cookies by signing the user in server-side
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.log("🍪 [REGISTER] Setting up Supabase session cookies...");
+      
+      const cookieStore = cookies();
+      const supa = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        {
+          cookies: {
+            getAll: () => cookieStore.getAll(),
+            setAll: (cs) => cs.forEach((c) => res.cookies.set(c)),
+          },
+        }
+      );
+
+      // Sign in to create sb-* cookies
+      const { error: signInErr } = await supa.auth.signInWithPassword({
+        email: emailNorm,
+        password: password,
+      });
+      
+      if (signInErr) {
+        console.warn("⚠️ [REGISTER] signInWithPassword failed:", signInErr.message);
+      } else {
+        console.log("✅ [REGISTER] Supabase session established");
+      }
+    }
+
+    // --- Keep your ghostcrm_jwt too
     res.cookies.set("ghostcrm_jwt", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
