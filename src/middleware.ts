@@ -130,6 +130,16 @@ export async function middleware(req: NextRequest) {
   const hasValidToken = !!(jwtToken && user);
   const userRole = (user?.role as string) || "sales_rep";
   
+  // Debug logging for role extraction
+  if (hasValidToken) {
+    console.log("🔍 [MIDDLEWARE] JWT User Debug:", {
+      hasUser: !!user,
+      userRole: userRole,
+      userKeys: user ? Object.keys(user) : [],
+      fullUser: user
+    });
+  }
+  
   // Check if path is public (no authentication required)
   const allPublicPaths = [...PUBLIC_PATHS, ...ADDITIONAL_PUBLIC_PATHS];
   if (isPublicPath(pathname) || allPublicPaths.some(path => pathname.startsWith(path))) {
@@ -169,12 +179,18 @@ export async function middleware(req: NextRequest) {
     // SPECIAL CASE: allow any authenticated user to access /billing
     // so newly-registered accounts can pick a plan even if not owner/admin yet.
     if ((pathname === "/billing" || pathname.startsWith("/billing/")) && hasValidToken) {
+      console.log("💳 [MIDDLEWARE] Billing access granted for role:", userRole);
       const tenantId = subdomain || (hostname.includes("vercel.app") ? hostname.split(".")[0] : "default");
       return handleTenantRequest(req, pathname, tenantId);
     }
     
     // For other protected routes, enforce role access (send to /unauthorized instead of /login)
     if (hasValidToken && !isRoleAllowed(pathname, userRole)) {
+      console.log("🚫 [MIDDLEWARE] Role access denied:", {
+        pathname,
+        userRole,
+        isAllowed: isRoleAllowed(pathname, userRole)
+      });
       const url = req.nextUrl.clone();
       url.pathname = "/unauthorized";
       return NextResponse.rewrite(url);
