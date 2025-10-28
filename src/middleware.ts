@@ -14,6 +14,7 @@ const PUBLIC_PATHS = [
   "/reset-password", 
   "/register",
   "/onboarding",
+  "/unauthorized",
   "/api/health",
   "/api/auth/db-login",
   "/api/auth/request-reset", 
@@ -61,6 +62,19 @@ function getUserFromToken(token: string) {
   }
 }
 
+function parseJwtCookie(req: NextRequest) {
+  const token = req.cookies.get("ghostcrm_jwt")?.value;
+  if (!token) return { token: null, user: null };
+  try {
+    const payload = JSON.parse(
+      Buffer.from(token.split(".")[1], "base64").toString()
+    );
+    return { token, user: payload };
+  } catch {
+    return { token, user: null };
+  }
+}
+
 function hasRoleAccess(pathname: string, userRole: string): boolean {
   for (const [routePrefix, allowedRoles] of Object.entries(ROLE_BASED_ROUTES)) {
     if (pathname.startsWith(routePrefix)) {
@@ -69,6 +83,15 @@ function hasRoleAccess(pathname: string, userRole: string): boolean {
   }
   // If no specific role restriction, allow access
   return true;
+}
+
+function isRoleAllowed(pathname: string, role: string): boolean {
+  for (const [prefix, roles] of Object.entries(ROLE_BASED_ROUTES)) {
+    if (pathname === prefix || pathname.startsWith(prefix + "/")) {
+      return roles.includes(role);
+    }
+  }
+  return true; // no explicit restriction
 }
 
 // Additional API and static paths
@@ -102,22 +125,24 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hostname = req.headers.get('host') || '';
   
+  // Parse JWT token once for all authentication checks
+  const { token: jwtToken, user } = parseJwtCookie(req);
+  const hasValidToken = !!(jwtToken && user);
+  const userRole = (user?.role as string) || "sales_rep";
+  
   // Check if path is public (no authentication required)
   const allPublicPaths = [...PUBLIC_PATHS, ...ADDITIONAL_PUBLIC_PATHS];
   if (isPublicPath(pathname) || allPublicPaths.some(path => pathname.startsWith(path))) {
     // Parse subdomain for tenant identification for existing logic
     const subdomain = getSubdomain(hostname);
     
-    // Check if user has valid JWT token for authentication status
-    const jwtToken = req.cookies.get('ghostcrm_jwt')?.value;
+    // Log cookie status for debugging
     console.log("🍪 [MIDDLEWARE] Cookie check:", {
       hasCookie: !!jwtToken,
       cookieLength: jwtToken?.length || 0,
       hostname: hostname,
       pathname: pathname
     });
-    
-    const hasValidToken = !!(jwtToken && getUserFromToken(jwtToken));
     
     const isMarketingSite = isMarketingRequest(hostname, subdomain, hasValidToken);
     
@@ -133,16 +158,27 @@ export async function middleware(req: NextRequest) {
     let hasTenant = false;
     if (hostname.includes('localhost')) {
       // For localhost, check if user has tenant info in JWT
-      if (jwtToken) {
-        const user = getUserFromToken(jwtToken);
-        hasTenant = !!(user?.organizationId || user?.tenantId);
-      }
+      hasTenant = !!(user?.organizationId || user?.tenantId);
     } else {
       // For production/Vercel, authenticated users on any domain are tenant users
       hasTenant = hasValidToken;
     }
     
     console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: ${finalIsMarketing} | Tenant: ${!finalIsMarketing}`);
+
+    // SPECIAL CASE: allow any authenticated user to access /billing
+    // so newly-registered accounts can pick a plan even if not owner/admin yet.
+    if ((pathname === "/billing" || pathname.startsWith("/billing/")) && hasValidToken) {
+      const tenantId = subdomain || (hostname.includes("vercel.app") ? hostname.split(".")[0] : "default");
+      return handleTenantRequest(req, pathname, tenantId);
+    }
+    
+    // For other protected routes, enforce role access (send to /unauthorized instead of /login)
+    if (hasValidToken && !isRoleAllowed(pathname, userRole)) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/unauthorized";
+      return NextResponse.rewrite(url);
+    }
 
     // Handle marketing site routing
     if (finalIsMarketing) {
@@ -159,10 +195,7 @@ export async function middleware(req: NextRequest) {
 
   // For localhost development, use JWT auth check
   if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
-    // Check for JWT token
-    const jwtToken = req.cookies.get('ghostcrm_jwt')?.value;
-    
-    if (!jwtToken) {
+    if (!hasValidToken) {
       // Redirect to login if no auth token
       const loginUrl = new URL('/login', req.url);
       loginUrl.searchParams.set('from', pathname);
@@ -174,10 +207,21 @@ export async function middleware(req: NextRequest) {
   }
 
   // For production/Vercel domains, handle authenticated users properly
-  const jwtToken = req.cookies.get('ghostcrm_jwt')?.value;
-  const hasValidToken = !!(jwtToken && getUserFromToken(jwtToken));
-  
   if (hasValidToken) {
+    // SPECIAL CASE: allow any authenticated user to access /billing
+    if (pathname === "/billing" || pathname.startsWith("/billing/")) {
+      const subdomain = getSubdomain(hostname) || (hostname.includes("vercel.app") ? hostname.split(".")[0] : null);
+      const tenantId = subdomain || "default";
+      return handleTenantRequest(req, pathname, tenantId);
+    }
+    
+    // For other protected routes, enforce role access
+    if (!isRoleAllowed(pathname, userRole)) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/unauthorized";
+      return NextResponse.rewrite(url);
+    }
+    
     // Authenticated user on production - treat as tenant user
     const subdomain = getSubdomain(hostname);
     console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: false | Tenant: true`);
