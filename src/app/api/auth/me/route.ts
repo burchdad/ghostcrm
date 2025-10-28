@@ -7,8 +7,6 @@ export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   try {
-    console.log('🔍 [AUTH/ME] Checking authentication status...');
-    
     // Check for JWT_SECRET
     if (!hasJwtSecret()) {
       console.error('❌ [AUTH/ME] JWT_SECRET not configured in environment');
@@ -22,8 +20,8 @@ export async function GET(req: NextRequest) {
     const token = req.cookies.get('ghostcrm_jwt')?.value;
     
     if (!token) {
-      console.log('❌ [AUTH/ME] No JWT cookie found');
-      return NextResponse.json({ user: null }, { status: 401 });
+      // This is normal for unauthenticated users - don't log as error
+      return NextResponse.json({ user: null }, { status: 200 });
     }
     
     // Decode JWT using shared utility
