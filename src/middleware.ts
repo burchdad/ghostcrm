@@ -13,7 +13,6 @@ const PUBLIC_PATHS = [
   "/pricing",
   "/reset-password", 
   "/register",
-  "/billing",
   "/onboarding",
   "/api/health",
   "/api/auth/db-login",
