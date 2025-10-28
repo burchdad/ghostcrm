@@ -107,18 +107,24 @@ export async function middleware(req: NextRequest) {
   if (isPublicPath(pathname) || allPublicPaths.some(path => pathname.startsWith(path))) {
     // Parse subdomain for tenant identification for existing logic
     const subdomain = getSubdomain(hostname);
-    const isMarketingSite = isMarketingRequest(hostname, subdomain);
     
-    // For localhost, also check if user has tenant info in JWT
+    // Check if user has valid JWT token for authentication status
+    const jwtToken = req.cookies.get('ghostcrm_jwt')?.value;
+    const hasValidToken = !!(jwtToken && getUserFromToken(jwtToken));
+    
+    const isMarketingSite = isMarketingRequest(hostname, subdomain, hasValidToken);
+    
+    // Determine if this is a tenant request
     let hasTenant = false;
     if (hostname.includes('localhost')) {
-      const jwtToken = req.cookies.get('ghostcrm_jwt')?.value;
+      // For localhost, check if user has tenant info in JWT
       if (jwtToken) {
         const user = getUserFromToken(jwtToken);
         hasTenant = !!(user?.organizationId || user?.tenantId);
       }
     } else {
-      hasTenant = !isMarketingSite && subdomain && subdomain !== 'www';
+      // For production/Vercel, authenticated users on any domain are tenant users
+      hasTenant = hasValidToken;
     }
     
     console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: ${isMarketingSite} | Tenant: ${hasTenant}`);
@@ -152,7 +158,21 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // For production, use the original JWT-based auth
+  // For production/Vercel domains, handle authenticated users properly
+  const jwtToken = req.cookies.get('ghostcrm_jwt')?.value;
+  const hasValidToken = !!(jwtToken && getUserFromToken(jwtToken));
+  
+  if (hasValidToken) {
+    // Authenticated user on production - treat as tenant user
+    const subdomain = getSubdomain(hostname);
+    console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: false | Tenant: true`);
+    
+    // Use hostname as tenant ID for Vercel deployments
+    const tenantId = hostname.includes('vercel.app') ? hostname.split('.')[0] : (subdomain || 'default');
+    return handleTenantRequest(req, pathname, tenantId);
+  }
+
+  // For production, use the original JWT-based auth for unauthenticated users
   return await handleDefaultRequest(req, pathname);
 }
 
@@ -170,15 +190,19 @@ function getSubdomain(hostname: string): string | null {
   return null;
 }
 
-function isMarketingRequest(hostname: string, subdomain: string | null): boolean {
+function isMarketingRequest(hostname: string, subdomain: string | null, hasValidToken: boolean = false): boolean {
+  // For Vercel deployments, if user is authenticated, treat as tenant site
+  if (hostname.includes('vercel.app')) {
+    return !hasValidToken; // Marketing if no auth token, tenant if authenticated
+  }
+  
   // Main domain or www subdomain = marketing site
   return !subdomain || 
          subdomain === 'www' || 
          hostname === 'ghostdefenses.com' ||
          hostname === 'www.ghostdefenses.com' ||
          hostname.includes('localhost') || 
-         hostname.includes('127.0.0.1') || // Local development = marketing
-         hostname.includes('vercel.app'); // Vercel deployments = marketing
+         hostname.includes('127.0.0.1'); // Local development = marketing
 }
 
 function handleMarketingRequest(req: NextRequest, pathname: string): NextResponse {
