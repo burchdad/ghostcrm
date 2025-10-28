@@ -373,6 +373,14 @@ export default function RegisterPage() {
                 >
                   Role
                 </label>
+                <p style={{ 
+                  fontSize: '0.75rem', 
+                  color: 'rgba(255, 255, 255, 0.6)', 
+                  marginBottom: '0.5rem',
+                  fontStyle: 'italic' 
+                }}>
+                  Select "Company Owner" for full access including billing and admin features
+                </p>
                 <select
                   id="role"
                   value={role}
