@@ -13,7 +13,7 @@ function getSupabaseConfig() {
   if (process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'preview') {
     // For preview builds, allow placeholder values
     console.warn('Using placeholder Supabase credentials for preview build');
-  } else if (supabaseServiceKey.startsWith("placeholder") || supabaseServiceKey.startsWith("sb_secret_") || supabaseServiceKey.length < 50) {
+  } else if (supabaseServiceKey.startsWith("placeholder") || supabaseServiceKey === "sb_secret_FSTLepb2jwJ3jCNJy78MsQ_OKKFZud0_PLACEHOLDER") {
     // For build process or development with placeholder values, create a mock client
     if (process.env.NODE_ENV === 'development' || process.env.NEXT_PHASE === 'phase-production-build') {
       console.warn('Using placeholder Supabase credentials for build/development');
