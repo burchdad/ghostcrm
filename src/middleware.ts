@@ -123,10 +123,23 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hostname = req.headers.get('host') || '';
   
+  console.log(`🚀 [MIDDLEWARE START] ${hostname}${pathname}`);
+  
   // Parse JWT token once for all authentication checks
   const { token: jwtToken, user } = parseJwtCookie(req);
   const hasValidToken = !!(jwtToken && user);
   const userRole = (user?.role as string) || "sales_rep";
+  
+  console.log(`🔍 [MIDDLEWARE] Authentication Status:`, {
+    pathname,
+    hostname,
+    hasValidToken,
+    userRole,
+    userEmail: user?.email,
+    organizationId: user?.organizationId,
+    isOwnerOnlyRoute: isOwnerOnlyRoute(pathname),
+    canAccess: canAccessOwnerRoute(userRole)
+  });
   
   // Enhanced debugging for JWT cookie issues
   console.log("🔍 [MIDDLEWARE DEBUG] JWT Analysis:", {
