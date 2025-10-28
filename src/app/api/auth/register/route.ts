@@ -64,7 +64,7 @@ async function registerHandler(req: Request) {
 
     // --- Determine user role (first user creating org gets owner role)
     const allowedRoles = ["sales_rep", "manager", "admin"] as const;
-    let userRole = (allowedRoles as readonly string[]).includes(role || "")
+    let userRole: string = (allowedRoles as readonly string[]).includes(role || "")
       ? (role as (typeof allowedRoles)[number])
       : "sales_rep";
     
