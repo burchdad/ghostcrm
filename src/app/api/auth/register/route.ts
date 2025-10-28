@@ -62,17 +62,14 @@ async function registerHandler(req: Request) {
       return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
     }
 
-    // --- Determine user role (first user creating org gets owner role)
-    const allowedRoles = ["sales_rep", "manager", "admin"] as const;
-    let userRole: string = (allowedRoles as readonly string[]).includes(role || "")
-      ? (role as (typeof allowedRoles)[number])
+    // --- Determine user role with owner option
+    const allowedRoles = ["sales_rep", "manager", "admin", "owner"] as const;
+    const userRole: string = (allowedRoles as readonly string[]).includes(role as any)
+      ? role as string
       : "sales_rep";
     
-    // If user is creating an organization (admin/manager), they become the owner
-    const isCreatingOrganization = userRole === "admin" || userRole === "manager";
-    if (isCreatingOrganization) {
-      userRole = "owner"; // First user of a new organization becomes owner
-    }
+    // Check if user is creating an organization (owner, admin, or manager roles)
+    const isCreatingOrganization = userRole === "owner" || userRole === "admin" || userRole === "manager";
 
     // --- Validate Supabase env
     if (
@@ -203,13 +200,13 @@ async function registerHandler(req: Request) {
           organizationId = orgResult.data.id;
           console.log("✅ [REGISTER] Organization created:", organizationId);
 
-          // Create organization membership with owner role
+          // Create organization membership with appropriate role
           const membershipResult = await supabaseAdmin
             .from("organization_memberships")
             .insert({
               organization_id: organizationId,
               user_id: user.id,
-              role: "owner", // Organization creator becomes owner
+              role: userRole, // Use the selected role directly
               status: "active",
             });
 
@@ -219,12 +216,12 @@ async function registerHandler(req: Request) {
             console.log("✅ [REGISTER] Organization membership created");
           }
 
-        // Update user record with organization info and owner role
+        // Update user record with organization info and selected role
         await supabaseAdmin
           .from("users")
           .update({ 
             organization_id: organizationId,
-            role: "owner" // Ensure role is set to owner in users table
+            role: userRole // Use the selected role directly
           })
           .eq("id", user.id);
         }
@@ -314,7 +311,7 @@ async function registerHandler(req: Request) {
       organization: organizationId ? {
         id: organizationId,
         name: companyName || `${firstName}'s Organization`,
-        role: "owner" // Organization creator is owner
+        role: userRole // Use the selected role directly
       } : null,
       trial_mode: true,
     });

@@ -50,8 +50,36 @@ export default function RegisterPage() {
       }
 
       localStorage.setItem('userEmail', email);
-      setMessage('Account created! Redirecting to billing…');
-      setTimeout(() => router.push('/billing'), 1500);
+      setMessage('Account created! Verifying authentication...');
+      
+      // Wait a moment for cookies to be set, then verify auth before redirecting
+      setTimeout(async () => {
+        try {
+          // Verify authentication is working
+          const authCheck = await fetch('/api/auth/me', {
+            method: 'GET',
+            credentials: 'include'
+          });
+          
+          if (authCheck.ok) {
+            const authData = await authCheck.json();
+            if (authData.user) {
+              setMessage('Authentication verified! Redirecting to billing...');
+              setTimeout(() => router.push('/billing'), 500);
+            } else {
+              setMessage('Authentication verification failed. Please login manually.');
+              setTimeout(() => router.push('/login'), 2000);
+            }
+          } else {
+            setMessage('Authentication verification failed. Please login manually.');
+            setTimeout(() => router.push('/login'), 2000);
+          }
+        } catch (error) {
+          console.error('Auth verification error:', error);
+          setMessage('Authentication verification failed. Please login manually.');
+          setTimeout(() => router.push('/login'), 2000);
+        }
+      }, 1000);
     } catch (err: any) {
       setMessage(err.message || 'Registration failed');
     } finally {
@@ -367,6 +395,7 @@ export default function RegisterPage() {
                   <option value="sales_rep" style={{ background: '#1a1a2e', color: 'white' }}>Sales Representative</option>
                   <option value="manager" style={{ background: '#1a1a2e', color: 'white' }}>Manager</option>
                   <option value="admin" style={{ background: '#1a1a2e', color: 'white' }}>Dealership Admin</option>
+                  <option value="owner" style={{ background: '#1a1a2e', color: 'white' }}>🏢 Company Owner (Full Access)</option>
                 </select>
               </div>
 
