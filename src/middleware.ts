@@ -15,6 +15,7 @@ const PUBLIC_PATHS = [
   "/register",
   "/onboarding",
   "/unauthorized",
+  "/debug", // Debug page for troubleshooting
   "/api/health",
   "/api/auth/db-login",
   "/api/auth/request-reset", 
