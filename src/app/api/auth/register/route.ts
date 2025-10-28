@@ -167,21 +167,44 @@ async function registerHandler(req: Request) {
     let organizationId: string | null = null;
     console.log("🏢 [REGISTER] Creating organization for company owner...");
     
-    // Generate a subdomain from company name
-    const subdomain = companyName 
+    // Generate a unique subdomain from company name
+    let subdomain = companyName 
       ? companyName.toLowerCase()
           .replace(/[^a-z0-9]/g, '-')
           .replace(/-+/g, '-')
           .replace(/^-|-$/g, '')
-          .substring(0, 30)
+          .substring(0, 20)
       : `org-${user.id.substring(0, 8)}`;
+    
+    // Ensure subdomain uniqueness
+    let counter = 1;
+    let finalSubdomain = subdomain;
+    
+    while (true) {
+      const { data: existingOrg } = await supabaseAdmin
+        .from("organizations")
+        .select("id")
+        .eq("subdomain", finalSubdomain)
+        .single();
+      
+      if (!existingOrg) break;
+      
+      finalSubdomain = `${subdomain}-${counter}`;
+      counter++;
+      
+      // Prevent infinite loop
+      if (counter > 100) {
+        finalSubdomain = `org-${user.id.substring(0, 8)}-${Date.now()}`;
+        break;
+      }
+    }
 
     try {
       const orgResult = await supabaseAdmin
         .from("organizations")
         .insert({
           name: companyName || `${firstName}'s Organization`,
-          subdomain: subdomain,
+          subdomain: finalSubdomain,
           owner_id: user.id,
           status: "active",
           onboarding_completed: false,
@@ -191,10 +214,11 @@ async function registerHandler(req: Request) {
 
       if (orgResult.error) {
         console.error("❌ [REGISTER] Failed to create organization:", orgResult.error);
-        // Don't fail registration, just log the error
-      } else {
-        organizationId = orgResult.data.id;
-        console.log("✅ [REGISTER] Organization created:", organizationId);
+        throw new Error(`Organization creation failed: ${orgResult.error.message}`);
+      }
+      
+      organizationId = orgResult.data.id;
+      console.log("✅ [REGISTER] Organization created:", organizationId, "with subdomain:", finalSubdomain);
 
         // Create organization membership as owner
         const membershipResult = await supabaseAdmin
@@ -206,30 +230,42 @@ async function registerHandler(req: Request) {
             status: "active",
           });
 
-          if (membershipResult.error) {
-            console.error("❌ [REGISTER] Failed to create membership:", membershipResult.error);
-          } else {
-            console.log("✅ [REGISTER] Organization membership created");
-          }
-
         if (membershipResult.error) {
           console.error("❌ [REGISTER] Failed to create membership:", membershipResult.error);
-        } else {
-          console.log("✅ [REGISTER] Organization membership created");
+          throw new Error(`Membership creation failed: ${membershipResult.error.message}`);
         }
+        
+        console.log("✅ [REGISTER] Organization membership created");
 
         // Update user record with organization info as owner
-        await supabaseAdmin
+        const { error: updateError } = await supabaseAdmin
           .from("users")
           .update({ 
             organization_id: organizationId,
             role: "owner" // Always owner for registrations
           })
           .eq("id", user.id);
+          
+        if (updateError) {
+          console.error("❌ [REGISTER] Failed to update user with organization:", updateError);
+          throw new Error(`User update failed: ${updateError.message}`);
+        }
+        
+        console.log("✅ [REGISTER] User updated with organization");
       }
     } catch (orgError) {
-      console.error("❌ [REGISTER] Organization creation error:", orgError);
-      // Continue with registration even if org creation fails
+      console.error("❌ [REGISTER] Organization setup failed:", orgError);
+      
+      // Clean up the user record since org setup failed
+      await supabaseAdmin
+        .from("users")
+        .delete()
+        .eq("id", user.id);
+      
+      return NextResponse.json(
+        { error: "Account setup failed. Please try again with a different company name." },
+        { status: 500 }
+      );
     }
 
     // --- Audit (best effort; ignore failures)
