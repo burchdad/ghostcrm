@@ -133,7 +133,10 @@ export type Permission =
   | 'settings.view'
   | 'settings.edit'
   | 'settings.tenant'
-  | 'settings.integrations';
+  | 'settings.integrations'
+  
+  // Billing management
+  | 'billing.manage';
 
 // Role definitions with default permissions
 export const rolePermissions: Record<UserRole, Permission[]> = {
@@ -148,6 +151,7 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     'finance.view', 'finance.manage',
     'reports.view', 'reports.create', 'reports.advanced',
     'ai.view', 'ai.manage', 'ai.configure',
+    'billing.manage', // Owner-only billing access
     'settings.view', 'settings.edit', 'settings.tenant', 'settings.integrations'
   ],
   

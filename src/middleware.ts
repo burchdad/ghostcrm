@@ -30,7 +30,8 @@ const PUBLIC_PATHS = [
 // Simplified: Direct registration users are owners, subdomain users have different flow
 // Only need to protect a few owner-specific routes
 const OWNER_ONLY_ROUTES = [
-  "/owner"        // Owner-specific admin panel - billing removed since only owners register
+  "/billing",     // Owner-only billing right after account creation
+  "/owner"        // Owner-specific admin panel
 ];
 
 function isPublicPath(pathname: string): boolean {
@@ -84,8 +85,18 @@ function isOwnerOnlyRoute(pathname: string): boolean {
   );
 }
 
-function canAccessOwnerRoute(role: string): boolean {
-  console.log(`🔍 [OWNER ROUTE CHECK] User Role: ${role}`);
+function canAccessOwnerRoute(role: string, pathname: string): boolean {
+  console.log(`🔍 [OWNER ROUTE CHECK] Path: ${pathname}, Role: ${role}`);
+  
+  if (pathname.startsWith('/billing')) {
+    // Billing requires owner role AND billing.manage permission
+    // For now, assume all owners have billing.manage (set in registration)
+    const canAccess = role === "owner";
+    console.log(`🔍 [BILLING ACCESS] ${canAccess ? '✅ ALLOWED' : '❌ DENIED'} for role: ${role}`);
+    return canAccess;
+  }
+  
+  // Other owner routes
   const isOwner = role === "owner";
   console.log(`🔍 [OWNER ROUTE CHECK] Is Owner: ${isOwner ? '✅ YES' : '❌ NO'}`);
   return isOwner;
@@ -138,7 +149,7 @@ export async function middleware(req: NextRequest) {
     userEmail: user?.email,
     organizationId: user?.organizationId,
     isOwnerOnlyRoute: isOwnerOnlyRoute(pathname),
-    canAccess: canAccessOwnerRoute(userRole)
+    canAccess: canAccessOwnerRoute(userRole, pathname)
   });
   
   // Enhanced debugging for JWT cookie issues
@@ -192,7 +203,7 @@ export async function middleware(req: NextRequest) {
     console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: ${finalIsMarketing} | Tenant: ${!finalIsMarketing}`);
 
     // Simple owner-only route protection
-    if (hasValidToken && isOwnerOnlyRoute(pathname) && !canAccessOwnerRoute(userRole)) {
+    if (hasValidToken && isOwnerOnlyRoute(pathname) && !canAccessOwnerRoute(userRole, pathname)) {
       console.log(`❌ [ACCESS DENIED] Owner-only route ${pathname} blocked for role: ${userRole}`);
       const url = req.nextUrl.clone();
       url.pathname = "/unauthorized";
@@ -222,7 +233,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // Simple owner-only route protection for localhost
-    if (isOwnerOnlyRoute(pathname) && !canAccessOwnerRoute(userRole)) {
+    if (isOwnerOnlyRoute(pathname) && !canAccessOwnerRoute(userRole, pathname)) {
       console.log(`❌ [LOCALHOST ACCESS DENIED] Owner-only route ${pathname} blocked for role: ${userRole}`);
       const url = req.nextUrl.clone();
       url.pathname = "/unauthorized";
@@ -236,7 +247,7 @@ export async function middleware(req: NextRequest) {
   // For production/Vercel domains, handle authenticated users properly
   if (hasValidToken) {
     // Simple owner-only route protection for production
-    if (isOwnerOnlyRoute(pathname) && !canAccessOwnerRoute(userRole)) {
+    if (isOwnerOnlyRoute(pathname) && !canAccessOwnerRoute(userRole, pathname)) {
       console.log(`❌ [PRODUCTION ACCESS DENIED] Owner-only route ${pathname} blocked for role: ${userRole}`);
       const url = req.nextUrl.clone();
       url.pathname = "/unauthorized";

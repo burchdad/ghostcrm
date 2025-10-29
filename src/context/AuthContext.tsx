@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   tenant: Tenant | null;
   isLoading: boolean;
+  authReady: boolean; // Track when auth initialization is complete
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
 
   // Initialize auth state on mount
   useEffect(() => {
@@ -114,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('auth_token');
     } finally {
       setIsLoading(false);
+      setAuthReady(true); // Auth initialization complete
     }
   }
 
@@ -212,6 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     tenant,
     isLoading,
+    authReady,
     login,
     logout,
     hasPermission,
@@ -235,6 +239,7 @@ export function useAuth() {
       user: null,
       tenant: null,
       isLoading: false,
+      authReady: true, // For public pages, auth is always "ready"
       login: async () => ({ success: false, message: 'Auth not available' }),
       logout: () => {},
       hasPermission: () => false,

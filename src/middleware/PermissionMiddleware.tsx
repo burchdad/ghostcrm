@@ -15,6 +15,14 @@ interface RoutePermission {
 
 // Define protected routes and their required permissions
 const PROTECTED_ROUTES: RoutePermission[] = [
+  // Billing - Owner-only, right after account creation
+  {
+    path: '/billing',
+    requiredPermissions: ['billing.manage'],
+    allowedRoles: ['owner'],
+    requireTenantAccess: false // New owner might not have tenantId yet
+  },
+
   // Owner routes
   {
     path: '/owner',
@@ -185,31 +193,34 @@ interface PermissionMiddlewareProps {
 
 // Component to protect individual routes
 export function RouteGuard({ children, fallbackComponent: FallbackComponent }: PermissionMiddlewareProps) {
-  const { user, isLoading, hasPermission } = useAuth();
+  const { user, isLoading, hasPermission, authReady } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
+  // Helper function for path matching
+  const startsWithSeg = (path: string, base: string) =>
+    path === base || path.startsWith(base + '/');
+
   useEffect(() => {
-    if (isLoading) return;
+    if (!authReady) return; // Critical: don't decide before auth is ready
 
     // Define public paths that don't require authentication
     const publicPaths = [
-      '/',
+      '/',             // landing
       '/login',
       '/register',
       '/reset-password',
-      '/pricing',
-      '/marketing',
-      '/demo',
+      '/marketing',    // marketing section root
+      '/pricing',      // public pricing page  
+      '/features',     // public features page
+      '/demo',         // free demo landing
       '/terms',
       '/privacy'
     ];
 
     // Check if current path is public
-    const isPublicPath = publicPaths.some(path => 
-      pathname === path || pathname.startsWith(path + '/')
-    );
+    const isPublicPath = publicPaths.some(path => startsWithSeg(pathname, path));
 
     // If it's a public path, allow access without authentication
     if (isPublicPath) {
@@ -223,16 +234,10 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
       return;
     }
 
-    // Find matching route configuration
-    const routeConfig = PROTECTED_ROUTES.find(route => pathname.startsWith(route.path));
+    // Find matching route configuration (includes /billing rule above)
+    const routeConfig = PROTECTED_ROUTES.find(route => startsWithSeg(pathname, route.path));
     
     if (!routeConfig) {
-      // Special handling for billing - only require login, no complex permissions
-      if (pathname.startsWith('/billing')) {
-        setIsAuthorized(true);
-        return;
-      }
-      
       // No specific route protection, allow access
       setIsAuthorized(true);
       return;
@@ -261,10 +266,10 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     }
 
     setIsAuthorized(true);
-  }, [user, isLoading, pathname, hasPermission, router]);
+  }, [authReady, user, pathname, hasPermission, router]);
 
   // Show loading state
-  if (isLoading || isAuthorized === null) {
+  if (!authReady || isAuthorized === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
