@@ -30,8 +30,7 @@ const PUBLIC_PATHS = [
 // Simplified: Direct registration users are owners, subdomain users have different flow
 // Only need to protect a few owner-specific routes
 const OWNER_ONLY_ROUTES = [
-  "/billing",     // Only owners can access billing
-  "/owner"        // Owner-specific admin panel
+  "/owner"        // Owner-specific admin panel - billing removed since only owners register
 ];
 
 function isPublicPath(pathname: string): boolean {
