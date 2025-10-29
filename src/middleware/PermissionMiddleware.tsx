@@ -18,9 +18,9 @@ const PROTECTED_ROUTES: RoutePermission[] = [
   // Billing - Owner-only, right after account creation
   {
     path: '/billing',
-    requiredPermissions: ['billing.manage'],
-    allowedRoles: ['owner'],
-    requireTenantAccess: false // New owner might not have tenantId yet
+    requiredPermissions: [],               // <- no explicit permission
+    allowedRoles: ['owner'],               // <- owner-only
+    requireTenantAccess: false             // <- allow pre-tenant owners
   },
 
   // Owner routes
