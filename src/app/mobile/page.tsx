@@ -45,44 +45,18 @@ export default function MobileDashboard() {
 
   const loadDashboardData = async () => {
     try {
-      // Simulate API calls for mobile dashboard data
+      // Clean production state - no mock data
       setStats({
-        totalLeads: 47,
-        todayAppointments: 8,
-        thisWeekSales: 12,
-        inventoryCount: 156,
-        pendingTasks: 23
+        totalLeads: 0,
+        todayAppointments: 0,
+        thisWeekSales: 0,
+        inventoryCount: 0,
+        pendingTasks: 0
       });
 
       setRecentActivity([
-        {
-          id: '1',
-          type: 'lead',
-          title: 'New lead: John Smith - 2024 Honda Civic',
-          time: '5 min ago',
-          priority: 'high'
-        },
-        {
-          id: '2',
-          type: 'appointment',
-          title: 'Test drive scheduled with Sarah Johnson',
-          time: '15 min ago',
-          priority: 'medium'
-        },
-        {
-          id: '3',
-          type: 'sale',
-          title: 'Sale completed: Mike Davis - $28,500',
-          time: '1 hour ago',
-          priority: 'high'
-        },
-        {
-          id: '4',
-          type: 'task',
-          title: 'Follow up with Jennifer Brown',
-          time: '2 hours ago',
-          priority: 'medium'
-        }
+        // No mock activity - clean state
+        // Real activity will be loaded from API when implemented
       ]);
 
       setLoading(false);

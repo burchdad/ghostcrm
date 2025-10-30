@@ -18,30 +18,8 @@ export function NotificationsDropdown() {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      title: t('New Lead Assigned', 'notifications'),
-      message: t('You have been assigned a new lead: John Smith', 'notifications'),
-      time: t('5 minutes ago', 'common'),
-      read: false,
-      type: 'info'
-    },
-    {
-      id: '2',
-      title: t('Deal Won!', 'notifications'),
-      message: t('Congratulations! Deal with ABC Corp closed successfully.', 'notifications'),
-      time: t('1 hour ago', 'common'),
-      read: false,
-      type: 'success'
-    },
-    {
-      id: '3',
-      title: t('Appointment Reminder', 'notifications'),
-      message: t('You have a meeting with Sarah Johnson in 30 minutes', 'notifications'),
-      time: t('2 hours ago', 'common'),
-      read: true,
-      type: 'warning'
-    }
+    // No mock notifications - start with clean state
+    // Real notifications will be loaded from API when implemented
   ]);
 
   const unreadCount = notifications.filter(n => !n.read).length;

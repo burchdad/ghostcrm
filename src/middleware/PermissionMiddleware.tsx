@@ -23,13 +23,13 @@ const PROTECTED_ROUTES: RoutePermission[] = [
     requireTenantAccess: false             // <- allow pre-tenant owners
   },
 
-  // Owner routes
-  {
-    path: '/owner',
-    requiredPermissions: ['system.owner'],
-    allowedRoles: ['owner'],
-    requireTenantAccess: false
-  },
+  // Owner routes - handled separately in the useEffect
+  // {
+  //   path: '/owner',
+  //   requiredPermissions: ['system.owner'],
+  //   allowedRoles: ['owner'],
+  //   requireTenantAccess: false
+  // },
 
   // Admin routes
   {
@@ -211,6 +211,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
       '/login',
       '/register',
       '/reset-password',
+      '/owner/login',  // software owner login
       '/marketing',    // marketing section root
       '/pricing',      // public pricing page  
       '/features',     // public features page
@@ -225,6 +226,36 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     // If it's a public path, allow access without authentication
     if (isPublicPath) {
       setIsAuthorized(true);
+      return;
+    }
+
+    // Special handling for software owner routes
+    if (startsWithSeg(pathname, '/owner')) {
+      // Check for owner session in localStorage
+      const ownerSession = localStorage.getItem('ownerSession');
+      if (ownerSession) {
+        try {
+          const session = JSON.parse(ownerSession);
+          const expires = new Date(session.expires);
+          
+          // Check if session is still valid
+          if (expires > new Date()) {
+            console.log('✅ [ROUTE_GUARD] Owner session valid, allowing access to:', pathname);
+            setIsAuthorized(true);
+            return;
+          } else {
+            console.log('❌ [ROUTE_GUARD] Owner session expired, removing and redirecting');
+            localStorage.removeItem('ownerSession');
+          }
+        } catch (error) {
+          console.log('❌ [ROUTE_GUARD] Invalid owner session, removing');
+          localStorage.removeItem('ownerSession');
+        }
+      }
+      
+      // No valid owner session for owner route
+      console.log('❌ [ROUTE_GUARD] No valid owner session, redirecting to owner login');
+      router.push('/owner/login');
       return;
     }
 

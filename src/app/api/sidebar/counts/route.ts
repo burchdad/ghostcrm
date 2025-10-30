@@ -16,18 +16,18 @@ interface SidebarCounts {
 
 // Function to get counts from database
 async function getSidebarCounts(tenantId?: string): Promise<SidebarCounts> {
-  // For development/demo mode, return mock realistic counts that match actual data
-  // In production, this would connect directly to the database
+  // Return empty counts for clean production environment
+  // Only show counts that represent actual system state
   return {
-    leads: 3, // Updated to match actual demo leads count
-    deals: 8,
-    dashboard: 1,
-    inventory: 47,
-    calendar: 12,
-    automation: 3,
-    collaboration: 5,
-    performance: 1,
-    finance: 2,
+    leads: 0,        // No leads in clean system
+    deals: 0,        // No deals in clean system  
+    dashboard: 0,    // No dashboard notifications
+    inventory: 0,    // No inventory items
+    calendar: 0,     // No calendar events
+    automation: 1,   // Keep automation count for built workflows
+    collaboration: 0,// No collaboration items
+    performance: 0,  // No performance alerts
+    finance: 0,      // No finance items
   };
 }
 

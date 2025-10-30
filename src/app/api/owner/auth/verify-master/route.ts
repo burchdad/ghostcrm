@@ -49,8 +49,15 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
   const userAgent = req.headers.get('user-agent');
 
+  // Debug logging
+  console.log('🔐 Owner Auth Debug:');
+  console.log('OWNER_MASTER_KEY exists:', !!OWNER_MASTER_KEY);
+  console.log('OWNER_MASTER_KEY length:', OWNER_MASTER_KEY?.length || 0);
+  console.log('OWNER_MASTER_KEY_HASH exists:', !!OWNER_MASTER_KEY_HASH);
+
   try {
     const { masterKey } = await req.json();
+    console.log('Received masterKey length:', masterKey?.length || 0);
 
     if (!masterKey) {
       await logOwnerAuthAttempt(ip, userAgent, false, 'master_key_missing');
@@ -64,9 +71,15 @@ export async function POST(req: NextRequest) {
     let isValidMasterKey = false;
     
     if (OWNER_MASTER_KEY && masterKey === OWNER_MASTER_KEY) {
+      console.log('✅ Direct comparison match');
       isValidMasterKey = true;
     } else if (OWNER_MASTER_KEY_HASH && hashMasterKey(masterKey) === OWNER_MASTER_KEY_HASH) {
+      console.log('✅ Hash comparison match');
       isValidMasterKey = true;
+    } else {
+      console.log('❌ No match - Direct:', masterKey === OWNER_MASTER_KEY);
+      console.log('❌ Expected:', OWNER_MASTER_KEY);
+      console.log('❌ Received:', masterKey);
     }
 
     if (!isValidMasterKey) {

@@ -79,14 +79,46 @@ function parseJwtCookie(req: NextRequest) {
   }
 }
 
+function parseOwnerSession(req: NextRequest) {
+  const ownerToken = req.cookies.get("owner_session")?.value;
+  if (!ownerToken) {
+    console.log("❌ [OWNER_SESSION] No owner_session cookie found");
+    return { token: null, session: null };
+  }
+  
+  try {
+    const payload = JSON.parse(
+      Buffer.from(ownerToken.split(".")[1], "base64").toString()
+    );
+    console.log("✅ [OWNER_SESSION] Successfully decoded owner session:", {
+      type: payload.type,
+      level: payload.level,
+      permissions: payload.permissions,
+      issued: new Date(payload.issued).toISOString(),
+      expires: new Date(payload.expires).toISOString()
+    });
+    return { 
+      token: ownerToken, 
+      session: { 
+        ...payload, 
+        role: 'software_owner',
+        isSoftwareOwner: true 
+      } 
+    };
+  } catch (error) {
+    console.log("❌ [OWNER_SESSION] Failed to decode owner session:", error);
+    return { token: ownerToken, session: null };
+  }
+}
+
 function isOwnerOnlyRoute(pathname: string): boolean {
   return OWNER_ONLY_ROUTES.some(route => 
     pathname === route || pathname.startsWith(route + "/")
   );
 }
 
-function canAccessOwnerRoute(role: string, pathname: string): boolean {
-  console.log(`🔍 [OWNER ROUTE CHECK] Path: ${pathname}, Role: ${role}`);
+function canAccessOwnerRoute(role: string, pathname: string, isSoftwareOwner: boolean = false): boolean {
+  console.log(`🔍 [OWNER ROUTE CHECK] Path: ${pathname}, Role: ${role}, Software Owner: ${isSoftwareOwner}`);
   
   if (pathname.startsWith('/billing')) {
     // Billing requires owner role AND billing.manage permission
@@ -96,7 +128,14 @@ function canAccessOwnerRoute(role: string, pathname: string): boolean {
     return canAccess;
   }
   
-  // Other owner routes
+  if (pathname.startsWith('/owner')) {
+    // Owner dashboard and related routes require software owner authentication
+    const canAccess = isSoftwareOwner && role === "software_owner";
+    console.log(`🔍 [SOFTWARE OWNER ACCESS] ${canAccess ? '✅ ALLOWED' : '❌ DENIED'} for role: ${role}, isSoftwareOwner: ${isSoftwareOwner}`);
+    return canAccess;
+  }
+  
+  // Other owner routes (legacy)
   const isOwner = role === "owner";
   console.log(`🔍 [OWNER ROUTE CHECK] Is Owner: ${isOwner ? '✅ YES' : '❌ NO'}`);
   return isOwner;
@@ -136,34 +175,60 @@ export async function middleware(req: NextRequest) {
   
   console.log(`🚀 [MIDDLEWARE START] ${hostname}${pathname}`);
   
-  // Parse JWT token once for all authentication checks
+  // Parse both JWT token and owner session
   const { token: jwtToken, user } = parseJwtCookie(req);
-  const hasValidToken = !!(jwtToken && user);
-  const userRole = (user?.role as string) || "sales_rep";
+  const { token: ownerToken, session: ownerSession } = parseOwnerSession(req);
+  
+  // Determine authentication status - prioritize owner session for /owner routes
+  let hasValidToken: boolean;
+  let userRole: string;
+  let isSoftwareOwner: boolean = false;
+  let authUser: any;
+  
+  if (pathname.startsWith('/owner') && ownerSession) {
+    // Use owner session for owner routes
+    hasValidToken = !!ownerSession;
+    userRole = ownerSession.role || 'software_owner';
+    isSoftwareOwner = ownerSession.isSoftwareOwner || false;
+    authUser = ownerSession;
+    console.log(`🔑 [AUTH] Using OWNER SESSION for ${pathname}`);
+  } else {
+    // Use regular JWT for all other routes
+    hasValidToken = !!(jwtToken && user);
+    userRole = (user?.role as string) || "sales_rep";
+    isSoftwareOwner = false;
+    authUser = user;
+    console.log(`🔑 [AUTH] Using JWT TOKEN for ${pathname}`);
+  }
   
   console.log(`🔍 [MIDDLEWARE] Authentication Status:`, {
     pathname,
     hostname,
     hasValidToken,
     userRole,
-    userEmail: user?.email,
-    organizationId: user?.organizationId,
+    userEmail: authUser?.email || 'N/A',
+    organizationId: authUser?.organizationId,
+    isSoftwareOwner,
     isOwnerOnlyRoute: isOwnerOnlyRoute(pathname),
-    canAccess: canAccessOwnerRoute(userRole, pathname)
+    canAccess: canAccessOwnerRoute(userRole, pathname, isSoftwareOwner)
   });
   
-  // Enhanced debugging for JWT cookie issues
-  console.log("🔍 [MIDDLEWARE DEBUG] JWT Analysis:", {
+  // Enhanced debugging for authentication
+  console.log("🔍 [MIDDLEWARE DEBUG] Authentication Analysis:", {
     pathname,
     hostname,
-    hasCookie: !!jwtToken,
-    cookieLength: jwtToken?.length || 0,
+    hasJwtCookie: !!jwtToken,
+    hasOwnerSession: !!ownerToken,
+    jwtCookieLength: jwtToken?.length || 0,
+    ownerTokenLength: ownerToken?.length || 0,
     hasUser: !!user,
     userRole,
-    organizationId: user?.organizationId,
-    tenantId: user?.tenantId,
+    isSoftwareOwner,
+    organizationId: authUser?.organizationId,
+    tenantId: authUser?.tenantId,
     hasValidToken,
-    cookiePreview: jwtToken ? jwtToken.substring(0, 50) + "..." : "none"
+    authMethod: pathname.startsWith('/owner') && ownerSession ? 'OWNER_SESSION' : 'JWT_TOKEN',
+    cookiePreview: (pathname.startsWith('/owner') && ownerToken ? ownerToken : jwtToken)?.substring(0, 50) + "..." || "none"
   });
   
   // Check if path is public (no authentication required)
@@ -203,8 +268,8 @@ export async function middleware(req: NextRequest) {
     console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: ${finalIsMarketing} | Tenant: ${!finalIsMarketing}`);
 
     // Simple owner-only route protection
-    if (hasValidToken && isOwnerOnlyRoute(pathname) && !canAccessOwnerRoute(userRole, pathname)) {
-      console.log(`❌ [ACCESS DENIED] Owner-only route ${pathname} blocked for role: ${userRole}`);
+    if (hasValidToken && isOwnerOnlyRoute(pathname) && !canAccessOwnerRoute(userRole, pathname, isSoftwareOwner)) {
+      console.log(`❌ [ACCESS DENIED] Owner-only route ${pathname} blocked for role: ${userRole}, isSoftwareOwner: ${isSoftwareOwner}`);
       const url = req.nextUrl.clone();
       url.pathname = "/unauthorized";
       return NextResponse.rewrite(url);

@@ -25,7 +25,7 @@ NEXTAUTH_URL=https://ghostcrm-liard.vercel.app
 
 ### Owner Authentication
 ```bash
-OWNER_MASTER_KEY=GhostCRM_Owner_Master_Key_2024!@#$
+OWNER_MASTER_KEY=GhostCRM_Owner_Master_Key_2024!@
 OWNER_ACCESS_CODE=GhostCRM_Admin_Access_2024
 OWNER_VERIFICATION_PIN=789123
 ```
