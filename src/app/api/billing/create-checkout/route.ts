@@ -14,12 +14,16 @@ interface CreateCheckoutRequest {
   tenantId?: string;
   customerId?: string;
   trialDays?: number;
+  billing?: 'monthly' | 'yearly';
+  promoCode?: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: CreateCheckoutRequest = await request.json()
-    const { priceId, planId, successUrl, cancelUrl, tenantId, customerId, trialDays } = body
+    const { priceId, planId, successUrl, cancelUrl, tenantId, customerId, trialDays, billing, promoCode } = body
+
+    console.log(`🛒 [CHECKOUT] Creating session for plan: ${planId}, billing: ${billing}, promo: ${promoCode || 'none'}`)
 
     // Validate required fields
     if (!priceId || !planId) {
@@ -53,12 +57,16 @@ export async function POST(request: NextRequest) {
           cancel_url: cancelUrl || `${process.env.NEXT_PUBLIC_APP_URL}/billing/cancel`,
           metadata: {
             planId,
+            billing: billing || 'monthly',
             ...(tenantId && { tenantId }),
+            ...(promoCode && { promoCode }),
           },
           subscription_data: {
             metadata: {
               planId,
+              billing: billing || 'monthly',
               ...(tenantId && { tenantId }),
+              ...(promoCode && { promoCode }),
             },
             ...(trialDays && {
               trial_period_days: trialDays,

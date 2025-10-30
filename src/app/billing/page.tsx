@@ -258,23 +258,51 @@ export default function BillingPage() {
     
     setLoading(true)
     try {
-      // For now, we'll use placeholder price IDs. In production, these should be from your Stripe dashboard
-      const priceIds = {
-        starter: 'price_starter_monthly', // Replace with actual Stripe price ID
-        professional: 'price_professional_monthly', // Replace with actual Stripe price ID
-        enterprise: 'price_enterprise_monthly' // Replace with actual Stripe price ID
+      // Get the correct Stripe price ID from our product mapping system
+      const localProductId = isAnnual 
+        ? `plan_${selectedPlan}_yearly` 
+        : `plan_${selectedPlan}_monthly`
+
+      console.log(`🔄 [CHECKOUT] Looking up price ID for: ${localProductId}`)
+
+      // First, try to get the Stripe price ID from our product mapping
+      const mappingResponse = await fetch(`/api/stripe/product-mapping?localId=${localProductId}`)
+      let priceId = null
+
+      if (mappingResponse.ok) {
+        const mappingData = await mappingResponse.json()
+        priceId = mappingData.stripePriceId
+        console.log(`✅ [CHECKOUT] Found mapped price ID: ${priceId}`)
+      } else {
+        console.warn(`⚠️ [CHECKOUT] No price mapping found for ${localProductId}, using fallback`)
+        
+        // Fallback to hardcoded price IDs (for development/testing)
+        const fallbackPriceIds = {
+          starter: isAnnual ? 'price_starter_yearly' : 'price_starter_monthly',
+          professional: isAnnual ? 'price_professional_yearly' : 'price_professional_monthly', 
+          enterprise: isAnnual ? 'price_enterprise_yearly' : 'price_enterprise_monthly'
+        }
+        priceId = fallbackPriceIds[selectedPlan as keyof typeof fallbackPriceIds]
+        console.log(`🔄 [CHECKOUT] Using fallback price ID: ${priceId}`)
+      }
+
+      if (!priceId) {
+        throw new Error('No price ID found for selected plan')
       }
 
       const response = await fetch('/api/billing/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          priceId: priceIds[selectedPlan as keyof typeof priceIds],
+          priceId,
           planId: selectedPlan,
           successUrl: `${window.location.origin}/billing/success`,
           cancelUrl: `${window.location.origin}/billing/cancel`,
           tenantId: 'current-tenant-id', // Get from auth context
-          trialDays: 14
+          trialDays: 14,
+          billing: isAnnual ? 'yearly' : 'monthly',
+          // Include promo code if applied
+          ...(promoDiscount && { promoCode: promoCode.toUpperCase() })
         })
       })
 
@@ -285,7 +313,10 @@ export default function BillingPage() {
       }
 
       if (result.url) {
+        console.log(`🚀 [CHECKOUT] Redirecting to Stripe: ${result.url}`)
         window.location.href = result.url
+      } else {
+        throw new Error('No checkout URL returned')
       }
     } catch (error) {
       console.error('Checkout error:', error)
