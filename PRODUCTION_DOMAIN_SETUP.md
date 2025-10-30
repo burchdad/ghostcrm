@@ -31,7 +31,20 @@ Complete configuration update to migrate GhostCRM from development/staging to pr
 - `VERCEL_ENV_SETUP.md` - Updated base URLs to ghostcrm.ai
 - Added `NEXT_PUBLIC_APP_URL=https://ghostcrm.ai`
 
-### **5. Test Configuration**
+### **5. Stripe Payment Integration**
+✅ **Required Stripe environment variables:**
+- `STRIPE_SECRET_KEY` - Your Stripe secret key (production)
+- `STRIPE_PUBLISHABLE_KEY` - Your Stripe publishable key (production)
+- `STRIPE_WEBHOOK_SECRET` - Webhook endpoint secret for signature verification
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Client-side publishable key (if needed for frontend)
+
+**Stripe Dashboard Configuration:**
+- ✅ Webhook endpoint: `https://ghostcrm.ai/api/webhooks/stripe`
+- ✅ Success URL: `https://ghostcrm.ai/billing/success`
+- ✅ Cancel URL: `https://ghostcrm.ai/billing/cancel`
+- ✅ Create subscription prices for each plan (starter, professional, enterprise)
+
+### **6. Test Configuration**
 ✅ **Updated test base URLs in:**
 - `playwright.config.ts`
 - `tests/health.spec.ts`

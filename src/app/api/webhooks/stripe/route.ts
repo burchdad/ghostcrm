@@ -1,11 +1,12 @@
 /**
  * STRIPE WEBHOOK HANDLER
  * Processes Stripe webhooks for subscription events and triggers feature provisioning
- * Note: Stripe types removed for now - add when Stripe is installed
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
+import Stripe from 'stripe';
+import { createSafeStripeClient } from '@/lib/stripe-safe';
 import { createSupabaseServer } from '@/utils/supabase/server';
 import { provisionSubscription, updateSubscription, suspendSubscription } from '@/lib/features/provisioning';
 import { PlanId } from '@/lib/features/pricing';
@@ -13,72 +14,43 @@ import { FeatureId } from '@/lib/features/definitions';
 
 export const runtime = 'nodejs';
 
-// Simplified webhook event type (replace with proper Stripe types when installed)
-interface WebhookEvent {
-  id: string;
-  type: string;
-  data: {
-    object: any;
-  };
-  created: number;
-}
-
-interface SubscriptionObject {
-  id: string;
-  customer: string;
-  status: string;
-  items: {
-    data: Array<{
-      price: {
-        id: string;
-        recurring?: {
-          interval: string;
-        };
-        metadata: Record<string, string>;
-      };
-    }>;
-  };
-  metadata: Record<string, string>;
-  trial_end?: number;
-}
-
-interface InvoiceObject {
-  id: string;
-  subscription?: string;
-  amount_paid: number;
-  amount_due: number;
-  currency: string;
-  number: string;
-  last_finalization_error?: {
-    message: string;
-  };
-}
-
-interface CheckoutSessionObject {
-  id: string;
-  mode: string;
-  subscription?: string;
-  payment_intent?: string;
-}
-
 /**
- * POST /api/webhooks/payment
- * Handle payment webhook events for subscription management
+ * POST /api/webhooks/stripe
+ * Handle Stripe webhook events for subscription management
  */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const rawBody = await req.text();
     const headersList = await headers();
-    const signature = headersList.get('webhook-signature');
+    const signature = headersList.get('stripe-signature');
 
-    // TODO: Add proper webhook signature verification when payment provider is chosen
-    if (!signature && process.env.NODE_ENV === 'production') {
-      console.error('Missing webhook signature');
+    if (!signature) {
+      console.error('Missing Stripe signature');
       return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
     }
 
+    const stripe = createSafeStripeClient();
+    if (!stripe) {
+      console.error('Stripe not configured');
+      return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
+    }
+
+    let event: Stripe.Event;
+
+    try {
+      // Verify webhook signature
+      event = stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET!
+      );
+    } catch (err) {
+      console.error('Webhook signature verification failed:', err);
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+    }
+
     // Process the event
-    const result = await processWebhookEvent(body as WebhookEvent);
+    const result = await processWebhookEvent(event);
 
     if (result.success) {
       return NextResponse.json({ received: true, processed: result.processed });
@@ -94,458 +66,258 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Process different webhook event types
+ * Process different Stripe webhook event types
  */
-async function processWebhookEvent(event: WebhookEvent): Promise<{
+async function processWebhookEvent(event: Stripe.Event): Promise<{
   success: boolean;
   processed: boolean;
   error?: string;
 }> {
   try {
-    // Log the webhook event
-    await logWebhookEvent(event);
+    console.log(`Processing Stripe webhook: ${event.type}`);
 
     switch (event.type) {
-      case 'customer.subscription.created':
-      case 'subscription.created':
-        return await handleSubscriptionCreated(event.data.object as SubscriptionObject);
+      case 'checkout.session.completed':
+        return await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
       
+      case 'customer.subscription.created':
       case 'customer.subscription.updated':
-      case 'subscription.updated':
-        return await handleSubscriptionUpdated(event.data.object as SubscriptionObject);
+        return await handleSubscriptionChange(event.data.object as Stripe.Subscription);
       
       case 'customer.subscription.deleted':
-      case 'subscription.cancelled':
-        return await handleSubscriptionDeleted(event.data.object as SubscriptionObject);
+        return await handleSubscriptionCanceled(event.data.object as Stripe.Subscription);
       
       case 'invoice.payment_succeeded':
-      case 'payment.succeeded':
-        return await handlePaymentSucceeded(event.data.object as InvoiceObject);
+        return await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
       
       case 'invoice.payment_failed':
-      case 'payment.failed':
-        return await handlePaymentFailed(event.data.object as InvoiceObject);
-      
-      case 'customer.subscription.trial_will_end':
-      case 'trial.ending':
-        return await handleTrialWillEnd(event.data.object as SubscriptionObject);
-      
-      case 'checkout.session.completed':
-      case 'purchase.completed':
-        return await handleCheckoutCompleted(event.data.object as CheckoutSessionObject);
-      
+        return await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+
       default:
         console.log(`Unhandled event type: ${event.type}`);
         return { success: true, processed: false };
     }
-
   } catch (error) {
-    console.error('Event processing error:', error);
-    return { 
-      success: false, 
-      processed: false, 
-      error: (error as Error)?.message || 'Unknown error' 
-    };
-  }
-}
-
-/**
- * Handle subscription created event
- */
-async function handleSubscriptionCreated(subscription: SubscriptionObject): Promise<{
-  success: boolean;
-  processed: boolean;
-}> {
-  try {
-    const tenantId = subscription.metadata.tenant_id;
-    const planId = subscription.metadata.plan_id as PlanId;
-
-    if (!tenantId || !planId) {
-      throw new Error('Missing tenant_id or plan_id in subscription metadata');
-    }
-
-    // Extract add-on features from subscription items
-    const addOnFeatures = extractAddOnFeatures(subscription) as FeatureId[];
-
-    // Determine billing cycle
-    const billingCycle = subscription.items.data[0]?.price?.recurring?.interval === 'year' 
-      ? 'yearly' as const 
-      : 'monthly' as const;
-
-    // Provision the subscription
-    const result = await provisionSubscription({
-      tenantId,
-      subscriptionId: subscription.id,
-      planId,
-      addOnFeatures,
-      billingCycle,
-      status: subscription.status === 'trialing' ? 'trial' : 'active',
-      metadata: {
-        subscription_id: subscription.id,
-        customer_id: subscription.customer,
-        trial_end: subscription.trial_end
-      }
-    });
-
-    if (!result.success) {
-      throw new Error(`Provisioning failed: ${result.errors.join(', ')}`);
-    }
-
-    console.log(`Subscription created and provisioned for tenant ${tenantId}`);
-    return { success: true, processed: true };
-
-  } catch (error) {
-    console.error('Subscription creation handling error:', error);
-    throw error;
-  }
-}
-
-/**
- * Handle subscription updated event
- */
-async function handleSubscriptionUpdated(subscription: SubscriptionObject): Promise<{
-  success: boolean;
-  processed: boolean;
-}> {
-  const supabase = await createSupabaseServer();
-
-  try {
-    const tenantId = subscription.metadata.tenant_id;
-    const planId = subscription.metadata.plan_id as PlanId;
-
-    if (!tenantId || !planId) {
-      throw new Error('Missing tenant_id or plan_id in subscription metadata');
-    }
-
-    // Get current subscription to detect changes
-    const { data: currentSub } = await supabase
-      .from('tenant_subscriptions')
-      .select('plan_id, add_on_features')
-      .eq('tenant_id', tenantId)
-      .single();
-
-    const addOnFeatures = extractAddOnFeatures(subscription) as FeatureId[];
-    const billingCycle = subscription.items.data[0]?.price?.recurring?.interval === 'year' 
-      ? 'yearly' as const 
-      : 'monthly' as const;
-
-    // Determine status
-    let status: 'active' | 'trial' | 'cancelled' | 'past_due' | 'inactive';
-    switch (subscription.status) {
-      case 'active':
-        status = 'active';
-        break;
-      case 'trialing':
-        status = 'trial';
-        break;
-      case 'canceled':
-      case 'cancelled':
-        status = 'cancelled';
-        break;
-      case 'past_due':
-        status = 'past_due';
-        break;
-      default:
-        status = 'inactive';
-    }
-
-    // Update the subscription
-    const result = await updateSubscription({
-      tenantId,
-      subscriptionId: subscription.id,
-      planId,
-      previousPlanId: currentSub?.plan_id,
-      addOnFeatures,
-      billingCycle,
-      status,
-      metadata: {
-        subscription_id: subscription.id,
-        customer_id: subscription.customer,
-        trial_end: subscription.trial_end
-      }
-    });
-
-    if (!result.success) {
-      throw new Error(`Subscription update failed: ${result.errors.join(', ')}`);
-    }
-
-    console.log(`Subscription updated for tenant ${tenantId}`);
-    return { success: true, processed: true };
-
-  } catch (error) {
-    console.error('Subscription update handling error:', error);
-    throw error;
-  }
-}
-
-/**
- * Handle subscription deleted event
- */
-async function handleSubscriptionDeleted(subscription: SubscriptionObject): Promise<{
-  success: boolean;
-  processed: boolean;
-}> {
-  try {
-    const tenantId = subscription.metadata.tenant_id;
-    const planId = subscription.metadata.plan_id as PlanId;
-
-    if (!tenantId || !planId) {
-      throw new Error('Missing tenant_id or plan_id in subscription metadata');
-    }
-
-    // Suspend the subscription
-    const result = await suspendSubscription({
-      tenantId,
-      subscriptionId: subscription.id,
-      planId,
-      addOnFeatures: [],
-      billingCycle: 'monthly',
-      status: 'cancelled'
-    });
-
-    if (!result.success) {
-      throw new Error(`Subscription suspension failed: ${result.errors.join(', ')}`);
-    }
-
-    console.log(`Subscription cancelled for tenant ${tenantId}`);
-    return { success: true, processed: true };
-
-  } catch (error) {
-    console.error('Subscription deletion handling error:', error);
-    throw error;
-  }
-}
-
-/**
- * Handle successful payment
- */
-async function handlePaymentSucceeded(invoice: InvoiceObject): Promise<{
-  success: boolean;
-  processed: boolean;
-}> {
-  const supabase = await createSupabaseServer();
-
-  try {
-    if (!invoice.subscription) {
-      return { success: true, processed: false };
-    }
-
-    // For now, we'll need to get tenant info differently since we don't have Stripe SDK
-    // This would need to be adapted based on your payment provider
-    console.log(`Payment succeeded for subscription ${invoice.subscription}`);
-
-    // Log billing event
-    const { data: subscription } = await supabase
-      .from('tenant_subscriptions')
-      .select('id, tenant_id')
-      .eq('stripe_subscription_id', invoice.subscription)
-      .single();
-
-    if (subscription) {
-      await supabase
-        .from('billing_events')
-        .insert({
-          subscription_id: subscription.id,
-          event_type: 'payment_succeeded',
-          amount: invoice.amount_paid,
-          currency: invoice.currency,
-          description: `Payment succeeded for invoice ${invoice.number}`,
-          status: 'processed',
-          processed_at: new Date().toISOString(),
-          event_data: {
-            invoice_id: invoice.id,
-            amount_paid: invoice.amount_paid,
-            currency: invoice.currency
-          }
-        });
-
-      // Update subscription to active if it was past_due
-      await supabase
-        .from('tenant_subscriptions')
-        .update({
-          status: 'active',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', subscription.id)
-        .eq('status', 'past_due');
-    }
-
-    return { success: true, processed: true };
-
-  } catch (error) {
-    console.error('Payment success handling error:', error);
-    throw error;
-  }
-}
-
-/**
- * Handle failed payment
- */
-async function handlePaymentFailed(invoice: InvoiceObject): Promise<{
-  success: boolean;
-  processed: boolean;
-}> {
-  const supabase = await createSupabaseServer();
-
-  try {
-    if (!invoice.subscription) {
-      return { success: true, processed: false };
-    }
-
-    console.log(`Payment failed for subscription ${invoice.subscription}`);
-
-    // Log billing event and update status
-    const { data: subscription } = await supabase
-      .from('tenant_subscriptions')
-      .select('id, tenant_id')
-      .eq('stripe_subscription_id', invoice.subscription)
-      .single();
-
-    if (subscription) {
-      // Update subscription to past_due
-      await supabase
-        .from('tenant_subscriptions')
-        .update({
-          status: 'past_due',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', subscription.id);
-
-      // Log billing event
-      await supabase
-        .from('billing_events')
-        .insert({
-          subscription_id: subscription.id,
-          event_type: 'payment_failed',
-          amount: invoice.amount_due,
-          currency: invoice.currency,
-          description: `Payment failed for invoice ${invoice.number}`,
-          status: 'processed',
-          processed_at: new Date().toISOString(),
-          event_data: {
-            invoice_id: invoice.id,
-            amount_due: invoice.amount_due,
-            currency: invoice.currency,
-            failure_reason: invoice.last_finalization_error?.message
-          }
-        });
-    }
-
-    return { success: true, processed: true };
-
-  } catch (error) {
-    console.error('Payment failure handling error:', error);
-    throw error;
-  }
-}
-
-/**
- * Handle trial will end event
- */
-async function handleTrialWillEnd(subscription: SubscriptionObject): Promise<{
-  success: boolean;
-  processed: boolean;
-}> {
-  const supabase = await createSupabaseServer();
-
-  try {
-    const tenantId = subscription.metadata.tenant_id;
-
-    if (!tenantId) {
-      throw new Error('Missing tenant_id in subscription metadata');
-    }
-
-    // Log the event for follow-up actions (emails, notifications, etc.)
-    const { data: sub } = await supabase
-      .from('tenant_subscriptions')
-      .select('id')
-      .eq('tenant_id', tenantId)
-      .single();
-
-    if (sub) {
-      await supabase
-        .from('billing_events')
-        .insert({
-          subscription_id: sub.id,
-          event_type: 'trial_ending',
-          description: 'Trial will end soon',
-          status: 'processed',
-          processed_at: new Date().toISOString(),
-          event_data: {
-            trial_end: subscription.trial_end,
-            days_remaining: subscription.trial_end 
-              ? Math.ceil((subscription.trial_end * 1000 - Date.now()) / (1000 * 60 * 60 * 24))
-              : 0
-          }
-        });
-    }
-
-    console.log(`Trial ending notification for tenant ${tenantId}`);
-    return { success: true, processed: true };
-
-  } catch (error) {
-    console.error('Trial ending handling error:', error);
-    throw error;
+    console.error('Error processing webhook event:', error);
+    return { success: false, processed: false, error: String(error) };
   }
 }
 
 /**
  * Handle checkout session completed
  */
-async function handleCheckoutCompleted(session: CheckoutSessionObject): Promise<{
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<{
   success: boolean;
   processed: boolean;
+  error?: string;
 }> {
   try {
+    console.log('Processing checkout session completed:', session.id);
+
     if (session.mode === 'subscription' && session.subscription) {
-      // Subscription created via checkout - will be handled by subscription.created event
-      console.log(`Checkout completed for subscription ${session.subscription}`);
-    } else if (session.mode === 'payment') {
-      // One-time payment - handle add-on purchases, etc.
-      console.log(`One-time payment completed: ${session.payment_intent}`);
+      // For subscription checkouts, the subscription.created event will handle provisioning
+      console.log('Subscription checkout completed, subscription events will handle provisioning');
+      return { success: true, processed: true };
+    }
+
+    if (session.mode === 'payment') {
+      // Handle one-time payments if needed
+      console.log('One-time payment completed');
+      return { success: true, processed: true };
+    }
+
+    return { success: true, processed: false };
+  } catch (error) {
+    console.error('Error handling checkout session completed:', error);
+    return { success: false, processed: false, error: String(error) };
+  }
+}
+
+/**
+ * Handle subscription changes (created/updated)
+ */
+async function handleSubscriptionChange(subscription: Stripe.Subscription): Promise<{
+  success: boolean;
+  processed: boolean;
+  error?: string;
+}> {
+  try {
+    console.log('Processing subscription change:', subscription.id);
+
+    const planId = subscription.metadata.planId as PlanId;
+    const tenantId = subscription.metadata.tenantId;
+
+    if (!planId) {
+      console.error('Missing planId in subscription metadata');
+      return { success: false, processed: false, error: 'Missing planId' };
+    }
+
+    const supabase = await createSupabaseServer();
+
+    // Update or create subscription record
+    const subscriptionData = {
+      stripe_subscription_id: subscription.id,
+      stripe_customer_id: subscription.customer as string,
+      plan_id: planId,
+      status: subscription.status,
+      current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+      current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
+      trial_end: (subscription as any).trial_end ? new Date((subscription as any).trial_end * 1000).toISOString() : null,
+      updated_at: new Date().toISOString(),
+      ...(tenantId && { tenant_id: tenantId }),
+    };
+
+    const { error: dbError } = await supabase
+      .from('subscriptions')
+      .upsert(subscriptionData, { onConflict: 'stripe_subscription_id' });
+
+    if (dbError) {
+      console.error('Database error:', dbError);
+      return { success: false, processed: false, error: dbError.message };
+    }
+
+    // Provision or update features based on subscription status
+    if (subscription.status === 'active' || subscription.status === 'trialing') {
+      if (tenantId) {
+        const context = {
+          tenantId,
+          subscriptionId: subscription.id,
+          planId,
+          addOnFeatures: [] as FeatureId[],
+          billingCycle: 'monthly' as const,
+          status: subscription.status as 'active' | 'trial',
+        };
+        await provisionSubscription(context);
+      }
     }
 
     return { success: true, processed: true };
-
   } catch (error) {
-    console.error('Checkout completion handling error:', error);
-    throw error;
+    console.error('Error handling subscription change:', error);
+    return { success: false, processed: false, error: String(error) };
   }
 }
 
 /**
- * Extract add-on features from subscription items
+ * Handle subscription cancellation
  */
-function extractAddOnFeatures(subscription: SubscriptionObject): string[] {
-  const addOns: string[] = [];
-  
-  for (const item of subscription.items.data) {
-    const featureId = item.price.metadata.feature_id;
-    if (featureId && item.price.metadata.is_add_on === 'true') {
-      addOns.push(featureId);
-    }
-  }
-  
-  return addOns;
-}
-
-/**
- * Log webhook events for audit trail
- */
-async function logWebhookEvent(event: WebhookEvent): Promise<void> {
-  const supabase = await createSupabaseServer();
-  
+async function handleSubscriptionCanceled(subscription: Stripe.Subscription): Promise<{
+  success: boolean;
+  processed: boolean;
+  error?: string;
+}> {
   try {
-    await supabase
-      .from('billing_events')
-      .insert({
-        event_type: event.type,
-        stripe_event_id: event.id,
-        description: `Webhook: ${event.type}`,
-        status: 'pending',
-        event_data: event.data
-      });
+    console.log('Processing subscription cancellation:', subscription.id);
+
+    const tenantId = subscription.metadata.tenantId;
+    const supabase = await createSupabaseServer();
+
+    // Update subscription status
+    const { error: dbError } = await supabase
+      .from('subscriptions')
+      .update({
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('stripe_subscription_id', subscription.id);
+
+    if (dbError) {
+      console.error('Database error:', dbError);
+      return { success: false, processed: false, error: dbError.message };
+    }
+
+    // Suspend features
+    if (tenantId) {
+      const context = {
+        tenantId,
+        subscriptionId: subscription.id,
+        planId: subscription.metadata.planId as PlanId || 'starter',
+        addOnFeatures: [] as FeatureId[],
+        billingCycle: 'monthly' as const,
+        status: 'cancelled' as const,
+      };
+      await suspendSubscription(context);
+    }
+
+    return { success: true, processed: true };
   } catch (error) {
-    console.error('Failed to log webhook event:', error);
+    console.error('Error handling subscription cancellation:', error);
+    return { success: false, processed: false, error: String(error) };
+  }
+}
+
+/**
+ * Handle successful invoice payment
+ */
+async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice): Promise<{
+  success: boolean;
+  processed: boolean;
+  error?: string;
+}> {
+  try {
+    console.log('Processing successful payment:', invoice.id);
+
+    if ((invoice as any).subscription) {
+      const supabase = await createSupabaseServer();
+
+      // Update last payment info
+      const { error: dbError } = await supabase
+        .from('subscriptions')
+        .update({
+          last_payment_at: new Date().toISOString(),
+          status: 'active',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('stripe_subscription_id', (invoice as any).subscription);
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+        return { success: false, processed: false, error: dbError.message };
+      }
+    }
+
+    return { success: true, processed: true };
+  } catch (error) {
+    console.error('Error handling successful payment:', error);
+    return { success: false, processed: false, error: String(error) };
+  }
+}
+
+/**
+ * Handle failed invoice payment
+ */
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<{
+  success: boolean;
+  processed: boolean;
+  error?: string;
+}> {
+  try {
+    console.log('Processing failed payment:', invoice.id);
+
+    if ((invoice as any).subscription) {
+      const supabase = await createSupabaseServer();
+
+      // Update subscription status
+      const { error: dbError } = await supabase
+        .from('subscriptions')
+        .update({
+          status: 'past_due',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('stripe_subscription_id', (invoice as any).subscription);
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+        return { success: false, processed: false, error: dbError.message };
+      }
+
+      // Optionally suspend features or send notifications
+    }
+
+    return { success: true, processed: true };
+  } catch (error) {
+    console.error('Error handling failed payment:', error);
+    return { success: false, processed: false, error: String(error) };
   }
 }
