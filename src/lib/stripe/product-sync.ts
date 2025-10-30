@@ -238,7 +238,7 @@ async function syncSingleProduct(
     
     let stripeProductId: string;
     let stripePriceId: string;
-    let status: 'created' | 'updated' | 'synced' = 'synced';
+    let status: 'created' | 'updated' | 'synced' | 'error' = 'synced';
 
     if (existingMapping && !options.forceUpdate) {
       // Product exists, verify it's still valid in Stripe
