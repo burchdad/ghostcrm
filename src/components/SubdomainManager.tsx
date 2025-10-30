@@ -1,13 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
-} from '@/components/ui/dialog';
+import Modal from '@/components/ui/Modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,7 +35,14 @@ import {
   Trash2,
   Pause,
   Play,
-  RefreshCw
+  RefreshCw,
+  Settings,
+  XCircle,
+  AlertTriangle,
+  Download,
+  Upload,
+  Eye,
+  Activity 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -306,15 +307,14 @@ export default function SubdomainManager({ isOpen, onClose }: SubdomainManagerPr
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
-            Subdomain Management
-          </DialogTitle>
-        </DialogHeader>
-
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Subdomain Management"
+      width="min(1200px, 92vw)"
+      maxHeight="90vh"
+    >
+      <div className="p-4 max-h-[80vh] overflow-y-auto">
         {/* Stats Dashboard */}
         {stats && (
           <div className="grid grid-cols-4 gap-4 mb-6">
@@ -616,12 +616,12 @@ export default function SubdomainManager({ isOpen, onClose }: SubdomainManagerPr
           </TabsContent>
         </Tabs>
 
-        <DialogFooter>
+        <div className="flex justify-end pt-4 border-t">
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </Modal>
   );
 }
