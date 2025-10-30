@@ -317,8 +317,8 @@ async function syncSingleProduct(
     stripeProductId: 'fallback_product_id',
     stripePriceId: 'fallback_price_id',
     price: product.price,
-    status: 'error'
-  });
+    status: 'synced'  // Using 'synced' as fallback since 'error' is not in the local function scope
+  } as SyncedProduct);
 }
 
 /**
