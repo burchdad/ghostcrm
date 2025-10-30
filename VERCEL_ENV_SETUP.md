@@ -31,6 +31,15 @@ OWNER_ACCESS_CODE=GhostCRM_Admin_Access_2024
 OWNER_VERIFICATION_PIN=789123
 ```
 
+### Stripe Configuration (Live Production Keys)
+```bash
+STRIPE_SECRET_KEY=sk_live_[YOUR_STRIPE_SECRET_KEY_HERE]
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_[YOUR_STRIPE_PUBLISHABLE_KEY_HERE]
+STRIPE_WEBHOOK_SECRET=whsec_[YOUR_WEBHOOK_SECRET_HERE]
+```
+
+**⚠️ SECURITY NOTE:** Never commit live Stripe keys to your repository. Add these directly in Vercel's environment variables dashboard.
+
 ### External APIs
 ```bash
 NEXT_PUBLIC_OPENAI_API_KEY=your_openai_api_key_here

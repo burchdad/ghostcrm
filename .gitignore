@@ -17,6 +17,11 @@ Thumbs.db
 .env*
 .env.local
 
+# Security - Never commit these files
+STRIPE_PRODUCTION_KEYS.txt
+*_PRODUCTION_KEYS.txt
+*_SECRETS.txt
+
 # IDE files
 .vscode/
 .idea/
