@@ -319,7 +319,9 @@ export async function middleware(req: NextRequest) {
       return NextResponse.rewrite(url);
     }
     
-    const subdomain = getSubdomain(hostname) || (hostname.includes("vercel.app") ? hostname.split(".")[0] : null);
+    const subdomain = getSubdomain(hostname) || 
+      (hostname.includes("vercel.app") ? hostname.split(".")[0] : null) ||
+      (hostname.includes("ghostcrm.ai") ? hostname.split(".")[0] : null);
     const tenantId = subdomain || "default";
     return handleTenantRequest(req, pathname, tenantId);
   }
@@ -357,9 +359,12 @@ function isMarketingRequest(hostname: string, subdomain: string | null, hasValid
     return !hasValidToken; // If has valid token = tenant, no token = marketing
   }
   
+  // Production domain handling for ghostcrm.ai
   // Main domain or www subdomain = marketing site
   return !subdomain || 
          subdomain === 'www' || 
+         hostname === 'ghostcrm.ai' ||
+         hostname === 'www.ghostcrm.ai' ||
          hostname === 'ghostdefenses.com' ||
          hostname === 'www.ghostdefenses.com';
 }

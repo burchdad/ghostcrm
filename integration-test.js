@@ -8,7 +8,7 @@ const path = require('path');
 
 class IntegrationTester {
   constructor() {
-    this.baseUrl = process.env.TEST_BASE_URL || 'http://localhost:3000';
+    this.baseUrl = process.env.TEST_BASE_URL || 'https://ghostcrm.ai';
     this.results = {
       timestamp: new Date().toISOString(),
       overall_status: 'unknown',

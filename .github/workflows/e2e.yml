@@ -11,7 +11,7 @@ jobs:
       - run: npx playwright install --with-deps
       - name: Run Playwright
         env:
-          APP_BASE_URL: http://localhost:3000
+          APP_BASE_URL: https://ghostcrm.ai
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_USER: ${{ secrets.DB_USER }}

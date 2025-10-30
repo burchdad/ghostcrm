@@ -92,11 +92,19 @@ export async function POST(req: NextRequest) {
 
 async function getTenantsList(): Promise<Tenant[]> {
   // TODO: Implement actual tenant discovery (query your multi-tenant DB)
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const domain = baseUrl.includes('localhost') ? 'localhost:3000' : 'ghostcrm.ai';
+  
+  const buildTenantUrl = (tenantId: string) => 
+    baseUrl.includes('localhost') 
+      ? `${baseUrl}?tenant=${tenantId}`
+      : `https://${tenantId}.${domain}`;
+
   return [
     {
       id: 'acme-corp',
       name: 'Acme Corporation',
-      url: 'https://acme-corp.ghostcrm.com',
+      url: buildTenantUrl('acme-corp'),
       status: 'active',
       created_at: '2024-01-15T10:00:00Z',
       last_test: '2024-01-20T14:30:00Z',
@@ -105,7 +113,7 @@ async function getTenantsList(): Promise<Tenant[]> {
     {
       id: 'tech-startup',
       name: 'Tech Startup Inc',
-      url: 'https://tech-startup.ghostcrm.com',
+      url: buildTenantUrl('tech-startup'),
       status: 'active',
       created_at: '2024-02-01T09:15:00Z',
       last_test: '2024-01-20T12:45:00Z',
@@ -114,7 +122,7 @@ async function getTenantsList(): Promise<Tenant[]> {
     {
       id: 'global-sales',
       name: 'Global Sales Ltd',
-      url: 'https://global-sales.ghostcrm.com',
+      url: buildTenantUrl('global-sales'),
       status: 'active',
       created_at: '2024-01-10T16:20:00Z',
       last_test: '2024-01-19T18:00:00Z',
@@ -279,7 +287,11 @@ function getTenantUrl(tenantId: string): string {
   if (tenantId === 'main') {
     return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   }
-  // TODO: resolve tenant subdomain from DB/config
-  return `https://${tenantId}.ghostcrm.com`;
+  // Use production domain for tenant URLs
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const domain = baseUrl.includes('localhost') ? 'localhost:3000' : 'ghostcrm.ai';
+  return baseUrl.includes('localhost') 
+    ? `${baseUrl}?tenant=${tenantId}`
+    : `https://${tenantId}.${domain}`;
 }
 

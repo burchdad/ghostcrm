@@ -15,9 +15,12 @@ export interface CORSConfig {
 const defaultConfig: CORSConfig = {
   allowedOrigins: [
     process.env.NODE_ENV === 'production' 
-      ? 'https://ghostdefenses.com'
+      ? 'https://ghostcrm.ai'
       : 'http://localhost:3000',
-    // Allow Vercel deployment domains
+    // Production domain
+    'https://ghostcrm.ai',
+    'https://www.ghostcrm.ai',
+    // Allow Vercel deployment domains for staging
     'https://ghostcrm-liard.vercel.app',
     // Add specific tenant domains if needed
     ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [])
@@ -54,6 +57,10 @@ export function isOriginAllowed(origin: string | null, config: CORSConfig = defa
   try {
     const url = new URL(origin);
     if (url.hostname.endsWith('.vercel.app')) {
+      return true;
+    }
+    // Allow production ghostcrm.ai domains
+    if (url.hostname === 'ghostcrm.ai' || url.hostname === 'www.ghostcrm.ai') {
       return true;
     }
   } catch {

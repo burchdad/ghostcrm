@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const BASE_URL = process.env.APP_BASE_URL || "http://localhost:3000";
+const BASE_URL = process.env.APP_BASE_URL || "https://ghostcrm.ai";
 
 test.describe("Health endpoints", () => {
   test("auth health endpoint reports ok", async ({ request }) => {

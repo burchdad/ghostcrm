@@ -42,7 +42,9 @@ export function isMarketingSite(hostname: string): boolean {
     return true;
   }
   
-  return hostname === 'ghostautocrm.com' || 
+  return hostname === 'ghostcrm.ai' || 
+         hostname === 'www.ghostcrm.ai' ||
+         hostname === 'ghostautocrm.com' || 
          hostname === 'www.ghostautocrm.com' ||
          getSubdomain(hostname) === null;
 }

@@ -19,8 +19,9 @@ SUPABASE_SERVICE_ROLE_KEY=sb_secret_FSTLepb2jwJ3jCNJy78MsQ_OKKFZud0
 JWT_SECRET=ghostcrm_mvp_launch_secret_2025_super_secure_development_key_for_demo_and_testing_purposes
 PROVIDER_SECRET_KEY=ghostcrm_provider_secret_2025
 ENCRYPTION_MASTER_KEY=085227490f3caad70b3b7b391f2c39321b73bfeb385ad79bebaf1a2adf32ef91
-NEXT_PUBLIC_BASE_URL=https://ghostcrm-liard.vercel.app
-NEXTAUTH_URL=https://ghostcrm-liard.vercel.app
+NEXT_PUBLIC_BASE_URL=https://ghostcrm.ai
+NEXTAUTH_URL=https://ghostcrm.ai
+NEXT_PUBLIC_APP_URL=https://ghostcrm.ai
 ```
 
 ### Owner Authentication

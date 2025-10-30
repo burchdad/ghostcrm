@@ -7,7 +7,7 @@ const fetch = require('node-fetch');
 
 class APIEndpointTester {
   constructor() {
-    this.baseUrl = process.env.TEST_BASE_URL || 'http://localhost:3000';
+    this.baseUrl = process.env.TEST_BASE_URL || 'https://ghostcrm.ai';
     this.testResults = {
       total: 0,
       passed: 0,

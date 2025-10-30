@@ -263,8 +263,12 @@ function getTenantUrl(tenantId: string): string {
   if (tenantId === 'main') {
     return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   }
-  // TODO: resolve tenant-specific URL from DB
-  return `https://${tenantId}.ghostcrm.com`;
+  // Use production domain for tenant URLs
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const domain = baseUrl.includes('localhost') ? 'localhost:3000' : 'ghostcrm.ai';
+  return baseUrl.includes('localhost') 
+    ? `${baseUrl}?tenant=${tenantId}`
+    : `https://${tenantId}.${domain}`;
 }
 
 function parseTestResults(stdout: string): SuiteResult {

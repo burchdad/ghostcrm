@@ -40,7 +40,7 @@ async function setupAdminTestingDashboard() {
     console.log('\n✅ Admin Testing Dashboard setup completed!');
     console.log('\n🎯 Next steps:');
     console.log('1. Start your application: npm run dev');
-    console.log('2. Visit: http://localhost:3000/admin/testing');
+    console.log('2. Visit: https://ghostcrm.ai/admin/testing');
     console.log('3. Login with your admin credentials');
     console.log('4. Configure test schedules and alerts');
 
@@ -124,7 +124,7 @@ async function setupEnvironment() {
   }
 
   const requiredVars = {
-    'TEST_BASE_URL': 'http://localhost:3000',
+    'TEST_BASE_URL': 'https://ghostcrm.ai',
     'OWNER_EMAIL': 'admin@ghostcrm.com',
     'DB_HOST': 'localhost',
     'DB_PORT': '5432',
