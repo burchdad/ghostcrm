@@ -18,7 +18,8 @@ import {
   RefreshCw,
   Download,
   Search,
-  Ticket
+  Ticket,
+  CreditCard
 } from 'lucide-react';
 
 interface SystemMetrics {
@@ -89,6 +90,12 @@ export default function OwnerDashboard() {
   const [showEditPromo, setShowEditPromo] = useState(false);
   const [editingPromo, setEditingPromo] = useState<PromoCode | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Stripe Management State
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeSyncResult, setStripeSyncResult] = useState<any>(null);
+  const [stripeError, setStripeError] = useState('');
+  const [lastStripeAction, setLastStripeAction] = useState<string>('');
 
   useEffect(() => {
     // Verify owner session
@@ -324,6 +331,57 @@ export default function OwnerDashboard() {
     }
   };
 
+  // Stripe Management Functions
+  const testProductSync = async () => {
+    setStripeLoading(true);
+    setStripeError('');
+    setStripeSyncResult(null);
+    setLastStripeAction('Product Sync');
+    
+    try {
+      const response = await fetch('/api/stripe/sync-products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setStripeSyncResult(data);
+      } else {
+        setStripeError(data.error || 'Failed to sync products');
+      }
+    } catch (error) {
+      setStripeError(error instanceof Error ? error.message : 'Unknown error occurred');
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
+  const testProductMapping = async () => {
+    setStripeLoading(true);
+    setStripeError('');
+    setStripeSyncResult(null);
+    setLastStripeAction('Product Mapping');
+    
+    try {
+      const response = await fetch('/api/stripe/product-mappings');
+      const data = await response.json();
+      
+      if (data.success) {
+        setStripeSyncResult(data);
+      } else {
+        setStripeError(data.error || 'Failed to fetch product mappings');
+      }
+    } catch (error) {
+      setStripeError(error instanceof Error ? error.message : 'Unknown error occurred');
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('ownerSession');
     router.push('/owner/login');
@@ -525,6 +583,101 @@ export default function OwnerDashboard() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+
+            {/* Stripe Management Section */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6 border-b">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <CreditCard className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Stripe Integration Management</h3>
+                    <p className="text-sm text-gray-600">Test and manage Stripe product synchronization</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Product Sync Button */}
+                  <button
+                    onClick={testProductSync}
+                    disabled={stripeLoading}
+                    className="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg"
+                  >
+                    {stripeLoading && lastStripeAction === 'Product Sync' ? (
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-5 h-5" />
+                    )}
+                    <span className="font-medium">Sync Stripe Products</span>
+                  </button>
+
+                  {/* Product Mapping Button */}
+                  <button
+                    onClick={testProductMapping}
+                    disabled={stripeLoading}
+                    className="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg"
+                  >
+                    {stripeLoading && lastStripeAction === 'Product Mapping' ? (
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Database className="w-5 h-5" />
+                    )}
+                    <span className="font-medium">Test Product Mapping</span>
+                  </button>
+                </div>
+
+                {/* Results Display */}
+                {(stripeSyncResult || stripeError) && (
+                  <div className="mt-6 p-4 rounded-lg border">
+                    {stripeError ? (
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <h4 className="font-medium text-red-900">Error in {lastStripeAction}</h4>
+                          <p className="text-red-700 mt-1">{stripeError}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-3">
+                        <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <h4 className="font-medium text-green-900">{lastStripeAction} Successful</h4>
+                          {stripeSyncResult && (
+                            <div className="mt-2 text-sm text-gray-700">
+                              {lastStripeAction === 'Product Sync' && stripeSyncResult.results && (
+                                <div className="space-y-1">
+                                  <p>✅ Products synced: {stripeSyncResult.results.length}</p>
+                                  {stripeSyncResult.results.map((result: any, index: number) => (
+                                    <p key={index} className="ml-4">
+                                      • {result.name}: {result.success ? 'Success' : result.error}
+                                    </p>
+                                  ))}
+                                </div>
+                              )}
+                              {lastStripeAction === 'Product Mapping' && stripeSyncResult.mappings && (
+                                <div className="space-y-1">
+                                  <p>✅ Product mappings found: {stripeSyncResult.mappings.length}</p>
+                                  {stripeSyncResult.mappings.slice(0, 3).map((mapping: any, index: number) => (
+                                    <p key={index} className="ml-4">
+                                      • {mapping.product_name}: {mapping.stripe_price_id}
+                                    </p>
+                                  ))}
+                                  {stripeSyncResult.mappings.length > 3 && (
+                                    <p className="ml-4 text-gray-500">... and {stripeSyncResult.mappings.length - 3} more</p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
