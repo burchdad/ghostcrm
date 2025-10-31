@@ -175,7 +175,13 @@ export default function BillingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string>('professional') // Default to popular plan
   const [loading, setLoading] = useState(false)
   const [promoCode, setPromoCode] = useState('')
-  const [promoDiscount, setPromoDiscount] = useState<{ type: 'percentage' | 'fixed', value: number, description: string } | null>(null)
+  const [promoDiscount, setPromoDiscount] = useState<{ 
+    type: 'percentage' | 'fixed' | 'custom_price', 
+    value: number, 
+    description: string,
+    monthlyPrice?: number,
+    yearlyPrice?: number
+  } | null>(null)
   const [promoError, setPromoError] = useState('')
   const [showPromoSection, setShowPromoSection] = useState(false)
   const [showFAQ, setShowFAQ] = useState(false)
@@ -193,7 +199,6 @@ export default function BillingPage() {
 
     setPromoError('')
     try {
-      // You can replace this with your actual promo code validation API
       const response = await fetch('/api/billing/validate-promo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -201,54 +206,70 @@ export default function BillingPage() {
       })
 
       if (response.ok) {
-        const discount = await response.json()
-        setPromoDiscount(discount)
-        setPromoError('')
+        const data = await response.json()
+        if (data.success && data.promoCode) {
+          // Convert Supabase response to expected format
+          const discount = {
+            type: data.promoCode.discountType, // 'percentage', 'fixed', or 'custom_price'
+            value: parseFloat(data.promoCode.discountValue) || 0,
+            description: data.promoCode.description,
+            monthlyPrice: data.promoCode.customMonthlyPrice,
+            yearlyPrice: data.promoCode.customYearlyPrice
+          }
+          setPromoDiscount(discount)
+          setPromoError('')
+          console.log('✅ Promo code applied:', discount)
+        } else {
+          setPromoError(data.error || 'Invalid promo code')
+          setPromoDiscount(null)
+        }
       } else {
-        setPromoError('Invalid promo code')
+        const errorData = await response.json()
+        setPromoError(errorData.error || 'Invalid promo code')
         setPromoDiscount(null)
+        console.log('❌ Promo code validation failed:', errorData.error)
       }
     } catch (error) {
-      // For demo purposes, let's add some hardcoded promo codes
-      const validPromoCodes: Record<string, { type: 'percentage' | 'fixed', value: number, description: string }> = {
-        'SAVE20': { type: 'percentage', value: 20, description: '20% off first month' },
-        'NEWCLIENT': { type: 'fixed', value: 100, description: '$100 off setup fee' },
-        'LAUNCH50': { type: 'percentage', value: 50, description: '50% off first month' }
-      }
-
-      const upperCode = promoCode.toUpperCase()
-      if (validPromoCodes[upperCode]) {
-        setPromoDiscount(validPromoCodes[upperCode])
-        setPromoError('')
-      } else {
-        setPromoError('Invalid promo code')
-        setPromoDiscount(null)
-      }
+      console.error('❌ Promo code validation error:', error)
+      setPromoError('Unable to validate promo code. Please try again.')
+      setPromoDiscount(null)
     }
   }
 
   // Calculate pricing with promo discount
   const calculatePricing = () => {
-    if (!selectedPlanData) return { monthly: 0, setup: 799, total: 799 }
+    if (!selectedPlanData) return { monthly: 0, setup: 799, total: 799, originalMonthly: 0, originalSetup: 799 }
     
-    let monthly = selectedPlanData.price
-    let setup = selectedPlanData.setupFee
+    let monthly = selectedPlanData.price || 0
+    let setup = selectedPlanData.setupFee || 0
     
-    if (promoDiscount) {
+    if (promoDiscount && typeof promoDiscount.value === 'number') {
       if (promoDiscount.type === 'percentage') {
-        monthly = monthly * (1 - promoDiscount.value / 100)
-      } else {
+        // Apply percentage discount to monthly price
+        monthly = monthly * (1 - Math.min(promoDiscount.value, 100) / 100)
+      } else if (promoDiscount.type === 'fixed') {
+        // Apply fixed discount to setup fee
         setup = Math.max(0, setup - promoDiscount.value)
+      } else if (promoDiscount.type === 'custom_price') {
+        // Use custom pricing if available
+        if (isAnnual && promoDiscount.yearlyPrice) {
+          monthly = promoDiscount.yearlyPrice / 12
+        } else if (!isAnnual && promoDiscount.monthlyPrice) {
+          monthly = promoDiscount.monthlyPrice
+        }
       }
     }
     
-    return {
-      monthly: Math.round(monthly),
-      setup: Math.round(setup),
-      total: Math.round(monthly + setup),
-      originalMonthly: selectedPlanData.price,
-      originalSetup: selectedPlanData.setupFee
+    // Ensure no NaN values
+    const result = {
+      monthly: Math.round(monthly) || 0,
+      setup: Math.round(setup) || 0,
+      total: Math.round((monthly + setup)) || 0,
+      originalMonthly: selectedPlanData.price || 0,
+      originalSetup: selectedPlanData.setupFee || 0
     }
+    
+    return result
   }
 
   const pricing = calculatePricing()

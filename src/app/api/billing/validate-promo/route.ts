@@ -52,8 +52,8 @@ async function validatePromoCode(code: string) {
       description: data.description,
       discountType: data.discount_type,
       discountValue: data.discount_value,
-      monthlyPrice: data.monthly_price,
-      yearlyPrice: data.yearly_price,
+      customMonthlyPrice: data.custom_monthly_price,
+      customYearlyPrice: data.custom_yearly_price,
       maxUses: data.max_uses,
       usedCount: data.used_count,
       expiresAt: data.expires_at,
@@ -99,8 +99,9 @@ export async function POST(req: NextRequest) {
         code: promoCode.code,
         description: promoCode.description,
         discountType: promoCode.discountType,
-        monthlyPrice: promoCode.monthlyPrice,
-        yearlyPrice: promoCode.yearlyPrice,
+        discountValue: promoCode.discountValue,
+        customMonthlyPrice: promoCode.customMonthlyPrice,
+        customYearlyPrice: promoCode.customYearlyPrice,
         // Don't expose sensitive data like usage counts or internal IDs
       }
     });
