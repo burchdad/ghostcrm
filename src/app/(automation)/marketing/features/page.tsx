@@ -17,6 +17,7 @@ import {
   Rocket,
 } from 'lucide-react'
 import MarketingHeader from '@/components/marketing/MarketingHeader'
+import '../../../../styles/components/features.css'
 
 // ---------- Data ----------
 const allFeatures = [
@@ -341,6 +342,41 @@ function getIconBg(index: number) {
 // ---------- Page ----------
 export default function FeaturesPage() {
   const cardsRef = React.useRef<HTMLDivElement>(null)
+  const [activeSection, setActiveSection] = React.useState('hero')
+  const [isMobile, setIsMobile] = React.useState(false)
+  const [expandedAccordion, setExpandedAccordion] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  const mobileNavItems = [
+    { id: 'hero', label: 'Overview' },
+    { id: 'innovations', label: 'Innovations' },
+    { id: 'features', label: 'Features' },
+    { id: 'categories', label: 'Categories' },
+    { id: 'testimonials', label: 'Reviews' },
+    { id: 'platform', label: 'Platform' },
+  ]
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
+      setActiveSection(sectionId)
+    }
+  }
+
+  const toggleAccordion = (accordionId: string) => {
+    setExpandedAccordion(expandedAccordion === accordionId ? null : accordionId)
+  }
 
   return (
     <main
@@ -451,11 +487,12 @@ export default function FeaturesPage() {
 
       {/* Hero */}
       <section
+        id="hero"
         style={{
           position: 'relative',
           zIndex: 10,
-          paddingTop: '3rem',
-          paddingBottom: '4rem',
+          paddingTop: isMobile ? '2rem' : '3rem',
+          paddingBottom: isMobile ? '3rem' : '4rem',
         }}
       >
         <div
@@ -503,7 +540,7 @@ export default function FeaturesPage() {
             {/* Title */}
             <h1
               style={{
-                fontSize: '3rem',
+                fontSize: isMobile ? '2rem' : '3rem',
                 fontWeight: 'bold',
                 color: '#ffffff',
                 marginBottom: '1rem',
@@ -530,13 +567,14 @@ export default function FeaturesPage() {
 
             <p
               style={{
-                fontSize: '1.25rem',
+                fontSize: isMobile ? '1rem' : '1.25rem',
                 color: '#f9fafb',
                 maxWidth: '56rem',
                 margin: '0 auto 2rem auto',
                 textShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
                 fontWeight: 500,
                 lineHeight: 1.6,
+                padding: isMobile ? '0 0.5rem' : '0',
               }}
               className="animate-fade-in-up animation-delay-400"
             >
@@ -556,7 +594,7 @@ export default function FeaturesPage() {
             <div
               style={{
                 display: 'flex',
-                flexDirection: 'column',
+                flexDirection: isMobile ? 'column' : 'row',
                 gap: '1rem',
                 justifyContent: 'center',
                 marginBottom: '2.5rem',
@@ -570,7 +608,7 @@ export default function FeaturesPage() {
                   position: 'relative',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  padding: '1rem 2rem',
+                  padding: isMobile ? '0.875rem 1.5rem' : '1rem 2rem',
                   background: 'linear-gradient(90deg, #8b5cf6, #ec4899)',
                   color: '#ffffff',
                   fontWeight: 'bold',
@@ -580,7 +618,9 @@ export default function FeaturesPage() {
                   transition: 'all 0.3s ease',
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: '1rem',
+                  fontSize: isMobile ? '0.9rem' : '1rem',
+                  width: isMobile ? '100%' : 'auto',
+                  justifyContent: 'center',
                 }}
                 className="group magnetic-button glow-button"
                 onMouseEnter={(e) => {
@@ -606,7 +646,7 @@ export default function FeaturesPage() {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  padding: '1rem 2rem',
+                  padding: isMobile ? '0.875rem 1.5rem' : '1rem 2rem',
                   background: 'rgba(255, 255, 255, 0.1)',
                   backdropFilter: 'blur(8px)',
                   color: '#ffffff',
@@ -616,7 +656,9 @@ export default function FeaturesPage() {
                   textDecoration: 'none',
                   transition: 'all 0.3s ease',
                   cursor: 'pointer',
-                  fontSize: '1rem',
+                  fontSize: isMobile ? '0.9rem' : '1rem',
+                  width: isMobile ? '100%' : 'auto',
+                  justifyContent: 'center',
                 }}
                 className="group magnetic-button"
                 onMouseEnter={(e) => {
@@ -643,7 +685,7 @@ export default function FeaturesPage() {
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '2rem',
+                gap: isMobile ? '0.75rem' : '2rem',
                 maxWidth: '32rem',
                 margin: '0 auto',
               }}
@@ -661,7 +703,7 @@ export default function FeaturesPage() {
                     background: 'rgba(30, 41, 59, 0.6)',
                     backdropFilter: 'blur(8px)',
                     borderRadius: '0.75rem',
-                    padding: '1rem',
+                    padding: isMobile ? '0.75rem' : '1rem',
                     transition: 'transform 0.3s ease',
                     cursor: 'pointer',
                   }}
@@ -670,7 +712,7 @@ export default function FeaturesPage() {
                 >
                   <div
                     style={{
-                      fontSize: '1.875rem',
+                      fontSize: isMobile ? '1.5rem' : '1.875rem',
                       fontWeight: 'bold',
                       color: '#ffffff',
                       marginBottom: '0.5rem',
@@ -681,7 +723,7 @@ export default function FeaturesPage() {
                   >
                     {stat.value}
                   </div>
-                  <div style={{ fontSize: '0.875rem', color: '#e5e7eb', fontWeight: 500 }}>{stat.label}</div>
+                  <div style={{ fontSize: isMobile ? '0.75rem' : '0.875rem', color: '#e5e7eb', fontWeight: 500 }}>{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -689,12 +731,30 @@ export default function FeaturesPage() {
         </div>
       </section>
 
+      {/* Mobile Navigation */}
+      {isMobile && (
+        <div className="mobile-sticky-nav">
+          <div className="mobile-nav-scroll">
+            {mobileNavItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => scrollToSection(item.id)}
+                className={`mobile-nav-pill ${activeSection === item.id ? 'active' : ''}`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Key Innovations Highlight */}
       <section
+        id="innovations"
         style={{
           position: 'relative',
           zIndex: 10,
-          padding: '4rem 0',
+          padding: isMobile ? '2rem 0' : '4rem 0',
           background: 'rgba(30, 41, 59, 0.3)',
           backdropFilter: 'blur(8px)',
           borderTop: '1px solid rgba(139, 92, 246, 0.1)',
@@ -708,10 +768,10 @@ export default function FeaturesPage() {
             padding: '0 1rem',
           }}
         >
-          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: isMobile ? '2rem' : '3rem' }}>
             <h2
               style={{
-                fontSize: '2.5rem',
+                fontSize: isMobile ? '1.75rem' : '2.5rem',
                 fontWeight: 'bold',
                 color: '#ffffff',
                 marginBottom: '1rem',
@@ -722,10 +782,11 @@ export default function FeaturesPage() {
             </h2>
             <p
               style={{
-                fontSize: '1.125rem',
+                fontSize: isMobile ? '1rem' : '1.125rem',
                 color: '#e5e7eb',
                 maxWidth: '48rem',
                 margin: '0 auto',
+                padding: isMobile ? '0 0.5rem' : '0',
               }}
             >
               Game-changing features that set us apart from every other automotive CRM platform
@@ -735,8 +796,8 @@ export default function FeaturesPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-              gap: '2rem',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(350px, 1fr))',
+              gap: isMobile ? '1.5rem' : '2rem',
             }}
           >
             {/* QR Code Innovation */}
@@ -745,7 +806,7 @@ export default function FeaturesPage() {
                 background: 'rgba(139, 92, 246, 0.1)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '1rem',
-                padding: '2rem',
+                padding: isMobile ? '1.5rem' : '2rem',
                 textAlign: 'center',
                 transition: 'all 0.3s ease',
               }}
@@ -753,8 +814,8 @@ export default function FeaturesPage() {
             >
               <div
                 style={{
-                  width: '4rem',
-                  height: '4rem',
+                  width: isMobile ? '3rem' : '4rem',
+                  height: isMobile ? '3rem' : '4rem',
                   background: 'linear-gradient(90deg, #8b5cf6, #ec4899)',
                   borderRadius: '50%',
                   display: 'flex',
@@ -763,12 +824,12 @@ export default function FeaturesPage() {
                   margin: '0 auto 1.5rem auto',
                 }}
               >
-                <Sparkles style={{ width: '2rem', height: '2rem', color: '#ffffff' }} />
+                <Sparkles style={{ width: isMobile ? '1.5rem' : '2rem', height: isMobile ? '1.5rem' : '2rem', color: '#ffffff' }} />
               </div>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
                 QR Code Vehicle Profiles
               </h3>
-              <p style={{ color: '#e5e7eb', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+              <p style={{ color: '#e5e7eb', marginBottom: '1.5rem', lineHeight: 1.6, fontSize: isMobile ? '0.875rem' : '1rem' }}>
                 Revolutionary QR system with bulk PDF/ZIP generation, digital window stickers, financial calculators, and test drive scheduling. Print hundreds of QR codes instantly.
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
@@ -780,7 +841,7 @@ export default function FeaturesPage() {
                       color: '#e9d5ff',
                       padding: '0.25rem 0.75rem',
                       borderRadius: '9999px',
-                      fontSize: '0.75rem',
+                      fontSize: isMobile ? '0.7rem' : '0.75rem',
                       fontWeight: 500,
                     }}
                   >
@@ -796,7 +857,7 @@ export default function FeaturesPage() {
                 background: 'rgba(236, 72, 153, 0.1)',
                 border: '1px solid rgba(236, 72, 153, 0.3)',
                 borderRadius: '1rem',
-                padding: '2rem',
+                padding: isMobile ? '1.5rem' : '2rem',
                 textAlign: 'center',
                 transition: 'all 0.3s ease',
               }}
@@ -804,8 +865,8 @@ export default function FeaturesPage() {
             >
               <div
                 style={{
-                  width: '4rem',
-                  height: '4rem',
+                  width: isMobile ? '3rem' : '4rem',
+                  height: isMobile ? '3rem' : '4rem',
                   background: 'linear-gradient(90deg, #ec4899, #f59e0b)',
                   borderRadius: '50%',
                   display: 'flex',
@@ -814,12 +875,12 @@ export default function FeaturesPage() {
                   margin: '0 auto 1.5rem auto',
                 }}
               >
-                <CheckCircle style={{ width: '2rem', height: '2rem', color: '#ffffff' }} />
+                <CheckCircle style={{ width: isMobile ? '1.5rem' : '2rem', height: isMobile ? '1.5rem' : '2rem', color: '#ffffff' }} />
               </div>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
                 Enterprise-Grade Security
               </h3>
-              <p style={{ color: '#e5e7eb', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+              <p style={{ color: '#e5e7eb', marginBottom: '1.5rem', lineHeight: 1.6, fontSize: isMobile ? '0.875rem' : '1rem' }}>
                 Complete tenant isolation with 5-tier role system. Sales reps from Company A never see Company B data. Granular permissions and secure multi-company management.
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
@@ -831,7 +892,7 @@ export default function FeaturesPage() {
                       color: '#fbcfe8',
                       padding: '0.25rem 0.75rem',
                       borderRadius: '9999px',
-                      fontSize: '0.75rem',
+                      fontSize: isMobile ? '0.7rem' : '0.75rem',
                       fontWeight: 500,
                     }}
                   >
@@ -847,7 +908,7 @@ export default function FeaturesPage() {
                 background: 'rgba(34, 197, 94, 0.1)',
                 border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: '1rem',
-                padding: '2rem',
+                padding: isMobile ? '1.5rem' : '2rem',
                 textAlign: 'center',
                 transition: 'all 0.3s ease',
               }}
@@ -855,8 +916,8 @@ export default function FeaturesPage() {
             >
               <div
                 style={{
-                  width: '4rem',
-                  height: '4rem',
+                  width: isMobile ? '3rem' : '4rem',
+                  height: isMobile ? '3rem' : '4rem',
                   background: 'linear-gradient(90deg, #22c55e, #06b6d4)',
                   borderRadius: '50%',
                   display: 'flex',
@@ -865,12 +926,12 @@ export default function FeaturesPage() {
                   margin: '0 auto 1.5rem auto',
                 }}
               >
-                <Rocket style={{ width: '2rem', height: '2rem', color: '#ffffff' }} />
+                <Rocket style={{ width: isMobile ? '1.5rem' : '2rem', height: isMobile ? '1.5rem' : '2rem', color: '#ffffff' }} />
               </div>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
                 Intelligent Sales Automation
               </h3>
-              <p style={{ color: '#e5e7eb', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+              <p style={{ color: '#e5e7eb', marginBottom: '1.5rem', lineHeight: 1.6, fontSize: isMobile ? '0.875rem' : '1rem' }}>
                 Round-robin agent assignment with specialty matching, automated test drive scheduling, performance analytics, and AI-powered lead scoring for maximum conversion.
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
@@ -882,7 +943,7 @@ export default function FeaturesPage() {
                       color: '#bbf7d0',
                       padding: '0.25rem 0.75rem',
                       borderRadius: '9999px',
-                      fontSize: '0.75rem',
+                      fontSize: isMobile ? '0.7rem' : '0.75rem',
                       fontWeight: 500,
                     }}
                   >
@@ -895,20 +956,21 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* Feature Cards (simple grid using allFeatures) */}
+      {/* Feature Cards - Mobile Accordion / Desktop Grid */}
       <section
+        id="features"
         style={{
           position: 'relative',
           zIndex: 10,
-          padding: '3rem 0',
+          padding: isMobile ? '2rem 0' : '3rem 0',
           borderTop: '1px solid rgba(139, 92, 246, 0.1)',
         }}
       >
         <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 1rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: isMobile ? '2rem' : '2.5rem' }}>
             <h2
               style={{
-                fontSize: '2.5rem',
+                fontSize: isMobile ? '1.75rem' : '2.5rem',
                 fontWeight: 'bold',
                 color: '#ffffff',
                 marginBottom: '1rem',
@@ -919,89 +981,172 @@ export default function FeaturesPage() {
             </h2>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '1.5rem',
-              marginBottom: '2.5rem',
-            }}
-          >
-            {allFeatures.map((feature, index) => (
+          {isMobile ? (
+            // Mobile Accordion Layout
+            <div className="mobile-accordion-section">
               <div
-                key={feature.id}
-                className="animate-fade-in-up"
+                className="mobile-accordion-header"
+                onClick={() => toggleAccordion('all-features')}
                 style={{
-                  position: 'relative',
-                  background: 'rgba(30, 41, 59, 0.8)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: '1rem',
-                  padding: '1.5rem',
-                  border: '1px solid rgba(139, 92, 246, 0.3)',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
-                  overflow: 'hidden',
-                  animationDelay: `${index * 150}ms`,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-0.5rem) scale(1.02)'
-                  e.currentTarget.style.borderColor = '#8b5cf6'
-                  e.currentTarget.style.boxShadow = `0 20px 40px #8b5cf640`
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0) scale(1)'
-                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)'
-                  e.currentTarget.style.boxShadow = 'none'
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                 }}
               >
-                {/* Icon */}
-                <div style={{ position: 'relative', zIndex: 10 }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '1rem', display: 'inline-flex' }}>
-                    <feature.Icon className={`feature-icon ${getIconBg(index)} w-10 h-10 p-2 rounded-lg`} />
-                  </div>
-
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '0.5rem' }}>
-                    {feature.title}
-                  </h3>
-
-                  <p
-                    style={{
-                      color: '#f9fafb',
-                      marginBottom: '1rem',
-                      fontSize: '0.875rem',
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {feature.description}
-                  </p>
-
-                  <ul style={{ marginBottom: '1rem' }}>
-                    {feature.benefits.map((b, i) => (
-                      <li key={i} style={{ color: '#f9fafb', fontSize: '0.875rem', lineHeight: 1.6 }}>
-                        • {b}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Link
-                    href="#"
-                    className="group"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      color: '#e9d5ff',
-                      fontWeight: 'bold',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    Learn more
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
+                <h3 style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '1.125rem', margin: 0 }}>
+                  All Features ({allFeatures.length})
+                </h3>
+                <div style={{ color: '#a78bfa', fontSize: '1.25rem' }}>
+                  {expandedAccordion === 'all-features' ? '−' : '+'}
                 </div>
               </div>
-            ))}
-          </div>
+              <div className={`mobile-accordion-content ${expandedAccordion === 'all-features' ? 'expanded' : ''}`}>
+                <div className="mobile-feature-grid">
+                  {allFeatures.map((feature, index) => (
+                    <div
+                      key={feature.id}
+                      style={{
+                        background: 'rgba(30, 41, 59, 0.8)',
+                        backdropFilter: 'blur(10px)',
+                        borderRadius: '0.75rem',
+                        padding: '1.25rem',
+                        border: '1px solid rgba(139, 92, 246, 0.3)',
+                        transition: 'all 0.3s ease',
+                      }}
+                    >
+                      <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
+                        <feature.Icon 
+                          style={{ 
+                            width: '1.5rem', 
+                            height: '1.5rem', 
+                            marginRight: '0.75rem',
+                            color: '#a78bfa'
+                          }} 
+                        />
+                        <h4 style={{ fontSize: '1rem', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>
+                          {feature.title}
+                        </h4>
+                      </div>
+                      
+                      <p
+                        style={{
+                          color: '#e5e7eb',
+                          marginBottom: '1rem',
+                          fontSize: '0.875rem',
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {feature.description}
+                      </p>
+
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {feature.benefits.slice(0, 2).map((benefit, i) => (
+                          <span
+                            key={i}
+                            style={{
+                              background: 'rgba(139, 92, 246, 0.2)',
+                              color: '#e9d5ff',
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '0.375rem',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                            }}
+                          >
+                            {benefit}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Desktop Grid Layout
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '1.5rem',
+                marginBottom: '2.5rem',
+              }}
+            >
+              {allFeatures.map((feature, index) => (
+                <div
+                  key={feature.id}
+                  className="animate-fade-in-up"
+                  style={{
+                    position: 'relative',
+                    background: 'rgba(30, 41, 59, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '1rem',
+                    padding: '1.5rem',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    animationDelay: `${index * 150}ms`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-0.5rem) scale(1.02)'
+                    e.currentTarget.style.borderColor = '#8b5cf6'
+                    e.currentTarget.style.boxShadow = `0 20px 40px #8b5cf640`
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)'
+                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                >
+                  {/* Icon */}
+                  <div style={{ position: 'relative', zIndex: 10 }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '1rem', display: 'inline-flex' }}>
+                      <feature.Icon className={`feature-icon ${getIconBg(index)} w-10 h-10 p-2 rounded-lg`} />
+                    </div>
+
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '0.5rem' }}>
+                      {feature.title}
+                    </h3>
+
+                    <p
+                      style={{
+                        color: '#f9fafb',
+                        marginBottom: '1rem',
+                        fontSize: '0.875rem',
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {feature.description}
+                    </p>
+
+                    <ul style={{ marginBottom: '1rem' }}>
+                      {feature.benefits.map((b, i) => (
+                        <li key={i} style={{ color: '#f9fafb', fontSize: '0.875rem', lineHeight: 1.6 }}>
+                          • {b}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Link
+                      href="#"
+                      className="group"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        color: '#e9d5ff',
+                        fontWeight: 'bold',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Learn more
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -1218,18 +1363,19 @@ export default function FeaturesPage() {
 
       {/* Social Proof */}
       <section
+        id="testimonials"
         style={{
           position: 'relative',
           zIndex: 10,
-          padding: '3rem 0',
+          padding: isMobile ? '2rem 0' : '3rem 0',
           borderTop: '1px solid rgba(139, 92, 246, 0.2)',
         }}
       >
         <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 1rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: isMobile ? '2rem' : '2.5rem' }}>
             <h2
               style={{
-                fontSize: '2.5rem',
+                fontSize: isMobile ? '1.75rem' : '2.5rem',
                 fontWeight: 'bold',
                 color: '#ffffff',
                 marginBottom: '1rem',
@@ -1238,127 +1384,229 @@ export default function FeaturesPage() {
             >
               Trusted by <span style={{ color: '#a78bfa' }}>10,000+</span> Dealerships
             </h2>
-            <p style={{ fontSize: '1.125rem', color: '#f9fafb', maxWidth: '48rem', margin: '0 auto' }}>
+            <p style={{ fontSize: isMobile ? '1rem' : '1.125rem', color: '#f9fafb', maxWidth: '48rem', margin: '0 auto' }}>
               Join the elite dealers who've already transformed their business
             </p>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '2rem',
-              marginBottom: '2.5rem',
-            }}
-          >
-            {[
-              {
-                quote: "GhostCRM increased our sales by 300% in just 6 months. It's like having a sales superpower.",
-                author: 'Mike Chen',
-                role: 'Sales Director',
-                company: 'Premier Auto Group',
-                metric: '+300% Sales',
-              },
-              {
-                quote: 'The AI lead scoring is incredible. We close 5x more deals now with the same effort.',
-                author: 'Sarah Johnson',
-                role: 'General Manager',
-                company: 'Elite Motors',
-                metric: '5x More Closes',
-              },
-              {
-                quote: 'Setup took 3 minutes. ROI came in 2 weeks. This is the future of automotive sales.',
-                author: 'David Rodriguez',
-                role: 'Owner',
-                company: 'Speed Dealership',
-                metric: '2 Week ROI',
-              },
-            ].map((t, i) => (
-              <div
-                key={i}
-                className="animate-fade-in-up"
-                style={{
-                  position: 'relative',
-                  background: 'rgba(30, 41, 59, 0.8)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: '1rem',
-                  padding: '2rem',
-                  border: '1px solid rgba(139, 92, 246, 0.3)',
-                  transition: 'all 0.3s ease',
-                  transform: `translateY(${i % 2 === 0 ? '1rem' : '0'})`,
-                  animationDelay: `${i * 200}ms`,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-0.5rem) scale(1.02)'
-                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = `translateY(${i % 2 === 0 ? '1rem' : '0'})`
-                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)'
-                }}
-              >
+          {isMobile ? (
+            // Mobile: Single column with condensed testimonials
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
+              {[
+                {
+                  quote: "GhostCRM increased our sales by 300% in just 6 months.",
+                  author: 'Mike Chen',
+                  role: 'Sales Director',
+                  company: 'Premier Auto Group',
+                  metric: '+300% Sales',
+                },
+                {
+                  quote: 'The AI lead scoring is incredible. We close 5x more deals now.',
+                  author: 'Sarah Johnson',
+                  role: 'General Manager',
+                  company: 'Elite Motors',
+                  metric: '5x More Closes',
+                },
+                {
+                  quote: 'Setup took 3 minutes. ROI came in 2 weeks.',
+                  author: 'David Rodriguez',
+                  role: 'Owner',
+                  company: 'Speed Dealership',
+                  metric: '2 Week ROI',
+                },
+              ].map((t, i) => (
                 <div
+                  key={i}
                   style={{
-                    position: 'absolute',
-                    top: '-0.75rem',
-                    right: '1rem',
-                    background: 'linear-gradient(90deg, #8b5cf6, #ec4899)',
-                    color: '#ffffff',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '9999px',
-                    fontSize: '0.875rem',
-                    fontWeight: 'bold',
-                    boxShadow: '0 4px 20px rgba(139, 92, 246, 0.4)',
+                    background: 'rgba(30, 41, 59, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '1rem',
+                    padding: '1.5rem',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    position: 'relative',
                   }}
                 >
-                  {t.metric}
-                </div>
-
-                <blockquote
-                  style={{
-                    fontSize: '1.125rem',
-                    color: '#f9fafb',
-                    marginBottom: '1.5rem',
-                    lineHeight: 1.6,
-                    fontStyle: 'italic',
-                  }}
-                >
-                  "{t.quote}"
-                </blockquote>
-
-                <div style={{ display: 'flex', alignItems: 'center' }}>
                   <div
                     style={{
-                      width: '3rem',
-                      height: '3rem',
-                      background: `linear-gradient(135deg, ${
-                        i % 3 === 0 ? '#8b5cf6, #ec4899' : i % 3 === 1 ? '#ec4899, #3b82f6' : '#3b82f6, #8b5cf6'
-                      })`,
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      position: 'absolute',
+                      top: '-0.5rem',
+                      right: '1rem',
+                      background: 'linear-gradient(90deg, #8b5cf6, #ec4899)',
                       color: '#ffffff',
+                      padding: '0.375rem 0.75rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.75rem',
                       fontWeight: 'bold',
-                      marginRight: '1rem',
-                      fontSize: '1.25rem',
+                      boxShadow: '0 4px 20px rgba(139, 92, 246, 0.4)',
                     }}
                   >
-                    {t.author
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')}
+                    {t.metric}
                   </div>
-                  <div>
-                    <div style={{ fontWeight: 'bold', color: '#ffffff', marginBottom: '0.25rem' }}>{t.author}</div>
-                    <div style={{ fontSize: '0.875rem', color: '#a78bfa' }}>
-                      {t.role}, {t.company}
+
+                  <blockquote
+                    style={{
+                      fontSize: '1rem',
+                      color: '#f9fafb',
+                      marginBottom: '1rem',
+                      lineHeight: 1.6,
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    "{t.quote}"
+                  </blockquote>
+
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div
+                      style={{
+                        width: '2.5rem',
+                        height: '2.5rem',
+                        background: `linear-gradient(135deg, ${
+                          i % 3 === 0 ? '#8b5cf6, #ec4899' : i % 3 === 1 ? '#ec4899, #3b82f6' : '#3b82f6, #8b5cf6'
+                        })`,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#ffffff',
+                        fontWeight: 'bold',
+                        marginRight: '0.75rem',
+                        fontSize: '1rem',
+                      }}
+                    >
+                      {t.author
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 'bold', color: '#ffffff', marginBottom: '0.25rem', fontSize: '0.9rem' }}>{t.author}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#a78bfa' }}>
+                        {t.role}, {t.company}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            // Desktop: Grid layout
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '2rem',
+                marginBottom: '2.5rem',
+              }}
+            >
+              {[
+                {
+                  quote: "GhostCRM increased our sales by 300% in just 6 months. It's like having a sales superpower.",
+                  author: 'Mike Chen',
+                  role: 'Sales Director',
+                  company: 'Premier Auto Group',
+                  metric: '+300% Sales',
+                },
+                {
+                  quote: 'The AI lead scoring is incredible. We close 5x more deals now with the same effort.',
+                  author: 'Sarah Johnson',
+                  role: 'General Manager',
+                  company: 'Elite Motors',
+                  metric: '5x More Closes',
+                },
+                {
+                  quote: 'Setup took 3 minutes. ROI came in 2 weeks. This is the future of automotive sales.',
+                  author: 'David Rodriguez',
+                  role: 'Owner',
+                  company: 'Speed Dealership',
+                  metric: '2 Week ROI',
+                },
+              ].map((t, i) => (
+                <div
+                  key={i}
+                  className="animate-fade-in-up"
+                  style={{
+                    position: 'relative',
+                    background: 'rgba(30, 41, 59, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '1rem',
+                    padding: '2rem',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    transition: 'all 0.3s ease',
+                    transform: `translateY(${i % 2 === 0 ? '1rem' : '0'})`,
+                    animationDelay: `${i * 200}ms`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-0.5rem) scale(1.02)'
+                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = `translateY(${i % 2 === 0 ? '1rem' : '0'})`
+                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)'
+                  }}
+                >
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '-0.75rem',
+                      right: '1rem',
+                      background: 'linear-gradient(90deg, #8b5cf6, #ec4899)',
+                      color: '#ffffff',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.875rem',
+                      fontWeight: 'bold',
+                      boxShadow: '0 4px 20px rgba(139, 92, 246, 0.4)',
+                    }}
+                  >
+                    {t.metric}
+                  </div>
+
+                  <blockquote
+                    style={{
+                      fontSize: '1.125rem',
+                      color: '#f9fafb',
+                      marginBottom: '1.5rem',
+                      lineHeight: 1.6,
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    "{t.quote}"
+                  </blockquote>
+
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div
+                      style={{
+                        width: '3rem',
+                        height: '3rem',
+                        background: `linear-gradient(135deg, ${
+                          i % 3 === 0 ? '#8b5cf6, #ec4899' : i % 3 === 1 ? '#ec4899, #3b82f6' : '#3b82f6, #8b5cf6'
+                        })`,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#ffffff',
+                        fontWeight: 'bold',
+                        marginRight: '1rem',
+                        fontSize: '1.25rem',
+                      }}
+                    >
+                      {t.author
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 'bold', color: '#ffffff', marginBottom: '0.25rem' }}>{t.author}</div>
+                      <div style={{ fontSize: '0.875rem', color: '#a78bfa' }}>
+                        {t.role}, {t.company}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Trust badges */}
           <div
@@ -1366,14 +1614,14 @@ export default function FeaturesPage() {
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              gap: '3rem',
+              gap: isMobile ? '2rem' : '3rem',
               flexWrap: 'wrap',
               opacity: 0.7,
             }}
           >
             {['SOC 2 Certified', 'GDPR Compliant', '99.9% Uptime', 'Enterprise Security', '24/7 Support'].map(
               (badge, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', color: '#a78bfa', fontSize: '0.875rem', fontWeight: 500 }}>
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', color: '#a78bfa', fontSize: isMobile ? '0.8rem' : '0.875rem', fontWeight: 500 }}>
                   <div style={{ width: '0.5rem', height: '0.5rem', background: '#a78bfa', borderRadius: '50%', marginRight: '0.5rem' }} />
                   {badge}
                 </div>
@@ -1383,109 +1631,112 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* Comparison Matrix */}
-      <section
-        style={{
-          position: 'relative',
-          zIndex: 10,
-          padding: '3rem 0',
-        }}
-      >
-        <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 1rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <h2
-              style={{
-                fontSize: '2.5rem',
-                fontWeight: 'bold',
-                color: '#ffffff',
-                marginBottom: '1rem',
-                textShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-              }}
-            >
-              Why Choose <span style={{ color: '#a78bfa' }}>GhostCRM</span>?
-            </h2>
-          </div>
+      {/* Comparison Matrix - Desktop Only */}
+      {!isMobile && (
+        <section
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            padding: '3rem 0',
+          }}
+        >
+          <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 1rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+              <h2
+                style={{
+                  fontSize: '2.5rem',
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  marginBottom: '1rem',
+                  textShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                }}
+              >
+                Why Choose <span style={{ color: '#a78bfa' }}>GhostCRM</span>?
+              </h2>
+            </div>
 
-          <div
-            style={{
-              background: 'rgba(30, 41, 59, 0.8)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: '1rem',
-              padding: '2rem',
-              border: '1px solid rgba(139, 92, 246, 0.3)',
-              overflow: 'hidden',
-            }}
-          >
             <div
               style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 150px 150px 150px',
-                gap: '1rem',
-                alignItems: 'center',
+                background: 'rgba(30, 41, 59, 0.8)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '1rem',
+                padding: '2rem',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                overflow: 'hidden',
               }}
             >
-              <div style={{ fontWeight: 'bold', color: '#f9fafb', fontSize: '1.125rem' }}>Feature</div>
-              <div style={{ textAlign: 'center', fontWeight: 'bold', color: '#a78bfa' }}>GhostCRM</div>
-              <div style={{ textAlign: 'center', fontWeight: 'bold', color: '#9ca3af' }}>Competitor A</div>
-              <div style={{ textAlign: 'center', fontWeight: 'bold', color: '#9ca3af' }}>Competitor B</div>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 150px 150px 150px',
+                  gap: '1rem',
+                  alignItems: 'center',
+                }}
+              >
+                <div style={{ fontWeight: 'bold', color: '#f9fafb', fontSize: '1.125rem' }}>Feature</div>
+                <div style={{ textAlign: 'center', fontWeight: 'bold', color: '#a78bfa' }}>GhostCRM</div>
+                <div style={{ textAlign: 'center', fontWeight: 'bold', color: '#9ca3af' }}>Competitor A</div>
+                <div style={{ textAlign: 'center', fontWeight: 'bold', color: '#9ca3af' }}>Competitor B</div>
 
-              {[
-                ['AI Lead Scoring', '✅', '❌', '❌'],
-                ['5-Min Setup', '✅', '❌', '⚠️'],
-                ['Real-time Analytics', '✅', '✅', '❌'],
-                ['Mobile App', '✅', '❌', '✅'],
-                ['24/7 Support', '✅', '⚠️', '❌'],
-                ['Custom Integrations', '✅', '❌', '❌'],
-                ['Price', '$99/mo', '$299/mo', '$199/mo'],
-              ].map((row, index) => (
-                <React.Fragment key={index}>
-                  <div style={{ color: '#f9fafb', padding: '1rem 0', borderTop: index > 0 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none' }}>
-                    {row[0]}
-                  </div>
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      padding: '1rem 0',
-                      borderTop: index > 0 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none',
-                      color: row[1] === '✅' ? '#10b981' : row[1] === '❌' ? '#ef4444' : '#f59e0b',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    {row[1]}
-                  </div>
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      padding: '1rem 0',
-                      borderTop: index > 0 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none',
-                      color: row[2] === '✅' ? '#10b981' : row[2] === '❌' ? '#ef4444' : '#f59e0b',
-                    }}
-                  >
-                    {row[2]}
-                  </div>
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      padding: '1rem 0',
-                      borderTop: index > 0 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none',
-                      color: row[3] === '✅' ? '#10b981' : row[3] === '❌' ? '#ef4444' : '#f59e0b',
-                    }}
-                  >
-                    {row[3]}
-                  </div>
-                </React.Fragment>
-              ))}
+                {[
+                  ['AI Lead Scoring', '✅', '❌', '❌'],
+                  ['5-Min Setup', '✅', '❌', '⚠️'],
+                  ['Real-time Analytics', '✅', '✅', '❌'],
+                  ['Mobile App', '✅', '❌', '✅'],
+                  ['24/7 Support', '✅', '⚠️', '❌'],
+                  ['Custom Integrations', '✅', '❌', '❌'],
+                  ['Price', '$99/mo', '$299/mo', '$199/mo'],
+                ].map((row, index) => (
+                  <React.Fragment key={index}>
+                    <div style={{ color: '#f9fafb', padding: '1rem 0', borderTop: index > 0 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none' }}>
+                      {row[0]}
+                    </div>
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        padding: '1rem 0',
+                        borderTop: index > 0 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none',
+                        color: row[1] === '✅' ? '#10b981' : row[1] === '❌' ? '#ef4444' : '#f59e0b',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {row[1]}
+                    </div>
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        padding: '1rem 0',
+                        borderTop: index > 0 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none',
+                        color: row[2] === '✅' ? '#10b981' : row[2] === '❌' ? '#ef4444' : '#f59e0b',
+                      }}
+                    >
+                      {row[2]}
+                    </div>
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        padding: '1rem 0',
+                        borderTop: index > 0 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none',
+                        color: row[3] === '✅' ? '#10b981' : row[3] === '❌' ? '#ef4444' : '#f59e0b',
+                      }}
+                    >
+                      {row[3]}
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Platform Overview */}
       <section
+        id="platform"
         style={{
           position: 'relative',
           zIndex: 10,
-          padding: '5rem 0',
+          padding: isMobile ? '3rem 0' : '5rem 0',
           background: 'rgba(15, 23, 42, 0.8)',
           backdropFilter: 'blur(8px)',
           borderTop: '1px solid rgba(139, 92, 246, 0.1)',
@@ -1498,10 +1749,10 @@ export default function FeaturesPage() {
             padding: '0 1rem',
           }}
         >
-          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: isMobile ? '3rem' : '4rem' }}>
             <h2
               style={{
-                fontSize: '3rem',
+                fontSize: isMobile ? '2rem' : '3rem',
                 fontWeight: 'bold',
                 color: '#ffffff',
                 marginBottom: '1rem',
@@ -1524,11 +1775,12 @@ export default function FeaturesPage() {
             </h2>
             <p
               style={{
-                fontSize: '1.25rem',
+                fontSize: isMobile ? '1rem' : '1.25rem',
                 color: '#e5e7eb',
                 maxWidth: '56rem',
                 margin: '0 auto',
                 lineHeight: 1.6,
+                padding: isMobile ? '0 0.5rem' : '0',
               }}
             >
               Every tool your dealership needs to capture, convert, and close more deals—all in one powerful platform
@@ -1538,9 +1790,9 @@ export default function FeaturesPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '2rem',
-              marginBottom: '4rem',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: isMobile ? '1.5rem' : '2rem',
+              marginBottom: isMobile ? '3rem' : '4rem',
             }}
           >
             {/* Vehicle Management */}
@@ -1549,15 +1801,15 @@ export default function FeaturesPage() {
                 background: 'rgba(139, 92, 246, 0.1)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '1rem',
-                padding: '2rem',
+                padding: isMobile ? '1.5rem' : '2rem',
                 transition: 'all 0.3s ease',
               }}
               className="hover:scale-105"
             >
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: isMobile ? '1.125rem' : '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
                 🚗 Vehicle Management
               </h3>
-              <ul style={{ color: '#e5e7eb', lineHeight: 1.8 }}>
+              <ul style={{ color: '#e5e7eb', lineHeight: 1.8, fontSize: isMobile ? '0.875rem' : '1rem' }}>
                 <li>• Smart inventory tracking & analytics</li>
                 <li>• QR code bulk generation (PDF/ZIP)</li>
                 <li>• Digital window stickers</li>
@@ -1572,15 +1824,15 @@ export default function FeaturesPage() {
                 background: 'rgba(236, 72, 153, 0.1)',
                 border: '1px solid rgba(236, 72, 153, 0.3)',
                 borderRadius: '1rem',
-                padding: '2rem',
+                padding: isMobile ? '1.5rem' : '2rem',
                 transition: 'all 0.3s ease',
               }}
               className="hover:scale-105"
             >
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: isMobile ? '1.125rem' : '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
                 👥 Customer Engagement
               </h3>
-              <ul style={{ color: '#e5e7eb', lineHeight: 1.8 }}>
+              <ul style={{ color: '#e5e7eb', lineHeight: 1.8, fontSize: isMobile ? '0.875rem' : '1rem' }}>
                 <li>• Test drive scheduling with round-robin</li>
                 <li>• Financial calculators & estimators</li>
                 <li>• Customer self-service portal</li>
@@ -1595,15 +1847,15 @@ export default function FeaturesPage() {
                 background: 'rgba(34, 197, 94, 0.1)',
                 border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: '1rem',
-                padding: '2rem',
+                padding: isMobile ? '1.5rem' : '2rem',
                 transition: 'all 0.3s ease',
               }}
               className="hover:scale-105"
             >
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: isMobile ? '1.125rem' : '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
                 📊 Sales & Analytics
               </h3>
-              <ul style={{ color: '#e5e7eb', lineHeight: 1.8 }}>
+              <ul style={{ color: '#e5e7eb', lineHeight: 1.8, fontSize: isMobile ? '0.875rem' : '1rem' }}>
                 <li>• Visual sales pipeline management</li>
                 <li>• Real-time performance dashboards</li>
                 <li>• AI-powered lead scoring</li>
@@ -1618,15 +1870,15 @@ export default function FeaturesPage() {
                 background: 'rgba(245, 158, 11, 0.1)',
                 border: '1px solid rgba(245, 158, 11, 0.3)',
                 borderRadius: '1rem',
-                padding: '2rem',
+                padding: isMobile ? '1.5rem' : '2rem',
                 transition: 'all 0.3s ease',
               }}
               className="hover:scale-105"
             >
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: isMobile ? '1.125rem' : '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
                 🔒 Security & Compliance
               </h3>
-              <ul style={{ color: '#e5e7eb', lineHeight: 1.8 }}>
+              <ul style={{ color: '#e5e7eb', lineHeight: 1.8, fontSize: isMobile ? '0.875rem' : '1rem' }}>
                 <li>• 5-tier role-based authentication</li>
                 <li>• Complete tenant data isolation</li>
                 <li>• Multi-company support</li>
@@ -1641,15 +1893,15 @@ export default function FeaturesPage() {
                 background: 'rgba(59, 130, 246, 0.1)',
                 border: '1px solid rgba(59, 130, 246, 0.3)',
                 borderRadius: '1rem',
-                padding: '2rem',
+                padding: isMobile ? '1.5rem' : '2rem',
                 transition: 'all 0.3s ease',
               }}
               className="hover:scale-105"
             >
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: isMobile ? '1.125rem' : '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
                 🤖 Automation & AI
               </h3>
-              <ul style={{ color: '#e5e7eb', lineHeight: 1.8 }}>
+              <ul style={{ color: '#e5e7eb', lineHeight: 1.8, fontSize: isMobile ? '0.875rem' : '1rem' }}>
                 <li>• Intelligent workflow automation</li>
                 <li>• AI-powered sales assistant</li>
                 <li>• Automated task assignments</li>
@@ -1664,15 +1916,15 @@ export default function FeaturesPage() {
                 background: 'rgba(168, 85, 247, 0.1)',
                 border: '1px solid rgba(168, 85, 247, 0.3)',
                 borderRadius: '1rem',
-                padding: '2rem',
+                padding: isMobile ? '1.5rem' : '2rem',
                 transition: 'all 0.3s ease',
               }}
               className="hover:scale-105"
             >
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: isMobile ? '1.125rem' : '1.25rem', fontWeight: 'bold', color: '#ffffff', marginBottom: '1rem' }}>
                 🔗 Integration & Platform
               </h3>
-              <ul style={{ color: '#e5e7eb', lineHeight: 1.8 }}>
+              <ul style={{ color: '#e5e7eb', lineHeight: 1.8, fontSize: isMobile ? '0.875rem' : '1rem' }}>
                 <li>• Enterprise DMS integration</li>
                 <li>• Financial system connections</li>
                 <li>• Mobile-first responsive design</li>
@@ -1687,17 +1939,17 @@ export default function FeaturesPage() {
             style={{
               background: 'rgba(30, 41, 59, 0.8)',
               borderRadius: '1.5rem',
-              padding: '3rem',
+              padding: isMobile ? '2rem' : '3rem',
               textAlign: 'center',
               border: '1px solid rgba(139, 92, 246, 0.2)',
             }}
           >
             <h3
               style={{
-                fontSize: '2rem',
+                fontSize: isMobile ? '1.5rem' : '2rem',
                 fontWeight: 'bold',
                 color: '#ffffff',
-                marginBottom: '2rem',
+                marginBottom: isMobile ? '1.5rem' : '2rem',
               }}
             >
               Why Choose GhostCRM?
@@ -1705,44 +1957,44 @@ export default function FeaturesPage() {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '2rem',
-                marginBottom: '2rem',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: isMobile ? '1.5rem' : '2rem',
+                marginBottom: isMobile ? '1.5rem' : '2rem',
               }}
             >
               <div>
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎯</div>
-                <h4 style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <h4 style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: isMobile ? '1rem' : '1.125rem' }}>
                   Built for Automotive
                 </h4>
-                <p style={{ color: '#e5e7eb', fontSize: '0.875rem' }}>
+                <p style={{ color: '#e5e7eb', fontSize: isMobile ? '0.8rem' : '0.875rem' }}>
                   Designed specifically for car dealerships with industry-specific workflows and requirements
                 </p>
               </div>
               <div>
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⚡</div>
-                <h4 style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <h4 style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: isMobile ? '1rem' : '1.125rem' }}>
                   Revolutionary Innovation
                 </h4>
-                <p style={{ color: '#e5e7eb', fontSize: '0.875rem' }}>
+                <p style={{ color: '#e5e7eb', fontSize: isMobile ? '0.8rem' : '0.875rem' }}>
                   QR code systems, tenant isolation, and AI features you won't find anywhere else
                 </p>
               </div>
               <div>
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🏢</div>
-                <h4 style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <h4 style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: isMobile ? '1rem' : '1.125rem' }}>
                   Enterprise-Grade
                 </h4>
-                <p style={{ color: '#e5e7eb', fontSize: '0.875rem' }}>
+                <p style={{ color: '#e5e7eb', fontSize: isMobile ? '0.8rem' : '0.875rem' }}>
                   Scalable architecture supporting multiple dealerships with complete data isolation
                 </p>
               </div>
               <div>
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🚀</div>
-                <h4 style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <h4 style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: isMobile ? '1rem' : '1.125rem' }}>
                   Rapid Implementation
                 </h4>
-                <p style={{ color: '#e5e7eb', fontSize: '0.875rem' }}>
+                <p style={{ color: '#e5e7eb', fontSize: isMobile ? '0.8rem' : '0.875rem' }}>
                   Get up and running in minutes with intuitive setup and comprehensive onboarding
                 </p>
               </div>
@@ -1750,6 +2002,16 @@ export default function FeaturesPage() {
           </div>
         </div>
       </section>
+
+      {/* Mobile Floating Back to Top Button */}
+      {isMobile && (
+        <div
+          className="mobile-floating-nav"
+          onClick={() => scrollToSection('hero')}
+        >
+          <ArrowRight style={{ width: '1.5rem', height: '1.5rem', transform: 'rotate(-90deg)', color: '#ffffff' }} />
+        </div>
+      )}
 
       {/* Epic CTA */}
       <section
@@ -1779,7 +2041,7 @@ export default function FeaturesPage() {
             <h2
               className="animate-fade-in-up"
               style={{
-                fontSize: '3.5rem',
+                fontSize: isMobile ? '2.5rem' : '3.5rem',
                 fontWeight: 'bold',
                 color: '#ffffff',
                 marginBottom: '2rem',
@@ -1806,13 +2068,14 @@ export default function FeaturesPage() {
             <p
               className="animate-fade-in-up animation-delay-200"
               style={{
-                fontSize: '1.25rem',
+                fontSize: isMobile ? '1rem' : '1.25rem',
                 color: '#f9fafb',
                 marginBottom: '3rem',
                 maxWidth: '32rem',
                 marginInline: 'auto',
                 textShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
                 fontWeight: 500,
+                padding: isMobile ? '0 1rem' : '0',
               }}
             >
               Join the revolution. Transform your dealership. Become the competition&apos;s worst nightmare.
@@ -1825,17 +2088,19 @@ export default function FeaturesPage() {
                 position: 'relative',
                 display: 'inline-flex',
                 alignItems: 'center',
-                padding: '1.5rem 3rem',
+                padding: isMobile ? '1.25rem 2.5rem' : '1.5rem 3rem',
                 background: 'linear-gradient(90deg, #8b5cf6, #ec4899, #3b82f6)',
                 color: '#ffffff',
                 fontWeight: 'bold',
-                fontSize: '1.125rem',
+                fontSize: isMobile ? '1rem' : '1.125rem',
                 borderRadius: '1rem',
                 boxShadow: '0 20px 50px rgba(139, 92, 246, 0.4)',
                 textDecoration: 'none',
                 transition: 'all 0.5s ease',
                 border: 'none',
                 cursor: 'pointer',
+                justifyContent: 'center',
+                minWidth: isMobile ? '280px' : '320px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'scale(1.1) translateY(-8px)'
@@ -1880,7 +2145,12 @@ export default function FeaturesPage() {
 
             <p
               className="animate-fade-in-up animation-delay-400"
-              style={{ color: '#a78bfa', marginTop: '2rem', fontSize: '0.875rem' }}
+              style={{ 
+                color: '#a78bfa', 
+                marginTop: '2rem', 
+                fontSize: isMobile ? '0.8rem' : '0.875rem',
+                padding: isMobile ? '0 1rem' : '0',
+              }}
             >
               🚀 14-day free trial • ⚡ Setup in 5 minutes • 💎 No credit card required
             </p>
