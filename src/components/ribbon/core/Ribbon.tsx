@@ -1,6 +1,7 @@
 "use client";
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { useRibbon } from "../providers/RibbonProvider";
 import { useContextualRibbon, prioritizeNotifications, getContextualShortcuts } from "../providers/ContextualRibbon";
 import { Menu, X, ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
@@ -145,12 +146,14 @@ function MobileRibbonGroup({
   title, 
   items, 
   isExpanded,
-  onToggleExpansion 
+  onToggleExpansion,
+  user
 }: { 
   title: string; 
   items: { ctrl: any; disabled: boolean }[]; 
   isExpanded: boolean;
   onToggleExpansion: () => void;
+  user?: any;
 }) {
   const hasVisible = items.some(({ ctrl, disabled }) => !disabled);
   
@@ -178,7 +181,7 @@ function MobileRibbonGroup({
               <button
                 key={ctrl.id}
                 type="button"
-                onClick={ctrl.onClick}
+                onClick={() => ctrl.onClick?.(user)}
                 className="flex flex-col items-center p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all touch-manipulation group"
               >
                 <span className="text-xl mb-2 group-hover:scale-110 transition-transform">{ctrl.icon}</span>
@@ -194,7 +197,7 @@ function MobileRibbonGroup({
   );
 }
 
-function DesktopRibbonGroup({ title, items, isTablet = false }: { title: string; items: { ctrl: any; disabled: boolean }[]; isTablet?: boolean }) {
+function DesktopRibbonGroup({ title, items, isTablet = false, user }: { title: string; items: { ctrl: any; disabled: boolean }[]; isTablet?: boolean; user?: any }) {
   const [open, setOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -257,7 +260,7 @@ function DesktopRibbonGroup({ title, items, isTablet = false }: { title: string;
               >
                 <button
                   type="button"
-                  onClick={ctrl.onClick}
+                  onClick={() => ctrl.onClick?.(user)}
                   className={`w-full text-left px-3 ${isTablet ? 'py-3' : 'py-2.5'} text-sm rounded-md transition-all duration-150 flex items-center gap-3 ${
                     hoveredItem === ctrl.id 
                       ? 'bg-blue-500 text-white shadow-md transform scale-[1.02]' 
@@ -290,7 +293,7 @@ function DesktopRibbonGroup({ title, items, isTablet = false }: { title: string;
                         <li key={idx} className="mx-2">
                           <button
                             type="button"
-                            onClick={item.onClick}
+                            onClick={() => item.onClick?.(user)}
                             className="w-full text-left px-3 py-2 text-sm rounded-md transition-all duration-150 text-gray-700 hover:bg-blue-500 hover:text-white hover:shadow-md hover:transform hover:scale-[1.02] font-medium touch-manipulation"
                           >
                             {item.label}
@@ -311,6 +314,7 @@ function DesktopRibbonGroup({ title, items, isTablet = false }: { title: string;
 
 export default function Ribbon() {
   const pathname = usePathname();
+  const { user } = useAuth();
   const contextualTab = getContextualTabName(pathname);
   const contextualControls = getContextualControls(contextualTab);
   
@@ -598,6 +602,7 @@ export default function Ribbon() {
                     items={items}
                     isExpanded={expandedGroups.has(title)}
                     onToggleExpansion={() => toggleGroupExpansion(title)}
+                    user={user}
                   />
                 ))}
               </div>
@@ -617,6 +622,7 @@ export default function Ribbon() {
                 title={title} 
                 items={items}
                 isTablet={isTablet}
+                user={user}
               />
             ))}
           </div>

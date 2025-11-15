@@ -1,0 +1,105 @@
+/* Coming Soon Section Styles */
+.coming-soon-section {
+  margin-bottom: 2rem;
+}
+
+.coming-soon-container {
+  background: linear-gradient(135deg, #eff6ff 0%, #f3e8ff 100%);
+  border-radius: 0.75rem;
+  padding: 2rem;
+  border: 1px solid #e0e7ff;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.coming-soon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.coming-soon-card {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid #f1f5f9;
+  transition: transform 0.2s ease;
+}
+
+.coming-soon-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.coming-soon-icon {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.coming-soon-icon .icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.coming-soon-icon.blue {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.coming-soon-icon.purple {
+  background-color: #f3e8ff;
+  color: #9333ea;
+}
+
+.coming-soon-icon.green {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.coming-soon-content {
+  text-align: left;
+}
+
+.coming-soon-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.coming-soon-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .coming-soon-container {
+    padding: 1.5rem;
+  }
+  
+  .coming-soon-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .coming-soon-card {
+    padding: 1rem;
+  }
+  
+  .coming-soon-icon .icon {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}

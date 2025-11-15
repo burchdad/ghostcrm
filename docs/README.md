@@ -4,10 +4,40 @@ This directory contains all project documentation organized by category.
 
 ## 📂 Directory Structure
 
-### `/architecture/`
-Technical architecture and system design documentation:
-- `MULTI_TENANT_ARCHITECTURE.md` - Multi-tenant system design
-- `TENANT_STRATEGY.md` - Tenant management strategy
+### `/setup/`
+Configuration and setup guides for various services:
+- Telnyx setup and configuration
+- Stripe integration setup  
+- Production domain setup
+- Authentication setup
+
+### `/features/`
+Feature implementation documentation:
+- Promo code system
+- Multi-language support
+- Feature gating system
+- Role-based authentication
+- Automated subdomain system
+
+### `/development/`
+Development and enhancement documentation:
+- Development roadmap
+- Enhancement plans
+- Performance improvements
+- Deployment system
+- Project cleanup summaries
+
+## Key Documents
+
+- `GHOSTCRM_COMPLETE_FEATURES.md` - Complete feature overview
+- `SECURITY_COMPLIANCE_ENHANCEMENTS.md` - Security compliance documentation
+
+## Migration Information
+
+SQL migration files are organized in:
+- `migrations/` - Current migration files
+- `migrations/archive/obsolete/` - Archived obsolete migration files
+- `supabase/migrations/` - Supabase-specific migrations
 - `TENANT_SETUP_GUIDE.md` - Guide for setting up new tenants
 - `SECURE_CREDENTIALS_SYSTEM.md` - Security and credentials architecture
 - `DYNAMIC_CHART_SYSTEM.md` - Dynamic charting system design

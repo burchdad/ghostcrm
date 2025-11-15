@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/context/AuthContext'
 
 export interface OnboardingStatus {
   isCompleted: boolean
@@ -10,6 +11,7 @@ export interface OnboardingStatus {
 }
 
 export function useOnboardingStatus(): OnboardingStatus {
+  const { user, authReady } = useAuth()
   const [status, setStatus] = useState<OnboardingStatus>({
     isCompleted: false,
     completedAt: null,
@@ -18,6 +20,22 @@ export function useOnboardingStatus(): OnboardingStatus {
   })
 
   useEffect(() => {
+    // Don't check onboarding status until auth is ready
+    if (!authReady) {
+      return
+    }
+
+    // If auth is ready but no user, mark as not loading but not completed
+    if (!user) {
+      setStatus({
+        isCompleted: false,
+        completedAt: null,
+        organizationId: null,
+        isLoading: false
+      })
+      return
+    }
+
     const checkOnboardingStatus = async () => {
       try {
         // Check if user is in demo mode - demo users should be considered as having completed onboarding
@@ -98,7 +116,7 @@ export function useOnboardingStatus(): OnboardingStatus {
     }
 
     checkOnboardingStatus()
-  }, [])
+  }, [authReady, user])
 
   return status
 }

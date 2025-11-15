@@ -24,7 +24,7 @@ export const viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-gray-900">
+      <body className="bg-gray-900" suppressHydrationWarning={true}>
         <GlobalErrorBoundary>
           <I18nProvider>
               <ConditionalAuthProvider>

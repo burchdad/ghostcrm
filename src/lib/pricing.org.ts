@@ -11,66 +11,72 @@ export interface OrgPlan {
   stripePriceId?: string;      // Stripe price ID for the base plan
 }
 
-export const ORG_SETUP_FEE = 499; // One-time setup (bumped up for feature-packed platform)
+export const ORG_SETUP_FEE = 799; // One-time setup matching billing page
 
 export const ORG_PLANS: OrgPlan[] = [
   {
     id: 'starter',
     name: 'Starter',
-    description: 'Core CRM to get your dealership productive fast.',
-    priceMonthly: 149,
+    description: 'Perfect for small dealerships getting started',
+    priceMonthly: 299,
     setupFee: ORG_SETUP_FEE,
-    stripePriceId: 'price_org_starter_monthly', // TODO: replace with live Stripe ID
+    stripePriceId: 'price_org_starter_monthly',
     features: [
-      'Up to 3 seats included',
-      'Leads, Contacts, Deals pipelines',
-      'Basic automations (templates)',
-      'Team calendar + basic scheduling',
-      'Email templates + send (SMTP included)',
+      'Up to 5 team members',
+      'Up to 500 vehicles in inventory',
+      'Core CRM & lead management',
+      'Basic reporting & analytics',
+      'Email & SMS integration',
       'Mobile app access',
-      'Standard dashboards',
-      'Role-based access control',
-      'Supabase DB + backups (included)',
-      'Email + in-app support'
+      'Customer portal',
+      'Standard support',
+      'Basic integrations (DMS, websites)',
+      'Standard security & backups'
     ]
   },
   {
     id: 'growth',
-    name: 'Growth',
-    description: 'Automation + analytics to scale a growing team.',
-    priceMonthly: 299,
+    name: 'Professional',
+    description: 'Enhanced tools for growing dealerships',
+    priceMonthly: 599,
     setupFee: ORG_SETUP_FEE,
     popular: true,
-    stripePriceId: 'price_org_growth_monthly',
+    stripePriceId: 'price_org_professional_monthly',
     features: [
-      'Everything in Starter',
-      'Up to 10 seats included',
-      'Advanced automations & sequences',
-      'Sales dialer + basic SMS (A2P-ready)',
-      'Document management + e-sign',
-      'Team performance & pipeline analytics',
-      'Custom fields & objects',
-      'Webhook + API access',
-      'SLA & audit log',
-      'Priority support'
+      'Up to 25 team members',
+      'Up to 2,000 vehicles in inventory',
+      'Everything in Starter, plus:',
+      'Advanced AI-powered insights',
+      'Advanced automation workflows',
+      'Custom reporting & dashboards',
+      'Advanced integrations (F&I, lenders)',
+      'Team performance analytics',
+      'Advanced customer segmentation',
+      'Priority support',
+      'API access for custom integrations',
+      'Enhanced security & compliance'
     ]
   },
   {
     id: 'scale',
-    name: 'Scale',
-    description: 'Full platform with AI + enterprise controls.',
-    priceMonthly: 599,
+    name: 'Enterprise',
+    description: 'Complete solution for large dealership groups',
+    priceMonthly: 999,
     setupFee: ORG_SETUP_FEE,
-    stripePriceId: 'price_org_scale_monthly',
+    stripePriceId: 'price_org_enterprise_monthly',
     features: [
-      'Everything in Growth',
-      'Unlimited seats included',
-      'AI insights + automated follow-ups',
-      'Predictive analytics & forecasting',
-      'Advanced security & compliance',
-      'White-label & SSO/SAML',
-      'Custom integrations',
-      'Dedicated success manager'
+      'Unlimited team members',
+      'Unlimited vehicle inventory',
+      'Everything in Professional, plus:',
+      'White-label & custom branding',
+      'Advanced AI & machine learning',
+      'Multi-location management',
+      'Custom integrations & API access',
+      'Dedicated account manager',
+      'Custom training & onboarding',
+      '24/7 premium support',
+      'Enterprise security & compliance',
+      'Advanced analytics & forecasting'
     ]
   }
 ];

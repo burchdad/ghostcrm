@@ -67,11 +67,14 @@ export function isOriginAllowed(origin: string | null, config: CORSConfig = defa
     // Invalid URL, continue with other checks
   }
 
-  // For development, allow localhost with any port
+  // For development, allow localhost with any port and subdomains
   if (process.env.NODE_ENV === 'development') {
     try {
       const url = new URL(origin);
-      if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      // Allow localhost, 127.0.0.1, and any subdomain of localhost (e.g. tenant.localhost)
+      if (url.hostname === 'localhost' || 
+          url.hostname === '127.0.0.1' || 
+          url.hostname.endsWith('.localhost')) {
         return true;
       }
     } catch {

@@ -41,17 +41,13 @@ export default function HeroSection() {
           </div>
           <div className="hero-feature-item">
             <CheckCircle className="w-4 h-4 text-green-500" />
-            No setup fees
-          </div>
-          <div className="hero-feature-item">
-            <CheckCircle className="w-4 h-4 text-green-500" />
             Cancel anytime
           </div>
         </div>
       </div>
 
       {/* Interactive Dashboard Preview */}
-      <div className="mt-16 relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="dashboard-preview-container">
         <div className="dashboard-mockup">
           <div className="browser-header">
             <div className="browser-controls">
@@ -65,7 +61,7 @@ export default function HeroSection() {
           </div>
 
           <div className="dashboard-content">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="dashboard-grid">
               <div className="dashboard-card">
                 <div className="dashboard-card-header">
                   <h3 className="dashboard-card-title">Active Leads</h3>
@@ -73,30 +69,30 @@ export default function HeroSection() {
                     <TrendingUp className="w-5 h-5 text-green-600" />
                   </div>
                 </div>
-                <div className="dashboard-card-value">247</div>
-                <div className="dashboard-card-trend text-green-600">+12% this month</div>
+                <div className="dashboard-card-value">1,247</div>
+                <div className="dashboard-card-trend text-green-600">+23% this month</div>
               </div>
 
               <div className="dashboard-card">
                 <div className="dashboard-card-header">
-                  <h3 className="dashboard-card-title">Sales Pipeline</h3>
+                  <h3 className="dashboard-card-title">Monthly Revenue</h3>
                   <div className="dashboard-card-icon bg-blue-100">
                     <BarChart3 className="w-5 h-5 text-blue-600" />
                   </div>
                 </div>
-                <div className="dashboard-card-value">$2.4M</div>
-                <div className="dashboard-card-trend text-blue-600">85% close rate</div>
+                <div className="dashboard-card-value">$847K</div>
+                <div className="dashboard-card-trend text-blue-600">92% close rate</div>
               </div>
 
               <div className="dashboard-card">
                 <div className="dashboard-card-header">
-                  <h3 className="dashboard-card-title">Follow-ups Due</h3>
+                  <h3 className="dashboard-card-title">Appointments Today</h3>
                   <div className="dashboard-card-icon bg-purple-100">
                     <Calendar className="w-5 h-5 text-purple-600" />
                   </div>
                 </div>
-                <div className="dashboard-card-value">18</div>
-                <div className="dashboard-card-trend text-purple-600">Today</div>
+                <div className="dashboard-card-value">34</div>
+                <div className="dashboard-card-trend text-purple-600">8 confirmed</div>
               </div>
             </div>
           </div>
@@ -105,9 +101,9 @@ export default function HeroSection() {
       
       {/* Scroll Indicator */}
       <div className="scroll-indicator">
-        <div className="flex flex-col items-center">
-          <span className="text-white/70 text-sm mb-2">Scroll to explore</span>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white/70">
+        <div className="scroll-indicator-content">
+          <span className="scroll-text">Scroll to explore</span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="scroll-icon">
             <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>

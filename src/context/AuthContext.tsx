@@ -8,7 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   authReady: boolean; // Track when auth initialization is complete
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
   canAccessTenant: (tenantId: string) => boolean;
@@ -124,41 +124,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Find user by email
-      const userData = sampleUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
-      
-      if (!userData) {
-        return { success: false, message: 'Invalid email or password' };
+      // Call the actual login API
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, message: data.error || 'Login failed' };
       }
-      
-      if (!userData.isActive) {
-        return { success: false, message: 'Account is deactivated. Please contact your administrator.' };
-      }
-      
-      // Find tenant
-      const tenantData = sampleTenants.find(t => t.id === userData.tenantId);
-      
-      if (!tenantData || !tenantData.isActive) {
-        return { success: false, message: 'Company account is not active. Please contact support.' };
-      }
-      
-      // Check subscription status
-      if (tenantData.subscription.status !== 'active') {
-        return { success: false, message: 'Company subscription is not active. Please contact your administrator.' };
-      }
-      
-      // Update last login
-      userData.lastLogin = new Date().toISOString();
-      
-      // Generate session token
-      const token = AuthService.generateSessionToken(userData);
-      localStorage.setItem('auth_token', token);
-      
-      setUser(userData);
-      setTenant(tenantData);
+
+      // If login successful, refresh auth state
+      await initializeAuth();
       
       return { success: true };
       
@@ -170,13 +153,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  function logout() {
-    localStorage.removeItem('auth_token');
-    setUser(null);
-    setTenant(null);
-    
-    // Redirect to login
-    window.location.href = '/login';
+  async function logout() {
+    try {
+      // Call logout API to clear HTTP-only cookies
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('Error calling logout API:', error);
+    } finally {
+      // Clear local state regardless of API call success
+      localStorage.removeItem('auth_token');
+      setUser(null);
+      setTenant(null);
+      
+      // Redirect to login
+      window.location.href = '/login';
+    }
   }
 
   function hasPermission(permission: string): boolean {
@@ -241,7 +235,7 @@ export function useAuth() {
       isLoading: false,
       authReady: true, // For public pages, auth is always "ready"
       login: async () => ({ success: false, message: 'Auth not available' }),
-      logout: () => {},
+      logout: async () => {},
       hasPermission: () => false,
       hasAnyPermission: () => false,
       canAccessTenant: () => false,

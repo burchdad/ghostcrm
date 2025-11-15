@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import {
   Search,
   Bell,
@@ -53,9 +54,26 @@ export default function UnifiedToolbar({
 }: UnifiedToolbarProps) {
   const pathname = usePathname() || "/";
   const { t } = useI18n();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("AI");
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Helper function to get tenant-aware route based on user role
+  const getTenantRoute = (basePath: string): string => {
+    if (!user || !user.role) return basePath;
+    
+    const roleMapping: Record<string, string> = {
+      'owner': 'tenant-owner',
+      'admin': 'tenant-owner', // Admin can access owner routes
+      'manager': 'tenant-salesmanager',
+      'sales_rep': 'tenant-salesrep',
+      'user': 'tenant-salesrep' // Default users to sales rep level
+    };
+    
+    const tenantPrefix = roleMapping[user.role] || 'tenant-salesrep';
+    return `/${tenantPrefix}${basePath}`;
+  };
 
   useEffect(() => {
     getOnlineUsers()
@@ -214,7 +232,10 @@ export default function UnifiedToolbar({
             id: "newLead" as ControlId,
             group: "Leads",
             label: "New Lead",
-            onClick: () => window.location.href = "/leads/create"
+            onClick: () => {
+              const newLeadRoute = getTenantRoute("/new-lead");
+              window.location.href = newLeadRoute;
+            }
           },
           {
             id: "importLeads" as ControlId,

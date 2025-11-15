@@ -1,5 +1,6 @@
  "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
 import { useAuth } from "@/context/AuthContext";
 import { FeatureGuard, usePermissionCheck } from "@/middleware/PermissionMiddleware";
@@ -182,6 +183,23 @@ const sampleVehicles: Vehicle[] = [
     assignedSalesRep: 'emma.brown@hyundai-north.com'
   }
 ];
+
+// Helper function to get tenant-aware route based on user role
+function getTenantRoute(user: any, basePath: string): string {
+  if (!user || !user.role) return basePath;
+  
+  // Map user roles to their tenant directories
+  const roleMapping: Record<string, string> = {
+    'owner': 'tenant-owner',
+    'admin': 'tenant-owner', // Tenant admin has same access as owner except billing/creation
+    'manager': 'tenant-salesmanager',
+    'sales_rep': 'tenant-salesrep',
+    'user': 'tenant-salesrep' // Default users to sales rep level
+  };
+  
+  const tenantDir = roleMapping[user.role] || 'tenant-salesrep';
+  return `/${tenantDir}${basePath}`;
+}
 
 // Placeholder chart component
 function ChartPlaceholder({ title }: { title: string }) {
@@ -444,6 +462,7 @@ function InventoryContent() {
   // Authentication and permission hooks
   const { user } = useAuth();
   const { canManageInventory, isSalesRep, canAccess } = usePermissionCheck();
+  const router = useRouter();
   
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
@@ -738,7 +757,13 @@ function InventoryContent() {
         
         {/* Add Vehicle Button - Managers and above can add vehicles */}
         <FeatureGuard permissions={['inventory.manage']} roles={['owner', 'admin', 'manager']}>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+          <button 
+            onClick={() => {
+              const newInventoryRoute = getTenantRoute(user, "/new-inventory");
+              router.push(newInventoryRoute);
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
             + Add Vehicle
           </button>
         </FeatureGuard>

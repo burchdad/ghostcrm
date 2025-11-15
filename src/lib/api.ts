@@ -3,8 +3,8 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 // Type definitions for returned data
 export interface User {
   id: string;
-  name: string;
-  online: boolean;
+  email: string;
+  role?: string;
 }
 
 export interface Notification {
@@ -42,13 +42,17 @@ function handleError(error: any, context: string): { error: true; message: strin
  */
 export async function getOnlineUsers(limit = 50, offset = 0): Promise<User[] | { error: true; message: string; context: string }> {
   try {
-    const { data, error } = await supabase
-      .from('users')
-      .select('id, name, online')
-      .eq('online', true)
-      .range(offset, offset + limit - 1);
-    if (error) return handleError(error, 'getOnlineUsers');
-    return (data as User[]) || [];
+    // Since we don't have online/presence tracking yet, return empty array
+    // This prevents the 400 errors while the feature is being implemented
+    return [];
+    
+    // TODO: Implement proper online user tracking with websockets/presence
+    // const { data, error } = await supabase
+    //   .from('users')
+    //   .select('id, email, role')
+    //   .range(offset, offset + limit - 1);
+    // if (error) return handleError(error, 'getOnlineUsers');
+    // return (data as User[]) || [];
   } catch (error: any) {
     return handleError(error, 'getOnlineUsers');
   }

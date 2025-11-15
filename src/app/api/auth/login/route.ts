@@ -7,7 +7,6 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { limitKey } from "@/lib/rateLimitEdge";
 import { withCORS } from "@/lib/cors";
 import { withErrorHandling, createErrorResponse } from "@/lib/error-handling";
-import { handleDemoLogin } from "@/lib/demo/demo-data-provider";
 
 // Get JWT secret with runtime validation
 function getJWTSecret() {
@@ -22,101 +21,23 @@ function getJWTSecret() {
 }
 
 async function loginHandler(req: Request) {
+  console.log('🚀 [LOGIN] Starting login process...');
+  console.log('🔍 [LOGIN] Request details:', {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries())
+  });
+  
   try {
     const { email, password, rememberMe } = await req.json();
     
     if (!email || !password) {
+      console.log('❌ [LOGIN] Missing email or password');
       return NextResponse.json({ error: "Missing email or password" }, { status: 400 });
     }
 
     const emailNorm = String(email).trim().toLowerCase();
-    
-    // Check for demo credentials first and populate database
-    if (emailNorm === 'demo@ghostcrm.com' && password === 'demo123') {
-      console.log('🎬 [DEMO] Demo login detected via main login endpoint, initializing full demo environment...');
-      
-      try {
-        // Use the proper demo login handler that populates the database
-        const demoResult = await handleDemoLogin(req, supabaseAdmin);
-        
-        // Create JWT token for demo user
-        const token = jwt.sign(
-          { 
-            userId: demoResult.user.id, 
-            email: demoResult.user.email, 
-            role: 'admin',
-            orgId: demoResult.organization.id 
-          },
-          getJWTSecret(),
-          { expiresIn: rememberMe ? "30d" : "24h" }
-        );
-        
-        // Set HTTP-only cookie
-        const response = NextResponse.json({ 
-          success: true, 
-          user: {
-            id: demoResult.user.id,
-            email: demoResult.user.email,
-            firstName: 'Demo',
-            lastName: 'User',
-            dealership: 'Premier Auto Sales',
-            role: 'admin',
-            orgId: demoResult.organization.id
-          },
-          demo_mode: true
-        });
-        
-        response.cookies.set("ghostcrm_jwt", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60
-        });
-        
-        console.log('✅ [DEMO] Demo environment fully initialized with database population');
-        return response;
-        
-      } catch (demoError) {
-        console.error('❌ [DEMO] Demo initialization failed:', demoError);
-        
-        // Fallback to simple demo response if database population fails
-        const demoUser = {
-          id: 'demo-user-id',
-          email: 'demo@ghostcrm.com',
-          firstName: 'Demo',
-          lastName: 'User',
-          dealership: 'Ghost Auto Demo Dealership',
-          role: 'admin',
-          orgId: 'demo-org-id'
-        };
-        
-        const token = jwt.sign(
-          { 
-            userId: demoUser.id, 
-            email: demoUser.email, 
-            role: demoUser.role,
-            orgId: demoUser.orgId 
-          },
-          getJWTSecret(),
-          { expiresIn: rememberMe ? "30d" : "24h" }
-        );
-        
-        const response = NextResponse.json({ 
-          success: true, 
-          user: demoUser,
-          demo_mode: true
-        });
-        
-        response.cookies.set("ghostcrm_jwt", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60
-        });
-        
-        return response;
-      }
-    }
+    console.log('📧 [LOGIN] Processing login for:', emailNorm);
     
     // Apply rate limiting based on email and IP
     const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
@@ -124,6 +45,7 @@ async function loginHandler(req: Request) {
     
     const rateResult = await limitKey(rateKey);
     if (!rateResult.allowed) {
+      console.log('❌ [LOGIN] Rate limit exceeded for:', emailNorm);
       return NextResponse.json(
         { error: "Too many login attempts. Please try again later." }, 
         { status: 429 }
@@ -131,29 +53,77 @@ async function loginHandler(req: Request) {
     }
     
     // Fetch user from Supabase
+    console.log('🔍 [LOGIN] Looking up user in database...');
     const { data: user, error: userError } = await supabaseAdmin
       .from("users")
-      .select("id, email, password_hash, role, org_id")
+      .select("id, email, password_hash, role, organization_id")
       .eq("email", emailNorm)
       .single();
       
     if (!user || userError) {
+      console.log('❌ [LOGIN] User lookup failed:', { emailNorm, error: userError });
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
     
+    console.log('✅ [LOGIN] User found:', { id: user.id, email: user.email, role: user.role, hasPassword: !!user.password_hash });
+    
     // Verify password
+    console.log('🔐 [LOGIN] Verifying password...');
     const valid = await compare(password, user.password_hash);
+    console.log('🔐 [LOGIN] Password verification result:', valid);
+    
     if (!valid) {
+      console.log('❌ [LOGIN] Password verification failed');
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    }
+    
+    console.log('✅ [LOGIN] Password verified successfully');
+    
+    // Get tenant context from request headers (subdomain)
+    const hostname = req.headers.get('host') || '';
+    const subdomain = hostname.split('.')[0];
+    
+    console.log('🏢 [LOGIN] Hostname analysis:', {
+      hostname,
+      subdomain,
+      isSubdomain: subdomain && subdomain !== 'localhost' && subdomain !== hostname,
+      hostnameIncludesLocalhost: hostname.includes('localhost')
+    });
+    
+    // Determine tenant/organization ID
+    let tenantId = user.organization_id || 'default-org'; // Default fallback
+    let organizationId = user.organization_id || 'default-org';
+    
+    // If we have a subdomain (not localhost), use it as tenant context
+    // For burch-enterprises.localhost:3000, subdomain = 'burch-enterprises'
+    if (subdomain && subdomain !== 'localhost' && subdomain !== hostname && hostname.includes('localhost')) {
+      tenantId = subdomain;
+      organizationId = subdomain;
+      console.log('🎯 [LOGIN] Using subdomain as tenant context:', {
+        hostname,
+        subdomain,
+        tenantId,
+        organizationId
+      });
+    } else {
+      console.log('🚨 [LOGIN] No subdomain detected, using database org:', {
+        hostname,
+        subdomain,
+        tenantId,
+        organizationId,
+        userOrgId: user.organization_id
+      });
     }
     
     // Create JWT token
+    console.log('🎫 [LOGIN] Creating JWT token...');
     const token = jwt.sign(
       { 
         userId: user.id, 
         email: user.email, 
         role: user.role,
-        orgId: user.org_id 
+        organizationId: organizationId,
+        tenantId: tenantId
       },
       getJWTSecret(),
       { expiresIn: rememberMe ? "30d" : "24h" }
@@ -166,20 +136,33 @@ async function loginHandler(req: Request) {
         id: user.id, 
         email: user.email, 
         role: user.role,
-        orgId: user.org_id
+        organizationId: organizationId,
+        tenantId: tenantId
       } 
     });
     
-    response.cookies.set("ghostcrm_jwt", token, {
+    // Cookie settings based on Remember Me choice
+    const cookieOptions: any = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60 // 30 days or 24 hours
-    });
+      path: "/"
+    };
     
+    // Only set maxAge if Remember Me is checked
+    // Without maxAge, cookie becomes a session cookie (expires on browser close)
+    if (rememberMe) {
+      cookieOptions.maxAge = 30 * 24 * 60 * 60; // 30 days
+    }
+    // If rememberMe is false, cookie will be a session cookie (no maxAge)
+    
+    response.cookies.set("ghostcrm_jwt", token, cookieOptions);
+    
+    console.log('🎉 [LOGIN] Login successful for:', user.email);
     return response;
     
   } catch (error) {
+    console.error('💥 [LOGIN] Login error:', error);
     const context = {
       endpoint: '/api/auth/login',
       method: 'POST',

@@ -1,6 +1,20 @@
 import { Car, Users, TrendingUp, Zap, Sparkles, Rocket, Crown } from "lucide-react";
 
-export default function BrandPanel() {
+interface BrandPanelProps {
+  organizationInfo?: any;
+  roleIcon?: React.ReactNode;
+  roleColor?: string;
+  roleName?: string;
+  roleDescription?: string;
+}
+
+export default function BrandPanel({ 
+  organizationInfo,
+  roleIcon,
+  roleColor = "from-purple-500 to-indigo-600",
+  roleName = "Professional",
+  roleDescription = "Access your dashboard and manage your business efficiently."
+}: BrandPanelProps = {}) {
   return (
     <div style={{
       width: '50%',
@@ -230,6 +244,63 @@ export default function BrandPanel() {
             ))}
           </div>
         </div>
+
+        {/* Role-Specific Section */}
+        {roleIcon && (
+          <div style={{
+            marginTop: '2rem',
+            padding: '1.5rem',
+            background: 'rgba(255, 255, 255, 0.08)',
+            borderRadius: '1rem',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              marginBottom: '1rem'
+            }}>
+              <div style={{
+                padding: '0.75rem',
+                borderRadius: '0.75rem',
+                background: `linear-gradient(135deg, ${roleColor?.split(' ')[1] || '#8b5cf6'}, ${roleColor?.split(' ')[3] || '#6366f1'})`,
+                color: 'white',
+                boxShadow: '0 8px 20px rgba(139, 92, 246, 0.3)'
+              }}>
+                {roleIcon}
+              </div>
+              <div>
+                <h3 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '700',
+                  color: 'white',
+                  margin: 0,
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                }}>
+                  {roleName}
+                </h3>
+                {organizationInfo && (
+                  <p style={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '0.9rem',
+                    margin: '0.25rem 0 0 0'
+                  }}>
+                    {organizationInfo.name}
+                  </p>
+                )}
+              </div>
+            </div>
+            <p style={{
+              color: 'rgba(255, 255, 255, 0.8)',
+              fontSize: '0.95rem',
+              lineHeight: '1.4',
+              margin: 0
+            }}>
+              {roleDescription}
+            </p>
+          </div>
+        )}
       </div>
 
       <div style={{

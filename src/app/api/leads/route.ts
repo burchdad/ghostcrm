@@ -7,9 +7,16 @@ import { supaFromReq } from "@/lib/supa-ssr";
 import { LeadCreate } from "@/lib/validators";
 import { getMembershipOrgId } from "@/lib/rbac";
 import { ok, bad, oops } from "@/lib/http";
+import { createClient } from "@supabase/supabase-js";
 
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
 export const runtime = 'nodejs';
+
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function GET(req: NextRequest) {
   const { s, res } = supaFromReq(req);
@@ -21,6 +28,8 @@ export async function GET(req: NextRequest) {
     const token = req.cookies.get("ghostcrm_jwt")?.value;
     let isDemoMode = false;
     let demoOrgId = null;
+    let jwtOrgId = null;
+    let jwtUserId = null;
     
     console.log(`🔍 Checking for demo mode. Token exists: ${!!token}`);
     
@@ -32,11 +41,13 @@ export async function GET(req: NextRequest) {
         
         if (jwtSecret) {
           const decoded = jwt.verify(token, jwtSecret) as any;
-          console.log(`🔍 JWT decoded successfully. UserID: ${decoded.userId}, OrgID: ${decoded.orgId}`);
+          jwtOrgId = decoded.organizationId || decoded.orgId;
+          jwtUserId = decoded.userId;
+          console.log(`🔍 JWT decoded successfully. UserID: ${jwtUserId}, OrgID: ${jwtOrgId}`);
           
           if (decoded.userId === 'demo-user-id') {
             isDemoMode = true;
-            demoOrgId = decoded.orgId || 'demo-org-id';
+            demoOrgId = jwtOrgId || 'demo-org-id';
             console.log(`🎬 Demo mode detected for leads API, using org ID: ${demoOrgId}`);
           }
         }
@@ -154,8 +165,39 @@ export async function GET(req: NextRequest) {
       console.log(`✅ Returning ${transformedLeads.length} demo leads`);
       return ok({ records: transformedLeads }, res.headers);
     } else {
-      // Get the current organization ID for proper multi-tenant filtering
-      org_id = await getMembershipOrgId(s);
+      // Get the current organization ID - try JWT first, then membership lookup
+      if (jwtOrgId && jwtUserId) {
+        console.log(`🔍 Using JWT organization ID: ${jwtOrgId} for user: ${jwtUserId}`);
+        
+        // If JWT contains subdomain, look up the actual UUID
+        if (typeof jwtOrgId === 'string' && !jwtOrgId.match(/^[0-9a-f-]{36}$/i)) {
+          console.log(`🔍 JWT contains subdomain '${jwtOrgId}', looking up organization UUID`);
+          const { data: orgData, error: orgError } = await supabaseAdmin
+            .from("organizations")
+            .select("id, subdomain, name")
+            .eq("subdomain", jwtOrgId)
+            .single();
+            
+          console.log(`🔍 Organization lookup result:`, { orgData, error: orgError });
+            
+          if (orgError || !orgData) {
+            console.error(`❌ Could not find organization with subdomain: ${jwtOrgId}`, orgError?.message);
+            org_id = null;
+          } else {
+            org_id = orgData.id;
+            console.log(`✅ Found organization UUID: ${org_id} for subdomain: ${jwtOrgId}`);
+          }
+        } else {
+          org_id = jwtOrgId;
+          console.log(`🔍 Using JWT org_id directly (already UUID): ${org_id}`);
+        }
+      } else {
+        // Fall back to membership lookup
+        console.log(`🔍 No JWT org/user found, falling back to membership lookup`);
+        org_id = await getMembershipOrgId(s);
+        console.log(`🔍 Membership lookup result: ${org_id}`);
+      }
+      
       if (!org_id) {
         console.warn("No organization membership found for user");
         
@@ -203,7 +245,8 @@ export async function GET(req: NextRequest) {
     console.log(`✅ Found organization ID: ${org_id}`);
 
     // Query leads with contact information
-    let q = s.from("leads")
+    console.log(`🔍 Querying leads for organization: ${org_id}`);
+    let q = supabaseAdmin.from("leads")
       .select(`
         *,
         contacts:contact_id (
@@ -218,9 +261,24 @@ export async function GET(req: NextRequest) {
       .order("updated_at", { ascending: false })
       .limit(200);
       
-    if (stage) q = q.eq("stage", stage);
+    if (stage) {
+      q = q.eq("stage", stage);
+      console.log(`🔍 Filtering by stage: ${stage}`);
+    }
 
     const { data, error } = await q;
+    console.log(`🔍 Database query completed:`, { 
+      recordCount: data?.length || 0, 
+      error: error?.message || null,
+      sampleRecord: data?.[0] ? {
+        id: data[0].id,
+        title: data[0].title,
+        organization_id: data[0].organization_id,
+        stage: data[0].stage,
+        industry: data[0].industry
+      } : null
+    });
+    
     if (error) {
       console.error("Leads table error:", error.message);
       return ok({ records: [] }, res.headers);
@@ -255,11 +313,18 @@ export async function GET(req: NextRequest) {
         `${lead.contacts.first_name || ''} ${lead.contacts.last_name || ''}`.trim() : ''),
       contact_email: lead.contacts?.email,
       contact_phone: lead.contacts?.phone,
-      org_id: lead.organization_id,
-      opted_out: false // Add for compatibility with frontend filtering
+      org_id: lead.organization_id
+      // NOTE: Removed opted_out field since it doesn't exist in database
     }));
 
     console.log(`✅ Returning ${transformedLeads.length} leads for organization: ${org_id}`);
+    console.log('🔍 Sample transformed lead:', transformedLeads[0]);
+    console.log('🔍 Full API response structure:', { 
+      records: transformedLeads,
+      recordCount: transformedLeads.length,
+      sampleKeys: transformedLeads[0] ? Object.keys(transformedLeads[0]) : []
+    });
+    
     return ok({ records: transformedLeads }, res.headers);
   } catch (err) {
     console.error("Leads API error:", err);
@@ -268,54 +333,95 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  console.log('🚀 POST /api/leads - Starting request');
+  
   const { s, res } = supaFromReq(req);
-  const parsed = LeadCreate.safeParse(await req.json());
-  if (!parsed.success) return bad(parsed.error.errors[0].message);
+  
+  try {
+    const requestBody = await req.json();
+    console.log('📥 Request body received:', JSON.stringify(requestBody, null, 2));
+    
+    const parsed = LeadCreate.safeParse(requestBody);
+    console.log('🔍 Validation result:', {
+      success: parsed.success,
+      error: parsed.success ? null : parsed.error.errors
+    });
+    
+    if (!parsed.success) {
+      console.error('❌ Validation failed:', parsed.error.errors);
+      return bad(parsed.error.errors[0].message);
+    }
 
-  const org_id = await getMembershipOrgId(s);
-  if (!org_id) return bad("no_membership");
+    const org_id = await getMembershipOrgId(s);
+    console.log('🏢 Organization ID resolved:', org_id);
+    
+    if (!org_id) {
+      console.error('❌ No organization found');
+      return bad("no_membership");
+    }
 
-  const body = parsed.data;
+    const body = parsed.data;
+    console.log('📝 Parsed data:', body);
 
-  // Upsert contact for this org (only if email/phone provided)
-  let contactId: number | null = null;
-  if (body.email || body.phone) {
-    const { data: contact, error: cErr } = await s
-      .from("contacts")
-      .upsert({
-        org_id,
-        first_name: body.first_name,
-        last_name: body.last_name ?? "",
-        email: body.email ?? null,
-        phone: body.phone ?? null,
-        data: body.meta ?? {},
+    // Upsert contact for this org (only if email/phone provided)
+    let contactId: number | null = null;
+    if (body.email || body.phone) {
+      console.log('👤 Creating/updating contact...');
+      
+      const { data: contact, error: cErr } = await s
+        .from("contacts")
+        .upsert({
+          organization_id: org_id,
+          first_name: body.first_name,
+          last_name: body.last_name ?? "",
+          email: body.email ?? null,
+          phone: body.phone ?? null,
+          custom_fields: body.meta ?? {},
+        })
+        .select("id")
+        .single();
+        
+      console.log('👤 Contact result:', { contact, error: cErr });
+      
+      if (cErr) {
+        console.error('❌ Contact creation failed:', cErr);
+        return oops(cErr.message);
+      }
+      contactId = (contact as any)?.id ?? null;
+      console.log('👤 Contact ID:', contactId);
+    }
+
+    console.log('🎯 Creating lead...');
+    const { data: lead, error } = await s
+      .from("leads")
+      .insert({
+        organization_id: org_id,
+        contact_id: contactId,
+        title: `${body.first_name}${body.last_name ? " " + body.last_name : ""}`,
+        stage: body.stage ?? "new",
+        value: body.est_value ?? null,
+        description: `Lead created for ${body.first_name}${body.last_name ? " " + body.last_name : ""}`,
+        source: body.campaign ?? "website",
+        priority: "medium"
       })
-      .select("id")
+      .select()
       .single();
-    if (cErr) return oops(cErr.message);
-    contactId = (contact as any)?.id ?? null;
+
+    console.log('🎯 Lead result:', { lead, error });
+
+    if (error) {
+      console.error('❌ Lead creation failed:', error);
+      return oops(error.message);
+    }
+    
+    await s.from("audit_events").insert({ organization_id: org_id, entity: "lead", entity_id: lead.id, action: "create" });
+
+    console.log('✅ Lead created successfully:', lead.id);
+    return ok(lead, res.headers);
+  } catch (err) {
+    console.error('❌ Unexpected error in POST /api/leads:', err);
+    return oops("Unexpected error occurred");
   }
-
-  const { data: lead, error } = await s
-    .from("leads")
-    .insert({
-      org_id,
-      contact_id: contactId,
-      full_name: `${body.first_name}${body.last_name ? " " + body.last_name : ""}`,
-      stage: body.stage ?? "new",
-      campaign: body.campaign ?? null,
-      est_value: body.est_value ?? null,
-      contact_email: body.email ?? null,
-      contact_phone: body.phone ?? null,
-      meta: body.meta ?? {},
-    })
-    .select()
-    .single();
-
-  if (error) return oops(error.message);
-  await s.from("audit_events").insert({ org_id, entity: "lead", entity_id: lead.id, action: "create" });
-
-  return ok(lead, res.headers);
 }
 
 

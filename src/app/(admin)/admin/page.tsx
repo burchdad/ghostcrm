@@ -383,6 +383,7 @@ export default function Admin() {
           <button className="px-2 py-1 bg-red-500 text-white rounded text-xs">Superadmin: Reset Admin Data</button>
         </div>
       )}
+      
       <SecuritySettingsPanel />
       <SecurityAIChatPanel />
       <SecurityAIInsightsPanel />

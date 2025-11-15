@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 interface Vehicle {
@@ -18,8 +19,25 @@ interface Vehicle {
   qrCode?: string;
 }
 
+// Helper function to get tenant-aware route based on user role
+function getTenantRoute(user: any, basePath: string): string {
+  if (!user || !user.role) return basePath;
+  
+  const roleMapping: Record<string, string> = {
+    'owner': 'tenant-owner',
+    'admin': 'tenant-owner', // Admin can access owner routes
+    'manager': 'tenant-salesmanager',
+    'sales_rep': 'tenant-salesrep',
+    'user': 'tenant-salesrep' // Default users to sales rep level
+  };
+  
+  const tenantPrefix = roleMapping[user.role] || 'tenant-salesrep';
+  return `/${tenantPrefix}${basePath}`;
+}
+
 export default function MobileInventory() {
   const { user, tenant } = useAuth();
+  const router = useRouter();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [filter, setFilter] = useState<'all' | 'available' | 'pending' | 'sold'>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -153,7 +171,13 @@ export default function MobileInventory() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <button 
+          onClick={() => {
+            const newInventoryRoute = getTenantRoute(user, "/new-inventory");
+            router.push(newInventoryRoute);
+          }}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+        >
           + Add Vehicle
         </button>
       </div>
@@ -305,7 +329,13 @@ export default function MobileInventory() {
           <p className="text-gray-600 mb-4">
             {searchTerm ? 'Try adjusting your search' : 'Add vehicles to your inventory'}
           </p>
-          <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium">
+          <button 
+            onClick={() => {
+              const newInventoryRoute = getTenantRoute(user, "/new-inventory");
+              router.push(newInventoryRoute);
+            }}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium"
+          >
             Add First Vehicle
           </button>
         </div>

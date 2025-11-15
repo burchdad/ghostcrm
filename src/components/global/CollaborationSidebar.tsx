@@ -10,6 +10,20 @@ import {
   Settings,
   Plus,
   Menu as MenuIcon,
+  Users,
+  Hash,
+  Lock,
+  Volume2,
+  VolumeX,
+  Star,
+  Archive,
+  UserPlus,
+  Calendar,
+  Paperclip,
+  Smile,
+  Send,
+  MoreVertical,
+  Circle
 } from "lucide-react";
 
 interface Chat {

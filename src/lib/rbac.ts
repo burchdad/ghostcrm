@@ -18,20 +18,28 @@ export async function getMembershipOrgId(s: any) {
       return 'demo-org-id';
     }
     
-    // Query memberships table for this specific user
+    // Query organization_memberships table for this specific user
     const { data, error } = await s
-      .from("memberships")
-      .select("organization_id")
+      .from("organization_memberships")
+      .select("organization_id, user_id, role, status")
       .eq("user_id", uid)
       .limit(1);
       
     if (error) {
-      console.error("Error querying memberships:", error.message);
+      console.error("Error querying organization_memberships:", error.message);
       return undefined;
     }
     
+    console.log(`🔍 Membership query result:`, data);
+    
     if (!data || data.length === 0) {
       console.warn(`No membership found for user ${uid}`);
+      // Try to see if user exists at all
+      const { data: allMemberships } = await s
+        .from("organization_memberships")
+        .select("user_id, organization_id")
+        .limit(5);
+      console.log(`🔍 Sample memberships in database:`, allMemberships);
       return undefined;
     }
     
@@ -47,6 +55,6 @@ export async function getMembershipOrgId(s: any) {
 export async function requireRole(s: any, role: "owner"|"admin") {
   const uid = (await s.auth.getUser()).data.user?.id;
   if (!uid) return false;
-  const { data } = await s.from("memberships").select("role").limit(1);
+  const { data } = await s.from("organization_memberships").select("role").limit(1);
   return ["owner","admin"].includes(data?.[0]?.role || "");
 }

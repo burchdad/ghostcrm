@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useCallback } from "react";
 import Link from "next/link";
-import { Chart as ChartJS, ArcElement, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend, RadialLinearScale } from 'chart.js';
+import { Chart as ChartJS, ArcElement, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend, RadialLinearScale, Filler } from 'chart.js';
 import { Bar, Line, Pie, Doughnut, Radar, Scatter } from "react-chartjs-2";
 import { useDrag, useDrop } from 'react-dnd';
 import { useToast } from "@/components/utils/ToastProvider";
@@ -18,7 +18,8 @@ ChartJS.register(
   RadialLinearScale,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 // Drag and drop item types

@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const { filename } = await req.json();
-  const { data: mem } = await s.from("memberships").select("organization_id").limit(1);
+  const { data: mem } = await s.from("organization_memberships").select("organization_id").limit(1);
   const org_id = mem?.[0]?.organization_id;
   if (!org_id) return NextResponse.json({ error:"no_membership" },{ status:403 });
 

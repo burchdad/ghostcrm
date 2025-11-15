@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { 
@@ -32,6 +32,22 @@ const floatingStyles = `
   @keyframes gradient-shift {
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
+  }
+  
+  /* Force visible placeholder text for team invitation inputs */
+  .team-invite-input::placeholder {
+    color: #6b7280 !important;
+    opacity: 1 !important;
+    font-weight: 400 !important;
+  }
+  
+  .team-invite-select {
+    color: #1f2937 !important;
+  }
+  
+  .team-invite-select option {
+    color: #111827 !important;
+    background: white !important;
   }
 `;
 
@@ -73,6 +89,95 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
   const [isLoading, setIsLoading] = useState(false) // Make sure this starts as false
   const [apiError, setApiError] = useState('')
   const [createdOrganization, setCreatedOrganization] = useState(null)
+  const [existingOrganization, setExistingOrganization] = useState(null)
+  const [isUpdateMode, setIsUpdateMode] = useState(false)
+
+  // Load existing organization data on component mount
+  useEffect(() => {
+    async function loadExistingOrganization() {
+      try {
+        console.log('🔍 Checking for existing organization...')
+        
+        // Clear any existing errors when component mounts
+        setApiError('')
+        
+        const orgResponse = await fetch('/api/organization')
+        
+        if (orgResponse.status === 404) {
+          // No organization found, stay in create mode
+          console.log('📝 No existing organization found, staying in create mode')
+          return
+        }
+        
+        if (orgResponse.ok) {
+          const orgData = await orgResponse.json()
+          console.log('🏢 Organization data received:', orgData)
+          
+          if (orgData.success && orgData.organization) {
+            const org = orgData.organization
+            console.log('🔄 Setting update mode with organization:', org)
+            
+            setExistingOrganization(org)
+            setIsUpdateMode(true)
+            
+            // Clear any existing error messages
+            setApiError('')
+            
+                // Pre-populate the form with existing data
+                setOnboardingData(prev => ({
+                  ...prev,
+                  organization: {
+                    name: org.name || '',
+                    subdomain: org.subdomain || '',
+                    industry: org.industry || '', // May be undefined if column doesn't exist
+                    teamSize: org.team_size || '' // May be undefined if column doesn't exist
+                  }
+                }))
+                
+                console.log('✅ Form pre-populated with existing data')
+          }
+        }
+      } catch (error) {
+        console.error('Error loading existing organization:', error)
+        // Clear any error messages if loading fails
+        setApiError('')
+        // Continue with create mode if loading fails
+      }
+    }
+    
+    loadExistingOrganization()
+  }, [])
+
+  // Stable onChange handler for company name input
+  const handleCompanyNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    const subdomain = name.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    
+    setOnboardingData(prev => ({
+      ...prev,
+      organization: { 
+        ...prev.organization, 
+        name: name,
+        subdomain: subdomain
+      }
+    }));
+    
+    // Clear any previous errors when user starts typing
+    if (apiError) {
+      setApiError('');
+    }
+  }, [apiError]);
+
+  // Stable focus handler
+  const handleInputFocus = useCallback(() => {
+    if (apiError) {
+      setApiError('');
+    }
+  }, [apiError]);
 
   // Organization Setup Component
   const OrganizationSetup = () => (
@@ -87,69 +192,68 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
           </div>
         </div>
         <h2 className={`text-2xl font-bold mb-2 ${onComplete ? 'text-gray-900' : 'text-white'}`}>
-          Set Up Your Organization
+          {isUpdateMode ? 'Complete Your Organization Setup' : 'Set Up Your Organization'}
         </h2>
         <p className={`text-sm ${onComplete ? 'text-gray-600' : 'text-white font-medium'}`}>
-          Tell us about your company to personalize your CRM experience
+          {isUpdateMode 
+            ? 'Add the missing details to complete your organization setup'
+            : 'Tell us about your company to personalize your CRM experience'
+          }
         </p>
       </div>
 
       <div className="max-w-lg mx-auto space-y-4">
         <div>
           <label className={`block text-sm font-bold mb-1 ${onComplete ? 'text-gray-700' : 'text-white'}`}>
-            Company Name *
+            Company Name * {isUpdateMode && <span className="text-xs opacity-75">(already set)</span>}
           </label>
           <input
             type="text"
             required
             value={onboardingData.organization.name}
+            readOnly={isUpdateMode}
             className="w-full px-3 py-2 text-base rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-4"
             style={{
-              background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.2)',
+              background: isUpdateMode 
+                ? (onComplete ? '#f3f4f6' : 'rgba(255, 255, 255, 0.1)')
+                : (onComplete ? 'white' : 'rgba(255, 255, 255, 0.2)'),
               backdropFilter: onComplete ? 'none' : 'blur(15px)',
               border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.4)',
-              color: onComplete ? '#111827' : 'white'
+              color: onComplete ? '#111827' : 'white',
+              cursor: isUpdateMode ? 'not-allowed' : 'text'
             }}
             placeholder="Enter your company name"
-            onChange={(e) => {
-              const name = e.target.value;
-              const subdomain = name.toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, '')
-                .replace(/\s+/g, '-')
-                .replace(/-+/g, '-')
-                .replace(/^-|-$/g, '');
-              
-              setOnboardingData(prev => ({
-                ...prev,
-                organization: { 
-                  ...prev.organization, 
-                  name: name,
-                  subdomain: subdomain
-                }
-              }));
-            }}
+            onChange={isUpdateMode ? undefined : handleCompanyNameChange}
+            onFocus={isUpdateMode ? undefined : handleInputFocus}
+            autoComplete="organization"
           />
         </div>
 
         <div>
           <label className={`block text-sm font-bold mb-1 ${onComplete ? 'text-gray-700' : 'text-white'}`}>
-            Subdomain *
+            Subdomain * {isUpdateMode && <span className="text-xs opacity-75">(already set)</span>}
           </label>
           <div className="flex">
             <input
               type="text"
               required
               value={onboardingData.organization.subdomain}
+              readOnly={isUpdateMode}
               className="flex-1 px-3 py-2 text-base rounded-l-xl border-2 transition-all duration-300 focus:outline-none focus:ring-4"
               style={{
-                background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.2)',
+                background: isUpdateMode 
+                  ? (onComplete ? '#f3f4f6' : 'rgba(255, 255, 255, 0.1)')
+                  : (onComplete ? 'white' : 'rgba(255, 255, 255, 0.2)'),
                 backdropFilter: onComplete ? 'none' : 'blur(15px)',
                 border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.4)',
                 borderRight: 'none',
-                color: onComplete ? '#111827' : 'white'
+                color: onComplete ? '#111827' : 'white',
+                cursor: isUpdateMode ? 'not-allowed' : 'text'
               }}
               placeholder="your-company"
               onChange={(e) => {
+                if (isUpdateMode) return; // Prevent changes in update mode
+                
                 const subdomain = e.target.value.toLowerCase()
                   .replace(/[^a-z0-9-]/g, '')
                   .replace(/-+/g, '-')
@@ -236,16 +340,24 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
         </div>
 
         {apiError && (
-          <div className="p-3 rounded-xl" style={{
+          <div className="p-4 rounded-xl mb-4 border-2" style={{
             background: onComplete 
               ? 'rgba(254, 242, 242, 1)' 
-              : 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1))',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            backdropFilter: onComplete ? 'none' : 'blur(10px)'
+              : 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2))',
+            border: '2px solid rgba(239, 68, 68, 0.5)',
+            backdropFilter: onComplete ? 'none' : 'blur(10px)',
+            boxShadow: '0 4px 20px rgba(239, 68, 68, 0.3)'
           }}>
-            <p className={`text-sm font-medium ${onComplete ? 'text-red-600' : 'text-red-300'}`}>
-              {apiError}
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">!</span>
+                </div>
+              </div>
+              <p className={`text-base font-semibold ${onComplete ? 'text-red-700' : 'text-red-100'}`}>
+                {apiError}
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -289,27 +401,57 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
 
         <div className="space-y-6">
           {[1, 2, 3].map((index) => (
-            <div key={index} className="flex gap-4">
+            <div key={index} className="flex gap-4 items-center">
+              {/* Visual indicator/checkbox area */}
+              <div 
+                className="w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                style={{
+                  background: onComplete ? '#f3f4f6' : 'rgba(255, 255, 255, 0.2)',
+                  border: onComplete ? '2px solid #d1d5db' : '2px solid rgba(255, 255, 255, 0.4)',
+                }}
+              >
+                <span className="text-xs font-bold" style={{ color: onComplete ? '#6b7280' : 'rgba(255, 255, 255, 0.7)' }}>
+                  {index}
+                </span>
+              </div>
+              
               <input
                 type="email"
-                className="flex-1 px-4 py-3 text-lg rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-4"
+                className={`px-4 py-3 text-lg rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 ${
+                  onComplete ? '' : 'team-invite-input'
+                }`}
                 style={{
-                  background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.1)',
-                  backdropFilter: onComplete ? 'none' : 'blur(10px)',
-                  border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.2)',
-                  color: onComplete ? '#111827' : 'white'
+                  background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: onComplete ? 'none' : 'blur(15px)',
+                  border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.9)',
+                  color: onComplete ? '#111827' : '#1f2937',
+                  boxShadow: onComplete ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.2)',
+                  fontWeight: onComplete ? 'normal' : '500',
+                  fontSize: '16px',
+                  minHeight: '52px',
+                  width: '320px'  // Fixed width for email inputs - much wider
                 }}
                 placeholder="teammate@company.com"
               />
-              <select className="px-4 py-3 text-lg rounded-xl border-2 transition-all duration-300 focus:outline-none" style={{
-                background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: onComplete ? 'none' : 'blur(10px)',
-                border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.2)',
-                color: onComplete ? '#111827' : 'white'
-              }}>
-                <option value="sales_rep">Sales Rep</option>
-                <option value="sales_manager">Sales Manager</option>
-                <option value="admin">Admin</option>
+              <select 
+                className={`px-3 py-3 text-base rounded-xl border-2 transition-all duration-300 focus:outline-none ${
+                  onComplete ? '' : 'team-invite-select'
+                }`}
+                style={{
+                  background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: onComplete ? 'none' : 'blur(15px)',
+                  border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.9)',
+                  color: onComplete ? '#111827' : '#1f2937',
+                  boxShadow: onComplete ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.2)',
+                  fontWeight: onComplete ? 'normal' : '500',
+                  fontSize: '14px',  // Smaller font for compact dropdown
+                  minHeight: '52px',
+                  width: '120px'  // Fixed smaller width - just enough for text
+                }}
+              >
+                <option value="sales_rep" style={{ color: '#111827', background: 'white' }}>Sales Rep</option>
+                <option value="sales_manager" style={{ color: '#111827', background: 'white' }}>Sales Manager</option>
+                <option value="admin" style={{ color: '#111827', background: 'white' }}>Admin</option>
               </select>
             </div>
           ))}
@@ -341,35 +483,71 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
           </div>
         </div>
         <h2 className={`text-2xl font-bold mb-2 ${onComplete ? 'text-gray-900' : 'text-white'}`}>
-          Choose Your Plan
+          Choose Your Role & Pricing
         </h2>
-        <p className={`text-sm ${onComplete ? 'text-gray-600' : 'text-white font-medium'}`}>
-          Select the plan that best fits your team's needs
+        <p className={`text-sm ${onComplete ? 'text-gray-600' : 'text-white font-medium'} mb-1`}>
+          Simple per-user pricing based on your role and responsibilities. Add team members later at the same rates.
+        </p>
+        <p className={`text-xs ${onComplete ? 'text-gray-500' : 'text-white/70'} mb-6`}>
+          All roles include full CRM features, mobile app access, and email integration - pricing reflects access level
         </p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-4 max-w-5xl mx-auto">
         {[
           {
-            tier: 'Basic',
-            price: 29,
-            features: ['Up to 5 users', 'Basic CRM features', 'Email support', '5GB storage'],
+            tier: 'Sales Rep',
+            price: 5,
+            setupFee: 50,
+            features: [
+              'Lead management & tracking',
+              'Contact database access', 
+              'Basic activity logging',
+              'Email templates & sending',
+              'Mobile app access',
+              'Personal reporting',
+              'View own leads & contacts',
+              'Basic CRM functionality'
+            ],
             popular: false,
-            color: '#3b82f6'
+            color: '#3b82f6',
+            description: 'Perfect for front-line sales team members'
           },
           {
-            tier: 'Pro',
-            price: 79,
-            features: ['Up to 25 users', 'Advanced automation', 'Phone support', '50GB storage', 'API access'],
+            tier: 'Sales Manager',
+            price: 10,
+            setupFee: 50,
+            features: [
+              'Everything Sales Rep includes',
+              'Team lead assignment',
+              'Team performance dashboards',
+              'Lead distribution management',
+              'Goal tracking & monitoring',
+              'Team activity oversight',
+              'Advanced reporting',
+              'Pipeline management'
+            ],
             popular: true,
-            color: '#8b5cf6'
+            color: '#8b5cf6',
+            description: 'Team oversight and performance management'
           },
           {
-            tier: 'Elite',
-            price: 199,
-            features: ['Unlimited users', 'Custom integrations', 'Priority support', 'Unlimited storage', 'White-label options'],
+            tier: 'Admin',
+            price: 15,
+            setupFee: 50,
+            features: [
+              'Everything Sales Manager includes',
+              'User management & permissions',
+              'Organization settings',
+              'Billing & subscription control',
+              'System configuration',
+              'Data export & backup',
+              'Security settings',
+              'Full system access'
+            ],
             popular: false,
-            color: '#ec4899'
+            color: '#ec4899',
+            description: 'Full system access and organizational control'
           }
         ].map((plan) => (
           <div
@@ -411,8 +589,14 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
               <h3 className={`text-lg font-bold mb-1 ${onComplete ? 'text-gray-900' : 'text-white'}`}>
                 {plan.tier}
               </h3>
-              <div className={`text-2xl font-bold mb-4 ${onComplete ? 'text-gray-900' : 'text-white'}`}>
-                ${plan.price}<span className="text-sm font-normal opacity-70">/month</span>
+              <p className={`text-xs ${onComplete ? 'text-gray-600' : 'text-white/80'} mb-3`}>
+                {plan.description}
+              </p>
+              <div className={`text-2xl font-bold mb-1 ${onComplete ? 'text-gray-900' : 'text-white'}`}>
+                ${plan.price}<span className="text-sm font-normal opacity-70">/month per user</span>
+              </div>
+              <div className={`text-xs ${onComplete ? 'text-gray-600' : 'text-white/70'} mb-4`}>
+                + $50 setup fee per user
               </div>
             </div>
             
@@ -441,6 +625,32 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
             </div>
           </div>
         ))}
+      </div>
+      
+      {/* Skip Option */}
+      <div className="text-center mt-8">
+        <button
+          onClick={() => {
+            // Skip billing selection and move to next step
+            setOnboardingData(prev => ({ ...prev, billing: { skipped: true } }))
+            // Use nextStep() to properly advance to the next step
+            setCurrentStep(currentStep + 1)
+          }}
+          className={`px-6 py-2 text-sm font-medium rounded-xl transition-all duration-300 hover:transform hover:scale-105 cursor-pointer ${
+            onComplete 
+              ? 'text-gray-600 hover:text-gray-800 border border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50' 
+              : 'text-white/80 hover:text-white border border-white/30 hover:border-white/50 hover:bg-white/10'
+          }`}
+          style={{
+            backdropFilter: onComplete ? 'none' : 'blur(10px)',
+            boxShadow: onComplete ? '0 2px 8px rgba(0, 0, 0, 0.1)' : '0 4px 15px rgba(0, 0, 0, 0.2)'
+          }}
+        >
+          Skip role selection - Choose later
+        </button>
+        <p className={`text-xs mt-2 ${onComplete ? 'text-gray-500' : 'text-white/60'}`}>
+          You can select your role and start your billing later from your account settings
+        </p>
       </div>
     </div>
   )
@@ -582,9 +792,13 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
         <button
           onClick={() => {
             if (createdOrganization) {
-              // Redirect to the new subdomain
-              window.location.href = `http://${createdOrganization.subdomain}.localhost:3000/dashboard`;
+              // Redirect to the new subdomain tenant owner login since they're the organization owner
+              const baseUrl = process.env.NODE_ENV === 'development' 
+                ? `http://${createdOrganization.subdomain}.localhost:3000`
+                : `https://${createdOrganization.subdomain}.ghostcrm.ai`;
+              window.location.href = `${baseUrl}/login-owner`;
             } else {
+              // Fallback to regular dashboard if no organization is created
               router.push('/dashboard');
             }
           }}
@@ -716,28 +930,99 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
     }
   };
 
+  const updateOrganization = async () => {
+    const { organization } = onboardingData;
+    
+    console.log('🔄 Updating organization with data:', organization);
+    
+    // Validation for update mode (only industry and team_size required)
+    if (!organization.industry || !organization.teamSize) {
+      setApiError('Industry and team size are required');
+      return false;
+    }
+
+    setIsLoading(true);
+    setApiError('');
+
+    try {
+      console.log('📤 Making API call to /api/organization (PUT)');
+      
+      const requestBody = {
+        industry: organization.industry,
+        team_size: organization.teamSize
+      };
+      
+      console.log('📤 Request body:', requestBody);
+
+      const response = await fetch('/api/organization', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('📥 Response status:', response.status);
+      const result = await response.json();
+      console.log('📥 Response data:', result);
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update organization');
+      }
+
+      setCreatedOrganization(result.organization);
+      console.log('✅ Organization updated successfully:', result.organization);
+      return true;
+    } catch (error) {
+      console.error('❌ Organization update error:', error);
+      setApiError(error.message || 'Failed to update organization. Please try again.');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const nextStep = async () => {
     console.log('🔄 Next step clicked, current step:', currentStep);
     console.log('📋 Current organization data:', onboardingData.organization);
+    console.log('🔄 Update mode:', isUpdateMode);
     
     // Add basic validation check
     if (currentStep === 0) {
       const orgData = onboardingData.organization;
       console.log('🔍 Checking organization data:', orgData);
       
-      if (!orgData.name || !orgData.subdomain) {
-        console.log('❌ Missing required fields:', { name: orgData.name, subdomain: orgData.subdomain });
-        setApiError('Please fill in the company name and subdomain');
-        return;
+      if (isUpdateMode) {
+        // In update mode, only validate industry and team size
+        if (!orgData.industry || !orgData.teamSize) {
+          console.log('❌ Missing required fields for update:', { industry: orgData.industry, teamSize: orgData.teamSize });
+          setApiError('Please select industry and team size');
+          return;
+        }
+        
+        console.log('🔄 Updating organization on step 0');
+        const success = await updateOrganization();
+        if (!success) {
+          console.log('❌ Organization update failed, staying on current step');
+          return;
+        }
+        console.log('✅ Organization update succeeded, moving to next step');
+      } else {
+        // In create mode, validate name and subdomain
+        if (!orgData.name || !orgData.subdomain) {
+          console.log('❌ Missing required fields for create:', { name: orgData.name, subdomain: orgData.subdomain });
+          setApiError('Please fill in the company name and subdomain');
+          return;
+        }
+        
+        console.log('🏢 Creating organization on step 0');
+        const success = await createOrganization();
+        if (!success) {
+          console.log('❌ Organization creation failed, staying on current step');
+          return;
+        }
+        console.log('✅ Organization creation succeeded, moving to next step');
       }
-      
-      console.log('🏢 Creating organization on step 0');
-      const success = await createOrganization();
-      if (!success) {
-        console.log('❌ Organization creation failed, staying on current step');
-        return; // Stay on current step if organization creation failed
-      }
-      console.log('✅ Organization creation succeeded, moving to next step');
     }
 
     if (currentStep < steps.length - 1) {
@@ -1028,7 +1313,7 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
             {isLoading ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                Creating...
+                {isUpdateMode ? 'Updating...' : 'Creating...'}
               </div>
             ) : (
               currentStep === steps.length - 1 ? 'Complete Setup' : 'Continue'
@@ -1037,16 +1322,24 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
         </div>
 
         {apiError && (
-          <div className="mt-4 p-3 rounded-xl" style={{
+          <div className="mt-4 p-4 rounded-xl border-2" style={{
             background: onComplete 
               ? 'rgba(254, 242, 242, 1)' 
-              : 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1))',
-            border: onComplete ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
-            backdropFilter: onComplete ? 'none' : 'blur(10px)'
+              : 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2))',
+            border: '2px solid rgba(239, 68, 68, 0.5)',
+            backdropFilter: onComplete ? 'none' : 'blur(10px)',
+            boxShadow: '0 4px 20px rgba(239, 68, 68, 0.3)'
           }}>
-            <p className={`text-sm font-medium ${onComplete ? 'text-red-600' : 'text-red-300'}`}>
-              {apiError}
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">!</span>
+                </div>
+              </div>
+              <p className={`text-base font-semibold ${onComplete ? 'text-red-700' : 'text-red-100'}`}>
+                {apiError}
+              </p>
+            </div>
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 interface Lead {
@@ -15,8 +16,25 @@ interface Lead {
   source: string;
 }
 
+// Helper function to get tenant-aware route based on user role
+function getTenantRoute(user: any, basePath: string): string {
+  if (!user || !user.role) return basePath;
+  
+  const roleMapping: Record<string, string> = {
+    'owner': 'tenant-owner',
+    'admin': 'tenant-owner', // Admin can access owner routes
+    'manager': 'tenant-salesmanager',
+    'sales_rep': 'tenant-salesrep',
+    'user': 'tenant-salesrep' // Default users to sales rep level
+  };
+  
+  const tenantPrefix = roleMapping[user.role] || 'tenant-salesrep';
+  return `/${tenantPrefix}${basePath}`;
+}
+
 export default function MobileLeads() {
   const { user, tenant } = useAuth();
+  const router = useRouter();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filter, setFilter] = useState<'all' | 'new' | 'hot' | 'scheduled'>('all');
   const [loading, setLoading] = useState(true);
@@ -137,7 +155,13 @@ export default function MobileLeads() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <button 
+          onClick={() => {
+            const newLeadRoute = getTenantRoute(user, "/new-lead");
+            router.push(newLeadRoute);
+          }}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+        >
           + New Lead
         </button>
       </div>
@@ -258,7 +282,13 @@ export default function MobileLeads() {
           <div className="text-6xl mb-4">👥</div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No leads found</h3>
           <p className="text-gray-600 mb-4">Start capturing leads to see them here</p>
-          <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium">
+          <button 
+            onClick={() => {
+              const newLeadRoute = getTenantRoute(user, "/new-lead");
+              router.push(newLeadRoute);
+            }}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium"
+          >
             Create First Lead
           </button>
         </div>

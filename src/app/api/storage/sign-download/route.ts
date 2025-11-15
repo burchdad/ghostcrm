@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   const { s, res } = supaFromReq(req);
   const key = new URL(req.url).searchParams.get("key") || "";
-  const { data: mem } = await s.from("memberships").select("organization_id").limit(1);
+  const { data: mem } = await s.from("organization_memberships").select("organization_id").limit(1);
   const org_id = mem?.[0]?.organization_id;
   if (!org_id || !key.startsWith(`org/${org_id}/`)) return NextResponse.json({ error:"forbidden" }, { status:403 });
 

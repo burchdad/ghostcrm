@@ -1,0 +1,39 @@
+/* 
+  ===========================================
+  🎨 VARIABLES & ROOT CONFIGURATION
+  ===========================================
+  CSS custom properties and theme variables
+*/
+
+:root {
+  --unified-toolbar-h: 64px; /* Single unified toolbar height */
+  --sidebar-w: 300px; /* Wider to accommodate longer text like "Collaboration" */
+}
+
+@media (min-width: 1024px) { 
+  :root { 
+    --sidebar-w: 340px; 
+  } 
+}
+
+@media (max-width: 767px) { 
+  :root { 
+    --unified-toolbar-h: 56px; 
+    --sidebar-w: 270px; 
+  } 
+}
+
+.sidebar-collapsed { 
+  --sidebar-w: 72px; 
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.15s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-0.25rem); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}

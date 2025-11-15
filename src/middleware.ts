@@ -10,6 +10,10 @@ export const runtime = 'nodejs';
 const PUBLIC_PATHS = [
   "/",
   "/login",
+  "/login-owner",     // Tenant owner login (public)
+  "/login-admin",     // Tenant admin login (public)
+  "/login-salesmanager",  // Tenant sales manager login (public)
+  "/login-salesrep",  // Tenant sales rep login (public)
   "/pricing",
   "/reset-password", 
   "/register",
@@ -17,6 +21,7 @@ const PUBLIC_PATHS = [
   "/unauthorized",
   "/debug", // Debug page for troubleshooting
   "/api/health",
+  "/api/auth/login",      // Login API endpoint (public)
   "/api/auth/db-login",
   "/api/auth/request-reset", 
   "/api/auth/register",
@@ -169,6 +174,14 @@ const SHARED_PATHS = [
   "/reset-password"
 ];
 
+// Role-specific login paths (public access for all subdomains)
+const ROLE_LOGIN_PATHS = [
+  "/login-owner",
+  "/login-admin", 
+  "/login-salesmanager", 
+  "/login-salesrep"
+];
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hostname = req.headers.get('host') || '';
@@ -258,14 +271,25 @@ export async function middleware(req: NextRequest) {
     // Determine if this is a tenant request
     let hasTenant = false;
     if (hostname.includes('localhost')) {
-      // For localhost, check if user has tenant info in JWT
-      hasTenant = !!(user?.organizationId || user?.tenantId);
+      // For localhost, if there's a subdomain, it's a tenant request regardless of auth status
+      // This allows login/auth endpoints to work on tenant subdomains
+      hasTenant = !!subdomain;
+      console.log(`🏠 [LOCALHOST TENANT LOGIC] subdomain: ${subdomain}, hasTenant: ${hasTenant}`);
     } else {
       // For production/Vercel, authenticated users on any domain are tenant users
-      hasTenant = hasValidToken;
+      // For unauthenticated requests, check if subdomain exists for tenant routing
+      hasTenant = hasValidToken || !!subdomain;
+      console.log(`🌐 [PRODUCTION TENANT LOGIC] hasValidToken: ${hasValidToken}, subdomain: ${subdomain}, hasTenant: ${hasTenant}`);
     }
     
     console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: ${finalIsMarketing} | Tenant: ${!finalIsMarketing}`);
+
+    console.log(`🚨 [DEBUG] Tenant routing check:`, {
+      hasTenant,
+      subdomain,
+      finalIsMarketing,
+      shouldCallTenantHandler: hasTenant && subdomain
+    });
 
     // Simple owner-only route protection
     if (hasValidToken && isOwnerOnlyRoute(pathname) && !canAccessOwnerRoute(userRole, pathname, isSoftwareOwner)) {
@@ -277,14 +301,17 @@ export async function middleware(req: NextRequest) {
 
     // Handle marketing site routing
     if (finalIsMarketing) {
+      console.log(`📰 [MARKETING] Calling handleMarketingRequest for ${pathname}`);
       return handleMarketingRequest(req, pathname);
     }
     
     // Handle tenant site routing  
     if (hasTenant && subdomain) {
-      return handleTenantRequest(req, pathname, subdomain);
+      console.log(`🏢 [TENANT] Calling handleTenantRequest for ${pathname} with subdomain: ${subdomain}`);
+      return handleTenantRequest(req, pathname, subdomain, userRole);
     }
     
+    console.log(`⚠️ [FALLBACK] No handler matched, using NextResponse.next() for ${pathname}`);
     return NextResponse.next();
   }
 
@@ -323,7 +350,7 @@ export async function middleware(req: NextRequest) {
       (hostname.includes("vercel.app") ? hostname.split(".")[0] : null) ||
       (hostname.includes("ghostcrm.ai") ? hostname.split(".")[0] : null);
     const tenantId = subdomain || "default";
-    return handleTenantRequest(req, pathname, tenantId);
+    return handleTenantRequest(req, pathname, tenantId, userRole);
   }
 
   // For production, use the original JWT-based auth for unauthenticated users
@@ -332,9 +359,14 @@ export async function middleware(req: NextRequest) {
 
 // Helper functions for tenant routing
 function getSubdomain(hostname: string): string | null {
-  // Handle localhost development
+  // Handle localhost development - extract subdomain from hostname like "burch-enterprises.localhost:3000"
   if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
-    return null; // No subdomain in local development
+    const parts = hostname.split('.');
+    if (parts.length > 1 && parts[0] !== 'localhost' && parts[0] !== '127') {
+      // Extract subdomain like "burch-enterprises" from "burch-enterprises.localhost:3000"
+      return parts[0];
+    }
+    return null; // Pure localhost without subdomain
   }
   
   const parts = hostname.split('.');
@@ -354,9 +386,11 @@ function isMarketingRequest(hostname: string, subdomain: string | null, hasValid
     return !hasValidToken; // Default logic for non-marketing paths
   }
   
-  // For localhost, if user has valid token, treat as tenant request
+  // For localhost development, check if there's a subdomain
   if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
-    return !hasValidToken; // If has valid token = tenant, no token = marketing
+    // If there's a subdomain (like burch-enterprises.localhost), treat as tenant
+    // If no subdomain (just localhost), treat as marketing
+    return !subdomain;
   }
   
   // Production domain handling for ghostcrm.ai
@@ -372,6 +406,11 @@ function isMarketingRequest(hostname: string, subdomain: string | null, hasValid
 function handleMarketingRequest(req: NextRequest, pathname: string): NextResponse {
   // Handle shared paths (login, register, etc.) - these are outside route groups
   if (SHARED_PATHS.includes(pathname)) {
+    return NextResponse.next();
+  }
+  
+  // Handle role-specific login paths - allow access on any subdomain
+  if (ROLE_LOGIN_PATHS.includes(pathname)) {
     return NextResponse.next();
   }
   
@@ -423,26 +462,136 @@ function handleMarketingRequest(req: NextRequest, pathname: string): NextRespons
   return NextResponse.next();
 }
 
-function handleTenantRequest(req: NextRequest, pathname: string, tenantId: string): NextResponse {
+function handleTenantRequest(req: NextRequest, pathname: string, tenantId: string, userRole: string = 'sales_rep'): NextResponse {
   console.log("🏢 [TENANT REQUEST] Handling tenant request:", {
     pathname,
     tenantId,
     routeType: pathname === '/billing' ? 'billing-root-level' : 'app-route-group'
   });
   
+  console.log("🚨 [DEBUG] API AUTH CHECK:", {
+    pathname,
+    isApiAuth: pathname.startsWith('/api/auth/'),
+    isHealth: pathname.startsWith('/api/health'),
+    isNext: pathname.startsWith('/_next')
+  });
+  
+  // Allow API auth routes to pass through for login functionality
+  if (pathname.startsWith('/api/auth/') || 
+      pathname.startsWith('/api/health') ||
+      pathname.startsWith('/_next')) {
+    console.log("🏢 [TENANT REQUEST] ✅ ALLOWING API/system route:", pathname);
+    const response = NextResponse.next();
+    response.headers.set('x-tenant-id', tenantId);
+    response.headers.set('x-tenant-slug', tenantId);
+    return response;
+  }
+  
   // Add tenant context to headers
   const response = NextResponse.next();
   response.headers.set('x-tenant-id', tenantId);
   response.headers.set('x-tenant-slug', tenantId);
-  
-  // Rewrite to app route group if accessing root paths
-  if (pathname === '/' || pathname === '') {
-    const url = req.nextUrl.clone();
-    url.pathname = '/(app)/dashboard';
-    console.log("🏢 [TENANT REQUEST] Rewriting root to dashboard:", url.pathname);
-    return NextResponse.rewrite(url);
+
+  // Handle role-specific login pages - allow them to pass through naturally
+  if (ROLE_LOGIN_PATHS.includes(pathname)) {
+    console.log("🏢 [TENANT REQUEST] Processing role-specific login page - allowing natural routing");
+    const roleLoginResponse = NextResponse.next();
+    roleLoginResponse.headers.set('x-tenant-id', tenantId);
+    roleLoginResponse.headers.set('x-tenant-slug', tenantId);
+    return roleLoginResponse;
+  }
+
+  // Track login page access for proper dashboard routing
+  if (pathname === '/login-owner') {
+    const response = NextResponse.next();
+    response.cookies.set('login_intent', 'tenant-owner', { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 300 // 5 minutes
+    });
+    return response;
   }
   
+  if (pathname === '/login-admin') {
+    const response = NextResponse.next();
+    response.cookies.set('login_intent', 'tenant-admin', { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 300 // 5 minutes
+    });
+    return response;
+  }
+  
+  if (pathname === '/login-salesmanager') {
+    const response = NextResponse.next();
+    response.cookies.set('login_intent', 'tenant-salesmanager', { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 300 // 5 minutes
+    });
+    return response;
+  }
+  
+  if (pathname === '/login-salesrep') {
+    const response = NextResponse.next();
+    response.cookies.set('login_intent', 'tenant-salesrep', { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 300 // 5 minutes
+    });
+    return response;
+  }
+
+  // Redirect authenticated users to appropriate dashboard if accessing root paths
+  if (pathname === '/' || pathname === '') {
+    const url = req.nextUrl.clone();
+    
+    // Check login intent cookie to determine correct dashboard
+    const loginIntent = req.cookies.get('login_intent')?.value;
+    
+    if (loginIntent) {
+      switch (loginIntent) {
+        case 'tenant-owner':
+          url.pathname = '/tenant-owner/dashboard';
+          console.log("🏢 [TENANT REQUEST] Redirecting based on login intent (owner) to:", url.pathname);
+          break;
+        case 'tenant-admin':
+          // Admin goes to main dashboard for now (until we create tenant-admin/dashboard)
+          url.pathname = '/dashboard';
+          console.log("🏢 [TENANT REQUEST] Redirecting based on login intent (admin) to:", url.pathname);
+          break;
+        case 'tenant-salesmanager':
+          // Sales manager goes to their leads page since that's what exists
+          url.pathname = '/tenant-salesmanager/leads';
+          console.log("🏢 [TENANT REQUEST] Redirecting based on login intent (salesmanager) to:", url.pathname);
+          break;
+        case 'tenant-salesrep':
+          // Sales rep goes to their leads page since that's what exists
+          url.pathname = '/tenant-salesrep/leads';
+          console.log("🏢 [TENANT REQUEST] Redirecting based on login intent (salesrep) to:", url.pathname);
+          break;
+        default:
+          url.pathname = '/dashboard';
+          console.log("🏢 [TENANT REQUEST] Redirecting to default dashboard:", url.pathname);
+      }
+      
+      // Clear the login intent cookie after use
+      const response = NextResponse.redirect(url);
+      response.cookies.delete('login_intent');
+      return response;
+    } else {
+      // Fallback to role-based routing if no login intent
+      if (userRole === 'owner') {
+        url.pathname = '/tenant-owner/dashboard';
+        console.log("🏢 [TENANT REQUEST] Fallback: Redirecting authenticated owner to tenant dashboard:", url.pathname);
+      } else {
+        url.pathname = '/dashboard';
+        console.log("🏢 [TENANT REQUEST] Fallback: Redirecting authenticated user to dashboard:", url.pathname);
+      }
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Billing page is now at root level - allow natural routing
   if (pathname === '/billing' || pathname.startsWith('/billing/')) {
     console.log("🏢 [TENANT REQUEST] Processing billing route - allowing natural routing");
@@ -451,21 +600,9 @@ function handleTenantRequest(req: NextRequest, pathname: string, tenantId: strin
     tenantResponse.headers.set('x-tenant-slug', tenantId);
     return tenantResponse;
   }
-  
-  // For tenant sites, ensure we're in the app route group
-  if (!pathname.startsWith('/(app)') && 
-      !pathname.startsWith('/(business)') &&
-      !pathname.startsWith('/_next') && 
-      !pathname.startsWith('/api') &&
-      !pathname.startsWith('/login')) {
-    const url = req.nextUrl.clone();
-    url.pathname = `/(app)${pathname}`;
-    const tenantResponse = NextResponse.rewrite(url);
-    tenantResponse.headers.set('x-tenant-id', tenantId);
-    tenantResponse.headers.set('x-tenant-slug', tenantId);
-    return tenantResponse;
-  }
-  
+
+  // For most routes, just pass through with tenant headers - let Next.js handle routing naturally
+  console.log(`🏢 [TENANT REQUEST] Allowing natural routing for ${pathname}`);
   return response;
 }
 

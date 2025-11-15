@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const { e164, provider_account_id } = await req.json();
   if (!e164) return NextResponse.json({ error: "missing e164" }, { status: 400 });
 
-  const { data: mem } = await s.from("memberships").select("organization_id").limit(1);
+  const { data: mem } = await s.from("organization_memberships").select("organization_id").limit(1);
   const org_id = mem?.[0]?.organization_id;
   if (!org_id) return NextResponse.json({ error: "no_membership" }, { status: 403 });
 

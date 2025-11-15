@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const { provider_id, label, meta, secrets } = await req.json();
   if (!provider_id || !secrets) return NextResponse.json({ error: "missing fields" }, { status: 400 });
 
-  const { data: mem } = await s.from("memberships").select("organization_id").limit(1);
+  const { data: mem } = await s.from("organization_memberships").select("organization_id").limit(1);
   const org_id = mem?.[0]?.organization_id;
   if (!org_id) return NextResponse.json({ error: "no_membership" }, { status: 403 });
 

@@ -1,8 +1,8 @@
-export type RibbonContext = "dashboard" | "analytics" | "leads" | "inventory" | "settings";
+export type RibbonContext = "dashboard" | "analytics" | "leads" | "inventory" | "settings" | "sales" | "admin" | "owner" | "reports" | "profile" | "ai-agents" | "ai-sales" | "billing" | "stripe";
 
 export type ControlId =
   | "profile" | "notifications" | "theme" | "language"
-  | "quickActions" | "bulkOps" | "saveLayout" | "share" | "export"
+  | "quickActions" | "bulkOps" | "saveLayout" | "share" | "export" | "save"
   | "aiTools" | "automation" | "data" | "billing" | "developer" | "salesPerformance" | "leadConversion" | "agentActivity" | "customReportBuilder" | "exportReport" | "scheduleReports"
   | "userPreferences"
   | "workspaceSettings"
@@ -33,13 +33,13 @@ export type RibbonControl = {
   group: string;
   label: string;
   icon?: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (user?: any) => void;
   description?: string;
   submenu?: Array<{
     id: string;
     label: string;
     icon?: React.ReactNode;
-    onClick?: () => void;
+    onClick?: (user?: any) => void;
   }>;
   render?: (args: RenderArgs) => React.ReactNode;
   contexts?: RibbonContext[]; // if undefined, show in all contexts
@@ -49,7 +49,7 @@ export type RibbonControl = {
 
 export type RenderArgs = {
   disabled: boolean;
-  onClick?: () => void;
+  onClick?: (user?: any) => void;
   state: RibbonState;
 };
 

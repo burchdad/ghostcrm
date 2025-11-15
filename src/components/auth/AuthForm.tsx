@@ -10,10 +10,10 @@ import ContactSalesModal from "@/components/modals/ContactSalesModal";
 import { loginSchema, LoginFormData } from "./schemas";
 
 interface AuthFormProps {
-  // No props needed - this is now a login-only form
+  showOwnerAccess?: boolean; // Controls whether to show Software Owner Access section
 }
 
-export default function AuthForm() {
+export default function AuthForm({ showOwnerAccess = true }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showContactSales, setShowContactSales] = useState(false);
   const { login, isLoading } = useAuth();
@@ -25,10 +25,26 @@ export default function AuthForm() {
   });
 
   const onLoginSubmit = async (data: LoginFormData) => {
+    console.log('🚀 [LOGIN] Form submitted! Data:', data);
+    console.log('🚀 [LOGIN] Form validation passed, proceeding with login...');
+    
     try {
-      await login(data.email, data.password);
+      console.log('🔐 [LOGIN] Attempting login with:', { email: data.email });
+      const result = await login(data.email, data.password);
+      
+      if (!result.success) {
+        console.error('❌ [LOGIN] Login failed:', result.message);
+        loginForm.setError("root", {
+          type: "manual",
+          message: result.message || "Login failed. Please try again.",
+        });
+        return;
+      }
+      
+      console.log('✅ [LOGIN] Login successful, redirecting...');
       // Redirect handled by useEffect in parent component
     } catch (error: any) {
+      console.error('❌ [LOGIN] Login error:', error);
       loginForm.setError("root", {
         type: "manual",
         message: error.message || "An error occurred. Please try again.",
@@ -123,6 +139,7 @@ export default function AuthForm() {
           showPassword={showPassword}
           setShowPassword={setShowPassword}
           isLoading={isLoading}
+          showOwnerAccess={showOwnerAccess}
         />
 
         {/* Sign Up Link */}
@@ -240,9 +257,10 @@ interface LoginFormProps {
   showPassword: boolean;
   setShowPassword: (show: boolean) => void;
   isLoading: boolean;
+  showOwnerAccess: boolean;
 }
 
-function LoginForm({ form, onSubmit, showPassword, setShowPassword, isLoading }: LoginFormProps) {
+function LoginForm({ form, onSubmit, showPassword, setShowPassword, isLoading, showOwnerAccess }: LoginFormProps) {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
 
   return (
@@ -338,47 +356,49 @@ function LoginForm({ form, onSubmit, showPassword, setShowPassword, isLoading }:
         </button>
       </form>
       
-      {/* Owner Login Link */}
-      <div style={{
-        marginTop: '2rem',
-        padding: '1rem',
-        backgroundColor: 'rgba(139, 92, 246, 0.1)',
-        borderRadius: '0.75rem',
-        border: '1px solid rgba(139, 92, 246, 0.2)',
-        textAlign: 'center'
-      }}>
-        <p style={{
-          fontSize: '0.875rem',
-          color: '#6b7280',
-          marginBottom: '0.5rem'
+      {/* Owner Login Link - Only show if showOwnerAccess is true */}
+      {showOwnerAccess && (
+        <div style={{
+          marginTop: '2rem',
+          padding: '1rem',
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          borderRadius: '0.75rem',
+          border: '1px solid rgba(139, 92, 246, 0.2)',
+          textAlign: 'center'
         }}>
-          Software Owner Access
-        </p>
-        <a
-          href="/owner/login"
-          style={{
+          <p style={{
             fontSize: '0.875rem',
-            color: '#8b5cf6',
-            textDecoration: 'none',
-            fontWeight: '500',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.color = '#7c3aed';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.color = '#8b5cf6';
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M5 16L3 14l5.5-5.5L14 14l-2 2-5.5-5.5L5 16zm0 0"/>
-            <path d="M12 2L22 12l-1.41 1.41L12 4.83L3.41 13.41L2 12L12 2z"/>
-          </svg>
-          Owner Portal Access
-        </a>
-      </div>
+            color: '#6b7280',
+            marginBottom: '0.5rem'
+          }}>
+            Software Owner Access
+          </p>
+          <a
+            href="/owner/login"
+            style={{
+              fontSize: '0.875rem',
+              color: '#8b5cf6',
+              textDecoration: 'none',
+              fontWeight: '500',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.color = '#7c3aed';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.color = '#8b5cf6';
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5 16L3 14l5.5-5.5L14 14l-2 2-5.5-5.5L5 16zm0 0"/>
+              <path d="M12 2L22 12l-1.41 1.41L12 4.83L3.41 13.41L2 12L12 2z"/>
+            </svg>
+            Owner Portal Access
+          </a>
+        </div>
+      )}
     </>
   );
 }

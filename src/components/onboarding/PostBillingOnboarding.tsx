@@ -31,6 +31,7 @@ export default function PostBillingOnboarding({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [checkoutSession, setCheckoutSession] = useState<any>(null)
+  const [createdOrganization, setCreatedOrganization] = useState<any>(null)
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -177,6 +178,7 @@ export default function PostBillingOnboarding({
       }
 
       setSuccess(true)
+      setCreatedOrganization(data.organization)
       
       // Save completion state
       localStorage.setItem('onboarding-complete', 'true')
@@ -186,9 +188,17 @@ export default function PostBillingOnboarding({
         onComplete(data.organization)
       }
 
-      // Redirect to dashboard after success
+      // Redirect to subdomain tenant owner login after success
       setTimeout(() => {
-        router.push('/dashboard')
+        // Check if we have organization data with subdomain
+        if (data.organization && data.organization.subdomain) {
+          const baseUrl = process.env.NODE_ENV === 'development' 
+            ? `http://${data.organization.subdomain}.localhost:3000`
+            : `https://${data.organization.subdomain}.ghostcrm.ai`;
+          window.location.href = `${baseUrl}/login-owner`
+        } else {
+          router.push('/dashboard')
+        }
       }, 2000)
 
     } catch (error: any) {
@@ -223,7 +233,17 @@ export default function PostBillingOnboarding({
         </div>
 
         <button
-          onClick={() => router.push('/dashboard')}
+          onClick={() => {
+            // Check if we have organization data with subdomain
+            if (createdOrganization && createdOrganization.subdomain) {
+              const baseUrl = process.env.NODE_ENV === 'development' 
+                ? `http://${createdOrganization.subdomain}.localhost:3000`
+                : `https://${createdOrganization.subdomain}.ghostcrm.ai`;
+              window.location.href = `${baseUrl}/login-owner`
+            } else {
+              router.push('/dashboard')
+            }
+          }}
           className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200"
         >
           Go to Dashboard

@@ -20,7 +20,15 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
   const isLandingPage = pathname === "/";
   
   // Check if we're on auth pages (should have no layout wrapper)
-  const isAuthPage = pathname === "/login" || pathname === "/register" || pathname === "/reset-password" || pathname === "/billing";
+  const isAuthPage = pathname === "/login" || 
+                     pathname === "/register" || 
+                     pathname === "/reset-password" || 
+                     pathname === "/billing" ||
+                     pathname === "/login-owner" ||
+                     pathname === "/login-admin" ||
+                     pathname === "/login-salesmanager" ||
+                     pathname === "/login-salesrep" ||
+                     pathname.startsWith("/login-");
   
   // Check if we're on a marketing page (should use marketing layout)
   const isMarketingPage = pathname.startsWith("/marketing");

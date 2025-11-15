@@ -8,16 +8,21 @@ export default function PricingPage() {
   const plans = [
     {
       name: "Starter",
-      price: "49",
+      price: "299",
       period: "month",
+      setupFee: "799",
       description: "Perfect for small dealerships getting started",
       features: [
-        "Up to 100 leads per month",
-        "Basic CRM functionality",
-        "Email automation",
+        "Up to 5 team members",
+        "Up to 500 vehicles in inventory",
+        "Core CRM & lead management",
+        "Basic reporting & analytics",
+        "Email & SMS integration",
         "Mobile app access",
-        "Basic reporting",
-        "Email support"
+        "Customer portal",
+        "Standard support",
+        "Basic integrations (DMS, websites)",
+        "Standard security & backups"
       ],
       icon: Zap,
       color: "#3b82f6",
@@ -25,18 +30,23 @@ export default function PricingPage() {
     },
     {
       name: "Professional",
-      price: "149",
+      price: "599",
       period: "month",
-      description: "Ideal for growing dealerships",
+      setupFee: "799",
+      description: "Enhanced tools for growing dealerships",
       features: [
-        "Up to 1,000 leads per month",
-        "Advanced CRM features",
-        "Multi-channel automation",
-        "Advanced analytics",
-        "Custom integrations",
+        "Up to 25 team members",
+        "Up to 2,000 vehicles in inventory",
+        "Everything in Starter, plus:",
+        "Advanced AI-powered insights",
+        "Advanced automation workflows",
+        "Custom reporting & dashboards",
+        "Advanced integrations (F&I, lenders)",
+        "Team performance analytics",
+        "Advanced customer segmentation",
         "Priority support",
-        "Team collaboration tools",
-        "Custom branding"
+        "API access for custom integrations",
+        "Enhanced security & compliance"
       ],
       icon: Crown,
       color: "#8b5cf6",
@@ -44,20 +54,23 @@ export default function PricingPage() {
     },
     {
       name: "Enterprise",
-      price: "399",
+      price: "999",
       period: "month",
-      description: "For large dealerships and dealer groups",
+      setupFee: "799",
+      description: "Complete solution for large dealership groups",
       features: [
-        "Unlimited leads",
-        "Full CRM suite",
-        "AI-powered insights",
-        "White-label solution",
-        "API access",
+        "Unlimited team members",
+        "Unlimited vehicle inventory",
+        "Everything in Professional, plus:",
+        "White-label & custom branding",
+        "Advanced AI & machine learning",
+        "Multi-location management",
+        "Custom integrations & API access",
         "Dedicated account manager",
-        "Custom training",
-        "24/7 phone support",
-        "Advanced security",
-        "Multi-location support"
+        "Custom training & onboarding",
+        "24/7 premium support",
+        "Enterprise security & compliance",
+        "Advanced analytics & forecasting"
       ],
       icon: Rocket,
       color: "#ec4899",
@@ -261,6 +274,15 @@ export default function PricingPage() {
                   }}>
                     /{plan.period}
                   </span>
+                  {plan.setupFee && (
+                    <div style={{
+                      fontSize: '0.875rem',
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      marginTop: '0.5rem'
+                    }}>
+                      + ${plan.setupFee} one-time setup
+                    </div>
+                  )}
                 </div>
 
                 {/* Features */}

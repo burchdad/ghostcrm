@@ -5,6 +5,7 @@ import QuickAddModal from "@/components/modals/QuickAddModal";
 import { useI18n } from "@/components/utils/I18nProvider";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import "./QuickAddButton.css";
 
 export default function QuickAddButton() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -53,8 +54,10 @@ export default function QuickAddButton() {
         onClick={() => setShowQuickAdd(true)}
         className="quick-add-button"
         title={t("Quick Add (Ctrl+N)", "actions")}
+        aria-label="Quick Add - Create new records (Ctrl+N)"
       >
-        <Plus className="w-6 h-6" />
+        <Plus />
+        <span className="sr-only">Quick Add</span>
       </button>
 
       {/* Quick Add Modal */}

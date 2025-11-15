@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LucideHome, LucideUser, LucideBarChart2, LucideCar, LucideCalendar, Zap, Users, Shield, Activity } from "lucide-react";
+import { LucideHome, LucideUser, LucideBarChart2, LucideCar, LucideCalendar, Zap, Users, Shield, Activity, Settings, DollarSign, UserCog, TrendingUp, Building, CreditCard, FileText, ChevronDown, ChevronRight, MoreHorizontal, Palette, Bot } from "lucide-react";
+import { useAuth } from '@/context/AuthContext';
+import './Sidebar.css';
 
 // MVP Feature Configuration
 const ENABLED_FEATURES = new Set([
@@ -40,27 +42,127 @@ interface SidebarItem {
   countKey?: keyof SidebarCounts;
   section?: string;
   ownerOnly?: boolean;
+  tenantOwnerOnly?: boolean;
+  tenantAdminOnly?: boolean;
+  salesManagerOnly?: boolean;
+  salesRepOnly?: boolean;
+  subItems?: SidebarItem[];
+  isDropdown?: boolean;
+  expandable?: boolean;
 }
 
 const DEFAULT_ITEMS: SidebarItem[] = [
-  { name: "Dashboard", path: "/dashboard", icon: LucideHome, role: ["admin","sales"], enabled: true, countKey: "dashboard", section: "overview" },
-  { name: "Leads", path: "/leads", icon: LucideUser, role: ["sales"], enabled: true, countKey: "leads", section: "sales" },
-  { name: "Deals", path: "/deals", icon: LucideBarChart2, role: ["sales"], enabled: true, countKey: "deals", section: "sales" },
-  { name: "Inventory", path: "/inventory", icon: LucideCar, role: ["admin", "sales"], enabled: true, countKey: "inventory", section: "operations" },
-  { name: "Calendar", path: "/calendar", icon: LucideCalendar, role: ["admin", "sales"], enabled: true, countKey: "calendar", section: "operations" },
-  { name: "Collaboration", path: "/collaboration", icon: Users, role: ["admin", "sales"], enabled: true, countKey: "collaboration", section: "team" },
-  { name: "Automation", path: "/automation", icon: Zap, role: ["admin", "sales"], enabled: true, countKey: "automation", section: "team" },
-  { name: "Performance", path: "/performance", icon: LucideBarChart2, role: ["admin"], enabled: false, comingSoon: "Jan 2026", countKey: "performance", section: "analytics" },
-  { name: "Finance", path: "/finance", icon: LucideBarChart2, role: ["admin"], enabled: false, comingSoon: "Dec 2025", countKey: "finance", section: "analytics" },
-  { name: "AI Agents", path: "/ai-agents", icon: Activity, role: ["owner"], enabled: true, section: "system", ownerOnly: true },
-  { name: "Cybersecurity", path: "/admin/testing", icon: Shield, role: ["owner"], enabled: true, section: "security", ownerOnly: true }
+  // Software Owner Features
+  { name: "Software Dashboard", path: "/owner/dashboard", icon: LucideHome, role: ["owner"], enabled: false, comingSoon: "Q1 2025", section: "overview", ownerOnly: true },
+  { name: "Leads", path: "/leads", icon: LucideUser, role: ["owner"], enabled: true, countKey: "leads", section: "operations", ownerOnly: true },
+  { name: "Deals", path: "/deals", icon: LucideBarChart2, role: ["owner"], enabled: true, countKey: "deals", section: "operations", ownerOnly: true },
+  { name: "Calendar", path: "/calendar", icon: LucideCalendar, role: ["owner"], enabled: true, countKey: "calendar", section: "operations", ownerOnly: true },
+  { name: "Collaboration", path: "/collaboration", icon: Users, role: ["owner"], enabled: true, countKey: "collaboration", section: "operations", ownerOnly: true },
+  { name: "Automation", path: "/automation", icon: Zap, role: ["owner"], enabled: true, countKey: "automation", section: "operations", ownerOnly: true },
+  { name: "Stripe", path: "/owner/stripe", icon: CreditCard, role: ["owner"], enabled: false, comingSoon: "Q1 2025", section: "platform", ownerOnly: true },
+  { name: "AI Agents", path: "/ai-agents", icon: Activity, role: ["owner"], enabled: true, section: "platform", ownerOnly: true },
+  { name: "AI Sales Agents", path: "/owner/ai-sales", icon: Bot, role: ["owner"], enabled: false, comingSoon: "Q1 2025", section: "platform", ownerOnly: true },
+  { name: "Cybersecurity", path: "/admin/testing", icon: Shield, role: ["owner"], enabled: true, section: "platform", ownerOnly: true },
+  { name: "Software Settings", path: "/owner/settings", icon: Settings, role: ["owner"], enabled: false, comingSoon: "Q1 2025", section: "platform", ownerOnly: true },
+  
+  // Tenant Owner Features
+  { 
+    name: "Business Dashboard", 
+    path: "/tenant-owner/dashboard", 
+    icon: LucideHome, 
+    role: ["owner"], 
+    enabled: true, 
+    section: "overview", 
+    tenantOwnerOnly: true,
+    expandable: true,
+    subItems: [
+      { name: "Leads", path: "/tenant-owner/leads", icon: LucideUser, role: ["owner"], enabled: true, countKey: "leads", tenantOwnerOnly: true },
+      { name: "Deals", path: "/tenant-owner/deals", icon: LucideBarChart2, role: ["owner"], enabled: true, countKey: "deals", tenantOwnerOnly: true },
+      { name: "Inventory", path: "/tenant-owner/inventory", icon: LucideCar, role: ["owner"], enabled: true, countKey: "inventory", tenantOwnerOnly: true },
+      { name: "Calendar", path: "/tenant-owner/calendar", icon: LucideCalendar, role: ["owner"], enabled: true, countKey: "calendar", tenantOwnerOnly: true },
+      { name: "Collaboration", path: "/tenant-owner/collaboration", icon: Users, role: ["owner"], enabled: true, countKey: "collaboration", tenantOwnerOnly: true },
+      { name: "Automation", path: "/tenant-owner/automation", icon: Zap, role: ["owner"], enabled: true, countKey: "automation", tenantOwnerOnly: true }
+    ]
+  },
+  { 
+    name: "More Options", 
+    path: "#", 
+    icon: MoreHorizontal, 
+    role: ["owner"], 
+    enabled: true, 
+    section: "management", 
+    tenantOwnerOnly: true,
+    isDropdown: true,
+    subItems: [
+      { name: "Team Management", path: "/tenant-owner/team", icon: UserCog, role: ["owner"], enabled: true, tenantOwnerOnly: true },
+      { name: "Business Settings", path: "/tenant-owner/settings", icon: Settings, role: ["owner"], enabled: true, tenantOwnerOnly: true },
+      { name: "Financial Overview", path: "/tenant-owner/finance", icon: DollarSign, role: ["owner"], enabled: true, tenantOwnerOnly: true },
+      { name: "Business Analytics", path: "/tenant-owner/analytics", icon: TrendingUp, role: ["owner"], enabled: true, tenantOwnerOnly: true },
+      { name: "Billing & Subscriptions", path: "/tenant-owner/billing", icon: CreditCard, role: ["owner"], enabled: true, tenantOwnerOnly: true },
+      { name: "Reports & Insights", path: "/tenant-owner/reports", icon: FileText, role: ["owner"], enabled: true, tenantOwnerOnly: true },
+      { name: "Organization Profile", path: "/tenant-owner/profile", icon: Building, role: ["owner"], enabled: true, tenantOwnerOnly: true },
+      { name: "AI Sales Agents", path: "/tenant-owner/ai-sales", icon: Bot, role: ["owner"], enabled: true, tenantOwnerOnly: true }
+    ]
+  },
+  
+  // Tenant Admin Features
+  { name: "Admin Dashboard", path: "/admin/dashboard", icon: LucideHome, role: ["admin"], enabled: true, section: "overview", tenantAdminOnly: true },
+  { name: "Inventory", path: "/inventory", icon: LucideCar, role: ["admin"], enabled: true, countKey: "inventory", section: "operations", tenantAdminOnly: true },
+  { name: "Calendar", path: "/calendar", icon: LucideCalendar, role: ["admin"], enabled: true, countKey: "calendar", section: "operations", tenantAdminOnly: true },
+  { name: "Collaboration", path: "/collaboration", icon: Users, role: ["admin"], enabled: true, countKey: "collaboration", section: "operations", tenantAdminOnly: true },
+  { name: "Automation", path: "/automation", icon: Zap, role: ["admin"], enabled: true, countKey: "automation", section: "operations", tenantAdminOnly: true },
+  { name: "Financial Overview", path: "/tenant-owner/finance", icon: DollarSign, role: ["admin"], enabled: true, section: "management", tenantAdminOnly: true },
+  
+  // Tenant Sales Manager Features
+  { name: "Dashboard", path: "/dashboard", icon: LucideHome, role: ["manager"], enabled: true, countKey: "dashboard", section: "overview", salesManagerOnly: true },
+  { 
+    name: "Leads", 
+    path: "/leads", 
+    icon: LucideUser, 
+    role: ["manager"], 
+    enabled: true, 
+    countKey: "leads", 
+    section: "sales", 
+    salesManagerOnly: true,
+    expandable: true,
+    subItems: [
+      { name: "All Leads", path: "/leads", icon: LucideUser, role: ["manager"], enabled: true, salesManagerOnly: true },
+      { name: "Kanban View", path: "/leads/kanban", icon: LucideBarChart2, role: ["manager"], enabled: true, salesManagerOnly: true }
+    ]
+  },
+  { name: "Deals", path: "/deals", icon: LucideBarChart2, role: ["manager"], enabled: true, countKey: "deals", section: "sales", salesManagerOnly: true },
+  { name: "Inventory", path: "/inventory", icon: LucideCar, role: ["manager"], enabled: true, countKey: "inventory", section: "operations", salesManagerOnly: true },
+  { name: "Calendar", path: "/calendar", icon: LucideCalendar, role: ["manager"], enabled: true, countKey: "calendar", section: "operations", salesManagerOnly: true },
+  { name: "Collaboration", path: "/collaboration", icon: Users, role: ["manager"], enabled: true, countKey: "collaboration", section: "operations", salesManagerOnly: true },
+  
+  // Tenant Sales Rep Features
+  { name: "Sales Dashboard", path: "/sales/dashboard", icon: LucideHome, role: ["sales_rep"], enabled: true, section: "overview", salesRepOnly: true },
+  { 
+    name: "Leads", 
+    path: "/leads", 
+    icon: LucideUser, 
+    role: ["sales_rep"], 
+    enabled: true, 
+    countKey: "leads", 
+    section: "sales", 
+    salesRepOnly: true,
+    expandable: true,
+    subItems: [
+      { name: "All Leads", path: "/leads", icon: LucideUser, role: ["sales_rep"], enabled: true, salesRepOnly: true },
+      { name: "Kanban View", path: "/leads/kanban", icon: LucideBarChart2, role: ["sales_rep"], enabled: true, salesRepOnly: true }
+    ]
+  },
+  { name: "Deals", path: "/deals", icon: LucideBarChart2, role: ["sales_rep"], enabled: true, countKey: "deals", section: "sales", salesRepOnly: true },
+  { name: "Inventory", path: "/inventory", icon: LucideCar, role: ["sales_rep"], enabled: true, countKey: "inventory", section: "operations", salesRepOnly: true },
+  { name: "Calendar", path: "/calendar", icon: LucideCalendar, role: ["sales_rep"], enabled: true, countKey: "calendar", section: "operations", salesRepOnly: true },
+  { name: "Collaboration", path: "/collaboration", icon: Users, role: ["sales_rep"], enabled: true, countKey: "collaboration", section: "operations", salesRepOnly: true }
 ]
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { user } = useAuth(); // Get user from AuthContext
   const items = DEFAULT_ITEMS;
   const [order, setOrder] = useState(items.map((_, i) => i));
-  const [isOwner, setIsOwner] = useState(false);
   const [counts, setCounts] = useState<SidebarCounts>({
     leads: 0,
     deals: 0,
@@ -73,30 +175,43 @@ export default function Sidebar() {
     finance: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [dropdownOpen, setDropdownOpen] = useState<Set<string>>(new Set());
 
-  // Fetch user data for owner verification
-  useEffect(() => {
-    async function fetchUserData() {
-      try {
-        const response = await fetch('/api/admin/auth/verify', {
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          setIsOwner(userData.isOwner || false);
-        } else {
-          // If API call fails (non-admin user), they're definitely not the owner
-          setIsOwner(false);
-        }
-      } catch (error) {
-        console.error('Failed to fetch user data:', error);
-        setIsOwner(false);
+  // Determine user type and role
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isSubdomain = hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname.includes('.localhost');
+  const isSoftwareOwner = user?.role === 'owner' && !isSubdomain; // Owner on main domain
+  const isTenantOwner = user?.role === 'owner' && isSubdomain; // Owner on subdomain
+  const isTenantAdmin = user?.role === 'admin' && isSubdomain; // Admin on subdomain
+  const isSalesManager = user?.role === 'manager' && isSubdomain; // Sales Manager on subdomain
+  const isSalesRep = user?.role === 'sales_rep' && isSubdomain; // Sales Rep on subdomain
+
+  // Toggle expandable items
+  const toggleExpanded = (itemName: string) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemName)) {
+        newSet.delete(itemName);
+      } else {
+        newSet.add(itemName);
       }
-    }
+      return newSet;
+    });
+  };
 
-    fetchUserData();
-  }, []);
+  // Toggle dropdown items
+  const toggleDropdown = (itemName: string) => {
+    setDropdownOpen(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemName)) {
+        newSet.delete(itemName);
+      } else {
+        newSet.add(itemName);
+      }
+      return newSet;
+    });
+  };
 
   // Fetch live counts from API
   useEffect(() => {
@@ -135,11 +250,35 @@ export default function Sidebar() {
     };
   }, []);
 
-  // Filter items based on enabled status and owner access
+  // Filter items based on role and context
   const filtered = order.map((i) => items[i]).filter((item) => {
-    if (!item.enabled) return false;
-    if (item.ownerOnly && !isOwner) return false;
-    return true;
+    // Software Owner filtering
+    if (isSoftwareOwner) {
+      return item.ownerOnly && !item.tenantOwnerOnly && !item.tenantAdminOnly && !item.salesManagerOnly && !item.salesRepOnly;
+    }
+    
+    // Tenant Owner filtering
+    if (isTenantOwner) {
+      return item.tenantOwnerOnly;
+    }
+    
+    // Tenant Admin filtering
+    if (isTenantAdmin) {
+      return item.tenantAdminOnly;
+    }
+    
+    // Sales Manager filtering
+    if (isSalesManager) {
+      return item.salesManagerOnly;
+    }
+    
+    // Sales Rep filtering
+    if (isSalesRep) {
+      return item.salesRepOnly;
+    }
+    
+    // Default: no items shown for unknown roles
+    return false;
   });
   
   // Group items by section for better visual hierarchy
@@ -150,22 +289,23 @@ export default function Sidebar() {
     return acc;
   }, {} as Record<string, typeof filtered>);
 
-  const sectionOrder = ['overview', 'sales', 'operations', 'team', 'analytics', 'security', 'general'];
+  const sectionOrder = ['overview', 'sales', 'operations', 'management', 'platform', 'analytics', 'security', 'general'];
   const sectionLabels = {
     overview: 'Overview',
     sales: 'Sales',
     operations: 'Operations', 
-    team: 'Team',
+    management: 'Management',
+    platform: 'Platform',
     analytics: 'Analytics',
     security: 'Security',
     general: 'General'
   };
 
   return (
-    <div className="sidebar themed-bg-secondary flex flex-col h-full relative w-50 themed-border border-r overflow-hidden">
+    <div className="sidebar themed-bg-secondary themed-border">
       {/* Navigation takes full height */}
-      <nav className="p-3 h-full" role="navigation" aria-label="Main Navigation">
-        <div className="space-y-6 h-full">
+      <nav role="navigation" aria-label="Main Navigation">
+        <div className="space-y-6">
           {sectionOrder.map(sectionKey => {
             const sectionItems = groupedItems[sectionKey];
             if (!sectionItems || sectionItems.length === 0) return null;
@@ -174,47 +314,157 @@ export default function Sidebar() {
               <div key={sectionKey} className="space-y-1">
                 {/* Section Header - only show for sections other than overview */}
                 {sectionKey !== 'overview' && (
-                  <div className="px-3 py-1">
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <div className="section-header">
+                    <h3>
                       {sectionLabels[sectionKey as keyof typeof sectionLabels]}
                     </h3>
                   </div>
                 )}
                 
                 {/* Section Items */}
-                <ul className="space-y-1 list-none">
+                <ul className="space-y-1">
                   {sectionItems.map((item) => {
-                    const { name, path, icon: Icon, countKey } = item;
+                    const { name, path, icon: Icon, countKey, comingSoon, expandable, isDropdown, subItems } = item;
                     const active = pathname === path;
                     const count = countKey ? counts[countKey] : 0;
                     const showBadge = count > 0;
+                    const isComingSoon = !item.enabled && comingSoon;
+                    const isExpanded = expandedItems.has(name);
+                    const isDropdownOpen = dropdownOpen.has(name);
+                    
                     return (
-                      <li key={path} className="list-none">
-                        <Link
-                          href={path}
-                          className={[
-                            "relative flex items-center rounded-lg px-3 py-3 transition nav-text justify-between gap-3 group",
-                            active 
-                              ? "bg-blue-600 text-white ring-2 ring-blue-200" 
-                              : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
-                          ].join(" ")}
-                        >
-                          <span className="flex items-center gap-3 min-w-0 flex-1">
-                            <Icon className={[
-                              "h-5 w-5 flex-shrink-0 transition-colors",
-                              active ? "text-white" : "text-gray-500 group-hover:text-gray-700"
-                            ].join(" ")} />
-                            <span className="font-medium truncate">{name}</span>
-                            {loading && countKey && (
-                              <span className="h-2 w-2 bg-gray-300 rounded-full animate-pulse flex-shrink-0"></span>
-                            )}
-                          </span>
-                          {showBadge && !loading && (
-                            <span className="px-2 py-1 bg-red-500 text-white text-xs rounded-full flex-shrink-0 font-semibold shadow-sm">
-                              {count > 99 ? '99+' : count}
+                      <li key={`${path}-${name}`}>
+                        {/* Main Item */}
+                        {isComingSoon ? (
+                          <div className="nav-item coming-soon">
+                            <span className="nav-item-content">
+                              <Icon />
+                              <span>{name}</span>
                             </span>
-                          )}
-                        </Link>
+                            <span className="coming-soon-badge">
+                              {comingSoon}
+                            </span>
+                          </div>
+                        ) : expandable ? (
+                          <button
+                            onClick={() => toggleExpanded(name)}
+                            className={`nav-item${active ? ' active' : ''}`}
+                          >
+                            <span className="nav-item-content">
+                              <Icon />
+                              <span>{name}</span>
+                            </span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              {showBadge && !loading && (
+                                <span className="nav-badge">
+                                  {count > 99 ? '99+' : count}
+                                </span>
+                              )}
+                              {isExpanded ? 
+                                <ChevronDown className="nav-chevron expanded" /> : 
+                                <ChevronRight className="nav-chevron" />
+                              }
+                            </span>
+                          </button>
+                        ) : isDropdown ? (
+                          <button
+                            onClick={() => toggleDropdown(name)}
+                            className="nav-item"
+                          >
+                            <span className="nav-item-content">
+                              <Icon />
+                              <span>{name}</span>
+                            </span>
+                            {isDropdownOpen ? 
+                              <ChevronDown className="nav-chevron dropdown-open" /> : 
+                              <ChevronRight className="nav-chevron" />
+                            }
+                          </button>
+                        ) : (
+                          <Link
+                            href={path}
+                            className={`nav-item${active ? ' active' : ''}`}
+                          >
+                            <span className="nav-item-content">
+                              <Icon />
+                              <span>{name}</span>
+                              {loading && countKey && (
+                                <span className="loading-dot"></span>
+                              )}
+                            </span>
+                            {showBadge && !loading && (
+                              <span className="nav-badge">
+                                {count > 99 ? '99+' : count}
+                              </span>
+                            )}
+                          </Link>
+                        )}
+                        
+                        {/* Sub Items for Expandable */}
+                        {expandable && isExpanded && subItems && (
+                          <ul className="sub-nav">
+                            {subItems.map((subItem) => {
+                              const subActive = pathname === subItem.path;
+                              const subCount = subItem.countKey ? counts[subItem.countKey] : 0;
+                              const subShowBadge = subCount > 0;
+                              
+                              return (
+                                <li key={subItem.path}>
+                                  <Link
+                                    href={subItem.path}
+                                    className={`nav-item${subActive ? ' active' : ''}`}
+                                  >
+                                    <span className="nav-item-content">
+                                      <subItem.icon />
+                                      <span>{subItem.name}</span>
+                                    </span>
+                                    {subShowBadge && !loading && (
+                                      <span className="nav-badge">
+                                        {subCount > 99 ? '99+' : subCount}
+                                      </span>
+                                    )}
+                                  </Link>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                        
+                        {/* Sub Items for Dropdown */}
+                        {isDropdown && isDropdownOpen && subItems && (
+                          <ul className="sub-nav">
+                            {subItems.map((subItem) => {
+                              const subActive = pathname === subItem.path;
+                              const subIsComingSoon = !subItem.enabled && subItem.comingSoon;
+                              
+                              return (
+                                <li key={subItem.path}>
+                                  {subIsComingSoon ? (
+                                    <div className="nav-item coming-soon">
+                                      <span className="nav-item-content">
+                                        <subItem.icon />
+                                        <span>{subItem.name}</span>
+                                      </span>
+                                      <span className="coming-soon-badge">
+                                        {subItem.comingSoon}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <Link
+                                      href={subItem.path}
+                                      className={`nav-item${subActive ? ' active' : ''}`}
+                                    >
+                                      <span className="nav-item-content">
+                                        <subItem.icon />
+                                        <span>{subItem.name}</span>
+                                      </span>
+                                    </Link>
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
                       </li>
                     );
                   })}

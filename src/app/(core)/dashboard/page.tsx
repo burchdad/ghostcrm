@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { useRibbonPage } from "@/components/ribbon";
+import { Crown } from "lucide-react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { ToastProvider } from "@/components/utils/ToastProvider";
@@ -46,23 +49,12 @@ function DashboardContent() {
       "automation",
       "data",
       "billing",
-      "developer"
-    ],
-    disable: []
+      "appIntegrations"
+    ]
   });
 
-  return (
-    <I18nProvider>
-      <ToastProvider>
-        <DndProvider backend={HTML5Backend}>
-          <DashboardPageContent />
-        </DndProvider>
-      </ToastProvider>
-    </I18nProvider>
-  );
-}
-
-function DashboardPageContent() {
+  const router = useRouter();
+  const { user, tenant } = useAuth();
   const { messages, aiAlerts } = useDashboardData();
   const [loading, setLoading] = useState(true);
   const { t } = useI18n();
@@ -78,6 +70,50 @@ function DashboardPageContent() {
     conversionRate: 0,
     teamMembers: 0
   });
+
+  // Detect tenant context
+  const [isTenantOwner, setIsTenantOwner] = useState(false);
+  const [tenantSubdomain, setTenantSubdomain] = useState<string>('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const isSubdomain = hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname.includes('.localhost');
+      const subdomain = isSubdomain ? hostname.split('.')[0] : '';
+      
+      setIsTenantOwner(user?.role === 'owner' && isSubdomain);
+      setTenantSubdomain(subdomain);
+      
+      console.log('🏢 [DASHBOARD CONTEXT]', {
+        hostname,
+        isSubdomain,
+        subdomain,
+        userRole: user?.role,
+        isTenantOwner: user?.role === 'owner' && isSubdomain
+      });
+    }
+  }, [user]);
+
+  // Enhanced redirect logic for owners - handle subdomain context properly
+  useEffect(() => {
+    // This fallback logic should rarely be needed now since PermissionMiddleware handles redirects
+    // Only log if we somehow end up here incorrectly
+    if (user && user.role === 'owner') {
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+      const isSubdomain = hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname.includes('.localhost');
+      
+      console.log('⚠️ [DASHBOARD FALLBACK] Owner detected on dashboard - PermissionMiddleware should have handled this:', {
+        email: user.email,
+        role: user.role,
+        hostname,
+        isSubdomain,
+        note: 'This indicates PermissionMiddleware may need debugging'
+      });
+      
+      // Remove the automatic redirects - let PermissionMiddleware handle them
+      // This prevents double redirects and race conditions
+    }
+  }, [user]);
 
   // Fetch dashboard data and detect empty state
   useEffect(() => {
@@ -124,10 +160,12 @@ function DashboardPageContent() {
       }
     }
 
-    fetchDashboardData();
-  }, [aiAlerts.length]);
+    if (user && user.role !== 'owner') {
+      fetchDashboardData();
+    }
+  }, [aiAlerts.length, user]);
 
-  if (loading) {
+  if (loading && user?.role !== 'owner') {
     return (
       <main className="space-y-6 p-4 md:p-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -142,13 +180,33 @@ function DashboardPageContent() {
 
   return (
     <main className="p-4 md:p-8 pt-16">
+      {/* Show tenant owner header if applicable */}
+      {isTenantOwner && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-3">
+            <Crown className="h-6 w-6 text-blue-600" />
+            <div>
+              <h2 className="text-lg font-semibold text-blue-900">
+                {t("tenant_owner_dashboard", "Tenant Owner Dashboard")}
+              </h2>
+              <p className="text-sm text-blue-700">
+                Managing: <span className="font-medium">{tenantSubdomain}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 2x2 Grid Layout: Four equal cards */}
       <div className="w-full mb-6">
         <div className="grid grid-cols-2 lg:grid-cols-2 gap-4">
           {/* Top Left: Campaign Analytics */}
           <div className="bg-white rounded-lg shadow-sm border p-3 h-[280px] flex flex-col">
             <h3 className="text-base font-bold mb-3 text-blue-600">
-              {t("campaign_analytics", "dashboard")}
+              {isTenantOwner 
+                ? t("tenant_campaign_analytics", "Tenant Campaign Analytics")
+                : t("campaign_analytics", "Campaign Analytics")
+              }
             </h3>
             <div className="flex-1 overflow-hidden">
               <CampaignAnalytics />
@@ -158,7 +216,10 @@ function DashboardPageContent() {
           {/* Top Right: Realtime Outreach Events */}
           <div className="bg-white rounded-lg shadow-sm border p-3 h-[280px] flex flex-col">
             <h3 className="text-base font-bold mb-3 text-green-600">
-              {t("realtime_outreach_events", "dashboard")}
+              {isTenantOwner 
+                ? t("tenant_outreach_events", "Tenant Outreach Events")
+                : t("realtime_outreach_events", "Realtime Outreach Events")
+              }
             </h3>
             <div className="flex-1 overflow-hidden">
               <RealtimeOutreachFeed />
@@ -168,7 +229,10 @@ function DashboardPageContent() {
           {/* Bottom Left: Dashboard Metrics */}
           <div className="bg-white rounded-lg shadow-sm border p-3 h-[280px] flex flex-col">
             <h3 className="text-base font-bold mb-3 text-purple-600">
-              {t("dashboard_metrics", "dashboard")}
+              {isTenantOwner 
+                ? t("tenant_business_metrics", "Business Metrics")
+                : t("dashboard_metrics", "Dashboard Metrics")
+              }
             </h3>
             <div className="flex-1 overflow-hidden">
               <CombinedMetricsCard analytics={analytics} />
@@ -178,7 +242,10 @@ function DashboardPageContent() {
           {/* Bottom Right: Inventory Overview */}
           <div className="bg-white rounded-lg shadow-sm border p-3 h-[280px] flex flex-col">
             <h3 className="text-base font-bold mb-3 text-orange-600">
-              {t("inventory_overview", "dashboard")}
+              {isTenantOwner 
+                ? t("business_inventory", "Business Inventory")
+                : t("inventory_overview", "Inventory Overview")
+              }
             </h3>
             <div className="flex-1 overflow-hidden">
               <InventoryOverview />
@@ -231,10 +298,37 @@ function DashboardPageContent() {
   );
 }
 
-export default function DashboardPage() {
+export default function Dashboard() {
+  // Check if user is a tenant owner to skip onboarding
+  const [isTenantOwner, setIsTenantOwner] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const isSubdomain = hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname.includes('.localhost');
+      setIsTenantOwner(isSubdomain);
+    }
+  }, []);
+
+  // For tenant owners, skip onboarding entirely since they've already set up their organization
+  if (isTenantOwner) {
+    return (
+      <ToastProvider>
+        <I18nProvider>
+          <DashboardContent />
+        </I18nProvider>
+      </ToastProvider>
+    );
+  }
+
+  // For main domain users, use onboarding guard
   return (
     <OnboardingGuard requireCompleted={true} mode="modal">
-      <DashboardContent />
+      <ToastProvider>
+        <I18nProvider>
+          <DashboardContent />
+        </I18nProvider>
+      </ToastProvider>
     </OnboardingGuard>
   );
 }

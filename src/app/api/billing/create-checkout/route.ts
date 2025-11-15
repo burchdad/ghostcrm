@@ -9,6 +9,8 @@ export const runtime = 'nodejs'
 interface CreateCheckoutRequest {
   priceId: string;
   planId: PlanId;
+  setupFee?: number;
+  monthlyPrice?: number;
   successUrl?: string;
   cancelUrl?: string;
   tenantId?: string;
@@ -21,9 +23,9 @@ interface CreateCheckoutRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: CreateCheckoutRequest = await request.json()
-    const { priceId, planId, successUrl, cancelUrl, tenantId, customerId, trialDays, billing, promoCode } = body
+    const { priceId, planId, setupFee, monthlyPrice, successUrl, cancelUrl, tenantId, customerId, trialDays, billing, promoCode } = body
 
-    console.log(`🛒 [CHECKOUT] Creating session for plan: ${planId}, billing: ${billing}, promo: ${promoCode || 'none'}`)
+    console.log(`🛒 [CHECKOUT] Creating session for plan: ${planId}, billing: ${billing}, promo: ${promoCode || 'none'}, setupFee: ${setupFee}`)
 
     // Validate required fields
     if (!priceId || !planId) {
@@ -45,13 +47,8 @@ export async function POST(request: NextRequest) {
     // Create checkout session with Stripe
     const checkoutUrl = await withStripe(
       async (stripe) => {
-        const sessionParams: any = {
-          line_items: [
-            {
-              price: priceId,
-              quantity: 1,
-            },
-          ],
+        // Prepare session parameters
+        const baseSessionParams: any = {
           mode: 'subscription',
           success_url: successUrl || `${process.env.NEXT_PUBLIC_APP_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: cancelUrl || `${process.env.NEXT_PUBLIC_APP_URL}/billing/cancel`,
@@ -74,21 +71,74 @@ export async function POST(request: NextRequest) {
           },
           allow_promotion_codes: true,
           billing_address_collection: 'required',
-          customer_update: {
+        }
+
+        // Add customer info - for subscription mode, customer is required
+        if (customerId) {
+          baseSessionParams.customer = customerId
+          // Only add customer_update if we have an existing customer
+          baseSessionParams.customer_update = {
             address: 'auto',
             name: 'auto',
-          },
+          }
         }
+        // Note: customer_creation is only for payment mode, not subscription mode
 
-        // If customer ID is provided, use it
-        if (customerId) {
-          sessionParams.customer = customerId
-        } else {
-          sessionParams.customer_creation = 'always'
+        // Create checkout session
+        try {
+          // Prepare line items - start with the subscription
+          const lineItems: any[] = [
+            {
+              price: priceId,
+              quantity: 1,
+            }
+          ]
+
+          // Add setup fee as a one-time payment if provided
+          if (setupFee && setupFee > 0) {
+            console.log(`💰 [CHECKOUT] Adding setup fee: $${setupFee}`)
+            
+            // Create a one-time price for the setup fee
+            const setupPrice = await stripe.prices.create({
+              unit_amount: setupFee * 100, // Convert to cents
+              currency: 'usd',
+              product_data: {
+                name: `${plan.name} Plan - Setup Fee`,
+              },
+            })
+
+            // Add setup fee as second line item
+            lineItems.push({
+              price: setupPrice.id,
+              quantity: 1,
+            })
+          }
+
+          const sessionParams = {
+            ...baseSessionParams,
+            line_items: lineItems,
+          }
+
+          const session = await stripe.checkout.sessions.create(sessionParams)
+          return session.url
+          
+        } catch (stripeError: any) {
+          // Log the actual Stripe error details for debugging
+          console.error('❌ [CHECKOUT] Stripe checkout session creation failed:', {
+            error: stripeError.message,
+            code: stripeError.code,
+            type: stripeError.type,
+            priceId: priceId,
+            baseSessionParams: JSON.stringify(baseSessionParams, null, 2)
+          })
+          
+          // Check if it's specifically a price-related error
+          if (stripeError.code === 'resource_missing' || stripeError.message?.includes('price')) {
+            throw new Error(`Plan pricing not configured. Please contact support.`)
+          } else {
+            throw new Error(`Checkout creation failed: ${stripeError.message}`)
+          }
         }
-
-        const session = await stripe.checkout.sessions.create(sessionParams)
-        return session.url
       },
       null
     )

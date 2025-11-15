@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { AuthService, Permission } from '@/lib/auth';
@@ -63,19 +63,107 @@ const PROTECTED_ROUTES: RoutePermission[] = [
     requireTenantAccess: true
   },
 
-  // Customer Management
+  // Customer Management - Now tenant-specific
   {
     path: '/leads',
     requiredPermissions: ['customers.view'],
     allowedRoles: ['owner', 'admin', 'manager', 'sales_rep'],
     requireTenantAccess: true
   },
+  {
+    path: '/tenant-owner/leads',
+    requiredPermissions: [], // Owner has unrestricted access
+    allowedRoles: ['owner'],
+    requireTenantAccess: false // Owner has access regardless
+  },
+  {
+    path: '/tenant-salesmanager/leads',
+    requiredPermissions: ['customers.view'],
+    allowedRoles: ['admin', 'manager'],
+    requireTenantAccess: true
+  },
+  {
+    path: '/tenant-salesrep/leads',
+    requiredPermissions: ['customers.view'],
+    allowedRoles: ['sales_rep', 'user'],
+    requireTenantAccess: true
+  },
 
-  // Deal Management
+  // Deal Management - Tenant-specific
   {
     path: '/deals',
     requiredPermissions: ['deals.view'],
     allowedRoles: ['owner', 'admin', 'manager', 'sales_rep'],
+    requireTenantAccess: true
+  },
+  {
+    path: '/tenant-owner/deals',
+    requiredPermissions: [], // Owner has unrestricted access
+    allowedRoles: ['owner'],
+    requireTenantAccess: false
+  },
+  {
+    path: '/tenant-salesmanager/deals',
+    requiredPermissions: ['deals.view'],
+    allowedRoles: ['admin', 'manager'],
+    requireTenantAccess: true
+  },
+  {
+    path: '/tenant-salesrep/deals',
+    requiredPermissions: ['deals.view'],
+    allowedRoles: ['sales_rep', 'user'],
+    requireTenantAccess: true
+  },
+
+  // Inventory Management - Tenant-specific
+  {
+    path: '/inventory',
+    requiredPermissions: ['inventory.view'],
+    allowedRoles: ['owner', 'admin', 'manager', 'sales_rep'],
+    requireTenantAccess: true
+  },
+  {
+    path: '/tenant-owner/inventory',
+    requiredPermissions: [], // Owner has unrestricted access
+    allowedRoles: ['owner'],
+    requireTenantAccess: false
+  },
+  {
+    path: '/tenant-salesmanager/inventory',
+    requiredPermissions: ['inventory.view'],
+    allowedRoles: ['admin', 'manager'],
+    requireTenantAccess: true
+  },
+  {
+    path: '/tenant-salesrep/inventory',
+    requiredPermissions: ['inventory.view'],
+    allowedRoles: ['sales_rep', 'user'],
+    requireTenantAccess: true
+  },
+
+  // Calendar/Appointments - Tenant-specific
+  {
+    path: '/calendar',
+    requiredPermissions: ['appointments.view'],
+    allowedRoles: ['owner', 'admin', 'manager', 'sales_rep'],
+    requireTenantAccess: true
+  },
+  {
+    path: '/tenant-owner/calendar',
+    requiredPermissions: [], // Owner has unrestricted access
+    allowedRoles: ['owner'],
+    requireTenantAccess: false
+  },
+  {
+    path: '/tenant-salesmanager/calendar',
+    requiredPermissions: ['appointments.view'],
+    allowedRoles: ['admin', 'manager'],
+    requireTenantAccess: true
+  },
+  {
+    path: '/tenant-salesrep/calendar',
+    requiredPermissions: ['appointments.view'],
+    allowedRoles: ['sales_rep', 'user'],
     requireTenantAccess: true
   },
 
@@ -197,13 +285,41 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
   const router = useRouter();
   const pathname = usePathname();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
+  const authCheckInProgress = useRef(false);
+
+  // Helper function to set authorization and reset check flag
+  const setAuthorizationResult = (authorized: boolean) => {
+    authCheckInProgress.current = false;
+    setIsCheckingRedirect(false);
+    setIsAuthorized(authorized);
+  };
 
   // Helper function for path matching
   const startsWithSeg = (path: string, base: string) =>
     path === base || path.startsWith(base + '/');
 
   useEffect(() => {
-    if (!authReady) return; // Critical: don't decide before auth is ready
+    // If already authorized and not checking redirects, don't re-run
+    if (isAuthorized === true && !isCheckingRedirect) {
+      return;
+    }
+    
+    if (!authReady || authCheckInProgress.current) {
+      setIsCheckingRedirect(true);
+      return; // Critical: don't decide before auth is ready or if check is in progress
+    }
+
+    authCheckInProgress.current = true;
+    setIsCheckingRedirect(true); // Start checking for redirects
+
+    console.log('🔍 [ROUTE_GUARD] Starting authorization check:', {
+      pathname,
+      authReady,
+      hasUser: !!user,
+      userRole: user?.role,
+      isLoading
+    });
 
     // Define public paths that don't require authentication
     const publicPaths = [
@@ -211,6 +327,9 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
       '/login',
       '/register',
       '/reset-password',
+      '/login-owner',      // owner role-specific login
+      '/login-salesmanager', // sales manager role-specific login  
+      '/login-salesrep',   // sales rep role-specific login
       '/owner/login',  // software owner login
       '/marketing',    // marketing section root
       '/pricing',      // public pricing page  
@@ -225,7 +344,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
 
     // If it's a public path, allow access without authentication
     if (isPublicPath) {
-      setIsAuthorized(true);
+      setAuthorizationResult(true);
       return;
     }
 
@@ -241,7 +360,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
           // Check if session is still valid
           if (expires > new Date()) {
             console.log('✅ [ROUTE_GUARD] Owner session valid, allowing access to:', pathname);
-            setIsAuthorized(true);
+            setAuthorizationResult(true);
             return;
           } else {
             console.log('❌ [ROUTE_GUARD] Owner session expired, removing and redirecting');
@@ -255,28 +374,116 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
       
       // No valid owner session for owner route
       console.log('❌ [ROUTE_GUARD] No valid owner session, redirecting to owner login');
+      setIsCheckingRedirect(false);
       router.push('/owner/login');
       return;
     }
 
     // If not logged in and not on public path, redirect to login
     if (!user) {
+      console.log('❌ [ROUTE_GUARD] No user found, redirecting to login:', {
+        pathname,
+        authReady,
+        isLoading
+      });
+      setIsCheckingRedirect(false);
       router.push('/login');
       return;
     }
 
+    console.log('✅ [ROUTE_GUARD] User authenticated, proceeding with route checks:', {
+      pathname,
+      userRole: user.role,
+      userEmail: user.email,
+      userId: user.id,
+      userFullDetails: user
+    });
+
+    // Auto-redirect users from legacy routes to tenant-specific routes
+    const tenantRouteRedirects: Record<string, Record<string, string>> = {
+      '/dashboard': {
+        'owner': '/tenant-owner/dashboard',
+        'admin': '/tenant-salesmanager/dashboard',
+        'manager': '/tenant-salesmanager/dashboard',
+        'sales_rep': '/tenant-salesrep/dashboard',
+        'user': '/tenant-salesrep/dashboard'
+      },
+      '/leads': {
+        'owner': '/tenant-owner/leads',
+        'admin': '/tenant-salesmanager/leads',
+        'manager': '/tenant-salesmanager/leads',
+        'sales_rep': '/tenant-salesrep/leads',
+        'user': '/tenant-salesrep/leads'
+      },
+      '/deals': {
+        'owner': '/tenant-owner/deals',
+        'admin': '/tenant-salesmanager/deals',
+        'manager': '/tenant-salesmanager/deals',
+        'sales_rep': '/tenant-salesrep/deals',
+        'user': '/tenant-salesrep/deals'
+      },
+      '/inventory': {
+        'owner': '/tenant-owner/inventory',
+        'admin': '/tenant-salesmanager/inventory',
+        'manager': '/tenant-salesmanager/inventory',
+        'sales_rep': '/tenant-salesrep/inventory',
+        'user': '/tenant-salesrep/inventory'
+      },
+      '/calendar': {
+        'owner': '/tenant-owner/calendar',
+        'admin': '/tenant-salesmanager/calendar',
+        'manager': '/tenant-salesmanager/calendar',
+        'sales_rep': '/tenant-salesrep/calendar',
+        'user': '/tenant-salesrep/calendar'
+      }
+    };
+
+    // Check if current path should be redirected to tenant-specific route
+    const redirectTarget = tenantRouteRedirects[pathname]?.[user.role];
+    if (redirectTarget) {
+      console.log(`🔄 [ROUTE_GUARD] Redirecting ${user.role} from ${pathname} to ${redirectTarget}`);
+      setIsCheckingRedirect(false); // Complete redirect check
+      router.push(redirectTarget);
+      return;
+    }
+
+    // No redirect needed, continue with authorization checks
+    setIsCheckingRedirect(false);
+
     // Find matching route configuration (includes /billing rule above)
     const routeConfig = PROTECTED_ROUTES.find(route => startsWithSeg(pathname, route.path));
     
+    console.log('🔍 [ROUTE_GUARD] Route matching debug:', {
+      pathname,
+      userRole: user.role,
+      foundRoute: routeConfig?.path,
+      requireTenantAccess: routeConfig?.requireTenantAccess,
+      allowedRoles: routeConfig?.allowedRoles,
+      userTenantId: user.tenantId
+    });
+    
     if (!routeConfig) {
       // No specific route protection, allow access
-      setIsAuthorized(true);
+      console.log('✅ [ROUTE_GUARD] No route config found, allowing access');
+      console.log('🔧 [ROUTE_GUARD] Setting isCheckingRedirect=false, isAuthorized=true');
+      
+      // Force immediate state update
+      authCheckInProgress.current = false;
+      setTimeout(() => {
+        setIsCheckingRedirect(false);
+        setIsAuthorized(true);
+      }, 0);
       return;
     }
 
     // Check role authorization
     if (routeConfig.allowedRoles && !routeConfig.allowedRoles.includes(user.role)) {
-      setIsAuthorized(false);
+      console.log('❌ [ROUTE_GUARD] Role authorization failed:', {
+        route: pathname,
+        userRole: user.role,
+        allowedRoles: routeConfig.allowedRoles
+      });
+      setAuthorizationResult(false);
       return;
     }
 
@@ -286,21 +493,71 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     );
 
     if (!hasRequiredPermissions) {
-      setIsAuthorized(false);
+      console.log('❌ [ROUTE_GUARD] Permission authorization failed:', {
+        route: pathname,
+        userRole: user.role,
+        requiredPermissions: routeConfig.requiredPermissions,
+        hasRequiredPermissions
+      });
+      setAuthorizationResult(false);
       return;
     }
 
     // Check tenant access if required
+    console.log('🏢 [ROUTE_GUARD] Tenant access check:', {
+      requireTenantAccess: routeConfig.requireTenantAccess,
+      userTenantId: user.tenantId,
+      userRole: user.role,
+      pathname
+    });
+    
     if (routeConfig.requireTenantAccess && !user.tenantId) {
-      setIsAuthorized(false);
+      // Special case: if user is an owner and we're on a tenant subdomain, allow access
+      // This handles the case where owner logs in via subdomain but JWT doesn't have tenantId yet
+      if (user.role === 'owner' && typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        const subdomain = hostname.split('.')[0];
+        console.log('🔍 [TENANT_VALIDATION] Checking owner subdomain access:', {
+          hostname,
+          subdomain,
+          userRole: user.role,
+          hasValidSubdomain: subdomain && subdomain !== 'localhost' && hostname.includes('localhost')
+        });
+        // If we're on a subdomain (not just localhost), allow owner access
+        if (subdomain && subdomain !== 'localhost' && hostname.includes('localhost')) {
+          console.log('🔓 [ROUTE_GUARD] Allowing owner access to tenant route on subdomain:', subdomain);
+          setIsCheckingRedirect(false);
+          setIsAuthorized(true);
+          return;
+        }
+      }
+      console.log('❌ [ROUTE_GUARD] Tenant access denied - no tenantId for route:', {
+        route: pathname,
+        userRole: user.role,
+        requireTenantAccess: routeConfig.requireTenantAccess,
+        userTenantId: user.tenantId
+      });
+      setAuthorizationResult(false);
       return;
     }
 
-    setIsAuthorized(true);
-  }, [authReady, user, pathname, hasPermission, router]);
+    console.log('✅ [ROUTE_GUARD] All checks passed, authorizing access');
+    setAuthorizationResult(true);
+  }, [authReady, user?.role, user?.id, pathname]); // Removed hasPermission and router to prevent unnecessary re-runs
 
-  // Show loading state
-  if (!authReady || isAuthorized === null) {
+  // Show loading state - including while checking for redirects
+  if (!authReady || isAuthorized === null || isCheckingRedirect) {
+    console.log('🔄 [ROUTE_GUARD] Showing loading state:', {
+      authReady,
+      isAuthorized,
+      isCheckingRedirect,
+      pathname,
+      breakdown: {
+        'authReady_false': !authReady,
+        'isAuthorized_null': isAuthorized === null,
+        'isCheckingRedirect_true': isCheckingRedirect
+      }
+    });
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>

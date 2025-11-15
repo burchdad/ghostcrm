@@ -64,11 +64,10 @@ export default function StripeProductSyncDashboard() {
   const performSync = async (dryRun: boolean = false, forceUpdate: boolean = false) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/admin/stripe/sync-products', {
+      const response = await fetch('/api/stripe/sync-products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'sync',
           dryRun,
           forceUpdate
         })
@@ -83,6 +82,11 @@ export default function StripeProductSyncDashboard() {
       }
     } catch (error) {
       console.error('Sync failed:', error);
+      setLastSyncResult({
+        success: false,
+        message: 'Sync failed: ' + (error instanceof Error ? error.message : 'Unknown error'),
+        data: { created: 0, updated: 0, errors: [], products: [] }
+      });
     } finally {
       setIsLoading(false);
     }

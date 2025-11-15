@@ -77,7 +77,14 @@ export default function ChartMarketplaceModal({ open, onClose, onInstall }: Prop
   };
 
   return (
-    <Modal isOpen={open} onClose={handleClose} title="Chart Marketplace" initialFocusSelector=".mp-action-primary">
+    <Modal 
+      isOpen={open} 
+      onClose={handleClose} 
+      title="Chart Marketplace" 
+      initialFocusSelector=".mp-action-primary"
+      maxHeight="85vh"
+      width="min(1200px, 90vw)"
+    >
       {currentView === 'categories' ? (
         // Categories View
         <>
@@ -150,10 +157,10 @@ export default function ChartMarketplaceModal({ open, onClose, onInstall }: Prop
             </div>
 
             <div className="mp-actions">
-              <button className="mp-action-secondary" onClick={() => window.open('/charts/custom', '_blank')}>
+              <button className="mp-action-secondary" onClick={() => window.open('/tenant-owner/charts/custom', '_blank')}>
                 🎨 Custom Builder
               </button>
-              <button className="mp-action-primary" onClick={() => window.open('/charts/builder?mode=advanced', '_blank')}>
+              <button className="mp-action-primary" onClick={() => window.open('/tenant-owner/charts/builder?mode=advanced', '_blank')}>
                 ✨ AI Chart Builder
               </button>
             </div>
@@ -219,10 +226,10 @@ export default function ChartMarketplaceModal({ open, onClose, onInstall }: Prop
                 <h4>No templates yet</h4>
                 <p>This category is perfect for custom charts. Use our AI or custom builder to create something unique!</p>
                 <div className="mp-actions">
-                  <button className="mp-action-secondary" onClick={() => window.open('/charts/custom', '_blank')}>
+                  <button className="mp-action-secondary" onClick={() => window.open('/tenant-owner/charts/custom', '_blank')}>
                     🎨 Custom Builder
                   </button>
-                  <button className="mp-action-primary" onClick={() => window.open('/charts/builder?mode=advanced', '_blank')}>
+                  <button className="mp-action-primary" onClick={() => window.open('/tenant-owner/charts/builder?mode=advanced', '_blank')}>
                     ✨ AI Chart Builder
                   </button>
                 </div>

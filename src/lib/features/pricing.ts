@@ -45,16 +45,15 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
   starter: {
     id: 'starter',
     name: 'Starter',
-    description: 'Perfect for small teams getting started with CRM',
-    monthlyPrice: 29,
-    yearlyPrice: 290, // 17% discount
-    yearlyDiscount: 17,
-    maxUsers: 3,
-    maxContacts: 1000,
-    maxDeals: 200,
-    storageGB: 5,
+    description: 'Perfect for small dealerships getting started',
+    monthlyPrice: 299,
+    yearlyPrice: 3588, // 299 * 12 * 0.9 = 10% discount
+    yearlyDiscount: 10,
+    maxUsers: 5,
+    maxContacts: 5000,
+    maxDeals: 1000,
+    storageGB: 25,
     includedFeatures: [
-      // Core features
       'contacts_management',
       'basic_leads',
       'basic_deals',
@@ -62,52 +61,44 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
       'basic_reporting',
       'file_storage',
       'email_notifications',
-      // Some basic add-ons
       'email_integration',
-      'calendar_sync'
-    ],
-    availableAddOns: [
-      'advanced_pipeline',
-      'quote_generation',
-      'email_campaigns',
-      'workflow_automation',
-      'data_export',
-      'team_collaboration',
-      'comment_system',
       'mobile_app'
     ],
+    availableAddOns: [
+      'api_access',
+      'custom_branding'
+    ],
     features: {
-      storage: 5,
-      users: 3,
-      contacts: 1000,
-      deals: 200,
-      apiCalls: 5000,
-      emailCampaigns: 1000,
-      workflowRuns: 500,
-      support: 'email'
+      storage: 25,
+      users: 5,
+      contacts: 5000,
+      deals: 1000,
+      apiCalls: 10000,
+      emailCampaigns: 5000,
+      workflowRuns: 2500,
+      support: 'email',
     },
     limits: {
-      customFields: 10,
-      workflows: 3,
+      customFields: 25,
+      workflows: 10,
       integrations: 5,
-      reports: 5
-    }
+      reports: 10,
+    },
   },
 
   professional: {
     id: 'professional',
     name: 'Professional',
-    description: 'Advanced features for growing sales teams',
-    monthlyPrice: 79,
-    yearlyPrice: 790, // 17% discount
-    yearlyDiscount: 17,
-    maxUsers: 10,
-    maxContacts: 10000,
-    maxDeals: 2000,
-    storageGB: 25,
+    description: 'Enhanced tools for growing dealerships',
+    monthlyPrice: 599,
+    yearlyPrice: 7188, // 599 * 12 * 0.9 = 10% discount  
+    yearlyDiscount: 10,
+    maxUsers: 25,
+    maxContacts: 25000,
+    maxDeals: 5000,
+    storageGB: 100,
     popular: true,
     includedFeatures: [
-      // All starter features
       'contacts_management',
       'basic_leads',
       'basic_deals',
@@ -117,7 +108,6 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
       'email_notifications',
       'email_integration',
       'calendar_sync',
-      // Professional additions
       'advanced_pipeline',
       'sales_forecasting',
       'quote_generation',
@@ -128,54 +118,31 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
       'advanced_reporting',
       'data_export',
       'team_collaboration',
-      'comment_system',
-      'document_sharing',
-      'activity_feeds',
-      'mobile_app',
-      'zapier_integration'
+      'mobile_app'
     ],
     availableAddOns: [
       'contract_management',
       'territory_management',
       'commission_tracking',
       'marketing_automation',
-      'landing_pages',
-      'sms_marketing',
-      'drip_campaigns',
-      'custom_triggers',
-      'api_webhooks',
-      'scheduled_actions',
-      'conditional_logic',
-      'bulk_operations',
-      'custom_dashboards',
-      'performance_metrics',
-      'conversion_tracking',
-      'social_platforms',
-      'accounting_software',
-      'marketing_tools',
-      'shared_workspaces',
-      'mention_notifications',
-      'real_time_updates',
-      'predictive_scoring',
-      'sentiment_analysis',
-      'voice_integration',
-      'offline_sync'
+      'api_access',
+      'custom_branding'
     ],
     features: {
-      storage: 25,
-      users: 10,
-      contacts: 10000,
-      deals: 2000,
-      apiCalls: 25000,
-      emailCampaigns: 10000,
-      workflowRuns: 5000,
+      storage: 100,
+      users: 25,
+      contacts: 25000,
+      deals: 5000,
+      apiCalls: 50000,
+      emailCampaigns: 25000,
+      workflowRuns: 12500,
       support: 'priority'
     },
     limits: {
-      customFields: 50,
-      workflows: 15,
-      integrations: 20,
-      reports: 25
+      customFields: 100,
+      workflows: 50,
+      integrations: 25,
+      reports: 50,
     }
   },
 
@@ -183,15 +150,15 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     id: 'business',
     name: 'Business',
     description: 'Complete solution for established businesses',
-    monthlyPrice: 149,
-    yearlyPrice: 1490, // 17% discount
-    yearlyDiscount: 17,
-    maxUsers: 50,
-    maxContacts: 50000,
-    maxDeals: 10000,
-    storageGB: 100,
+    monthlyPrice: 999,
+    yearlyPrice: 11988, // 999 * 12 * 0.9 = 10% discount
+    yearlyDiscount: 10,
+    maxUsers: 100,
+    maxContacts: 100000,
+    maxDeals: 25000,
+    storageGB: 500,
+    enterprise: true,
     includedFeatures: [
-      // All professional features
       'contacts_management',
       'basic_leads',
       'basic_deals',
@@ -211,83 +178,47 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
       'advanced_reporting',
       'data_export',
       'team_collaboration',
-      'comment_system',
-      'document_sharing',
-      'activity_feeds',
       'mobile_app',
-      'zapier_integration',
-      // Business additions
       'contract_management',
       'territory_management',
       'commission_tracking',
       'marketing_automation',
-      'landing_pages',
-      'sms_marketing',
-      'drip_campaigns',
-      'custom_triggers',
-      'api_webhooks',
-      'scheduled_actions',
-      'conditional_logic',
-      'bulk_operations',
-      'custom_dashboards',
-      'performance_metrics',
-      'conversion_tracking',
-      'roi_analysis',
-      'social_platforms',
-      'accounting_software',
-      'marketing_tools',
       'api_access',
-      'shared_workspaces',
-      'mention_notifications',
-      'real_time_updates',
-      'predictive_scoring',
-      'sentiment_analysis',
-      'intelligent_routing',
-      'voice_integration',
-      'offline_sync'
-    ],
-    availableAddOns: [
-      'predictive_analytics',
-      'custom_integrations',
-      'ai_insights',
-      'sso_authentication',
-      'advanced_security',
-      'audit_logging',
       'custom_branding'
     ],
+    availableAddOns: [],
     features: {
-      storage: 100,
-      users: 50,
-      contacts: 50000,
-      deals: 10000,
-      apiCalls: 100000,
-      emailCampaigns: 50000,
-      workflowRuns: 25000,
-      support: 'priority'
+      storage: 500,
+      users: 100,
+      contacts: 100000,
+      deals: 25000,
+      apiCalls: 250000,
+      emailCampaigns: 100000,
+      workflowRuns: 50000,
+      support: 'dedicated'
     },
     limits: {
-      customFields: 200,
-      workflows: 50,
+      customFields: 500,
+      workflows: 250,
       integrations: 100,
-      reports: 100
+      reports: 250,
     }
   },
 
   enterprise: {
     id: 'enterprise',
     name: 'Enterprise',
-    description: 'Custom solution for large organizations',
-    monthlyPrice: 399,
-    yearlyPrice: 3990, // 17% discount
-    yearlyDiscount: 17,
+    description: 'Complete solution for large dealership groups',
+    monthlyPrice: 999,
+    yearlyPrice: 11988, // 999 * 12 * 0.9 = 10% discount
+    yearlyDiscount: 10,
     maxUsers: -1, // unlimited
     maxContacts: -1, // unlimited
     maxDeals: -1, // unlimited
     storageGB: -1, // unlimited
     enterprise: true,
-    customPricing: true,
+    customPricing: false,
     includedFeatures: [
-      // All business features plus enterprise
       'contacts_management',
       'basic_leads',
       'basic_deals',
@@ -307,55 +238,15 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
       'advanced_reporting',
       'data_export',
       'team_collaboration',
-      'comment_system',
-      'document_sharing',
-      'activity_feeds',
       'mobile_app',
-      'zapier_integration',
       'contract_management',
       'territory_management',
       'commission_tracking',
       'marketing_automation',
-      'landing_pages',
-      'sms_marketing',
-      'drip_campaigns',
-      'custom_triggers',
-      'api_webhooks',
-      'scheduled_actions',
-      'conditional_logic',
-      'bulk_operations',
-      'custom_dashboards',
-      'performance_metrics',
-      'conversion_tracking',
-      'roi_analysis',
-      'predictive_analytics',
-      'social_platforms',
-      'accounting_software',
-      'marketing_tools',
-      'custom_integrations',
       'api_access',
-      'shared_workspaces',
-      'mention_notifications',
-      'real_time_updates',
-      'ai_insights',
-      'predictive_scoring',
-      'sentiment_analysis',
-      'intelligent_routing',
-      'voice_integration',
-      'offline_sync',
-      // Enterprise-only features
-      'sso_authentication',
-      'advanced_security',
-      'audit_logging',
-      'custom_branding',
-      'dedicated_support',
-      'priority_processing',
-      'data_residency',
-      'compliance_tools'
+      'custom_branding'
     ],
-    availableAddOns: [
-      'custom_development'
-    ],
+    availableAddOns: [],
     features: {
       storage: -1, // unlimited
       users: -1, // unlimited
@@ -370,7 +261,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
       customFields: -1, // unlimited
       workflows: -1, // unlimited
       integrations: -1, // unlimited
-      reports: -1 // unlimited
+      reports: -1, // unlimited
     }
   }
 };

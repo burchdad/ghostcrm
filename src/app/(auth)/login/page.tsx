@@ -10,24 +10,59 @@ export default function LoginPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
 
-  // Redirect if already authenticated based on role
+  // Redirect if already authenticated based on role and context
   useEffect(() => {
     if (user && !isLoading) {
-      // Redirect based on user role
-      switch (user.role) {
-        case 'owner':
-          router.push("/owner/dashboard");
-          break;
-        case 'admin':
-          router.push("/admin/dashboard");
-          break;
-        case 'manager':
-        case 'sales_rep':
-          router.push("/dashboard");
-          break;
-        default:
-          router.push("/dashboard");
+      // Check if we're on a tenant subdomain (for tenant owners vs software owners)
+      const hostname = window.location.hostname;
+      const isSubdomain = hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname.includes('.localhost');
+      
+      // Try to determine login intent from referring URL or cookie
+      const currentPath = window.location.pathname;
+      let redirectPath = "/dashboard"; // default
+      
+      // Check which login page brought us here to determine correct dashboard
+      if (document.referrer.includes('/login-owner') || currentPath.includes('login-owner')) {
+        redirectPath = "/tenant-owner/dashboard";
+      } else if (document.referrer.includes('/login-admin') || currentPath.includes('login-admin')) {
+        redirectPath = "/dashboard"; // Admin uses main dashboard for now
+      } else if (document.referrer.includes('/login-salesmanager') || currentPath.includes('login-salesmanager')) {
+        redirectPath = "/tenant-salesmanager/leads"; // Sales manager goes to leads
+      } else if (document.referrer.includes('/login-salesrep') || currentPath.includes('login-salesrep')) {
+        redirectPath = "/tenant-salesrep/leads"; // Sales rep goes to leads
+      } else {
+        // Fallback to role-based routing for backwards compatibility
+        switch (user.role) {
+          case 'owner':
+            if (isSubdomain) {
+              redirectPath = "/tenant-owner/dashboard";
+            } else {
+              redirectPath = "/owner/dashboard"; // Software owner
+            }
+            break;
+          case 'admin':
+            redirectPath = "/dashboard"; // Admin uses main dashboard for now
+            break;
+          case 'manager':
+            redirectPath = "/tenant-salesmanager/leads"; // Manager goes to leads
+            break;
+          case 'sales_rep':
+            redirectPath = "/tenant-salesrep/leads"; // Sales rep goes to leads
+            break;
+          default:
+            redirectPath = "/dashboard";
+        }
       }
+      
+      console.log('🔄 [LOGIN] Redirecting user to:', {
+        role: user.role,
+        redirectPath,
+        referrer: document.referrer,
+        currentPath,
+        isSubdomain
+      });
+      
+      router.push(redirectPath);
     }
   }, [user, isLoading, router]);
 

@@ -1,0 +1,387 @@
+/* 
+  ===========================================
+  🚀 QUICK ADD MODAL ENHANCEMENTS
+  ===========================================
+  Component: /components/modals/QuickAddModal.tsx
+  Purpose: Enhanced styling for the Quick Add modal with modern glass effects
+  Theme: Complementary to existing modal.css with additional enhancements
+*/
+
+/* Enhanced Card Hover Effects */
+.mp-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.mp-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    transparent);
+  transition: left 0.6s ease;
+}
+
+.mp-card:hover::after {
+  left: 100%;
+}
+
+/* Category-Specific Gradients */
+.mp-card[data-category="sales"] {
+  --category-gradient: linear-gradient(135deg, #059669, #10b981);
+}
+
+.mp-card[data-category="operations"] {
+  --category-gradient: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+.mp-card[data-category="general"] {
+  --category-gradient: linear-gradient(135deg, #7c3aed, #a855f7);
+}
+
+/* Enhanced Icon Container */
+.mp-card-icon {
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.mp-card:hover .mp-card-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.mp-card-icon::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: var(--category-gradient, linear-gradient(135deg, #3b82f6, #1d4ed8));
+  border-radius: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.mp-card:hover .mp-card-icon::before {
+  opacity: 0.3;
+}
+
+/* Enhanced Link Button */
+.mp-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: rgba(29, 78, 216, 0.1);
+  color: #1d4ed8;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid rgba(29, 78, 216, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.mp-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  transition: left 0.3s ease;
+  z-index: -1;
+}
+
+.mp-link:hover {
+  color: white;
+  border-color: transparent;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
+}
+
+.mp-link:hover::before {
+  left: 0;
+}
+
+/* Enhanced Hero Section */
+.mp-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.mp-hero::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, 
+    rgba(99, 102, 241, 0.1) 0%, 
+    transparent 70%);
+  animation: float-bg 8s ease-in-out infinite;
+  z-index: 0;
+}
+
+/* Role Information Section */
+.mp-role-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem 0;
+  padding: 0.5rem;
+}
+
+.mp-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, 
+    rgba(99, 102, 241, 0.1) 0%, 
+    rgba(139, 92, 246, 0.1) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 1rem;
+  color: #4f46e5;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.mp-role-badge::before {
+  content: '👤';
+  font-size: 0.875rem;
+}
+
+@keyframes float-bg {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(-10px, -10px) rotate(1deg); }
+  66% { transform: translate(10px, 5px) rotate(-1deg); }
+}
+
+/* Enhanced Grid Layout */
+.mp-grid {
+  position: relative;
+}
+
+.mp-grid::before {
+  content: '';
+  position: absolute;
+  top: -1rem;
+  left: -1rem;
+  right: -1rem;
+  bottom: -1rem;
+  background: radial-gradient(circle at center, 
+    rgba(59, 130, 246, 0.02) 0%, 
+    transparent 70%);
+  border-radius: 1rem;
+  z-index: -1;
+}
+
+/* Stagger Animation for Cards */
+.mp-card {
+  animation: fadeInUp 0.6s ease forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.mp-card:nth-child(1) { animation-delay: 0.1s; }
+.mp-card:nth-child(2) { animation-delay: 0.2s; }
+.mp-card:nth-child(3) { animation-delay: 0.3s; }
+.mp-card:nth-child(4) { animation-delay: 0.4s; }
+.mp-card:nth-child(5) { animation-delay: 0.5s; }
+.mp-card:nth-child(6) { animation-delay: 0.6s; }
+.mp-card:nth-child(7) { animation-delay: 0.7s; }
+.mp-card:nth-child(8) { animation-delay: 0.8s; }
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced Typography */
+.mp-card-title {
+  position: relative;
+  background: linear-gradient(135deg, #0f172a, #374151);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.mp-card-sub {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+}
+
+.mp-card-sub::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--category-gradient, linear-gradient(135deg, #3b82f6, #1d4ed8));
+  transition: width 0.3s ease;
+}
+
+.mp-card:hover .mp-card-sub::after {
+  width: 100%;
+}
+
+/* Enhanced Quick Tips Section */
+.mp-section-head {
+  position: relative;
+  padding: 1rem;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.8) 0%, 
+    rgba(248, 250, 252, 0.9) 100%);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  margin-top: 1rem;
+}
+
+.mp-section-head::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    rgba(99, 102, 241, 0.02) 0%, 
+    rgba(139, 92, 246, 0.02) 100%);
+  border-radius: 0.75rem;
+  z-index: -1;
+}
+
+.mp-quick-tip {
+  position: relative;
+  padding: 0.5rem 1rem;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 0.5rem;
+  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+  font-size: 0.8rem;
+  color: #4f46e5;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.mp-quick-tip::before {
+  content: '⌨️';
+  margin-right: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+  .mp-card {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  
+  .mp-grid::before {
+    display: none;
+  }
+  
+  .mp-hero::after {
+    animation: none;
+  }
+}
+
+/* Accessibility Enhancements */
+@media (prefers-reduced-motion: reduce) {
+  .mp-card,
+  .mp-emoji,
+  .mp-hero::after {
+    animation: none;
+  }
+  
+  .mp-card {
+    opacity: 1;
+    transform: none;
+  }
+  
+  .mp-card:hover .mp-card-icon {
+    transform: none;
+  }
+  
+  .mp-link:hover {
+    transform: none;
+  }
+}
+
+/* Dark Mode Enhancements */
+@media (prefers-color-scheme: dark) {
+  .mp-card {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: rgba(71, 85, 105, 0.3);
+  }
+  
+  .mp-card:hover {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(99, 102, 241, 0.4);
+  }
+  
+  .mp-card-title {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .mp-card-desc {
+    color: #94a3b8;
+  }
+  
+  .mp-section-head {
+    background: linear-gradient(135deg, 
+      rgba(30, 41, 59, 0.8) 0%, 
+      rgba(51, 65, 85, 0.9) 100%);
+    border-color: rgba(71, 85, 105, 0.3);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .mp-card {
+    border: 2px solid #000;
+    background: #fff;
+  }
+  
+  .mp-card:hover {
+    background: #f0f0f0;
+    border-color: #0066cc;
+  }
+  
+  .mp-card-title {
+    background: none;
+    -webkit-text-fill-color: initial;
+    color: #000;
+  }
+  
+  .mp-card-icon {
+    background: #0066cc;
+    color: #fff;
+  }
+  
+  .mp-link {
+    background: #0066cc;
+    color: #fff;
+    border-color: #0066cc;
+  }
+}

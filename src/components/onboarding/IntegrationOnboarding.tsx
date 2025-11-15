@@ -164,22 +164,34 @@ export function IntegrationOnboarding({
   const renderDatabaseStep = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Database Integration</h3>
-        <p className="text-sm text-gray-600 mb-6">
-          Choose how you want to store and manage your CRM data. Supabase is included in all plans.
+        <h3 className="text-lg font-medium text-white mb-2">Database Integration</h3>
+        <p className="text-sm text-white/80 mb-6">
+          Choose how you want to store and manage your CRM data. All database options are included in your plan.
         </p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {INTEGRATION_PROVIDERS.databases.map((provider) => {
-          const isIncluded = provider.value === INCLUDED_INTEGRATIONS[actualIntegrationTier].database
+          const isRecommended = provider.value === 'supabase'
           const selected = preferences.database?.type === provider.value
           return (
             <div
               key={provider.value}
-              className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                selected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+              className={`rounded-xl p-6 cursor-pointer transition-all duration-300 hover:transform hover:scale-105 ${
+                selected ? 'ring-2 ring-white/40' : ''
               }`}
+              style={{
+                background: selected 
+                  ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.2))'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+                backdropFilter: 'blur(20px)',
+                border: selected 
+                  ? '2px solid rgba(139, 92, 246, 0.5)' 
+                  : '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: selected 
+                  ? '0 8px 25px rgba(139, 92, 246, 0.3)' 
+                  : '0 4px 15px rgba(0, 0, 0, 0.1)'
+              }}
               onClick={() =>
                 updatePreference('database', {
                   type: provider.value as any,
@@ -190,20 +202,30 @@ export function IntegrationOnboarding({
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-medium text-gray-900">{provider.label}</h4>
-                    {isIncluded && (
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                        Included
-                      </span>
-                    )}
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
+                      background: isRecommended 
+                        ? 'linear-gradient(135deg, #10b981, #059669)'
+                        : 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+                    }}>
+                      <CircleStackIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-white">{provider.label}</h4>
+                      {isRecommended && (
+                        <span className="bg-green-500/20 text-green-300 text-xs px-2 py-1 rounded-full border border-green-500/30">
+                          ⭐ Recommended
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">{provider.description}</p>
+                  <p className="text-sm text-white/70 ml-13">{provider.description}</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-medium text-gray-900">Setup: {provider.setup}</div>
-                  <div className="text-sm text-gray-600">
-                    {isIncluded ? 'Included' : `+$${provider.price}/mo connector`}
+                  <div className="text-sm font-medium text-white">Setup: {provider.setup}</div>
+                  <div className="text-sm text-green-300 font-medium">
+                    ✓ Included
                   </div>
                 </div>
               </div>
@@ -216,20 +238,26 @@ export function IntegrationOnboarding({
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="bg-amber-50 border border-amber-200 rounded-lg p-4"
+          className="rounded-xl p-6"
+          style={{
+            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1))',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            boxShadow: '0 4px 15px rgba(245, 158, 11, 0.2)'
+          }}
         >
-          <h4 className="font-medium text-amber-800 mb-2">Additional Configuration Required</h4>
-          <p className="text-sm text-amber-700 mb-3">
+          <h4 className="font-medium text-amber-200 mb-2">Additional Configuration Required</h4>
+          <p className="text-sm text-amber-100 mb-3">
             Custom database integration requires additional setup time and may involve data migration.
           </p>
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-amber-800 mb-1">
+              <label className="block text-sm font-medium text-amber-200 mb-1">
                 Estimated Existing Records
               </label>
               <input
                 type="number"
-                className="w-full border border-amber-300 rounded px-3 py-2 text-sm"
+                className="w-full border border-amber-300/30 rounded-xl px-3 py-2 text-sm bg-white/10 text-white placeholder-white/50"
                 placeholder="0"
                 onChange={(e) =>
                   updatePreference('database', {
@@ -250,8 +278,9 @@ export function IntegrationOnboarding({
                     migrationRequired: e.target.checked,
                   })
                 }
+                className="w-4 h-4 text-amber-600 border-amber-300 rounded focus:ring-amber-500"
               />
-              <label htmlFor="migration-required" className="text-sm text-amber-800">
+              <label htmlFor="migration-required" className="text-sm text-amber-100">
                 Data migration from existing system required
               </label>
             </div>
@@ -1187,33 +1216,64 @@ export function IntegrationOnboarding({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen relative" style={{
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      overflow: 'hidden'
+    }}>
+      {/* Background Effects */}
+      <div className="absolute inset-0">
+        <div className="absolute -top-10 -left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 -right-10 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-10 left-1/2 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Integration Setup</h1>
-          <p className="text-gray-600">Configure your preferred systems and integrations for Ghost Auto CRM</p>
+          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center" style={{
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1))',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 8px 20px rgba(168, 85, 247, 0.3)'
+          }}>
+            <CogIcon className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">Integration Setup</h1>
+          <p className="text-white/80">Configure your preferred systems and integrations for Ghost Auto CRM</p>
         </div>
 
         {/* Included Features */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-          <h3 className="text-lg font-medium text-blue-900 mb-4">
-            Included in Your {actualIntegrationTier.charAt(0).toUpperCase() + actualIntegrationTier.slice(1)} Plan
+        <div className="mb-8 rounded-3xl p-6" style={{
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05))',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)'
+        }}>
+          <h3 className="text-lg font-medium text-white mb-4">
+            ✨ Included in Your {actualIntegrationTier.charAt(0).toUpperCase() + actualIntegrationTier.slice(1)} Plan
           </h3>
           <div className="grid md:grid-cols-2 gap-4">
             {Object.entries(getIncludedFeatures(actualIntegrationTier)).map(([category, feature]) => (
-              <div key={category} className="flex items-center gap-2">
-                <CheckIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                <span className="text-sm text-blue-800">
+              <div key={category} className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{
+                  background: 'linear-gradient(135deg, #10b981, #059669)'
+                }}>
+                  <CheckIcon className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-sm text-white/90">
                   <span className="font-medium capitalize">{category}:</span> {feature}
                 </span>
               </div>
             ))}
           </div>
-          <p className="text-sm text-blue-700 mt-3">
-            💡 <strong>Pro tip:</strong> You only pay connector fees for upgrades beyond what's included. You still pay
-            your existing providers directly (e.g., your Twilio, Office 365 bills stay the same).
-          </p>
+          <div className="mt-4 p-3 rounded-xl" style={{
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1))',
+            border: '1px solid rgba(16, 185, 129, 0.3)'
+          }}>
+            <p className="text-sm text-white/90">
+              💡 <strong>Everything's Included:</strong> No additional fees for standard integrations. Your existing provider bills stay the same (e.g., Twilio, Office 365).
+            </p>
+          </div>
         </div>
 
         {/* Progress */}
@@ -1227,30 +1287,57 @@ export function IntegrationOnboarding({
               return (
                 <div key={step.id} className="flex items-center">
                   <div
-                    className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
-                      isActive
-                        ? 'border-blue-500 bg-blue-500 text-white'
-                        : isCompleted
-                        ? 'border-green-500 bg-green-500 text-white'
-                        : 'border-gray-300 bg-white text-gray-400'
+                    className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300 ${
+                      isActive || isCompleted ? 'transform scale-110' : ''
                     }`}
+                    style={{
+                      background: isActive
+                        ? 'linear-gradient(135deg, #8b5cf6, #ec4899)'
+                        : isCompleted
+                        ? 'linear-gradient(135deg, #10b981, #059669)'
+                        : 'rgba(255, 255, 255, 0.15)',
+                      backdropFilter: 'blur(20px)',
+                      border: `2px solid ${isActive || isCompleted ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 0.2)'}`,
+                      boxShadow: isActive 
+                        ? '0 8px 25px rgba(139, 92, 246, 0.4)' 
+                        : isCompleted 
+                        ? '0 8px 25px rgba(16, 185, 129, 0.4)'
+                        : '0 4px 15px rgba(0, 0, 0, 0.1)'
+                    }}
                   >
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-6 h-6 text-white" />
                   </div>
                   {index < steps.length - 1 && (
-                    <div className={`w-16 h-0.5 ml-2 transition-all ${isCompleted ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <div 
+                      className="w-16 h-1 ml-4 rounded-full transition-all duration-500"
+                      style={{
+                        background: isCompleted 
+                          ? 'linear-gradient(90deg, #10b981, #059669)' 
+                          : 'rgba(255, 255, 255, 0.2)'
+                      }}
+                    />
                   )}
                 </div>
               )
             })}
           </div>
-          <div className="mt-4 text-sm text-gray-600 text-center">
-            Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}
+          <div className="mt-6 text-center">
+            <div className="text-sm text-white/70 mb-1">
+              Step {currentStep + 1} of {steps.length}
+            </div>
+            <div className="text-lg font-semibold text-white">
+              {steps[currentStep].title}
+            </div>
           </div>
         </div>
 
         {/* Step */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
+        <div className="rounded-3xl p-8 mb-8" style={{
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05))',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)'
+        }}>
           <AnimatePresence mode="wait">
             <motion.div key={currentStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
               {renderCurrentStep()}
@@ -1263,14 +1350,44 @@ export function IntegrationOnboarding({
           <div className="flex gap-3">
             <button
               onClick={onSkip}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              className="px-6 py-3 text-sm font-medium rounded-xl transition-all duration-300 hover:transform hover:scale-105"
+              style={{
+                color: 'rgba(255, 255, 255, 0.8)',
+                background: 'rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 1)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)'
+              }}
             >
               Skip Integration Setup
             </button>
             {currentStep > 0 && (
               <button
                 onClick={prevStep}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-xl transition-all duration-300 hover:transform hover:scale-105"
+                style={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 1)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)'
+                }}
               >
                 <ChevronLeftIcon className="w-4 h-4" />
                 Previous
@@ -1279,15 +1396,21 @@ export function IntegrationOnboarding({
           </div>
 
           <div className="flex items-center gap-3">
-            {estimatedCost > 0 && (
-              <div className="text-sm text-gray-600">
-                Estimated cost: <span className="font-medium text-blue-600">+${estimatedCost}/mo</span>
-              </div>
-            )}
             {currentStep < steps.length - 1 ? (
               <button
                 onClick={nextStep}
-                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-6 py-3 text-sm font-medium text-white rounded-xl transition-all duration-300 hover:transform hover:scale-105"
+                style={{
+                  background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                  boxShadow: '0 6px 20px rgba(139, 92, 246, 0.4)',
+                  border: 'none'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(139, 92, 246, 0.6)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)'
+                }}
               >
                 Next
                 <ChevronRightIcon className="w-4 h-4" />
@@ -1295,7 +1418,18 @@ export function IntegrationOnboarding({
             ) : (
               <button
                 onClick={handleComplete}
-                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 transition-colors"
+                className="flex items-center gap-2 px-6 py-3 text-sm font-medium text-white rounded-xl transition-all duration-300 hover:transform hover:scale-105"
+                style={{
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  boxShadow: '0 6px 20px rgba(16, 185, 129, 0.4)',
+                  border: 'none'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(16, 185, 129, 0.6)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.4)'
+                }}
               >
                 <CheckIcon className="w-4 h-4" />
                 Complete Setup

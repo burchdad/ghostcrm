@@ -20,19 +20,28 @@ export async function GET(req: NextRequest) {
 
   try {
     console.log("🔍 [ONBOARDING_STATUS] Checking user onboarding status");
+    console.log("🍪 [ONBOARDING_STATUS] Request cookies:", req.cookies.getAll().map(c => c.name));
 
-    // Authenticate
-    const {
-      data: { user },
-      error: authError,
-    } = await s.auth.getUser();
-
-    if (authError || !user) {
-      console.error("❌ [ONBOARDING_STATUS] Authentication failed:", authError?.message);
+    // Get JWT token from cookies
+    const jwtToken = req.cookies.get('ghostcrm_jwt')?.value;
+    
+    if (!jwtToken) {
+      console.error("❌ [ONBOARDING_STATUS] No JWT token found");
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
-    console.log("🔍 [ONBOARDING_STATUS] Using authenticated user:", user.email);
+    // Decode JWT to get user info
+    let jwtPayload: any;
+    try {
+      const base64Payload = jwtToken.split('.')[1];
+      const decodedPayload = Buffer.from(base64Payload, 'base64').toString('utf-8');
+      jwtPayload = JSON.parse(decodedPayload);
+    } catch (jwtError) {
+      console.error("❌ [ONBOARDING_STATUS] Invalid JWT token:", jwtError);
+      return NextResponse.json({ error: "Invalid authentication token" }, { status: 401 });
+    }
+
+    console.log("🔍 [ONBOARDING_STATUS] Using authenticated user:", jwtPayload.email);
 
     // 1) Try: organization where the user is the owner
     let organizationData: OrgRow | null = null;
@@ -42,7 +51,7 @@ export async function GET(req: NextRequest) {
     const { data: ownerOrg, error: ownerOrgError } = await s
       .from("organizations")
       .select("id, name, subdomain, onboarding_completed, created_at, status")
-      .eq("owner_id", user.id)
+      .eq("owner_id", jwtPayload.userId)
       .single<OrgRow>();
 
     if (ownerOrgError && ownerOrgError.code !== "PGRST116") {
@@ -65,7 +74,7 @@ export async function GET(req: NextRequest) {
       const { data: membership, error: membershipError } = await s
         .from("organization_memberships")
         .select("organization_id, status")
-        .eq("user_id", user.id)
+        .eq("user_id", jwtPayload.userId)
         .eq("status", "active")
         .limit(1)
         .maybeSingle();

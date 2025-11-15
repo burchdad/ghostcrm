@@ -57,35 +57,74 @@ export async function POST(req: Request) {
     );
   }
 
-  const orgId = process.env.DEFAULT_ORG_ID!; // TEMP until Supabase Auth
+  // Get tenant context from request headers (subdomain)
+  const hostname = req.headers.get('host') || '';
+  const subdomain = hostname.split('.')[0];
+  
+  console.log('🏢 [DB-LOGIN] Hostname analysis:', {
+    hostname,
+    subdomain,
+    isSubdomain: subdomain && subdomain !== 'localhost' && subdomain !== hostname,
+    hostnameIncludesLocalhost: hostname.includes('localhost')
+  });
+  
+  // Determine tenant/organization ID
+  let tenantId = process.env.DEFAULT_ORG_ID || 'default-org'; // Default fallback
+  let organizationId = process.env.DEFAULT_ORG_ID || 'default-org';
+  
+  // If we have a subdomain (not localhost), use it as tenant context
+  // For burch-enterprises.localhost:3000, subdomain = 'burch-enterprises'
+  if (subdomain && subdomain !== 'localhost' && subdomain !== hostname && hostname.includes('localhost')) {
+    tenantId = subdomain;
+    organizationId = subdomain;
+    console.log('� [DB-LOGIN] Using subdomain as tenant context:', {
+      hostname,
+      subdomain,
+      tenantId,
+      organizationId
+    });
+  } else {
+    console.log('🚨 [DB-LOGIN] No subdomain detected, using default org:', {
+      hostname,
+      subdomain,
+      tenantId,
+      organizationId
+    });
+  }
+
   const token = signJwtToken(
     { 
       userId: String(user.id), 
       email: user.email, 
       role: user.role, 
-      organizationId: orgId,
-      tenantId: orgId
+      organizationId: organizationId,
+      tenantId: tenantId
     },
     rememberMe ? "30d" : "2h"
   );
-  const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 2 * 60 * 60; // 30 days or 2 hours in seconds
   const isProd = process.env.NODE_ENV === "production";
-  const res = NextResponse.json({ user: { id: user.id, email: user.email, role: user.role, org_id: orgId } });
+  const res = NextResponse.json({ user: { id: user.id, email: user.email, role: user.role, org_id: organizationId } });
   
+  // Build cookie options array
   const cookieOptions = [
     `ghostcrm_jwt=${token}`,
     "HttpOnly",
     isProd ? "Secure" : "", // Only secure in production
     "Path=/",
-    `Max-Age=${maxAge}`,
     "SameSite=Lax" // Changed from Strict to Lax for better redirect handling
-  ].filter(Boolean).join("; ");
+  ].filter(Boolean);
   
-  res.headers.set("Set-Cookie", cookieOptions);
+  // Only add Max-Age if Remember Me is checked
+  // Without Max-Age, cookie becomes a session cookie (expires on browser close)
+  if (rememberMe) {
+    cookieOptions.push(`Max-Age=${30 * 24 * 60 * 60}`); // 30 days
+  }
+  
+  res.headers.set("Set-Cookie", cookieOptions.join("; "));
   // audit log
   const device = req.headers.get("user-agent") || "";
   await supabaseAdmin.from("audit_events").insert({
-    org_id: orgId,
+    org_id: organizationId,
     actor_id: user.id,
     entity: "user",
     entity_id: user.id,

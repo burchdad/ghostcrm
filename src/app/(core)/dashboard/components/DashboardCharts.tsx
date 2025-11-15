@@ -10,6 +10,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
   ChartOptions,
   ChartData,
 } from 'chart.js'
@@ -34,7 +35,8 @@ Chart.register(
   LinearScale,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 )
 
 // -------------------- Types --------------------

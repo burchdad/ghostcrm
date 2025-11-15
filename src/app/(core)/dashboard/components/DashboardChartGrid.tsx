@@ -4,9 +4,37 @@ import { useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 import { ArrowsPointingOutIcon } from '@heroicons/react/24/outline';
-import { ChartData, ChartOptions } from 'chart.js';
+import { 
+  Chart,
+  ChartData, 
+  ChartOptions,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
 import DashboardChartCard from "./DashboardChartCard";
 import '../../../../styles/dashboard-charts.css';
+
+// Register Chart.js components including Filler for fill option
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 // Simple chart data interface for basic usage
 export interface SimpleChartData {

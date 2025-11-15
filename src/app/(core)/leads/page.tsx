@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
 import { createClient } from '@supabase/supabase-js';
 import { Card } from "@/components/ui/card";
@@ -16,8 +17,27 @@ import EmptyStateComponent from "@/components/feedback/EmptyStateComponent";
 import { useI18n } from "@/components/utils/I18nProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Modal } from "@/components/modals/Modal";
+import NewLeadModal from "@/components/modals/NewLeadModal";
+import { useAuth } from "@/context/AuthContext";
 
 const emailTypes = ["Marketing", "Follow-up", "Appointment"];
+
+// Helper function to get tenant-aware route based on user role
+function getTenantRoute(user: any, basePath: string): string {
+  if (!user || !user.role) return basePath;
+  
+  // Map user roles to their tenant directories
+  const roleMapping: Record<string, string> = {
+    'owner': 'tenant-owner',
+    'admin': 'tenant-owner', // Tenant admin has same access as owner except billing/creation
+    'manager': 'tenant-salesmanager',
+    'sales_rep': 'tenant-salesrep',
+    'user': 'tenant-salesrep' // Default users to sales rep level
+  };
+  
+  const tenantDir = roleMapping[user.role] || 'tenant-salesrep';
+  return `/${tenantDir}${basePath}`;
+}
 
 function getDefaultEmailMessage(type: string, lead: any) {
   switch (type) {
@@ -35,6 +55,8 @@ function getDefaultEmailMessage(type: string, lead: any) {
 export default function Leads() {
   const { toast } = useToast();
   const { t } = useI18n();
+  const router = useRouter();
+  const { user } = useAuth();
   
   useRibbonPage({
     context: "leads",
@@ -59,6 +81,7 @@ export default function Leads() {
   const [emailMessage, setEmailMessage] = useState("");
   const [emailSending, setEmailSending] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [showNewLeadModal, setShowNewLeadModal] = useState(false);
   const emailMessageRef = useRef<HTMLTextAreaElement>(null);
 
   async function handleAction(lead: any, action: "call" | "message" | "email") {
@@ -433,44 +456,50 @@ export default function Leads() {
   };
 
   useEffect(() => {
-    const loadLeads = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const res = await fetch("/api/leads");
-        
-        if (!res.ok) {
-          throw new Error(`Failed to fetch leads: ${res.status} ${res.statusText}`);
-        }
-        
-        const data = await res.json();
-        
-        if (data.records) {
-          setLeads(data.records);
-          // No need to show success notification for basic page load
-        } else {
-          throw new Error(data.error || "No data received");
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Unknown error occurred";
-        setError(errorMessage);
-        toast({
-          title: "Failed to Load Leads",
-          description: errorMessage,
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadLeads();
   }, []);
 
+  const loadLeads = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('🔍 [FRONTEND] Loading leads...');
+      const res = await fetch("/api/leads");
+      console.log('📊 [FRONTEND] Response status:', res.status, res.statusText);
+      
+      if (!res.ok) {
+        throw new Error(`Failed to fetch leads: ${res.status} ${res.statusText}`);
+      }
+      
+      const data = await res.json();
+      console.log('📦 [FRONTEND] API response:', data);
+      
+      if (data.records) {
+        console.log('✅ [FRONTEND] Setting leads with', data.records.length, 'records');
+        console.log('📋 [FRONTEND] Sample lead:', data.records[0]);
+        setLeads(data.records);
+        // No need to show success notification for basic page load
+      } else {
+        console.warn('⚠️ [FRONTEND] No data.records in response');
+        throw new Error(data.error || "No data received");
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error occurred";
+      setError(errorMessage);
+      toast({
+        title: "Failed to Load Leads",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredLeads = leads.filter(lead => {
-    // Only show opted-in leads in the main table
-    if (lead.opted_out) return false;
+    // Only show opted-in leads in the main table (if opted_out field exists)
+    if (lead.opted_out === true) return false;
     
     if (!filter) return true;
     const searchTerm = filter.toLowerCase();
@@ -481,6 +510,16 @@ export default function Leads() {
       lead["Company"]?.toLowerCase().includes(searchTerm)
     );
   });
+
+  console.log('🔍 [FRONTEND] Debug filter chain:');
+  console.log('  - Total leads in state:', leads.length);
+  console.log('  - After filtering (no opted_out):', filteredLeads.length);
+  console.log('  - Current filter:', filter || 'none');
+  
+  if (leads.length > 0) {
+    console.log('📋 [FRONTEND] Sample lead from state:', leads[0]);
+    console.log('  - opted_out value:', leads[0].opted_out);
+  }
 
   const sortedLeads = [...filteredLeads].sort((a, b) => {
     const aVal = a[sortKey] || "";
@@ -506,7 +545,7 @@ export default function Leads() {
               <span>{bulkMode ? t('general.exit_bulk_mode', 'common') : t('general.bulk_operations', 'common')}</span>
             </Button>
             <Button 
-              onClick={() => window.location.href = "/leads/create"}
+              onClick={() => setShowNewLeadModal(true)}
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
@@ -830,6 +869,16 @@ export default function Leads() {
           </div>
         </div>
       </Modal>
+
+      {/* New Lead Modal */}
+      <NewLeadModal
+        isOpen={showNewLeadModal}
+        onClose={() => setShowNewLeadModal(false)}
+        onLeadCreated={async () => {
+          setShowNewLeadModal(false);
+          await loadLeads(); // Refresh the leads list
+        }}
+      />
 
       {/* Opted-Out Leads Section */}
       <OptOutTable optedOutLeads={leads.filter(lead => lead.opted_out)} />

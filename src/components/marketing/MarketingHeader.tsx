@@ -29,7 +29,7 @@ export default function MarketingHeader() {
         right: 0,
         zIndex: 1000,
         background: isScrolled 
-          ? 'rgba(255, 255, 255, 0.95)' 
+          ? 'rgba(255, 255, 255, 0.85)' 
           : 'rgba(255, 255, 255, 0.1)',
         backdropFilter: 'blur(20px)',
         borderBottom: isScrolled 
@@ -381,47 +381,219 @@ export default function MarketingHeader() {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="lg:hidden" style={{
-            background: 'rgba(255, 255, 255, 0.95)',
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95))',
             backdropFilter: 'blur(20px)',
             borderTop: '1px solid rgba(139, 92, 246, 0.2)',
-            padding: '1rem'
+            borderRadius: '0 0 1rem 1rem',
+            padding: '1.5rem',
+            marginTop: '1px',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+            animation: 'slideDown 0.3s ease-out'
           }}>
-            <div className="flex flex-col space-y-4">
+            <div style={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem'
+            }}>
               <Link 
                 href="/" 
-                className="text-gray-700 hover:text-blue-600 transition-colors"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.875rem 1rem',
+                  borderRadius: '0.75rem',
+                  color: '#374151',
+                  textDecoration: 'none',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease',
+                  background: 'rgba(59, 130, 246, 0.05)',
+                  border: '1px solid rgba(59, 130, 246, 0.1)'
+                }}
                 onClick={() => setIsMenuOpen(false)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'
+                  e.currentTarget.style.transform = 'translateX(4px)'
+                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)'
+                  e.currentTarget.style.transform = 'translateX(0)'
+                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.1)'
+                }}
               >
+                <div style={{
+                  width: '2rem',
+                  height: '2rem',
+                  background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                  borderRadius: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <span style={{ color: 'white', fontSize: '0.875rem', fontWeight: '700' }}>🏠</span>
+                </div>
                 Home
               </Link>
+              
               <Link 
                 href="/marketing/features" 
-                className="text-gray-700 hover:text-blue-600 transition-colors"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.875rem 1rem',
+                  borderRadius: '0.75rem',
+                  color: '#374151',
+                  textDecoration: 'none',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease',
+                  background: 'rgba(139, 92, 246, 0.05)',
+                  border: '1px solid rgba(139, 92, 246, 0.1)'
+                }}
                 onClick={() => setIsMenuOpen(false)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)'
+                  e.currentTarget.style.transform = 'translateX(4px)'
+                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.2)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(139, 92, 246, 0.05)'
+                  e.currentTarget.style.transform = 'translateX(0)'
+                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.1)'
+                }}
               >
+                <div style={{
+                  width: '2rem',
+                  height: '2rem',
+                  background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+                  borderRadius: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <span style={{ color: 'white', fontSize: '0.875rem', fontWeight: '700' }}>⭐</span>
+                </div>
                 Features
               </Link>
+              
               <Link 
                 href="/marketing/pricing" 
-                className="text-gray-700 hover:text-blue-600 transition-colors"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.875rem 1rem',
+                  borderRadius: '0.75rem',
+                  color: '#374151',
+                  textDecoration: 'none',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease',
+                  background: 'rgba(236, 72, 153, 0.05)',
+                  border: '1px solid rgba(236, 72, 153, 0.1)'
+                }}
                 onClick={() => setIsMenuOpen(false)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(236, 72, 153, 0.1)'
+                  e.currentTarget.style.transform = 'translateX(4px)'
+                  e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.2)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(236, 72, 153, 0.05)'
+                  e.currentTarget.style.transform = 'translateX(0)'
+                  e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.1)'
+                }}
               >
+                <div style={{
+                  width: '2rem',
+                  height: '2rem',
+                  background: 'linear-gradient(135deg, #ec4899, #be185d)',
+                  borderRadius: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <span style={{ color: 'white', fontSize: '0.875rem', fontWeight: '700' }}>💰</span>
+                </div>
                 Pricing
               </Link>
+              
               <button
                 onClick={() => {
                   setShowContactSales(true);
                   setIsMenuOpen(false);
                 }}
-                className="text-left text-gray-700 hover:text-blue-600 transition-colors"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.875rem 1rem',
+                  borderRadius: '0.75rem',
+                  color: '#374151',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease',
+                  background: 'rgba(34, 197, 94, 0.05)',
+                  border: '1px solid rgba(34, 197, 94, 0.1)',
+                  width: '100%',
+                  textAlign: 'left'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(34, 197, 94, 0.1)'
+                  e.currentTarget.style.transform = 'translateX(4px)'
+                  e.currentTarget.style.borderColor = 'rgba(34, 197, 94, 0.2)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(34, 197, 94, 0.05)'
+                  e.currentTarget.style.transform = 'translateX(0)'
+                  e.currentTarget.style.borderColor = 'rgba(34, 197, 94, 0.1)'
+                }}
               >
+                <div style={{
+                  width: '2rem',
+                  height: '2rem',
+                  background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                  borderRadius: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <span style={{ color: 'white', fontSize: '0.875rem', fontWeight: '700' }}>📞</span>
+                </div>
                 Contact Sales
               </button>
-              <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
+              
+              <div style={{
+                padding: '1rem 0',
+                borderTop: '1px solid rgba(139, 92, 246, 0.1)',
+                marginTop: '0.5rem'
+              }}>
                 <Link
                   href="/login"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center"
+                  style={{
+                    display: 'block',
+                    background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                    color: 'white',
+                    padding: '0.875rem 1.5rem',
+                    borderRadius: '0.75rem',
+                    fontWeight: '700',
+                    textAlign: 'center',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)'
+                  }}
                   onClick={() => setIsMenuOpen(false)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(139, 92, 246, 0.4)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)'
+                  }}
                 >
                   Client Login
                 </Link>

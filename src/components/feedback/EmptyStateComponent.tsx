@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import { useAuth } from '@/context/AuthContext'
 import { 
   Users, 
   TrendingUp, 
@@ -29,6 +30,22 @@ interface EmptyStateProps {
   className?: string
 }
 
+// Helper function to get tenant-aware route based on user role
+function getTenantRoute(user: any, basePath: string): string {
+  if (!user || !user.role) return basePath;
+  
+  const roleMapping: Record<string, string> = {
+    'owner': 'tenant-owner',
+    'admin': 'tenant-owner', // Admin can access owner routes
+    'manager': 'tenant-salesmanager',
+    'sales_rep': 'tenant-salesrep',
+    'user': 'tenant-salesrep' // Default users to sales rep level
+  };
+  
+  const tenantPrefix = roleMapping[user.role] || 'tenant-salesrep';
+  return `/${tenantPrefix}${basePath}`;
+}
+
 const EmptyStateConfig = {
   dashboard: {
     icon: BarChart3,
@@ -43,9 +60,9 @@ const EmptyStateConfig = {
   leads: {
     icon: Users,
     title: "No leads yet",
-    description: "Start building your customer base by adding your first lead. Import from a file or add manually.",
-    actionLabel: "Add Lead",
-    actionHref: "/leads",
+    description: "Get started by adding your first lead using the 'Add Lead' button above. You can add leads individually or import them in bulk.",
+    actionLabel: null, // Removed button - use header button instead
+    actionHref: null,
     gradient: "from-blue-600 to-cyan-600",
     bgColor: "bg-blue-50",
     iconColor: "text-blue-600"
@@ -115,11 +132,24 @@ export default function EmptyStateComponent({
 }: EmptyStateProps) {
   const config = EmptyStateConfig[type]
   const Icon = config.icon
+  const { user } = useAuth()
 
   const finalTitle = title || config.title
   const finalDescription = description || config.description
   const finalActionLabel = actionLabel || config.actionLabel
-  const finalActionHref = actionHref || config.actionHref
+  
+  // Make actionHref tenant-aware if not explicitly provided
+  let finalActionHref = actionHref || config.actionHref
+  if (!actionHref && user && config.actionHref) {
+    // Only make specific paths tenant-aware
+    if (config.actionHref === "/leads") {
+      finalActionHref = getTenantRoute(user, "/new-lead")
+    } else if (config.actionHref === "/deals/new") {
+      finalActionHref = getTenantRoute(user, "/new-deal")
+    } else {
+      finalActionHref = config.actionHref
+    }
+  }
 
   return (
     <div className={`flex flex-col items-center justify-center py-16 px-6 text-center ${className}`}>
@@ -197,20 +227,8 @@ export default function EmptyStateComponent({
 
             {type === 'leads' && (
               <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                <Link
-                  href="/leads/import"
-                  className="inline-flex items-center gap-2 px-4 py-2 text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <FileText className="w-4 h-4" />
-                  Import Leads
-                </Link>
-                <Link
-                  href="/settings/integrations"
-                  className="inline-flex items-center gap-2 px-4 py-2 text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <Zap className="w-4 h-4" />
-                  Connect Integrations
-                </Link>
+                {/* Removed Import Leads and Connect Integrations buttons - these are now in the modal */}
+                <p className="text-sm text-gray-500">Use the "Add Lead" button above to create leads or import them in bulk.</p>
               </div>
             )}
           </div>
