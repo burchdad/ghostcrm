@@ -48,8 +48,6 @@
   🔧 UTILITY SYSTEM
   ===========================================
 */
-@import "./utilities/layout.css";
-@import "./utilities/spacing.css";
 @import "./utilities/utilities.css";
 
 /* 
