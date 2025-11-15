@@ -4,8 +4,17 @@ const nextConfig = {
     // Exclude packages that use Node.js APIs from Edge Runtime  
     serverComponentsExternalPackages: ['@supabase/realtime-js']
   },
-  // Optimize builds for Vercel deployment
-  swcMinify: true,
+  // Disable problematic CSS optimization for now
+  webpack: (config, { dev, isServer }) => {
+    if (!dev && !isServer) {
+      // Disable CSS optimization that's causing parser errors
+      config.optimization = {
+        ...config.optimization,
+        minimize: false,
+      };
+    }
+    return config;
+  },
   // Handle route group static exports properly
   trailingSlash: false,
   // Configure image domains for production
