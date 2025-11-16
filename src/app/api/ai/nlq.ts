@@ -3,10 +3,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 
-// Initialize OpenAI only if API key is available
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-}) : null;
+});
 
 
 // Define return type for AI NLQ parsing

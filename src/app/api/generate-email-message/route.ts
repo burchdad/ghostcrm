@@ -2,20 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import jwt from 'jsonwebtoken';
 
-// Initialize OpenAI only if API key is available
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-}) : null;
+});
 
 export async function POST(req: NextRequest) {
   try {
-    // Check if OpenAI is available
-    if (!openai) {
-      return NextResponse.json({ 
-        error: 'OpenAI service is not configured. Please set OPENAI_API_KEY environment variable.' 
-      }, { status: 503 });
-    }
-
     // JWT Authentication
     const token = req.cookies.get('ghostcrm_jwt')?.value;
     if (!token) {
