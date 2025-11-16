@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
 import { I18nProvider } from "@/components/utils/I18nProvider";
 import { ToastProvider } from "@/components/utils/ToastProvider";
+import '@/styles/components/tenant-billing.css';
 import { 
   CreditCard, 
   DollarSign, 
@@ -18,7 +19,8 @@ import {
   Plus,
   Trash2,
   Edit,
-  RefreshCw
+  RefreshCw,
+  TrendingUp
 } from "lucide-react";
 
 interface BillingInfo {
@@ -139,23 +141,17 @@ function BillingSubscriptionPage() {
     return Math.min((used / limit) * 100, 100);
   };
 
-  const getUsageColor = (percentage: number) => {
-    if (percentage < 70) return 'bg-green-500';
-    if (percentage < 90) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
-
   if (loading) {
     return (
       <I18nProvider>
         <ToastProvider>
-          <div className="p-6">
-            <div className="animate-pulse space-y-6">
-              <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="h-32 bg-gray-200 rounded"></div>
-                ))}
+          <div className="tenant-billing-container">
+            <div className="tenant-billing-loading">
+              <div className="tenant-billing-loading-title"></div>
+              <div className="tenant-billing-loading-grid">
+                <div className="tenant-billing-loading-card"></div>
+                <div className="tenant-billing-loading-card"></div>
+                <div className="tenant-billing-loading-card"></div>
               </div>
             </div>
           </div>
@@ -167,48 +163,52 @@ function BillingSubscriptionPage() {
   return (
     <I18nProvider>
       <ToastProvider>
-        <div className="p-6 space-y-6">
+        <div className="tenant-billing-container">
           {/* Header */}
-          <div className="flex justify-between items-center">
+          <div className="tenant-billing-header">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Billing & Subscriptions</h1>
-              <p className="text-gray-600 mt-1">Manage your subscription, billing, and usage</p>
+              <h1 className="tenant-billing-title">Subscription Management</h1>
+              <p className="tenant-billing-subtitle">Monitor usage, manage payments, and control your GhostCRM subscription</p>
             </div>
             <button
               onClick={() => setShowUpgradeModal(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="tenant-billing-upgrade-btn"
             >
-              <Plus className="h-4 w-4" />
+              <TrendingUp className="h-5 w-5" />
               Upgrade Plan
             </button>
           </div>
 
           {/* Current Plan Card */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex justify-between items-start">
+          <div className="tenant-billing-card">
+            <div className="tenant-billing-plan-header">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">{billingInfo.currentPlan} Plan</h2>
-                <p className="text-3xl font-bold text-blue-600 mt-2">
+                <h2 className="tenant-billing-plan-name">{billingInfo.currentPlan} Plan</h2>
+                <p className="tenant-billing-plan-price">
                   ${billingInfo.planPrice}
-                  <span className="text-lg text-gray-500">/{billingInfo.billingCycle === 'monthly' ? 'month' : 'year'}</span>
+                  <span className="tenant-billing-plan-cycle">/{billingInfo.billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-500">Next billing date</p>
-                <p className="font-medium text-gray-900">{new Date(billingInfo.nextBillingDate).toLocaleDateString()}</p>
+              <div className="tenant-billing-next-billing">
+                <p className="tenant-billing-next-label">Next billing date</p>
+                <p className="tenant-billing-next-date">{new Date(billingInfo.nextBillingDate).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric', 
+                  year: 'numeric' 
+                })}</p>
               </div>
             </div>
             
-            <div className="mt-6 flex gap-3">
+            <div className="tenant-billing-actions">
               <button
                 onClick={() => setShowUpgradeModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="tenant-billing-btn-primary"
               >
                 Change Plan
               </button>
               <button
                 onClick={() => setShowPaymentModal(true)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="tenant-billing-btn-secondary"
               >
                 Update Payment
               </button>
@@ -216,23 +216,23 @@ function BillingSubscriptionPage() {
           </div>
 
           {/* Payment Method */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Method</h3>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <CreditCard className="h-8 w-8 text-gray-400" />
+          <div className="tenant-billing-card">
+            <h3 className="tenant-billing-section-title">Payment Method</h3>
+            <div className="tenant-billing-payment-method">
+              <div className="tenant-billing-payment-info">
+                <CreditCard className="tenant-billing-payment-icon" />
                 <div>
-                  <p className="font-medium text-gray-900">
-                    **** **** **** {billingInfo.paymentMethod.last4}
+                  <p className="tenant-billing-card-number">
+                    •••• •••• •••• {billingInfo.paymentMethod.last4}
                   </p>
                   {billingInfo.paymentMethod.expiryDate && (
-                    <p className="text-sm text-gray-500">Expires {billingInfo.paymentMethod.expiryDate}</p>
+                    <p className="tenant-billing-card-expiry">Expires {billingInfo.paymentMethod.expiryDate}</p>
                   )}
                 </div>
               </div>
               <button
                 onClick={() => setShowPaymentModal(true)}
-                className="px-3 py-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                className="tenant-billing-edit-btn"
               >
                 <Edit className="h-4 w-4" />
               </button>
@@ -240,52 +240,61 @@ function BillingSubscriptionPage() {
           </div>
 
           {/* Usage Metrics */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Usage This Month</h3>
-            <div className="space-y-6">
+          <div className="tenant-billing-card">
+            <h3 className="tenant-billing-section-title">Current Usage</h3>
+            <div className="tenant-billing-usage-section">
               {/* Users */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-700">Team Members</span>
-                  <span className="text-sm text-gray-500">
-                    {billingInfo.usageMetrics.usersUsed} / {billingInfo.usageMetrics.usersLimit}
+              <div className="tenant-billing-usage-item">
+                <div className="tenant-billing-usage-header">
+                  <span className="tenant-billing-usage-label">Team Members</span>
+                  <span className="tenant-billing-usage-numbers">
+                    {billingInfo.usageMetrics.usersUsed} of {billingInfo.usageMetrics.usersLimit} used
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="tenant-billing-usage-bar">
                   <div
-                    className={`h-2 rounded-full ${getUsageColor(getUsagePercentage(billingInfo.usageMetrics.usersUsed, billingInfo.usageMetrics.usersLimit))}`}
+                    className={`tenant-billing-usage-fill ${
+                      getUsagePercentage(billingInfo.usageMetrics.usersUsed, billingInfo.usageMetrics.usersLimit) < 70 ? 'green' :
+                      getUsagePercentage(billingInfo.usageMetrics.usersUsed, billingInfo.usageMetrics.usersLimit) < 90 ? 'yellow' : 'red'
+                    }`}
                     style={{ width: `${getUsagePercentage(billingInfo.usageMetrics.usersUsed, billingInfo.usageMetrics.usersLimit)}%` }}
                   ></div>
                 </div>
               </div>
 
               {/* Storage */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-700">Storage</span>
-                  <span className="text-sm text-gray-500">
-                    {billingInfo.usageMetrics.storageUsed} GB / {billingInfo.usageMetrics.storageLimit} GB
+              <div className="tenant-billing-usage-item">
+                <div className="tenant-billing-usage-header">
+                  <span className="tenant-billing-usage-label">Storage</span>
+                  <span className="tenant-billing-usage-numbers">
+                    {billingInfo.usageMetrics.storageUsed} GB of {billingInfo.usageMetrics.storageLimit} GB used
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="tenant-billing-usage-bar">
                   <div
-                    className={`h-2 rounded-full ${getUsageColor(getUsagePercentage(billingInfo.usageMetrics.storageUsed, billingInfo.usageMetrics.storageLimit))}`}
+                    className={`tenant-billing-usage-fill ${
+                      getUsagePercentage(billingInfo.usageMetrics.storageUsed, billingInfo.usageMetrics.storageLimit) < 70 ? 'green' :
+                      getUsagePercentage(billingInfo.usageMetrics.storageUsed, billingInfo.usageMetrics.storageLimit) < 90 ? 'yellow' : 'red'
+                    }`}
                     style={{ width: `${getUsagePercentage(billingInfo.usageMetrics.storageUsed, billingInfo.usageMetrics.storageLimit)}%` }}
                   ></div>
                 </div>
               </div>
 
               {/* API Calls */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-700">API Calls</span>
-                  <span className="text-sm text-gray-500">
-                    {billingInfo.usageMetrics.apiCalls.toLocaleString()} / {billingInfo.usageMetrics.apiLimit.toLocaleString()}
+              <div className="tenant-billing-usage-item">
+                <div className="tenant-billing-usage-header">
+                  <span className="tenant-billing-usage-label">API Calls This Month</span>
+                  <span className="tenant-billing-usage-numbers">
+                    {billingInfo.usageMetrics.apiCalls.toLocaleString()} of {billingInfo.usageMetrics.apiLimit.toLocaleString()} used
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="tenant-billing-usage-bar">
                   <div
-                    className={`h-2 rounded-full ${getUsageColor(getUsagePercentage(billingInfo.usageMetrics.apiCalls, billingInfo.usageMetrics.apiLimit))}`}
+                    className={`tenant-billing-usage-fill ${
+                      getUsagePercentage(billingInfo.usageMetrics.apiCalls, billingInfo.usageMetrics.apiLimit) < 70 ? 'green' :
+                      getUsagePercentage(billingInfo.usageMetrics.apiCalls, billingInfo.usageMetrics.apiLimit) < 90 ? 'yellow' : 'red'
+                    }`}
                     style={{ width: `${getUsagePercentage(billingInfo.usageMetrics.apiCalls, billingInfo.usageMetrics.apiLimit)}%` }}
                   ></div>
                 </div>
@@ -294,37 +303,38 @@ function BillingSubscriptionPage() {
           </div>
 
           {/* Recent Invoices */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Invoices</h3>
-              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                View All
-              </button>
+          <div className="tenant-billing-card">
+            <div className="tenant-billing-invoices-header">
+              <h3 className="tenant-billing-section-title">Recent Invoices</h3>
+              <a href="#" className="tenant-billing-view-all-btn">
+                View All Invoices
+              </a>
             </div>
-            <div className="space-y-3">
+            <div className="tenant-billing-invoice-list">
               {billingInfo.invoices.map((invoice) => (
-                <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${
-                      invoice.status === 'paid' ? 'bg-green-100' :
-                      invoice.status === 'pending' ? 'bg-yellow-100' : 'bg-red-100'
-                    }`}>
+                <div key={invoice.id} className="tenant-billing-invoice-item">
+                  <div className="tenant-billing-invoice-left">
+                    <div className={`tenant-billing-invoice-status ${invoice.status}`}>
                       {invoice.status === 'paid' ? 
-                        <CheckCircle className="h-4 w-4 text-green-600" /> :
+                        <CheckCircle /> :
                         invoice.status === 'pending' ?
-                        <Clock className="h-4 w-4 text-yellow-600" /> :
-                        <AlertTriangle className="h-4 w-4 text-red-600" />
+                        <Clock /> :
+                        <AlertTriangle />
                       }
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">Invoice #{invoice.id}</p>
-                      <p className="text-sm text-gray-500">{new Date(invoice.date).toLocaleDateString()}</p>
+                    <div className="tenant-billing-invoice-details">
+                      <h4>Invoice #{invoice.id}</h4>
+                      <p>{new Date(invoice.date).toLocaleDateString('en-US', { 
+                        month: 'long', 
+                        day: 'numeric', 
+                        year: 'numeric' 
+                      })}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-medium text-gray-900">${invoice.amount}</span>
+                  <div className="tenant-billing-invoice-right">
+                    <span className="tenant-billing-invoice-amount">${invoice.amount}</span>
                     {invoice.downloadUrl && (
-                      <button className="p-1 text-gray-400 hover:text-gray-600">
+                      <button className="tenant-billing-download-btn">
                         <Download className="h-4 w-4" />
                       </button>
                     )}
@@ -336,9 +346,9 @@ function BillingSubscriptionPage() {
         </div>
 
         {/* Coming Soon Note */}
-        <div className="fixed bottom-4 right-4 bg-blue-100 border border-blue-200 rounded-lg p-4 max-w-sm">
-          <p className="text-sm text-blue-800 font-medium">Billing & Subscriptions</p>
-          <p className="text-xs text-blue-600 mt-1">Full billing integration coming Q1 2025</p>
+        <div className="tenant-billing-coming-soon">
+          <h4>Enhanced Billing Features</h4>
+          <p>Advanced billing analytics and team management features launching Q1 2025</p>
         </div>
       </ToastProvider>
     </I18nProvider>

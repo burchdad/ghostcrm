@@ -15,6 +15,7 @@ const PUBLIC_PATHS = [
   "/login-salesmanager",  // Tenant sales manager login (public)
   "/login-salesrep",  // Tenant sales rep login (public)
   "/pricing",
+  "/billing",         // Public billing page for plan selection
   "/reset-password", 
   "/register",
   "/onboarding",
@@ -35,8 +36,8 @@ const PUBLIC_PATHS = [
 // Simplified: Direct registration users are owners, subdomain users have different flow
 // Only need to protect a few owner-specific routes
 const OWNER_ONLY_ROUTES = [
-  "/billing",     // Owner-only billing right after account creation
-  "/owner"        // Owner-specific admin panel
+  "/tenant-owner",    // Tenant owner dashboard and billing after login
+  "/owner"           // Owner-specific admin panel
 ];
 
 function isPublicPath(pathname: string): boolean {
@@ -125,11 +126,10 @@ function isOwnerOnlyRoute(pathname: string): boolean {
 function canAccessOwnerRoute(role: string, pathname: string, isSoftwareOwner: boolean = false): boolean {
   console.log(`🔍 [OWNER ROUTE CHECK] Path: ${pathname}, Role: ${role}, Software Owner: ${isSoftwareOwner}`);
   
-  if (pathname.startsWith('/billing')) {
-    // Billing requires owner role AND billing.manage permission
-    // For now, assume all owners have billing.manage (set in registration)
+  if (pathname.startsWith('/tenant-owner')) {
+    // Tenant owner routes require owner role
     const canAccess = role === "owner";
-    console.log(`🔍 [BILLING ACCESS] ${canAccess ? '✅ ALLOWED' : '❌ DENIED'} for role: ${role}`);
+    console.log(`🔍 [TENANT OWNER ACCESS] ${canAccess ? '✅ ALLOWED' : '❌ DENIED'} for role: ${role}`);
     return canAccess;
   }
   

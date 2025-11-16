@@ -50,8 +50,8 @@ export default function RegisterPage() {
       }
 
       localStorage.setItem('userEmail', email);
-      setMessage('Account created! Redirecting to billing...');
-      setTimeout(() => router.push('/billing'), 1500);
+      setMessage('Account created! Redirecting to subscription setup...');
+      setTimeout(() => router.push('/tenant-owner/billing'), 1500);
     } catch (err: any) {
       setMessage(err.message || 'Registration failed');
     } finally {
