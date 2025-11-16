@@ -659,9 +659,9 @@ export default function BillingPage() {
 
         {/* Enhanced Annual/Monthly Toggle with better styling */}
           <div className="billing-toggle-container">
-            <div className="text-center mb-6">
-              <h3 className="text-xl md:text-2xl font-bold text-white mb-2">Choose Your Billing Frequency</h3>
-              <p className="text-white/70">Save money with annual billing</p>
+            <div className="text-center mb-8">
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-3">Choose Your Payment Schedule</h3>
+              <p className="text-white/80 text-lg">Save up to 20% with annual billing - pay less, get more!</p>
             </div>
             <div className="billing-toggle relative">
               <button
@@ -746,10 +746,10 @@ export default function BillingPage() {
               </p>
             </div>
             
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-6xl mx-auto">
               {/* Enhanced pricing breakdown with better readability */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-                <div className="bg-white/15 backdrop-blur-xl border border-white/30 rounded-3xl p-8 text-center hover:bg-white/20 transition-all duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 justify-center">
+                <div className="bg-white/15 backdrop-blur-xl border border-white/30 rounded-3xl p-8 text-center hover:bg-white/20 transition-all duration-300 mx-auto max-w-sm">
                   <div className="text-4xl md:text-5xl font-black text-white mb-3">
                     ${pricing.setup}
                   </div>
@@ -757,7 +757,7 @@ export default function BillingPage() {
                   <div className="text-white/80 text-base">Professional installation & training</div>
                 </div>
                 
-                <div className="bg-white/15 backdrop-blur-xl border border-white/30 rounded-3xl p-8 text-center hover:bg-white/20 transition-all duration-300">
+                <div className="bg-white/15 backdrop-blur-xl border border-white/30 rounded-3xl p-8 text-center hover:bg-white/20 transition-all duration-300 mx-auto max-w-sm">
                   <div className="text-4xl md:text-5xl font-black text-white mb-3">
                     ${pricing.monthly}
                     <span className="text-xl text-white/70 font-medium">/month</span>
@@ -768,7 +768,7 @@ export default function BillingPage() {
                   )}
                 </div>
                 
-                <div className="bg-gradient-to-br from-purple-500/30 to-pink-500/30 backdrop-blur-xl border border-purple-300/40 rounded-3xl p-8 text-center hover:from-purple-500/40 hover:to-pink-500/40 transition-all duration-300 ring-2 ring-purple-400/20">
+                <div className="bg-gradient-to-br from-purple-500/30 to-pink-500/30 backdrop-blur-xl border border-purple-300/40 rounded-3xl p-8 text-center hover:from-purple-500/40 hover:to-pink-500/40 transition-all duration-300 ring-2 ring-purple-400/20 mx-auto max-w-sm">
                   <div className="text-5xl md:text-6xl font-black bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent mb-3">
                     ${pricing.total}
                   </div>
@@ -847,25 +847,27 @@ export default function BillingPage() {
         )}
 
         {/* Enhanced Social Proof - Testimonials */}
-        <div className="billing-testimonials">
-          <div className="text-center mb-12">
-            <h2 className="text-5xl font-black text-white mb-6">Trusted by Industry Leaders</h2>
-            <p className="text-2xl text-gray-300 mb-16 font-medium">See what dealerships are saying about GhostCRM</p>
+        <div className="billing-testimonials max-w-7xl mx-auto px-6 py-16">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-6">Trusted by Industry Leaders</h2>
+            <p className="text-xl md:text-2xl text-white/80 mb-8 font-medium max-w-3xl mx-auto">
+              See what dealerships are saying about GhostCRM
+            </p>
           </div>
           
-          <div className="billing-testimonials-grid">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {TESTIMONIALS.map((testimonial, index) => (
-              <div key={index} className="billing-testimonial-card">
-                <div className="billing-testimonial-quote">
+              <div key={index} className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 hover:bg-white/15 transition-all duration-300 text-center">
+                <div className="text-white/90 text-lg italic mb-6 leading-relaxed">
                   "{testimonial.quote}"
                 </div>
-                <div className="billing-testimonial-author">
-                  <div className="billing-testimonial-avatar">
+                <div className="flex items-center justify-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
                     {testimonial.image}
                   </div>
-                  <div className="billing-testimonial-info">
-                    <h4>{testimonial.name}</h4>
-                    <p>{testimonial.role}, {testimonial.company}</p>
+                  <div className="text-left">
+                    <h4 className="text-white font-semibold text-lg">{testimonial.name}</h4>
+                    <p className="text-white/70 text-sm">{testimonial.role}, {testimonial.company}</p>
                   </div>
                 </div>
               </div>
@@ -874,29 +876,31 @@ export default function BillingPage() {
         </div>
 
         {/* Enhanced FAQ Section */}
-        <div className="billing-faq-section">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-black text-white mb-6">Frequently Asked Questions</h2>
-            <p className="text-xl text-gray-300 font-medium">Get answers to common questions about our plans</p>
+        <div className="max-w-4xl mx-auto px-6 py-16">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-6">Frequently Asked Questions</h2>
+            <p className="text-xl text-white/80 font-medium max-w-2xl mx-auto">
+              Get answers to common questions about our plans
+            </p>
           </div>
           
-          <div className="space-y-6">
+          <div className="space-y-4">
             {FAQ_DATA.map((faq, index) => (
-              <div key={index} className="billing-faq-item">
+              <div key={index} className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl overflow-hidden hover:bg-white/15 transition-all duration-300">
                 <button
                   onClick={() => setOpenFAQIndex(openFAQIndex === index ? null : index)}
-                  className="billing-faq-question"
+                  className="w-full text-left p-6 flex justify-between items-center hover:bg-white/5 transition-colors"
                 >
-                  <span>{faq.question}</span>
+                  <span className="text-white font-semibold text-lg">{faq.question}</span>
                   {openFAQIndex === index ? (
-                    <ChevronUp className="w-6 h-6" />
+                    <ChevronUp className="w-6 h-6 text-white/70" />
                   ) : (
-                    <ChevronDown className="w-6 h-6" />
+                    <ChevronDown className="w-6 h-6 text-white/70" />
                   )}
                 </button>
                 {openFAQIndex === index && (
-                  <div className="billing-faq-answer">
-                    <p>{faq.answer}</p>
+                  <div className="p-6 pt-0 border-t border-white/10">
+                    <p className="text-white/80 text-base leading-relaxed">{faq.answer}</p>
                   </div>
                 )}
               </div>
@@ -905,20 +909,22 @@ export default function BillingPage() {
         </div>
 
         {/* Enhanced Contact Section */}
-        <div className="billing-contact-section">
-          <h3 className="text-3xl font-black text-white mb-6">Need Help Choosing?</h3>
-          <p className="text-gray-300 mb-10 text-lg font-medium">Our team is here to help you find the perfect plan for your dealership</p>
+        <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+          <h3 className="text-3xl md:text-4xl font-black text-white mb-6">Need Help Choosing?</h3>
+          <p className="text-white/80 mb-10 text-lg font-medium max-w-2xl mx-auto">
+            Our team is here to help you find the perfect plan for your dealership
+          </p>
           
-          <div className="billing-contact-buttons">
-            <a href="tel:+1-555-GHOST-1" className="billing-contact-button primary">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <a href="tel:+1-555-GHOST-1" className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-2xl shadow-xl transition-all duration-200 hover:scale-105">
               <Phone className="w-6 h-6" />
               Call Us: (555) GHOST-1
             </a>
-            <a href="mailto:sales@ghostcrm.ai" className="billing-contact-button secondary">
+            <a href="mailto:sales@ghostcrm.ai" className="inline-flex items-center gap-3 px-8 py-4 bg-white/15 hover:bg-white/25 border border-white/30 text-white font-semibold rounded-2xl shadow-xl transition-all duration-200 hover:scale-105 backdrop-blur-xl">
               <Mail className="w-6 h-6" />
               Email Sales Team
             </a>
-            <button className="billing-contact-button tertiary">
+            <button className="inline-flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl shadow-xl transition-all duration-200 hover:scale-105">
               <MessageCircle className="w-6 h-6" />
               Live Chat
             </button>
