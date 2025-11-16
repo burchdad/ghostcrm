@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import fetch from "node-fetch";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Initialize OpenAI only if API key is available
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY 
+}) : null;
 
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
 const TWILIO_API_URL = process.env.TWILIO_API_URL;

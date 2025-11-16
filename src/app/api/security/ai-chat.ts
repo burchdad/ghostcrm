@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Initialize OpenAI only if API key is available
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY 
+}) : null;
 
 export async function POST(req: NextRequest) {
-  const { messages } = await req.json();
   try {
+    // Check if OpenAI is available
+    if (!openai) {
+      return NextResponse.json({ 
+        error: 'OpenAI service is not configured. Please set OPENAI_API_KEY environment variable.' 
+      }, { status: 503 });
+    }
+
+    const { messages } = await req.json();
+    
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [

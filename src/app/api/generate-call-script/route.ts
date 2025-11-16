@@ -62,12 +62,20 @@ const agentTypes = [
   }
 ];
 
-const openai = new OpenAI({
+// Initialize OpenAI only if API key is available
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
+}) : null;
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if OpenAI is available
+    if (!openai) {
+      return NextResponse.json({ 
+        error: 'OpenAI service is not configured. Please set OPENAI_API_KEY environment variable.' 
+      }, { status: 503 });
+    }
+
     const { 
       prompt, 
       agentType, 
