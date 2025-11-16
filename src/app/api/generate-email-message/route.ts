@@ -5,11 +5,12 @@ import jwt from 'jsonwebtoken';
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(req: NextRequest) {
+  // Initialize OpenAI with environment credentials at runtime
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
   try {
     // JWT Authentication
     const token = req.cookies.get('ghostcrm_jwt')?.value;

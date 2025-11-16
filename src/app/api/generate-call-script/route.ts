@@ -65,12 +65,11 @@ const agentTypes = [
   }
 ];
 
-// Initialize OpenAI with environment credentials
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(request: NextRequest) {
+  // Initialize OpenAI with environment credentials at runtime
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
   try {
     const { 
       prompt, 

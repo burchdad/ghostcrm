@@ -6,11 +6,6 @@ import OpenAI from 'openai';
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-
 // Define return type for AI NLQ parsing
 interface ParsedAnalyticsCard {
   title?: string;
@@ -25,6 +20,11 @@ interface ParsedAnalyticsCard {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Initialize OpenAI with environment credentials at runtime
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
