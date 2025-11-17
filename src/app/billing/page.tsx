@@ -425,7 +425,6 @@ export default function BillingPage() {
               )}
             </div>
           </div>
-        </div>
 
         {/* Enhanced Pricing Plans */}
         <div className="billing-plans-grid">
@@ -674,5 +673,6 @@ export default function BillingPage() {
         </div>
       </div>
     </div>
+  </div>
   )
 }
