@@ -15,13 +15,8 @@ interface RoutePermission {
 
 // Define protected routes and their required permissions
 const PROTECTED_ROUTES: RoutePermission[] = [
-  // Billing - Owner-only, right after account creation
-  {
-    path: '/billing',
-    requiredPermissions: [],               // <- no explicit permission
-    allowedRoles: ['owner'],               // <- owner-only
-    requireTenantAccess: false             // <- allow pre-tenant owners
-  },
+  // NOTE: /billing is now public (defined in middleware.ts PUBLIC_PATHS)
+  // No permission check needed for plan selection page
 
   // Owner routes - handled separately in the useEffect
   // {

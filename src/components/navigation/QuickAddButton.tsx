@@ -13,14 +13,20 @@ export default function QuickAddButton() {
   const { user } = useAuth();
   const router = useRouter();
 
-  // Simplified logic: show for most pages except marketing/auth
+  // Simplified logic: show for most pages except marketing/auth/billing
   const shouldShowButton = React.useMemo(() => {
     if (typeof window === 'undefined') return false; // SSR
     
     const pathname = window.location.pathname;
     
-    // Don't show on marketing pages or auth pages
-    if (pathname === '/' || pathname === '/login' || pathname === '/register' || pathname.includes('/marketing')) {
+    // Don't show on marketing pages, auth pages, or billing pages
+    if (pathname === '/' || 
+        pathname === '/login' || 
+        pathname === '/register' || 
+        pathname === '/billing' ||           // <- Added billing page
+        pathname === '/reset-password' ||   // <- Added reset password
+        pathname === '/unauthorized' ||     // <- Added unauthorized
+        pathname.includes('/marketing')) {
       return false;
     }
     

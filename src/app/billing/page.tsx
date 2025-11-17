@@ -177,7 +177,21 @@ export default function BillingPage() {
   const [openFAQIndex, setOpenFAQIndex] = useState<number | null>(null)
   const [isAnnual, setIsAnnual] = useState(false) // Toggle for annual/monthly pricing
   
+  // Ensure proper CSS control for billing page
+  useEffect(() => {
+    // Add billing-specific classes to ensure CSS specificity
+    document.documentElement.classList.add('billing-active')
+    document.body.classList.add('billing-active')
+    
+    // Cleanup on unmount
+    return () => {
+      document.documentElement.classList.remove('billing-active')
+      document.body.classList.remove('billing-active')
+    }
+  }, [])
+  
   const selectedPlanData = COMPANY_PLANS.find(plan => plan.id === selectedPlan)
+  console.log('🔍 [BILLING] selectedPlanData:', selectedPlanData)
 
   // Calculate pricing (simplified - no promo codes on billing page)
   const calculatePricing = () => {
@@ -324,7 +338,7 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="billing-page">
+    <div className="billing-page" style={{ position: 'relative', minHeight: '100vh', zIndex: 1 }}>
       {/* Hero background with same gradient as homepage */}
       <div className="billing-hero-background">
         {/* Enhanced animated background with glassmorphism */}
@@ -335,16 +349,16 @@ export default function BillingPage() {
           <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-blue-500/15 rounded-full blur-3xl animate-pulse delay-2000" />
           <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-amber-500/15 rounded-full blur-3xl animate-pulse delay-3000" />
           
-          {/* Floating particles */}
+          {/* Floating particles - simplified */}
           <div className="absolute inset-0">
-            {[...Array(12)].map((_, i) => (
+            {[...Array(6)].map((_, i) => (
               <div
                 key={i}
                 className="absolute w-2 h-2 bg-white/30 rounded-full"
                 style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  animation: `float ${3 + Math.random() * 4}s ease-in-out infinite ${Math.random() * 2}s`,
+                  left: `${20 + (i * 15)}%`,
+                  top: `${20 + (i * 10)}%`,
+                  animation: `float 3s ease-in-out infinite ${i * 0.5}s`,
                 }}
               />
             ))}
@@ -407,13 +421,19 @@ export default function BillingPage() {
             </div>
             <div className="billing-toggle relative">
               <button
-                onClick={() => setIsAnnual(false)}
+                onClick={() => {
+                  console.log('🔄 Monthly billing clicked')
+                  setIsAnnual(false)
+                }}
                 className={`${!isAnnual ? 'active bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg' : 'text-white/70 hover:text-white'} px-8 py-3 rounded-xl font-semibold transition-all duration-300`}
               >
                 Monthly Billing
               </button>
               <button
-                onClick={() => setIsAnnual(true)}
+                onClick={() => {
+                  console.log('🔄 Annual billing clicked')
+                  setIsAnnual(true)
+                }}
                 className={`${isAnnual ? 'active bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg' : 'text-white/70 hover:text-white'} px-8 py-3 rounded-xl font-semibold transition-all duration-300`}
               >
                 Annual Billing
@@ -438,7 +458,10 @@ export default function BillingPage() {
               <div
                 key={plan.id}
                 className={`billing-plan-card ${plan.popular ? 'popular' : ''} ${isSelected ? 'ring-2 ring-white/40' : ''}`}
-                onClick={() => setSelectedPlan(plan.id)}
+                onClick={() => {
+                  console.log(`🔄 Plan card clicked: ${plan.id}`)
+                  setSelectedPlan(plan.id)
+                }}
               >
                 <div className="billing-plan-header">
                   <div className="billing-plan-name">{plan.name}</div>
@@ -464,6 +487,7 @@ export default function BillingPage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
+                    console.log(`🔄 Select button clicked: ${plan.id}`)
                     setSelectedPlan(plan.id)
                   }}
                   className={`billing-plan-cta ${isSelected ? 'primary' : 'secondary'}`}
@@ -477,93 +501,93 @@ export default function BillingPage() {
 
         {/* Enhanced Selected Plan Summary - Now shown AFTER plan selection */}
         {selectedPlanData && (
-          <div className="mt-16 mb-12">
+          <div className="selected-plan-section">
             <div className="text-center mb-10">
-              <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              <h3 className="selected-plan-title">
                 Your Selected Plan
               </h3>
-              <p className="text-white/90 text-xl font-medium">
+              <p className="selected-plan-subtitle">
                 {selectedPlanData.name} Plan - {isAnnual ? 'Annual' : 'Monthly'} Billing
               </p>
             </div>
             
             <div className="max-w-6xl mx-auto">
               {/* Enhanced pricing breakdown with better readability */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 justify-center">
-                <div className="bg-white/15 backdrop-blur-xl border border-white/30 rounded-3xl p-8 text-center hover:bg-white/20 transition-all duration-300 mx-auto max-w-sm">
-                  <div className="text-4xl md:text-5xl font-black text-white mb-3">
+              <div className="pricing-breakdown">
+                <div className="pricing-card">
+                  <div className="pricing-amount">
                     ${pricing.setup}
                   </div>
-                  <div className="text-white font-semibold text-lg mb-2">One-time Setup</div>
-                  <div className="text-white/80 text-base">Professional installation & training</div>
+                  <div className="pricing-label">One-time Setup</div>
+                  <div className="pricing-description">Professional installation & training</div>
                 </div>
                 
-                <div className="bg-white/15 backdrop-blur-xl border border-white/30 rounded-3xl p-8 text-center hover:bg-white/20 transition-all duration-300 mx-auto max-w-sm">
-                  <div className="text-4xl md:text-5xl font-black text-white mb-3">
+                <div className="pricing-card">
+                  <div className="pricing-amount">
                     ${pricing.monthly}
                     <span className="text-xl text-white/70 font-medium">/month</span>
                   </div>
-                  <div className="text-white font-semibold text-lg mb-2">{isAnnual ? 'Monthly (Billed Annually)' : 'Monthly Subscription'}</div>
+                  <div className="pricing-label">{isAnnual ? 'Monthly (Billed Annually)' : 'Monthly Subscription'}</div>
                   {isAnnual && (
                     <div className="text-green-400 text-base font-semibold">20% Annual Savings!</div>
                   )}
                 </div>
                 
-                <div className="bg-gradient-to-br from-purple-500/30 to-pink-500/30 backdrop-blur-xl border border-purple-300/40 rounded-3xl p-8 text-center hover:from-purple-500/40 hover:to-pink-500/40 transition-all duration-300 ring-2 ring-purple-400/20 mx-auto max-w-sm">
-                  <div className="text-5xl md:text-6xl font-black bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent mb-3">
+                <div className="pricing-card featured">
+                  <div className="pricing-amount">
                     ${pricing.total}
                   </div>
-                  <div className="text-white font-semibold text-lg mb-2">Total First Month</div>
-                  <div className="text-white/80 text-base">Setup + First month</div>
+                  <div className="pricing-label">Total First Month</div>
+                  <div className="pricing-description">Setup + First month</div>
                 </div>
               </div>
 
               {/* Enhanced plan benefits with better spacing and contrast */}
-              <div className="bg-white/10 backdrop-blur-xl border border-white/25 rounded-3xl p-8 mb-10">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="plan-benefits">
+                <div className="benefits-grid">
                   <div>
-                    <h4 className="text-white font-bold text-xl mb-5 border-b border-white/20 pb-3">What's Included:</h4>
-                    <ul className="space-y-4">
-                      <li className="flex items-center gap-3 text-white/90 text-lg">
-                        <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
+                    <h4>What's Included:</h4>
+                    <div className="space-y-4">
+                      <div className="benefit-item">
+                        <Check className="benefit-icon" />
                         <span>Up to {selectedPlanData.maxUsers} team members</span>
-                      </li>
-                      <li className="flex items-center gap-3 text-white/90 text-lg">
-                        <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
+                      </div>
+                      <div className="benefit-item">
+                        <Check className="benefit-icon" />
                         <span>{selectedPlanData.maxVehicles} vehicles in inventory</span>
-                      </li>
-                      <li className="flex items-center gap-3 text-white/90 text-lg">
-                        <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
+                      </div>
+                      <div className="benefit-item">
+                        <Check className="benefit-icon" />
                         <span>White-glove setup & training</span>
-                      </li>
-                    </ul>
+                      </div>
+                    </div>
                   </div>
                   <div>
-                    <h4 className="text-white font-bold text-xl mb-5 border-b border-white/20 pb-3">Guaranteed Results:</h4>
-                    <ul className="space-y-4">
-                      <li className="flex items-center gap-3 text-white/90 text-lg">
-                        <TrendingUp className="w-5 h-5 text-green-400 flex-shrink-0" />
+                    <h4>Guaranteed Results:</h4>
+                    <div className="space-y-4">
+                      <div className="benefit-item">
+                        <TrendingUp className="benefit-icon" />
                         <span>{selectedPlanData.roi} typically</span>
-                      </li>
-                      <li className="flex items-center gap-3 text-white/90 text-lg">
-                        <Clock className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                      </div>
+                      <div className="benefit-item">
+                        <Clock className="benefit-icon" />
                         <span>Ready in {selectedPlanData.setupTime}</span>
-                      </li>
-                      <li className="flex items-center gap-3 text-white/90 text-lg">
-                        <Shield className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                      </div>
+                      <div className="benefit-item">
+                        <Shield className="benefit-icon" />
                         <span>30-day money-back guarantee</span>
-                      </li>
-                    </ul>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Enhanced checkout button with better prominence */}
-              <div className="text-center">
+              <div className="checkout-button-container">
                 <button
                   onClick={handleCheckout}
                   disabled={loading || !selectedPlanData}
-                  className="inline-flex items-center gap-4 px-16 py-5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-2xl rounded-3xl shadow-2xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ring-4 ring-purple-500/20 hover:ring-purple-500/40 relative z-10"
+                  className="enhanced-checkout-button disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
@@ -579,7 +603,7 @@ export default function BillingPage() {
                   )}
                 </button>
                 
-                <p className="text-white/70 text-base mt-6 font-medium">
+                <p className="checkout-security-text">
                   Secure checkout powered by Stripe • Cancel anytime
                 </p>
               </div>
@@ -588,27 +612,27 @@ export default function BillingPage() {
         )}
 
         {/* Enhanced Social Proof - Testimonials */}
-        <div className="billing-testimonials max-w-7xl mx-auto px-6 py-16">
+        <div className="billing-testimonials">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-6">Trusted by Industry Leaders</h2>
-            <p className="text-xl md:text-2xl text-white/80 mb-8 font-medium max-w-3xl mx-auto">
+            <h2 className="testimonials-title">Trusted by Industry Leaders</h2>
+            <p className="testimonials-subtitle">
               See what dealerships are saying about GhostCRM
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {TESTIMONIALS.map((testimonial, index) => (
-              <div key={index} className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 hover:bg-white/15 transition-all duration-300 text-center">
-                <div className="text-white/90 text-lg italic mb-6 leading-relaxed">
+              <div key={index} className="testimonial-card">
+                <div className="testimonial-quote">
                   "{testimonial.quote}"
                 </div>
-                <div className="flex items-center justify-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                <div className="testimonial-author">
+                  <div className="author-avatar">
                     {testimonial.image}
                   </div>
-                  <div className="text-left">
-                    <h4 className="text-white font-semibold text-lg">{testimonial.name}</h4>
-                    <p className="text-white/70 text-sm">{testimonial.role}, {testimonial.company}</p>
+                  <div className="author-info">
+                    <h4>{testimonial.name}</h4>
+                    <p>{testimonial.role}, {testimonial.company}</p>
                   </div>
                 </div>
               </div>
@@ -617,22 +641,25 @@ export default function BillingPage() {
         </div>
 
         {/* Enhanced FAQ Section */}
-        <div className="max-w-4xl mx-auto px-6 py-16">
+        <div className="faq-section">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-6">Frequently Asked Questions</h2>
-            <p className="text-xl text-white/80 font-medium max-w-2xl mx-auto">
+            <h2 className="faq-title">Frequently Asked Questions</h2>
+            <p className="faq-subtitle">
               Get answers to common questions about our plans
             </p>
           </div>
           
-          <div className="space-y-4">
+          <div className="space-y-4 max-w-4xl mx-auto">
             {FAQ_DATA.map((faq, index) => (
-              <div key={index} className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl overflow-hidden hover:bg-white/15 transition-all duration-300">
+              <div key={index} className="faq-item">
                 <button
-                  onClick={() => setOpenFAQIndex(openFAQIndex === index ? null : index)}
-                  className="w-full text-left p-6 flex justify-between items-center hover:bg-white/5 transition-colors"
+                  onClick={() => {
+                    console.log(`🔄 FAQ clicked: ${index}`)
+                    setOpenFAQIndex(openFAQIndex === index ? null : index)
+                  }}
+                  className="faq-question"
                 >
-                  <span className="text-white font-semibold text-lg">{faq.question}</span>
+                  <span>{faq.question}</span>
                   {openFAQIndex === index ? (
                     <ChevronUp className="w-6 h-6 text-white/70" />
                   ) : (
@@ -640,8 +667,8 @@ export default function BillingPage() {
                   )}
                 </button>
                 {openFAQIndex === index && (
-                  <div className="p-6 pt-0 border-t border-white/10">
-                    <p className="text-white/80 text-base leading-relaxed">{faq.answer}</p>
+                  <div className="faq-answer">
+                    <p>{faq.answer}</p>
                   </div>
                 )}
               </div>
@@ -650,22 +677,29 @@ export default function BillingPage() {
         </div>
 
         {/* Enhanced Contact Section */}
-        <div className="max-w-4xl mx-auto px-6 py-16 text-center">
-          <h3 className="text-3xl md:text-4xl font-black text-white mb-6">Need Help Choosing?</h3>
-          <p className="text-white/80 mb-10 text-lg font-medium max-w-2xl mx-auto">
+        <div className="contact-section">
+          <h3 className="contact-title">Need Help Choosing?</h3>
+          <p className="contact-subtitle">
             Our team is here to help you find the perfect plan for your dealership
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <a href="tel:+1-555-GHOST-1" className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-2xl shadow-xl transition-all duration-200 hover:scale-105">
+          <div className="contact-buttons">
+            <a href="tel:+1-555-GHOST-1" className="contact-button primary">
               <Phone className="w-6 h-6" />
               Call Us: (555) GHOST-1
             </a>
-            <a href="mailto:sales@ghostcrm.ai" className="inline-flex items-center gap-3 px-8 py-4 bg-white/15 hover:bg-white/25 border border-white/30 text-white font-semibold rounded-2xl shadow-xl transition-all duration-200 hover:scale-105 backdrop-blur-xl">
+            <a href="mailto:sales@ghostcrm.ai" className="contact-button secondary">
               <Mail className="w-6 h-6" />
               Email Sales Team
             </a>
-            <button className="inline-flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl shadow-xl transition-all duration-200 hover:scale-105">
+            <button 
+              onClick={() => {
+                console.log('🔄 Live chat clicked')
+                // Add your live chat functionality here
+                alert('Live chat would open here. Connect your chat widget!')
+              }}
+              className="contact-button tertiary"
+            >
               <MessageCircle className="w-6 h-6" />
               Live Chat
             </button>

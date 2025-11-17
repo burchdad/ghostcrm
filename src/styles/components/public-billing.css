@@ -1,5 +1,64 @@
 /* Public Billing Page Styles */
 
+/* BUTTON FUNCTIONALITY FIXES - Ensure all buttons are clickable */
+.billing-page button, 
+.billing-page .contact-button, 
+.billing-page .enhanced-checkout-button, 
+.billing-page .billing-plan-cta, 
+.billing-page .faq-question {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  z-index: 100 !important;
+  position: relative !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* Add click feedback for better UX */
+.billing-page button:active,
+.billing-page .contact-button:active, 
+.billing-page .enhanced-checkout-button:active,
+.billing-page .billing-plan-cta:active {
+  transform: scale(0.98) !important;
+  transition: transform 0.1s ease !important;
+}
+
+/* Ensure no overlapping elements block clicks */
+.billing-page button:hover,
+.billing-page .contact-button:hover, 
+.billing-page .enhanced-checkout-button:hover {
+  z-index: 200 !important;
+}
+
+/* Disable pointer events only for decorative elements */
+.billing-page .floating-icons,
+.billing-page .floating-icon,
+.billing-page .billing-hero-background > div:not(.billing-container) {
+  pointer-events: none !important;
+}
+
+/* Reset and body styles for proper scrolling - Billing page specific */
+.billing-page html,
+html.billing-active {
+  scroll-behavior: smooth !important;
+  overflow-y: auto !important;
+}
+
+.billing-page body,
+body.billing-active {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  background: transparent !important;
+}
+
+/* Ensure billing page overrides any global background */
+.billing-page,
+.billing-page *,
+.billing-page *::before,
+.billing-page *::after {
+  box-sizing: border-box;
+}
+
 /* Animations */
 @keyframes float {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
@@ -72,26 +131,35 @@
 
 /* Main Page Styles */
 .billing-page {
-  min-height: 100vh;
-  position: relative;
+  min-height: 100vh !important;
+  position: relative !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background-attachment: fixed !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scroll-behavior: smooth !important;
+  z-index: 1 !important;
 }
 
 .billing-hero-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  z-index: -1;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
 }
 
 .billing-container {
-  position: relative;
-  z-index: 10;
-  padding: 2rem 1rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  position: relative !important;
+  z-index: 10 !important;
+  padding: 2rem 1rem !important;
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  min-height: 100vh !important;
+  padding-bottom: 4rem !important;
 }
 
 /* Header Styles */
@@ -299,6 +367,8 @@
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  pointer-events: auto !important;
+  z-index: 10 !important;
 }
 
 .billing-plan-card:hover {
@@ -431,14 +501,436 @@
   margin: 4rem 0;
 }
 
+/* Selected Plan Section Styles */
+.selected-plan-section {
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08)) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  border-radius: 2rem !important;
+  padding: 3rem 2rem !important;
+  margin: 3rem 0 !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2) !important;
+}
+
+.selected-plan-title {
+  color: white !important;
+  font-size: 3rem !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  margin-bottom: 2rem !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.selected-plan-subtitle {
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 1.5rem !important;
+  text-align: center !important;
+  margin-bottom: 3rem !important;
+  font-weight: 500 !important;
+}
+
+.pricing-breakdown {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  gap: 2rem !important;
+  margin-bottom: 3rem !important;
+}
+
+.pricing-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1)) !important;
+  backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  border-radius: 1.5rem !important;
+  padding: 2rem !important;
+  text-align: center !important;
+  transition: all 0.3s ease !important;
+}
+
+.pricing-card:hover {
+  transform: translateY(-5px) !important;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.3) !important;
+  background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.15)) !important;
+}
+
+.pricing-card.featured {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3)) !important;
+  border: 2px solid rgba(139, 92, 246, 0.5) !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3) !important;
+}
+
+.pricing-amount {
+  font-size: 3.5rem !important;
+  font-weight: 900 !important;
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.pricing-label {
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 1rem !important;
+}
+
+.pricing-description {
+  color: rgba(255,255,255,0.8) !important;
+  font-size: 0.95rem !important;
+}
+
+/* Plan Benefits Section */
+.plan-benefits {
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06)) !important;
+  backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+  border-radius: 2rem !important;
+  padding: 2.5rem !important;
+  margin-bottom: 3rem !important;
+}
+
+.plan-benefits h4 {
+  color: white !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 1.5rem !important;
+  padding-bottom: 1rem !important;
+  border-bottom: 2px solid rgba(255,255,255,0.2) !important;
+}
+
+.benefits-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  gap: 2rem !important;
+}
+
+.benefit-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 1.1rem !important;
+  font-weight: 500 !important;
+  padding: 0.5rem 0 !important;
+}
+
+.benefit-icon {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  color: #10b981 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Enhanced Checkout Button */
+.checkout-button-container {
+  text-align: center !important;
+  margin: 3rem 0 !important;
+}
+
+.enhanced-checkout-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  padding: 1.5rem 3rem !important;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+  color: white !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  border: none !important;
+  border-radius: 2rem !important;
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4) !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  text-decoration: none !important;
+  z-index: 20 !important;
+  position: relative !important;
+  outline: none !important;
+}
+
+.enhanced-checkout-button:hover {
+  transform: translateY(-3px) scale(1.05) !important;
+  box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6) !important;
+  background: linear-gradient(135deg, #7c3aed, #db2777) !important;
+}
+
+.checkout-security-text {
+  color: rgba(255,255,255,0.8) !important;
+  font-size: 1rem !important;
+  margin-top: 1rem !important;
+  font-weight: 500 !important;
+}
+
+/* Testimonials Enhancement */
+.billing-testimonials {
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  border-radius: 2rem !important;
+  padding: 4rem 2rem !important;
+  margin: 4rem 0 !important;
+}
+
+.testimonials-title {
+  color: white !important;
+  font-size: 3rem !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  margin-bottom: 1rem !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.testimonials-subtitle {
+  color: rgba(255,255,255,0.85) !important;
+  font-size: 1.3rem !important;
+  text-align: center !important;
+  margin-bottom: 3rem !important;
+  font-weight: 500 !important;
+}
+
+.testimonial-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08)) !important;
+  backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+  border-radius: 1.5rem !important;
+  padding: 2rem !important;
+  transition: all 0.3s ease !important;
+  height: 100% !important;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.12)) !important;
+}
+
+.testimonial-quote {
+  color: rgba(255,255,255,0.95) !important;
+  font-size: 1.1rem !important;
+  line-height: 1.6 !important;
+  font-style: italic !important;
+  margin-bottom: 2rem !important;
+}
+
+.testimonial-author {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+}
+
+.author-avatar {
+  width: 3rem !important;
+  height: 3rem !important;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.5rem !important;
+  color: white !important;
+  font-weight: 700 !important;
+}
+
+.author-info h4 {
+  color: white !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  margin: 0 0 0.25rem 0 !important;
+}
+
+.author-info p {
+  color: rgba(255,255,255,0.75) !important;
+  font-size: 0.9rem !important;
+  margin: 0 !important;
+}
+
+/* FAQ Enhancement */
+.faq-section {
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  border-radius: 2rem !important;
+  padding: 4rem 2rem !important;
+  margin: 4rem 0 !important;
+}
+
+.faq-title {
+  color: white !important;
+  font-size: 3rem !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  margin-bottom: 1rem !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.faq-subtitle {
+  color: rgba(255,255,255,0.85) !important;
+  font-size: 1.3rem !important;
+  text-align: center !important;
+  margin-bottom: 3rem !important;
+  font-weight: 500 !important;
+}
+
+.faq-item {
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06)) !important;
+  backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+  border-radius: 1rem !important;
+  margin-bottom: 1rem !important;
+  overflow: hidden !important;
+  transition: all 0.3s ease !important;
+}
+
+.faq-item:hover {
+  background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.1)) !important;
+  border-color: rgba(255,255,255,0.4) !important;
+}
+
+.faq-question {
+  width: 100% !important;
+  text-align: left !important;
+  padding: 1.5rem !important;
+  background: transparent !important;
+  border: none !important;
+  color: white !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  transition: all 0.3s ease !important;
+  z-index: 10 !important;
+  position: relative !important;
+}
+
+.faq-question:hover {
+  background: rgba(255,255,255,0.1) !important;
+}
+
+.faq-answer {
+  padding: 0 1.5rem 1.5rem 1.5rem !important;
+  border-top: 1px solid rgba(255,255,255,0.15) !important;
+  color: rgba(255,255,255,0.85) !important;
+  font-size: 1rem !important;
+  line-height: 1.6 !important;
+}
+
+/* Contact Section Enhancement */
+.contact-section {
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08)) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  border-radius: 2rem !important;
+  padding: 4rem 2rem !important;
+  margin: 4rem 0 !important;
+  text-align: center !important;
+}
+
+.contact-title {
+  color: white !important;
+  font-size: 2.5rem !important;
+  font-weight: 900 !important;
+  margin-bottom: 1rem !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.contact-subtitle {
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 1.2rem !important;
+  margin-bottom: 3rem !important;
+  font-weight: 500 !important;
+}
+
+.contact-buttons {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+  align-items: center !important;
+}
+
+@media (min-width: 640px) {
+  .contact-buttons {
+    flex-direction: row !important;
+    justify-content: center !important;
+  }
+}
+
+.contact-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  padding: 1rem 2rem !important;
+  border-radius: 1rem !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  text-decoration: none !important;
+  transition: all 0.3s ease !important;
+  min-width: 200px !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  border: none !important;
+  outline: none !important;
+  z-index: 10 !important;
+  position: relative !important;
+}
+
+.contact-button.primary {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3) !important;
+}
+
+.contact-button.primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4) !important;
+  background: linear-gradient(135deg, #059669, #047857) !important;
+}
+
+.contact-button.secondary {
+  background: rgba(255,255,255,0.15) !important;
+  color: white !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+}
+
+.contact-button.secondary:hover {
+  transform: translateY(-2px) !important;
+  background: rgba(255,255,255,0.25) !important;
+  border-color: rgba(255,255,255,0.5) !important;
+}
+
+.contact-button.tertiary {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: white !important;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3) !important;
+}
+
+.contact-button.tertiary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4) !important;
+  background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
+  .billing-page {
+    background-attachment: scroll; /* Better for mobile performance */
+  }
+  
   .billing-container {
-    padding: 1rem;
+    padding: 1rem 0.5rem;
+    padding-bottom: 3rem;
+  }
+  
+  .billing-header {
+    margin-bottom: 2rem;
   }
   
   .stats-container {
     gap: 1.5rem;
+    flex-direction: column;
   }
   
   .stat-number {
@@ -458,6 +950,7 @@
   .billing-plans-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+    margin-bottom: 3rem;
   }
   
   .billing-plan-card {
@@ -470,8 +963,13 @@
 }
 
 @media (max-width: 480px) {
+  .billing-page {
+    background-attachment: scroll;
+  }
+  
   .billing-container {
     padding: 0.5rem;
+    padding-bottom: 2rem;
   }
   
   .floating-icons {
@@ -480,10 +978,12 @@
   
   .main-title {
     font-size: 2rem;
+    margin-bottom: 1rem;
   }
   
   .subtitle {
     font-size: 1rem;
+    margin-bottom: 2rem;
   }
   
   .billing-plan-card {
