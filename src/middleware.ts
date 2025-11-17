@@ -15,7 +15,7 @@ const PUBLIC_PATHS = [
   "/login-salesmanager",  // Tenant sales manager login (public)
   "/login-salesrep",  // Tenant sales rep login (public)
   "/pricing",
-  "/billing",         // Public billing page for plan selection
+  "/billing",         // Public billing page for plan selection (pre-auth)
   "/reset-password", 
   "/register",
   "/onboarding",
@@ -36,7 +36,7 @@ const PUBLIC_PATHS = [
 // Simplified: Direct registration users are owners, subdomain users have different flow
 // Only need to protect a few owner-specific routes
 const OWNER_ONLY_ROUTES = [
-  "/tenant-owner",    // Tenant owner dashboard and billing after login
+  "/tenant-owner",    // Tenant owner routes (post-auth)
   "/owner"           // Owner-specific admin panel
 ];
 
