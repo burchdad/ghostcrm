@@ -6,14 +6,14 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   console.log("🚪 [LOGOUT] Processing logout request...");
   
-  // CSRF origin check
-  const allowedOrigins = [
+  // CSRF protection
+  const allowedOrigins: string[] = [
     process.env.NEXT_PUBLIC_BASE_URL,
     process.env.NEXT_PUBLIC_DEPLOY_URL,
     "http://localhost:3000",
     "http://localhost:3001",
     "https://ghostcrm.com"
-  ];
+  ].filter((url): url is string => Boolean(url)); // Remove undefined values with type guard
   const origin = req.headers.get("origin") || req.headers.get("referer") || "";
   if (origin && !allowedOrigins.some(o => origin.startsWith(o))) {
     console.log("❌ [LOGOUT] Invalid origin:", origin);
