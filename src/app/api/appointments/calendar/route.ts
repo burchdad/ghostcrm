@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     const calendarEvents = formatAppointmentsForCalendar(appointments || []);
     
     // Calculate availability if requested
-    let availability = null;
+    let availability: any[] | null = null;
     if (include_availability) {
       availability = calculateAvailability(appointments || [], startDate, endDate);
     }
@@ -204,7 +204,7 @@ function calculateAvailability(appointments: any[], startDate: Date, endDate: Da
     days: [1, 2, 3, 4, 5, 6] // Monday-Saturday
   };
 
-  const availability = [];
+  const availability: any[] = [];
   const current = new Date(startDate);
 
   while (current <= endDate) {
