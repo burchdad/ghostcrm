@@ -23,13 +23,13 @@ export default function AdminTestingDashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [testStatus, setTestStatus] = useState('idle'); // idle, running, completed, failed
-  const [activeTests, setActiveTests] = useState([]);
-  const [testResults, setTestResults] = useState([]);
-  const [tenants, setTenants] = useState([]);
+  const [activeTests, setActiveTests] = useState<any[]>([]);
+  const [testResults, setTestResults] = useState<any[]>([]);
+  const [tenants, setTenants] = useState<any[]>([]);
   const [selectedTenants, setSelectedTenants] = useState(['main']);
   const [selectedTestSuites, setSelectedTestSuites] = useState(['all']);
-  const [schedules, setSchedules] = useState([]);
-  const [realTimeUpdates, setRealTimeUpdates] = useState(null);
+  const [schedules, setSchedules] = useState<any[]>([]);
+  const [realTimeUpdates, setRealTimeUpdates] = useState<EventSource | null>(null);
 
   const testSuites = [
     { id: 'all', name: 'Complete Test Suite', description: 'All test categories', critical: true },
