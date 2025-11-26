@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       customerEmail: session.customer_details?.email
     })
 
-    let promoCode = null
+    let promoCode: string | null = null
     let discountAmount = 0
     let discountPercentage = 0
 
