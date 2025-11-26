@@ -161,7 +161,7 @@ export class AIChartService {
   }
 
   private extractDataHints(prompt: string): string[] {
-    const hints = [];
+    const hints: string[] = [];
     
     // Time-based hints
     if (prompt.includes('month') || prompt.includes('monthly')) hints.push('monthly_data');
