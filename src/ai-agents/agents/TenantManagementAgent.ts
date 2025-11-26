@@ -777,7 +777,7 @@ export class TenantManagementAgent extends BaseAgent {
   }
 
   private async getResourceOptimizationRecommendations(metrics: TenantMetrics): Promise<string[]> {
-    const recommendations = [];
+    const recommendations: string[] = [];
     
     const storageUtilization = (metrics.storageUsed / metrics.storageLimit) * 100;
     if (storageUtilization < 30) {
@@ -813,7 +813,7 @@ export class TenantManagementAgent extends BaseAgent {
   }
 
   private async getTenantRecommendations(): Promise<string[]> {
-    const recommendations = [];
+    const recommendations: string[] = [];
     
     const overLimitTenants = Array.from(this.tenantMetrics.values())
       .filter(t => t.status === 'over_limit');
