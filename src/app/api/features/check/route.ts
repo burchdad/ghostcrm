@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
     const accessResult = accessControl.hasFeatureAccess(featureId);
     
     // Get usage information if available
-    let usageInfo = null;
+    let usageInfo: null | { currentUsage: number; limit: number | undefined; } = null;
     if (accessResult.currentUsage !== undefined) {
       usageInfo = {
         currentUsage: accessResult.currentUsage,
