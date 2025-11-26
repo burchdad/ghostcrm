@@ -16,6 +16,12 @@ import { IntegrationPreferences } from '@/lib/integrations'
 import OnboardingGuard from '@/components/onboarding/OnboardingGuard'
 import { markOnboardingComplete } from '@/hooks/useOnboardingStatus'
 
+interface Organization {
+  id: string;
+  name: string;
+  subdomain: string;
+}
+
 // Add floating animation styles
 const floatingStyles = `
   @keyframes float {
@@ -88,8 +94,8 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
   const [isCompleted, setIsCompleted] = useState(false)
   const [isLoading, setIsLoading] = useState(false) // Make sure this starts as false
   const [apiError, setApiError] = useState('')
-  const [createdOrganization, setCreatedOrganization] = useState(null)
-  const [existingOrganization, setExistingOrganization] = useState(null)
+  const [createdOrganization, setCreatedOrganization] = useState<Organization | null>(null)
+  const [existingOrganization, setExistingOrganization] = useState<Organization | null>(null)
   const [isUpdateMode, setIsUpdateMode] = useState(false)
 
   // Load existing organization data on component mount
