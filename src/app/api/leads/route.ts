@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
     const token = req.cookies.get("ghostcrm_jwt")?.value;
     let isDemoMode = false;
     let demoOrgId: string | null = null;
-    let jwtOrgId = null;
-    let jwtUserId = null;
+    let jwtOrgId: string | null = null;
+    let jwtUserId: string | null = null;
     
     console.log(`🔍 Checking for demo mode. Token exists: ${!!token}`);
     
