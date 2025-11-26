@@ -484,8 +484,8 @@ Available knowledge base includes: ${Object.keys(this.knowledgeBase).join(', ')}
           );
           break;
         case 'high-value-deal':
-          shouldEscalate = conversation.context.customerProfile.budget?.max && 
-            conversation.context.customerProfile.budget.max > (trigger.threshold || 50000);
+          shouldEscalate = !!(conversation.context.customerProfile.budget?.max && 
+            conversation.context.customerProfile.budget.max > (trigger.threshold || 50000));
           break;
       }
 
