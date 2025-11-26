@@ -7,6 +7,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+
+interface User {
+  email: string;
+  role: string;
+}
+
 import { 
   PlayIcon, 
   StopIcon, 
@@ -19,9 +25,9 @@ import {
   UsersIcon
 } from '@heroicons/react/24/outline';
 
-export default function AdminTestingDashboard() {
+export default function AdminTestingPage() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [testStatus, setTestStatus] = useState('idle'); // idle, running, completed, failed
   const [activeTests, setActiveTests] = useState<any[]>([]);
   const [testResults, setTestResults] = useState<any[]>([]);
