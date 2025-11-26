@@ -148,7 +148,7 @@ export class APIPerformanceAgent extends BaseAgent {
       const metrics = await this.collectMetrics() as APIPerformanceMetrics;
       const healthPercentage = this.calculateHealthPercentage(metrics);
       
-      const issues = [];
+      const issues: any[] = [];
       
       // Check for slow endpoints
       if (metrics.slowEndpoints > 0) {

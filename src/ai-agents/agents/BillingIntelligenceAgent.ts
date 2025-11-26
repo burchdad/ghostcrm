@@ -349,7 +349,7 @@ export class BillingIntelligenceAgent extends BaseAgent {
   private async getCustomersForChurnAnalysis(): Promise<any[]> {
     // In production, fetch from database
     // For now, simulate customer data
-    const customers = [];
+    const customers: any[] = [];
     
     for (let i = 0; i < 20; i++) {
       customers.push({

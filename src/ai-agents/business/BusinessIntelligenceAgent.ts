@@ -162,7 +162,7 @@ export class BusinessIntelligenceAgent extends BaseAgent {
       const metrics = await this.collectMetrics() as BusinessIntelligenceMetrics;
       const healthPercentage = this.calculateHealthPercentage(metrics);
       
-      const issues = [];
+      const issues: any[] = [];
       
       // Check data connectivity
       if (metrics.dataSourcesConnected === 0) {

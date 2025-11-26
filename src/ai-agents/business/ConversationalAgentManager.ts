@@ -174,7 +174,7 @@ export class ConversationalAgentManager extends BaseAgent {
       const metrics = await this.collectMetrics() as ConversationalAgentMetrics;
       const healthPercentage = this.calculateHealthPercentage(metrics);
       
-      const issues = [];
+      const issues: any[] = [];
       
       // Check conversation capacity
       if (metrics.activeConversations >= this.conversationalConfig.maxActiveConversations) {

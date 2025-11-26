@@ -536,7 +536,7 @@ export class TenantManagementAgent extends BaseAgent {
     }
 
     // Health check for all tenants
-    const results = [];
+    const results: any[] = [];
     for (const [id, metrics] of this.tenantMetrics) {
       const performance = this.performanceMetrics.get(id);
       results.push(await this.detailedTenantHealthCheck(metrics, performance));

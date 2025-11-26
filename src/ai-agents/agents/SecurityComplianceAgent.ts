@@ -515,7 +515,7 @@ export class SecurityComplianceAgent extends BaseAgent {
   }
 
   private async getSecurityRecommendations(): Promise<string[]> {
-    const recommendations = [];
+    const recommendations: string[] = [];
 
     const criticalEvents = this.securityEvents.filter(
       event => event.severity === 'critical' && 
