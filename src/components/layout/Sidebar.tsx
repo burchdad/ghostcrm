@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LucideHome, LucideUser, LucideBarChart2, LucideCar, LucideCalendar, Zap, Users, Shield, Activity, Settings, DollarSign, UserCog, TrendingUp, Building, CreditCard, FileText, ChevronDown, ChevronRight, MoreHorizontal, Palette, Bot } from "lucide-react";
 import { useAuth } from '@/context/AuthContext';
+import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import './Sidebar.css';
 
 // MVP Feature Configuration
@@ -161,6 +162,7 @@ const DEFAULT_ITEMS: SidebarItem[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth(); // Get user from AuthContext
+  const { isCompleted: onboardingCompleted } = useOnboardingStatus(); // Track onboarding status
   const items = DEFAULT_ITEMS;
   const [order, setOrder] = useState(items.map((_, i) => i));
   const [counts, setCounts] = useState<SidebarCounts>({
@@ -179,13 +181,18 @@ export default function Sidebar() {
   const [dropdownOpen, setDropdownOpen] = useState<Set<string>>(new Set());
 
   // Determine user type and role
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  const isSubdomain = hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname.includes('.localhost');
-  const isSoftwareOwner = user?.role === 'owner' && !isSubdomain; // Owner on main domain
-  const isTenantOwner = user?.role === 'owner' && isSubdomain; // Owner on subdomain
-  const isTenantAdmin = user?.role === 'admin' && isSubdomain; // Admin on subdomain
-  const isSalesManager = user?.role === 'manager' && isSubdomain; // Sales Manager on subdomain
-  const isSalesRep = user?.role === 'sales_rep' && isSubdomain; // Sales Rep on subdomain
+  // Check if user has dealership context (indicates tenant owner vs software owner)
+  const hasDealershipContext = user?.dealership && user.dealership.trim() !== '';
+  
+  // Role-based access determination
+  const isSoftwareOwner = user?.role === 'owner' && !hasDealershipContext; // Platform owner
+  const isTenantOwner = user?.role === 'owner' && hasDealershipContext; // Dealership owner
+  const isTenantAdmin = user?.role === 'admin' && hasDealershipContext; // Dealership admin
+  const isSalesManager = user?.role === 'manager' && hasDealershipContext; // Sales Manager
+  const isSalesRep = user?.role === 'sales_rep' && hasDealershipContext; // Sales Rep
+
+  // Determine if sidebar should be blurred during onboarding
+  const shouldBlurSidebar = isTenantOwner && !onboardingCompleted;
 
   // Toggle expandable items
   const toggleExpanded = (itemName: string) => {
@@ -302,7 +309,18 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="sidebar themed-bg-secondary themed-border">
+    <div className={`sidebar themed-bg-secondary themed-border ${
+      shouldBlurSidebar ? 'blur-sm pointer-events-none relative' : ''
+    }`}>
+      {shouldBlurSidebar && (
+        <div className="absolute inset-0 bg-white/10 backdrop-blur-sm z-10 flex items-center justify-center">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 text-center max-w-xs mx-4">
+            <div className="text-2xl mb-2">🚀</div>
+            <p className="text-sm font-medium text-gray-800">Complete your onboarding</p>
+            <p className="text-xs text-gray-600 mt-1">Unlock your dealership dashboard</p>
+          </div>
+        </div>
+      )}
       {/* Navigation takes full height */}
       <nav role="navigation" aria-label="Main Navigation">
         <div className="space-y-6">

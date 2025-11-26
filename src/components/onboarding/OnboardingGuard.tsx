@@ -25,10 +25,20 @@ export default function OnboardingGuard({
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
+    console.log('🔍 [ONBOARDING_GUARD] Status check:', {
+      isLoading,
+      isCompleted,
+      requireCompleted,
+      mode,
+      redirectTo,
+      shouldShowModal: requireCompleted && !isCompleted && mode === 'modal'
+    });
+
     if (!isLoading) {
       if (requireCompleted && !isCompleted) {
         if (mode === 'modal') {
           // Show onboarding modal overlay
+          console.log('🎭 [ONBOARDING_GUARD] Setting modal to show');
           setShowModal(true)
         } else {
           // Redirect to onboarding page
@@ -39,6 +49,8 @@ export default function OnboardingGuard({
         // User has completed onboarding, redirect away from onboarding pages
         console.log('🔄 [ONBOARDING_GUARD] Redirecting completed user to:', redirectTo);
         router.push(redirectTo)
+      } else {
+        console.log('✅ [ONBOARDING_GUARD] No action needed - user can proceed');
       }
     }
   }, [isLoading, isCompleted, requireCompleted, redirectTo, router, mode])

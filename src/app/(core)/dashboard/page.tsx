@@ -71,25 +71,24 @@ function DashboardContent() {
     teamMembers: 0
   });
 
-  // Detect tenant context
+  // Detect tenant context using dealership field instead of subdomain
   const [isTenantOwner, setIsTenantOwner] = useState(false);
   const [tenantSubdomain, setTenantSubdomain] = useState<string>('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname;
-      const isSubdomain = hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname.includes('.localhost');
-      const subdomain = isSubdomain ? hostname.split('.')[0] : '';
+      // Use dealership context for proper tenant owner detection
+      const hasDealershipContext = user?.dealership && user.dealership.trim() !== '';
+      const isOwner = user?.role === 'owner';
       
-      setIsTenantOwner(user?.role === 'owner' && isSubdomain);
-      setTenantSubdomain(subdomain);
+      setIsTenantOwner(isOwner && hasDealershipContext);
+      setTenantSubdomain(user?.dealership || '');
       
       console.log('🏢 [DASHBOARD CONTEXT]', {
-        hostname,
-        isSubdomain,
-        subdomain,
         userRole: user?.role,
-        isTenantOwner: user?.role === 'owner' && isSubdomain
+        dealership: user?.dealership,
+        hasDealershipContext,
+        isTenantOwner: isOwner && hasDealershipContext
       });
     }
   }, [user]);

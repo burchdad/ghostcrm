@@ -69,7 +69,8 @@ export function useOnboardingStatus(): OnboardingStatus {
 
         // Check with API for server-side verification
         try {
-          const response = await fetch('/api/onboarding/status')
+          // TODO: Replace with setup status check
+          const response = await fetch('/api/setup/status')
           if (response.ok) {
             const data = await response.json()
             setStatus({
