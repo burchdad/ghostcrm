@@ -224,8 +224,15 @@ function SecurityAIInsightsPanel() {
   );
 }
 
+interface LoginAttempt {
+  timestamp: string;
+  email: string;
+  ip: string;
+  suspicious: boolean;
+}
+
 function useLoginSecurityMonitor() {
-  const [loginAttempts, setLoginAttempts] = useState([]);
+  const [loginAttempts, setLoginAttempts] = useState<LoginAttempt[]>([]);
   const [aiAlert, setAiAlert] = useState("");
 
   useEffect(() => {
