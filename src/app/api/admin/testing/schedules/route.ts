@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
       active: scheduleData.active !== false,
       created_by: 'admin@ghostcrm.com', // TODO: Get from auth
       created_at: new Date().toISOString(),
-      last_run: null,
+      last_run: '', // Use empty string instead of null to match expected type
       next_run: calculateNextRun(scheduleData.cron_expression),
       success_count: 0,
       failure_count: 0
