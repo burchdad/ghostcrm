@@ -656,7 +656,7 @@ export class BillingIntelligenceAgent extends BaseAgent {
   }
 
   private async getAnomalyRecommendations(variance: number, isRevenueDrop: boolean): Promise<string[]> {
-    const recommendations = [];
+    const recommendations: string[] = [];
     
     if (isRevenueDrop) {
       recommendations.push('Investigate payment failure increases');
@@ -701,7 +701,7 @@ export class BillingIntelligenceAgent extends BaseAgent {
   }
 
   private async identifyBillingIssues(): Promise<string[]> {
-    const issues = [];
+    const issues: string[] = [];
     
     if (!this.billingMetrics) return ['Unable to calculate billing metrics'];
     
@@ -722,7 +722,7 @@ export class BillingIntelligenceAgent extends BaseAgent {
   }
 
   private async getBillingHealthRecommendations(healthScore: number): Promise<string[]> {
-    const recommendations = [];
+    const recommendations: string[] = [];
     
     if (healthScore < 6) {
       recommendations.push('Immediate attention required for billing health');
@@ -752,7 +752,7 @@ export class BillingIntelligenceAgent extends BaseAgent {
   }
 
   private async getBillingRecommendations(): Promise<string[]> {
-    const recommendations = [];
+    const recommendations: string[] = [];
     
     const failureRate = this.calculatePaymentFailureRate();
     if (failureRate > 0.05) {
