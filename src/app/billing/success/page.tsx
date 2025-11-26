@@ -46,12 +46,13 @@ function SuccessContent() {
         })
         
         // Auto-redirect after 3 seconds based on user type
-        setTimeout(() => {
+        setTimeout(async () => {
           if (isSoftwareOwner || usedSoftwareOwnerPromo) {
             router.push('/owner/dashboard')
           } else {
-            // Start onboarding for regular clients
-            router.push('/onboarding')
+            // Clear current session and redirect to tenant owner login
+            await fetch('/api/auth/logout', { method: 'POST' });
+            router.push('/login-owner')
           }
         }, 3000)
         
@@ -106,7 +107,7 @@ function SuccessContent() {
           <p className="success-subtitle">
             {successData.isSoftwareOwner 
               ? 'Software Owner access confirmed. Redirecting to your dashboard...'
-              : 'Thank you for your subscription. Your account has been activated.'
+              : 'Thank you for your subscription. You will now be redirected to login to your tenant portal!'
             }
           </p>
         </div>
@@ -121,7 +122,7 @@ function SuccessContent() {
           <p className="status-description">
             {successData.isSoftwareOwner 
               ? 'Full system access granted. You can manage all tenants and system settings.'
-              : 'Your GhostCRM subscription is now active and all features are available.'
+              : 'Your GhostCRM subscription is now active and your custom subdomain portal is ready to use.'
             }
           </p>
           {successData.promoCode && (
@@ -135,7 +136,7 @@ function SuccessContent() {
           <p className="redirect-text">
             Redirecting you to{' '}
             <span className="redirect-destination">
-              {successData.isSoftwareOwner ? 'Software Owner Dashboard' : 'Onboarding Setup'}
+              {successData.isSoftwareOwner ? 'Software Owner Dashboard' : 'Tenant Owner Login'}
             </span>
             {' '}in 3 seconds...
           </p>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyJwtToken, hasJwtSecret } from '@/lib/jwt';
+import { createSupabaseServer } from '@/utils/supabase/server';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
@@ -33,12 +34,41 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ user: null }, { status: 401 });
     }
     
+    // Get organization subdomain if user has an organization
+    let organizationSubdomain = null;
+    if (decoded.organizationId) {
+      try {
+        // Use service role to bypass RLS for organization lookup
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabaseAdmin = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        
+        const { data: org, error } = await supabaseAdmin
+          .from('organizations')
+          .select('subdomain')
+          .eq('id', decoded.organizationId)
+          .single();
+        
+        if (error) {
+          console.warn('⚠️ [AUTH/ME] Organization query error:', error);
+        } else {
+          organizationSubdomain = org?.subdomain || null;
+          console.log('🏢 [AUTH/ME] Found organization subdomain:', organizationSubdomain);
+        }
+      } catch (orgError) {
+        console.warn('⚠️ [AUTH/ME] Could not fetch organization subdomain:', orgError);
+      }
+    }
+    
     // Only log successful authentications to reduce noise
     console.log('✅ [AUTH/ME] User authenticated:', {
       userId: decoded.userId,
       email: decoded.email,
       role: decoded.role,
       organizationId: decoded.organizationId,
+      organizationSubdomain,
       tenantId: decoded.tenantId
     });
     
@@ -48,6 +78,7 @@ export async function GET(req: NextRequest) {
         email: decoded.email,
         role: decoded.role,
         organizationId: decoded.organizationId,
+        organizationSubdomain,
         tenantId: decoded.tenantId,
         exp: decoded.exp
       }

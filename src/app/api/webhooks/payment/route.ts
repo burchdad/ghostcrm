@@ -10,6 +10,7 @@ import { createSupabaseServer } from '@/utils/supabase/server';
 import { provisionSubscription, updateSubscription, suspendSubscription } from '@/lib/features/provisioning';
 import { PlanId } from '@/lib/features/pricing';
 import { FeatureId } from '@/lib/features/definitions';
+import { trackPromoCodeUsage } from '@/lib/promo-code-tracking';
 
 export const runtime = 'nodejs';
 
@@ -495,6 +496,14 @@ async function handleCheckoutCompleted(session: CheckoutSessionObject): Promise<
   processed: boolean;
 }> {
   try {
+    // Track promo code usage if any discounts were applied
+    try {
+      await trackPromoCodeUsage(session);
+    } catch (trackingError) {
+      console.error('Error tracking promo code usage:', trackingError);
+      // Don't fail the entire webhook for tracking errors
+    }
+
     if (session.mode === 'subscription' && session.subscription) {
       // Subscription created via checkout - will be handled by subscription.created event
       console.log(`Checkout completed for subscription ${session.subscription}`);

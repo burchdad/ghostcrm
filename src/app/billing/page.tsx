@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import '@/styles/components/public-billing.css'
+import Link from 'next/link'
+import './billing.css'
+import AIChatAssistant from './ai-chat'
 import { 
   Check, 
   CreditCard, 
@@ -176,6 +178,7 @@ export default function BillingPage() {
   const [showFAQ, setShowFAQ] = useState(false)
   const [openFAQIndex, setOpenFAQIndex] = useState<number | null>(null)
   const [isAnnual, setIsAnnual] = useState(false) // Toggle for annual/monthly pricing
+  const [showAIChat, setShowAIChat] = useState(false) // AI Chat Assistant state
   
   // Ensure proper CSS control for billing page
   useEffect(() => {
@@ -234,7 +237,7 @@ export default function BillingPage() {
 
       // First, try to get the Stripe price ID from our product mapping
       const mappingResponse = await fetch(`/api/stripe/product-mapping?localId=${localProductId}`)
-      let priceId = null
+      let priceId: string | null = null
 
       if (mappingResponse.ok) {
         const mappingData = await mappingResponse.json()
@@ -339,22 +342,19 @@ export default function BillingPage() {
 
   return (
     <div className="billing-page" style={{ position: 'relative', minHeight: '100vh', zIndex: 1 }}>
-      {/* Hero background with same gradient as homepage */}
       <div className="billing-hero-background">
-        {/* Enhanced animated background with glassmorphism */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20" />
-          <div className="absolute -top-1/2 -right-1/2 w-[600px] h-[600px] bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute -bottom-1/2 -left-1/2 w-[600px] h-[600px] bg-pink-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
-          <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-blue-500/15 rounded-full blur-3xl animate-pulse delay-2000" />
-          <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-amber-500/15 rounded-full blur-3xl animate-pulse delay-3000" />
-          
-          {/* Floating particles - simplified */}
-          <div className="absolute inset-0">
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute w-2 h-2 bg-white/30 rounded-full"
+        <div className="billing-bg-gradient"></div>
+        <div className="billing-bg-blur-1"></div>
+        <div className="billing-bg-blur-2"></div>
+        <div className="billing-bg-blur-3"></div>
+        <div className="billing-bg-blur-4"></div>
+        
+        {/* Floating particles - simplified */}
+        <div className="floating-particles-container">
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="floating-particle"
                 style={{
                   left: `${20 + (i * 15)}%`,
                   top: `${20 + (i * 10)}%`,
@@ -415,9 +415,9 @@ export default function BillingPage() {
 
         {/* Enhanced Annual/Monthly Toggle with better styling */}
           <div className="billing-toggle-container">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl md:text-3xl font-bold text-white mb-3">Choose Your Payment Schedule</h3>
-              <p className="text-white/80 text-lg">Save up to 20% with annual billing - pay less, get more!</p>
+            <div className="billing-toggle-header">
+              <h3 className="billing-toggle-title">Choose Your Payment Schedule</h3>
+              <p className="billing-toggle-subtitle">Save up to 20% with annual billing - pay less, get more!</p>
             </div>
             <div className="billing-toggle relative">
               <button
@@ -425,7 +425,7 @@ export default function BillingPage() {
                   console.log('🔄 Monthly billing clicked')
                   setIsAnnual(false)
                 }}
-                className={`${!isAnnual ? 'active bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg' : 'text-white/70 hover:text-white'} px-8 py-3 rounded-xl font-semibold transition-all duration-300`}
+                className={`billing-toggle-button ${!isAnnual ? 'active' : ''}`}
               >
                 Monthly Billing
               </button>
@@ -434,12 +434,12 @@ export default function BillingPage() {
                   console.log('🔄 Annual billing clicked')
                   setIsAnnual(true)
                 }}
-                className={`${isAnnual ? 'active bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg' : 'text-white/70 hover:text-white'} px-8 py-3 rounded-xl font-semibold transition-all duration-300`}
+                className={`billing-toggle-button ${isAnnual ? 'active' : ''}`}
               >
                 Annual Billing
               </button>
               {isAnnual && (
-                <div className="absolute -top-3 -right-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse shadow-lg">
+                <div className="billing-save-badge">
                   Save 20%! 🎉
                 </div>
               )}
@@ -457,7 +457,7 @@ export default function BillingPage() {
             return (
               <div
                 key={plan.id}
-                className={`billing-plan-card ${plan.popular ? 'popular' : ''} ${isSelected ? 'ring-2 ring-white/40' : ''}`}
+                className={`billing-plan-card ${plan.popular ? 'popular' : ''} ${isSelected ? 'selected' : ''}`}
                 onClick={() => {
                   console.log(`🔄 Plan card clicked: ${plan.id}`)
                   setSelectedPlan(plan.id)
@@ -478,7 +478,7 @@ export default function BillingPage() {
                 <ul className="billing-plan-features">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="billing-plan-feature">
-                      <Check className="w-5 h-5" />
+                      <Check className="check-icon" />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -525,11 +525,11 @@ export default function BillingPage() {
                 <div className="pricing-card">
                   <div className="pricing-amount">
                     ${pricing.monthly}
-                    <span className="text-xl text-white/70 font-medium">/month</span>
+                    <span className="pricing-period">/month</span>
                   </div>
                   <div className="pricing-label">{isAnnual ? 'Monthly (Billed Annually)' : 'Monthly Subscription'}</div>
                   {isAnnual && (
-                    <div className="text-green-400 text-base font-semibold">20% Annual Savings!</div>
+                    <div className="annual-savings">20% Annual Savings!</div>
                   )}
                 </div>
                 
@@ -584,6 +584,24 @@ export default function BillingPage() {
 
               {/* Enhanced checkout button with better prominence */}
               <div className="checkout-button-container">
+                {/* Security Notice */}
+                <div className="security-notice">
+                  <div className="security-badges">
+                    <div className="security-badge-item">
+                      <Shield className="w-5 h-5" />
+                      <span>256-bit SSL</span>
+                    </div>
+                    <div className="security-badge-item">
+                      <Award className="w-5 h-5" />
+                      <span>SOC 2 Certified</span>
+                    </div>
+                    <div className="security-badge-item">
+                      <Clock className="w-5 h-5" />
+                      <span>30-day guarantee</span>
+                    </div>
+                  </div>
+                </div>
+                
                 <button
                   onClick={handleCheckout}
                   disabled={loading || !selectedPlanData}
@@ -591,20 +609,21 @@ export default function BillingPage() {
                 >
                   {loading ? (
                     <>
-                      <div className="w-7 h-7 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="checkout-spinner" />
                       Processing...
                     </>
                   ) : (
                     <>
-                      <CreditCard className="w-7 h-7" />
+                      <CreditCard className="checkout-icon" />
                       Start Your {selectedPlanData?.name || 'Selected'} Plan
-                      <ArrowRight className="w-7 h-7" />
+                      <ArrowRight className="checkout-icon" />
                     </>
                   )}
                 </button>
                 
                 <p className="checkout-security-text">
-                  Secure checkout powered by Stripe • Cancel anytime
+                  <Shield className="disclaimer-icon" />
+                  Secure checkout powered by Stripe • Cancel anytime • 30-day money-back guarantee
                 </p>
               </div>
             </div>
@@ -620,7 +639,7 @@ export default function BillingPage() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="testimonials-grid">
             {TESTIMONIALS.map((testimonial, index) => (
               <div key={index} className="testimonial-card">
                 <div className="testimonial-quote">
@@ -649,7 +668,7 @@ export default function BillingPage() {
             </p>
           </div>
           
-          <div className="space-y-4 max-w-4xl mx-auto">
+          <div className="faq-list">
             {FAQ_DATA.map((faq, index) => (
               <div key={index} className="faq-item">
                 <button
@@ -678,35 +697,138 @@ export default function BillingPage() {
 
         {/* Enhanced Contact Section */}
         <div className="contact-section">
-          <h3 className="contact-title">Need Help Choosing?</h3>
-          <p className="contact-subtitle">
-            Our team is here to help you find the perfect plan for your dealership
-          </p>
-          
-          <div className="contact-buttons">
-            <a href="tel:+1-555-GHOST-1" className="contact-button primary">
-              <Phone className="w-6 h-6" />
-              Call Us: (555) GHOST-1
-            </a>
-            <a href="mailto:sales@ghostcrm.ai" className="contact-button secondary">
-              <Mail className="w-6 h-6" />
-              Email Sales Team
-            </a>
-            <button 
-              onClick={() => {
-                console.log('🔄 Live chat clicked')
-                // Add your live chat functionality here
-                alert('Live chat would open here. Connect your chat widget!')
-              }}
-              className="contact-button tertiary"
-            >
-              <MessageCircle className="w-6 h-6" />
-              Live Chat
-            </button>
+          <div className="contact-content">
+            <div className="contact-header">
+              <div className="contact-icon">
+                <HelpCircle className="w-12 h-12" />
+              </div>
+              <h3 className="contact-title">Need Help Choosing?</h3>
+              <p className="contact-subtitle">
+                Our team is here to help you find the perfect plan for your dealership.
+                <br />
+                <strong>Response time: Under 5 minutes</strong>
+              </p>
+            </div>
+            
+            <div className="contact-buttons">
+              <a href="tel:+1-555-GHOST-1" className="contact-button primary">
+                <div className="contact-button-icon">
+                  <Phone className="w-6 h-6" />
+                </div>
+                <div className="contact-button-text">
+                  <span className="contact-button-label">Call Us Now</span>
+                  <span className="contact-button-value">(555) GHOST-1</span>
+                </div>
+              </a>
+              <a href="mailto:sales@ghostcrm.ai" className="contact-button secondary">
+                <div className="contact-button-icon">
+                  <Mail className="w-6 h-6" />
+                </div>
+                <div className="contact-button-text">
+                  <span className="contact-button-label">Email Sales</span>
+                  <span className="contact-button-value">sales@ghostcrm.ai</span>
+                </div>
+              </a>
+              <button 
+                onClick={() => {
+                  console.log('🔄 Live chat clicked - Opening AI Assistant')
+                  setShowAIChat(true)
+                }}
+                className="contact-button tertiary"
+              >
+                <div className="contact-button-icon">
+                  <MessageCircle className="w-6 h-6" />
+                </div>
+                <div className="contact-button-text">
+                  <span className="contact-button-label">Live Chat</span>
+                  <span className="contact-button-value">Available 24/7</span>
+                </div>
+              </button>
+            </div>
+            
+            {/* Trust Indicators */}
+            <div className="trust-indicators">
+              <div className="trust-item">
+                <Shield className="w-8 h-8" />
+                <span>SOC 2 Certified</span>
+              </div>
+              <div className="trust-item">
+                <Award className="w-8 h-8" />
+                <span>Industry Leader</span>
+              </div>
+              <div className="trust-item">
+                <Clock className="w-8 h-8" />
+                <span>5-Min Setup</span>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Professional Footer */}
+        <footer className="billing-footer">
+          <div className="footer-content">
+            <div className="footer-section">
+              <h4>Company</h4>
+              <ul>
+                <li><Link href="/about">About Us</Link></li>
+                <li><Link href="/careers">Careers</Link></li>
+                <li><Link href="/press">Press</Link></li>
+                <li><Link href="/contact">Contact</Link></li>
+              </ul>
+            </div>
+            <div className="footer-section">
+              <h4>Product</h4>
+              <ul>
+                <li><Link href="/features">Features</Link></li>
+                <li><Link href="/integrations">Integrations</Link></li>
+                <li><Link href="/api-docs">API Docs</Link></li>
+                <li><Link href="/roadmap">Roadmap</Link></li>
+              </ul>
+            </div>
+            <div className="footer-section">
+              <h4>Support</h4>
+              <ul>
+                <li><Link href="/help">Help Center</Link></li>
+                <li><Link href="/documentation">Documentation</Link></li>
+                <li><Link href="/training">Training</Link></li>
+                <li><Link href="/status">Status</Link></li>
+              </ul>
+            </div>
+            <div className="footer-section">
+              <h4>Legal</h4>
+              <ul>
+                <li><Link href="/privacy">Privacy Policy</Link></li>
+                <li><Link href="/terms">Terms of Service</Link></li>
+                <li><Link href="/security">Security</Link></li>
+                <li><Link href="/compliance">Compliance</Link></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="footer-bottom">
+            <div className="footer-brand">
+              <Rocket className="w-8 h-8" />
+              <span>GhostCRM</span>
+            </div>
+            <div className="footer-tagline">
+              <p>&copy; 2025 GhostCRM. All rights reserved.</p>
+              <p>Empowering dealerships with AI-powered success.</p>
+            </div>
+            <div className="footer-security">
+              <div className="security-badge">
+                <Shield className="w-6 h-6" />
+                <span>Enterprise Security</span>
+              </div>
+            </div>
+          </div>
+        </footer>
       </div>
+      
+      {/* AI Chat Assistant */}
+      <AIChatAssistant 
+        isOpen={showAIChat} 
+        onClose={() => setShowAIChat(false)} 
+      />
     </div>
-  </div>
   )
 }

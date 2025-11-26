@@ -11,6 +11,7 @@ import { createSupabaseServer } from '@/utils/supabase/server';
 import { provisionSubscription, updateSubscription, suspendSubscription } from '@/lib/features/provisioning';
 import { PlanId } from '@/lib/features/pricing';
 import { FeatureId } from '@/lib/features/definitions';
+import { trackPromoCodeUsage } from '@/lib/promo-code-tracking';
 
 export const runtime = 'nodejs';
 
@@ -113,6 +114,22 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session):
 }> {
   try {
     console.log('Processing checkout session completed:', session.id);
+
+    // Track promo code usage if any discounts were applied
+    try {
+      await trackPromoCodeUsage(session);
+    } catch (trackingError) {
+      console.error('Error tracking promo code usage:', trackingError);
+      // Don't fail the entire webhook for tracking errors
+    }
+
+    // Activate subdomain for the user who just paid
+    try {
+      await activateSubdomainAfterPayment(session);
+    } catch (activationError) {
+      console.error('Error activating subdomain after payment:', activationError);
+      // Don't fail the entire webhook for subdomain activation errors
+    }
 
     if (session.mode === 'subscription' && session.subscription) {
       // For subscription checkouts, the subscription.created event will handle provisioning
@@ -319,5 +336,97 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<{
   } catch (error) {
     console.error('Error handling failed payment:', error);
     return { success: false, processed: false, error: String(error) };
+  }
+}
+
+/**
+ * Activate subdomain after successful payment
+ */
+async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): Promise<void> {
+  try {
+    console.log('🌐 [STRIPE_WEBHOOK] Activating subdomain after payment for session:', session.id);
+
+    // Get customer email from session
+    const customerEmail = session.customer_email || session.customer_details?.email;
+    
+    if (!customerEmail) {
+      console.warn('⚠️ [STRIPE_WEBHOOK] No customer email found in session');
+      return;
+    }
+
+    const supabase = await createSupabaseServer();
+
+    // Find the user by email
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, organization_id')
+      .eq('email', customerEmail)
+      .single();
+
+    if (userError || !user) {
+      console.warn('⚠️ [STRIPE_WEBHOOK] User not found for email:', customerEmail);
+      return;
+    }
+
+    if (!user.organization_id) {
+      console.warn('⚠️ [STRIPE_WEBHOOK] User has no organization:', user.id);
+      return;
+    }
+
+    // Find and activate the subdomain
+    const { data: subdomainRecord, error: subdomainError } = await supabase
+      .from('subdomains')
+      .select('*')
+      .eq('organization_id', user.organization_id)
+      .eq('status', 'pending_payment')
+      .single();
+
+    if (subdomainError || !subdomainRecord) {
+      console.warn('⚠️ [STRIPE_WEBHOOK] No pending subdomain found for organization:', user.organization_id);
+      return;
+    }
+
+    // Activate the subdomain
+    const { error: updateError } = await supabase
+      .from('subdomains')
+      .update({
+        status: 'active',
+        updated_at: new Date().toISOString(),
+        provisioned_at: new Date().toISOString()
+      })
+      .eq('id', subdomainRecord.id);
+
+    if (updateError) {
+      console.error('❌ [STRIPE_WEBHOOK] Failed to activate subdomain:', updateError);
+      return;
+    }
+
+    console.log('✅ [STRIPE_WEBHOOK] Subdomain activated:', subdomainRecord.subdomain);
+
+    // Optionally call the subdomain provisioning API to set up DNS
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/subdomains/provision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subdomain: subdomainRecord.subdomain,
+          organizationId: user.organization_id,
+          organizationName: subdomainRecord.organization_name,
+          ownerEmail: customerEmail,
+          autoProvision: true
+        })
+      });
+
+      if (response.ok) {
+        console.log('✅ [STRIPE_WEBHOOK] Subdomain DNS provisioned:', subdomainRecord.subdomain);
+      } else {
+        console.warn('⚠️ [STRIPE_WEBHOOK] DNS provisioning failed for:', subdomainRecord.subdomain);
+      }
+    } catch (provisionError) {
+      console.error('❌ [STRIPE_WEBHOOK] Error provisioning subdomain DNS:', provisionError);
+    }
+
+  } catch (error) {
+    console.error('❌ [STRIPE_WEBHOOK] Error in activateSubdomainAfterPayment:', error);
   }
 }

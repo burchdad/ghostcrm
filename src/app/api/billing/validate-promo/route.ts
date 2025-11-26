@@ -21,7 +21,7 @@ async function validatePromoCode(code: string) {
     // Query the promo_codes table directly
     const { data, error } = await supabase
       .from('promo_codes')
-      .select('*')
+      .select('*, stripe_promotion_code_id, stripe_coupon_id, sync_status')
       .ilike('code', code.trim())
       .eq('is_active', true)
       .single();
@@ -59,7 +59,10 @@ async function validatePromoCode(code: string) {
       expiresAt: data.expires_at,
       isActive: data.is_active,
       createdAt: data.created_at,
-      createdBy: data.created_by
+      createdBy: data.created_by,
+      stripePromotionCodeId: data.stripe_promotion_code_id,
+      stripeCouponId: data.stripe_coupon_id,
+      syncStatus: data.sync_status
     };
   } catch (error) {
     console.error('❌ [BILLING_VALIDATION] Error validating promo code:', error);
@@ -102,6 +105,7 @@ export async function POST(req: NextRequest) {
         discountValue: promoCode.discountValue,
         customMonthlyPrice: promoCode.customMonthlyPrice,
         customYearlyPrice: promoCode.customYearlyPrice,
+        stripePromotionCodeId: promoCode.stripePromotionCodeId,
         // Don't expose sensitive data like usage counts or internal IDs
       }
     });

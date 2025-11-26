@@ -1,7 +1,8 @@
 "use client";
 import React, { useState } from "react";
-import AIChartAdminInterface from "../../(core)/dashboard/components/marketplace/ai/components/AIChartAdminInterface";
-import EnhancedAIChartBuilder from "../../(core)/dashboard/components/marketplace/ai/components/EnhancedAIChartBuilder";
+// TODO: Fix these imports - files don't exist
+// import AIChartAdminInterface from "../../(app)/dashboard/components/marketplace/ai/components/AIChartAdminInterface";
+// import EnhancedAIChartBuilder from "../../(app)/dashboard/components/marketplace/ai/components/EnhancedAIChartBuilder";
 
 export default function AIChartTestPage() {
   const [showAdmin, setShowAdmin] = useState(false);
@@ -52,7 +53,8 @@ export default function AIChartTestPage() {
               
               {showAdmin && (
                 <div className="border rounded-lg p-4">
-                  <AIChartAdminInterface />
+                  {/* <AIChartAdminInterface /> */}
+                  <p className="text-gray-500">Admin interface not available</p>
                 </div>
               )}
               
@@ -143,10 +145,22 @@ export default function AIChartTestPage() {
       
       {/* AI Chart Builder Modal */}
       {isBuilderOpen && (
-        <EnhancedAIChartBuilder 
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-medium mb-4">AI Chart Builder</h3>
+            <p className="text-gray-500 mb-4">Chart builder not available</p>
+            <button 
+              onClick={() => setIsBuilderOpen(false)}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+        /* <EnhancedAIChartBuilder 
           isOpen={isBuilderOpen}
           onClose={() => setIsBuilderOpen(false)}
-        />
+        /> */
       )}
     </div>
   );

@@ -30,11 +30,13 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "strictNullChecks": true
   },
   "include": [
     "src",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "C:\\Users\\burch\\.next-build/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

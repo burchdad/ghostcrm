@@ -15,7 +15,7 @@ export default function OnboardingPage() {
     console.log('🔍 [ONBOARDING PAGE] User context:', {
       user: user ? {
         role: user.role,
-        dealership: user.dealership,
+        tenantId: user.tenantId,
         email: user.email
       } : null,
       hasUser: !!user
@@ -28,13 +28,13 @@ export default function OnboardingPage() {
     }
 
     // Check if user is tenant owner - if so, redirect to dashboard where onboarding modal will show
-    const hasDealershipContext = user?.dealership && user.dealership.trim() !== '';
-    const isTenantOwner = user?.role === 'owner' && hasDealershipContext;
+    const hasOrganizationContext = user?.tenantId && user.tenantId.trim() !== '';
+    const isTenantOwner = user?.role === 'owner' && hasOrganizationContext;
     
     console.log('🔍 [ONBOARDING] Role check:', {
       role: user.role,
-      dealership: user.dealership,
-      hasDealershipContext,
+      tenantId: user.tenantId,
+      hasOrganizationContext,
       isTenantOwner
     });
     

@@ -39,14 +39,7 @@ export default function CheckoutCancelPage() {
                 href="/billing"
                 className="primary-button"
               >
-                View Pricing Plans
-              </Link>
-              
-              <Link
-                href="/dashboard"
-                className="secondary-button"
-              >
-                Back to Dashboard
+                Return to Billing
               </Link>
             </div>
 

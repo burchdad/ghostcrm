@@ -20,7 +20,7 @@ import {
   Filler
 } from 'chart.js';
 import DashboardChartCard from "./DashboardChartCard";
-import '../../../../styles/dashboard-charts.css';
+import '@/styles/dashboard-charts.css';
 
 // Register Chart.js components including Filler for fill option
 Chart.register(

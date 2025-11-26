@@ -18,12 +18,13 @@ interface CreateCheckoutRequest {
   trialDays?: number;
   billing?: 'monthly' | 'yearly';
   promoCode?: string;
+  stripePromotionCodeId?: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: CreateCheckoutRequest = await request.json()
-    const { priceId, planId, setupFee, monthlyPrice, successUrl, cancelUrl, tenantId, customerId, trialDays, billing, promoCode } = body
+    const { priceId, planId, setupFee, monthlyPrice, successUrl, cancelUrl, tenantId, customerId, trialDays, billing, promoCode, stripePromotionCodeId } = body
 
     console.log(`🛒 [CHECKOUT] Creating session for plan: ${planId}, billing: ${billing}, promo: ${promoCode || 'none'}, setupFee: ${setupFee}`)
 
@@ -114,9 +115,17 @@ export async function POST(request: NextRequest) {
             })
           }
 
-          const sessionParams = {
+          const sessionParams: any = {
             ...baseSessionParams,
             line_items: lineItems,
+          }
+
+          // Apply promo code if provided
+          if (stripePromotionCodeId) {
+            console.log(`🎫 [CHECKOUT] Applying Stripe promotion code: ${stripePromotionCodeId}`);
+            sessionParams.discounts = [{
+              promotion_code: stripePromotionCodeId
+            }];
           }
 
           const session = await stripe.checkout.sessions.create(sessionParams)

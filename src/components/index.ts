@@ -13,9 +13,6 @@ export * from "./modals";
 // Dashboard components
 export * from "./dashboards";
 
-// Onboarding components
-export * from "./onboarding";
-
 // Feedback components
 export * from "./feedback";
 

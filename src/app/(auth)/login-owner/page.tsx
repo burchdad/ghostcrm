@@ -13,10 +13,29 @@ export default function TenantOwnerLoginPage() {
   // Redirect if already authenticated based on role
   useEffect(() => {
     if (user && !isLoading) {
-      // Tenant owner login should always go to tenant owner dashboard
-      router.push("/tenant-owner/dashboard");
+      // Check if tenant owner needs onboarding first
+      checkOnboardingStatus();
     }
   }, [user, isLoading, router]);
+
+  const checkOnboardingStatus = async () => {
+    try {
+      const response = await fetch('/api/onboarding/status');
+      const { isCompleted } = await response.json();
+      
+      if (!isCompleted) {
+        // Redirect to onboarding flow first
+        router.push('/onboarding');
+      } else {
+        // Already completed onboarding, go to dashboard
+        router.push("/tenant-owner/dashboard");
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      // Default to dashboard if check fails
+      router.push("/tenant-owner/dashboard");
+    }
+  };
 
   return (
     <div style={{

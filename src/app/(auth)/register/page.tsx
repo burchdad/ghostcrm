@@ -10,6 +10,7 @@ export default function RegisterPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [subdomain, setSubdomain] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -39,7 +40,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, companyName, email, password, role }),
+        body: JSON.stringify({ firstName, lastName, companyName, subdomain, email, password, role }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -330,6 +331,60 @@ export default function RegisterPage() {
                   onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.5)')}
                   onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)')}
                 />
+              </div>
+
+              {/* Subdomain */}
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    marginBottom: '0.5rem',
+                  }}
+                >
+                  Subdomain
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    id="subdomain"
+                    type="text"
+                    value={subdomain}
+                    onChange={(e) => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '0.75rem',
+                      color: 'white',
+                      fontSize: '1rem',
+                      outline: 'none',
+                      transition: 'all 0.2s',
+                    }}
+                    placeholder="your-company"
+                    onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.5)')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)')}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      right: '0.75rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      fontSize: '0.875rem',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    .ghostcrm.ai
+                  </div>
+                </div>
+                <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  This will be your custom login URL: {subdomain || 'your-company'}.ghostcrm.ai
+                </p>
               </div>
 
               {/* Email */}

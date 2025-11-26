@@ -24,6 +24,7 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
                      pathname === "/register" || 
                      pathname === "/reset-password" || 
                      pathname === "/billing" ||
+                     pathname.startsWith("/billing/") ||
                      pathname === "/login-owner" ||
                      pathname === "/login-admin" ||
                      pathname === "/login-salesmanager" ||
@@ -87,10 +88,13 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
       {/* Right Sidebar (Collaboration) */}
       {!expandedMode && (
         <aside
-          className="fixed right-0 bottom-0 z-30 shadow-lg overflow-hidden"
+          className="fixed right-0 bottom-0 z-30 shadow-lg overflow-hidden collaboration-sidebar-container"
           style={{
             top: "var(--unified-toolbar-h, 64px)",
             width: `${collaborationSidebarWidth}px`,
+            height: "calc(100vh - var(--unified-toolbar-h, 64px))",
+            position: "fixed",
+            right: "0",
           }}
         >
           <CollaborationSidebar onExpandMode={setExpandedMode} />

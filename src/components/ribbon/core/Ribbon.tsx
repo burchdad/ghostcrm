@@ -29,7 +29,7 @@ function useOutsideClick(ref: React.RefObject<HTMLElement>, onClose: () => void)
 
 // Function to get contextual tab name based on current route
 function getContextualTabName(pathname: string): string {
-  if (pathname === "/" || pathname.includes("/login") || pathname.includes("/register") || pathname.includes("/onboarding")) {
+  if (pathname === "/" || pathname.includes("/login") || pathname.includes("/register") || pathname.includes("/tenant-owner/setup")) {
     return "Home";
   }
   if (pathname.includes("/dashboard")) {

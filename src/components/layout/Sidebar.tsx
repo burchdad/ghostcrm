@@ -181,15 +181,15 @@ export default function Sidebar() {
   const [dropdownOpen, setDropdownOpen] = useState<Set<string>>(new Set());
 
   // Determine user type and role
-  // Check if user has dealership context (indicates tenant owner vs software owner)
-  const hasDealershipContext = user?.dealership && user.dealership.trim() !== '';
+  // Check if user has tenant/organization context (indicates tenant owner vs software owner)
+  const hasOrganizationContext = user?.tenantId && user.tenantId.trim() !== '';
   
   // Role-based access determination
-  const isSoftwareOwner = user?.role === 'owner' && !hasDealershipContext; // Platform owner
-  const isTenantOwner = user?.role === 'owner' && hasDealershipContext; // Dealership owner
-  const isTenantAdmin = user?.role === 'admin' && hasDealershipContext; // Dealership admin
-  const isSalesManager = user?.role === 'manager' && hasDealershipContext; // Sales Manager
-  const isSalesRep = user?.role === 'sales_rep' && hasDealershipContext; // Sales Rep
+  const isSoftwareOwner = user?.role === 'owner' && !hasOrganizationContext; // Platform owner
+  const isTenantOwner = user?.role === 'owner' && hasOrganizationContext; // Dealership owner
+  const isTenantAdmin = user?.role === 'admin' && hasOrganizationContext; // Dealership admin
+  const isSalesManager = user?.role === 'manager' && hasOrganizationContext; // Sales Manager
+  const isSalesRep = user?.role === 'sales_rep' && hasOrganizationContext; // Sales Rep
 
   // Determine if sidebar should be blurred during onboarding
   const shouldBlurSidebar = isTenantOwner && !onboardingCompleted;

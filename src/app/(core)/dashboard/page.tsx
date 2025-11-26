@@ -77,17 +77,17 @@ function DashboardContent() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Use dealership context for proper tenant owner detection
-      const hasDealershipContext = user?.dealership && user.dealership.trim() !== '';
+      // Use organization/tenant context for proper tenant owner detection
+      const hasOrganizationContext = user?.tenantId && user.tenantId.trim() !== '';
       const isOwner = user?.role === 'owner';
       
-      setIsTenantOwner(isOwner && hasDealershipContext);
-      setTenantSubdomain(user?.dealership || '');
+      setIsTenantOwner(isOwner && hasOrganizationContext);
+      setTenantSubdomain(user?.tenantId || '');
       
       console.log('🏢 [DASHBOARD CONTEXT]', {
         userRole: user?.role,
-        dealership: user?.dealership,
-        hasDealershipContext,
+        tenantId: user?.tenantId,
+        hasOrganizationContext,
         isTenantOwner: isOwner && hasDealershipContext
       });
     }

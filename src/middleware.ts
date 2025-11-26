@@ -18,7 +18,6 @@ const PUBLIC_PATHS = [
   "/billing",         // Public billing page for plan selection (pre-auth)
   "/reset-password", 
   "/register",
-  "/onboarding",
   "/unauthorized",
   "/debug", // Debug page for troubleshooting
   "/api/health",
@@ -37,7 +36,7 @@ const PUBLIC_PATHS = [
 // Only need to protect a few owner-specific routes
 const OWNER_ONLY_ROUTES = [
   "/tenant-owner",    // Tenant owner routes (post-auth)
-  "/owner"           // Owner-specific admin panel
+  "/owner",           // Owner-specific admin panel
 ];
 
 function isPublicPath(pathname: string): boolean {
@@ -208,7 +207,7 @@ export async function middleware(req: NextRequest) {
   } else {
     // Use regular JWT for all other routes
     hasValidToken = !!(jwtToken && user);
-    userRole = (user?.role as string) || "sales_rep";
+    userRole = (user?.role as string) || "visitor";
     isSoftwareOwner = false;
     authUser = user;
     console.log(`🔑 [AUTH] Using JWT TOKEN for ${pathname}`);

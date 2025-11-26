@@ -12,7 +12,7 @@ const PUBLIC_PAGES = [
   "/login",
   "/register", 
   "/reset-password",
-  "/onboarding"
+  "/tenant-owner/setup"
 ];
 
 export default function ConditionalLayout({ children }: { children: React.ReactNode }) {

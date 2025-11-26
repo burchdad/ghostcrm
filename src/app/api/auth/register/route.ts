@@ -18,6 +18,7 @@ type RegisterBody = {
   firstName?: string;
   lastName?: string;
   companyName?: string;
+  subdomain?: string;
   role?: string;
 };
 
@@ -31,6 +32,7 @@ async function registerHandler(req: Request) {
       firstName,
       lastName,
       companyName,
+      subdomain,
       role,
     }: RegisterBody = await req.json();
 
@@ -56,6 +58,34 @@ async function registerHandler(req: Request) {
         { status: 400 }
       );
     }
+    
+    // Validate subdomain if provided
+    if (subdomain) {
+      const subdomainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
+      if (!subdomainRegex.test(subdomain) || subdomain.length < 3 || subdomain.length > 63) {
+        console.log("❌ [REGISTER] Invalid subdomain format:", subdomain);
+        return NextResponse.json(
+          { error: "Invalid subdomain format. Must be 3-63 characters, lowercase letters, numbers, and hyphens only." },
+          { status: 400 }
+        );
+      }
+      
+      // Check for reserved subdomains
+      const reservedSubdomains = [
+        'www', 'api', 'admin', 'app', 'mail', 'ftp', 'blog', 'support', 
+        'help', 'docs', 'status', 'dev', 'staging', 'test', 'demo',
+        'dashboard', 'login', 'register', 'auth', 'billing', 'account'
+      ];
+      
+      if (reservedSubdomains.includes(subdomain.toLowerCase())) {
+        console.log("❌ [REGISTER] Reserved subdomain:", subdomain);
+        return NextResponse.json(
+          { error: `'${subdomain}' is a reserved subdomain name. Please choose a different name.` },
+          { status: 400 }
+        );
+      }
+    }
+    
     const emailNorm = String(email).trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
       console.log("❌ [REGISTER] Invalid email format:", emailNorm);
@@ -167,29 +197,37 @@ async function registerHandler(req: Request) {
     let organizationId: string | null = null;
     console.log("🏢 [REGISTER] Creating organization for company owner...");
     
-    // Generate a unique subdomain from company name
-    let subdomain = companyName 
+    // Use user-provided subdomain or generate from company name
+    let baseSubdomain = subdomain || (companyName 
       ? companyName.toLowerCase()
           .replace(/[^a-z0-9]/g, '-')
           .replace(/-+/g, '-')
           .replace(/^-|-$/g, '')
           .substring(0, 20)
-      : `org-${user.id.substring(0, 8)}`;
+      : `org-${user.id.substring(0, 8)}`);
     
     // Ensure subdomain uniqueness
     let counter = 1;
-    let finalSubdomain = subdomain;
+    let finalSubdomain = baseSubdomain;
     
     while (true) {
-      const { data: existingOrg } = await supabaseAdmin
-        .from("organizations")
-        .select("id")
-        .eq("subdomain", finalSubdomain)
-        .single();
+      // Check both organizations and placeholder subdomains tables
+      const [orgCheck, subdomainCheck] = await Promise.all([
+        supabaseAdmin
+          .from("organizations")
+          .select("id")
+          .eq("subdomain", finalSubdomain)
+          .single(),
+        supabaseAdmin
+          .from("subdomains")
+          .select("id")
+          .eq("subdomain", finalSubdomain)
+          .single()
+      ]);
       
-      if (!existingOrg) break;
+      if (!orgCheck.data && !subdomainCheck.data) break;
       
-      finalSubdomain = `${subdomain}-${counter}`;
+      finalSubdomain = `${baseSubdomain}-${counter}`;
       counter++;
       
       // Prevent infinite loop
@@ -252,6 +290,30 @@ async function registerHandler(req: Request) {
       }
       
       console.log("✅ [REGISTER] User updated with organization");
+      
+      // Create placeholder subdomain entry (inactive until payment)
+      try {
+        const { error: subdomainError } = await supabaseAdmin
+          .from("subdomains")
+          .insert({
+            subdomain: finalSubdomain,
+            organization_id: organizationId,
+            organization_name: companyName || `${firstName}'s Organization`,
+            owner_email: emailNorm,
+            status: 'pending_payment', // Will be activated after payment
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+          
+        if (subdomainError) {
+          console.error("❌ [REGISTER] Failed to create subdomain placeholder:", subdomainError);
+          // Don't fail registration for this, but log the error
+        } else {
+          console.log("✅ [REGISTER] Placeholder subdomain created:", finalSubdomain);
+        }
+      } catch (subdomainError) {
+        console.error("❌ [REGISTER] Subdomain creation error:", subdomainError);
+      }
     } catch (orgError) {
       console.error("❌ [REGISTER] Organization setup failed:", orgError);
       

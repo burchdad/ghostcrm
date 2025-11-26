@@ -306,3 +306,26 @@
   backface-visibility: hidden;
   perspective: 1000px;
 }
+
+/*
+  ===========================================
+  🔧 COLLABORATION SIDEBAR POSITIONING FIX
+  ===========================================
+  Ensure collaboration sidebar stays on the right side
+*/
+
+/* Force collaboration sidebar to appear on right side */
+aside[style*="right: 0"] {
+  position: fixed !important;
+  right: 0 !important;
+  top: var(--unified-toolbar-h, 64px) !important;
+  z-index: 30 !important;
+  height: calc(100vh - var(--unified-toolbar-h, 64px)) !important;
+  display: block !important;
+}
+
+/* Ensure no other elements interfere with right-side positioning */
+.fixed.right-0 {
+  position: fixed !important;
+  right: 0 !important;
+}

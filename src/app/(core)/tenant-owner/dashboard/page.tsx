@@ -26,7 +26,6 @@ import {
   Grid3X3
 } from "lucide-react";
 import ChartMarketplaceModal from "@/app/(core)/dashboard/components/marketplace/Modal/ChartMarketplaceModal";
-import DashboardChartGrid from "@/app/(core)/dashboard/components/DashboardChartGrid";
 import { 
   Chart as ChartJS,
   CategoryScale,
