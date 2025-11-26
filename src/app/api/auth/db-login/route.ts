@@ -11,12 +11,12 @@ const MAX = 5, WIN = 10 * 60 * 1000;
 
 export async function POST(req: Request) {
   // CSRF origin check
-  const allowedOrigins = [
+  const allowedOrigins: string[] = [
     process.env.NEXT_PUBLIC_BASE_URL,
     process.env.NEXT_PUBLIC_DEPLOY_URL,
     "http://localhost:3000",
     "https://ghostcrm.com"
-  ].filter(Boolean); // Remove undefined values
+  ].filter((url): url is string => Boolean(url)); // Remove undefined values with type guard
   const origin = req.headers.get("origin") || req.headers.get("referer") || "";
   if (origin && !allowedOrigins.some(o => origin.startsWith(o))) {
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
