@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     
     // Method 1: Try getMembershipOrgId 
     try {
-      org_id = await getMembershipOrgId(s);
+      org_id = await getMembershipOrgId(s) || null;
     } catch (error) {
       console.log('getMembershipOrgId failed, trying alternative methods');
     }
