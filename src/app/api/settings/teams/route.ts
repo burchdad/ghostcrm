@@ -320,7 +320,7 @@ export async function PUT(request: NextRequest) {
       // Check for duplicate name (excluding current team)
       const existingTeam = mockTeams.find(t => 
         t.id !== body.teamId &&
-        t.name.toLowerCase() === body.name.toLowerCase() && 
+        t.name.toLowerCase() === body.name?.toLowerCase() && 
         t.department === (body.department || team.department)
       );
       
