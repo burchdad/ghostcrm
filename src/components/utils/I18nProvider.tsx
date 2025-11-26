@@ -36,45 +36,58 @@ async function loadTranslations(lang: string): Promise<Record<string, any>> {
   }
 
   try {
-    // Import all translation files for the language
-    const [common, features, ui] = await Promise.all([
-      import(`@/locales/${lang}/common.json`),
-      import(`@/locales/${lang}/features.json`),
-      import(`@/locales/${lang}/ui.json`)
-    ]);
+    // Use static imports for better Next.js compatibility
+    let translations: Record<string, any>;
     
-    // Merge all translation files with namespace preservation
-    translationCache[lang] = {
-      common: common.default || common,
-      features: features.default || features,
-      ui: ui.default || ui
-    };
+    if (lang === 'en') {
+      const commonEn = await import('@/locales/en/common.json');
+      const featuresEn = await import('@/locales/en/features.json');
+      const uiEn = await import('@/locales/en/ui.json');
+      
+      translations = {
+        common: commonEn.default || commonEn,
+        features: featuresEn.default || featuresEn,
+        ui: uiEn.default || uiEn
+      };
+    } else if (lang === 'es') {
+      const commonEs = await import('@/locales/es/common.json');
+      const featuresEs = await import('@/locales/es/features.json');
+      const uiEs = await import('@/locales/es/ui.json');
+      
+      translations = {
+        common: commonEs.default || commonEs,
+        features: featuresEs.default || featuresEs,
+        ui: uiEs.default || uiEs
+      };
+    } else if (lang === 'fr') {
+      const commonFr = await import('@/locales/fr/common.json');
+      const featuresFr = await import('@/locales/fr/features.json');
+      const uiFr = await import('@/locales/fr/ui.json');
+      
+      translations = {
+        common: commonFr.default || commonFr,
+        features: featuresFr.default || featuresFr,
+        ui: uiFr.default || uiFr
+      };
+    } else {
+      // Fallback to English for unsupported languages
+      return loadTranslations('en');
+    }
     
-    return translationCache[lang];
+    translationCache[lang] = translations;
+    return translations;
   } catch (error) {
     console.warn(`Failed to load translations for language: ${lang}`, error);
-    // Fallback to English if available
+    // Fallback to English if not already trying English
     if (lang !== "en" && !translationCache["en"]) {
       try {
-        const [fallbackCommon, fallbackFeatures, fallbackUI] = await Promise.all([
-          import(`@/locales/en/common.json`),
-          import(`@/locales/en/features.json`),
-          import(`@/locales/en/ui.json`)
-        ]);
-        
-        translationCache["en"] = {
-          common: fallbackCommon.default || fallbackCommon,
-          features: fallbackFeatures.default || fallbackFeatures,
-          ui: fallbackUI.default || fallbackUI
-        };
-        
-        return translationCache["en"];
+        return await loadTranslations('en');
       } catch (fallbackError) {
         console.error("Failed to load fallback English translations", fallbackError);
-        return {};
+        return { common: {}, features: {}, ui: {} };
       }
     }
-    return translationCache["en"] || {};
+    return translationCache["en"] || { common: {}, features: {}, ui: {} };
   }
 }
 
