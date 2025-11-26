@@ -13,7 +13,7 @@ async function getCurrentTableName() {
   while (true) {
     const name = idx === 0 ? COLD_TABLE_BASE : `${COLD_TABLE_BASE}_${idx}`;
     const { error } = await supabase.rpc('table_exists', { table_name: name });
-    if (error || error.details === 'false') break;
+    if (error || (error?.details === 'false')) break;
     tableName = name;
     idx++;
   }
