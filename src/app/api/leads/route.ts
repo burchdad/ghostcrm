@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     // Check for demo mode first by looking at JWT token
     const token = req.cookies.get("ghostcrm_jwt")?.value;
     let isDemoMode = false;
-    let demoOrgId = null;
+    let demoOrgId: string | null = null;
     let jwtOrgId = null;
     let jwtUserId = null;
     
