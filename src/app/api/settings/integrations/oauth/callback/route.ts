@@ -112,11 +112,11 @@ export async function GET(request: NextRequest) {
       connectedAt: new Date().toISOString(),
       userId: stateData.userId,
       tokens: {
-        accessToken: tokenResponse.data.access_token,
-        refreshToken: tokenResponse.data.refresh_token,
-        expiresIn: tokenResponse.data.expires_in,
-        tokenType: tokenResponse.data.token_type || 'Bearer',
-        scope: tokenResponse.data.scope
+        accessToken: tokenResponse.data?.access_token,
+        refreshToken: tokenResponse.data?.refresh_token,
+        expiresIn: tokenResponse.data?.expires_in,
+        tokenType: tokenResponse.data?.token_type || 'Bearer',
+        scope: tokenResponse.data?.scope
       },
       metadata: {
         connectedVia: 'oauth',
