@@ -802,7 +802,7 @@ export default function WorkflowBuilderPage() {
       )}
 
       {/* Node Settings Modal */}
-      {showNodeSettings && (
+      {showNodeSettings && currentWorkflow && (
         <NodeSettingsModal 
           node={currentWorkflow.nodes.find(n => n.id === showNodeSettings)!}
           onClose={() => setShowNodeSettings(null)}
