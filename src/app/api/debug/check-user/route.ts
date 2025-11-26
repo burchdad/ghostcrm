@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Check organization_memberships if user exists
-    let memberships = []
+    let memberships: any[] = []
     if (users && users.length > 0) {
       const { data: membershipData, error: membershipError } = await supabaseAdmin
         .from('organization_memberships')
