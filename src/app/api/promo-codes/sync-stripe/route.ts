@@ -119,8 +119,8 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const results = [];
-    const errors = [];
+    const results: any[] = [];
+    const errors: any[] = [];
 
     for (const promoCode of promoCodes) {
       try {

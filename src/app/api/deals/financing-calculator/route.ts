@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
     
     // Calculate loan options if requested
     if (calculationType === "loan" || calculationType === "both") {
-      const loanOptions = [];
+      const loanOptions: any[] = [];
       
       // Multiple APR and term options for comparison
       const aprOptions = data.loan_apr ? [data.loan_apr] : [2.9, 3.9, 4.9, 5.9, 6.9, 7.9];
@@ -180,7 +180,7 @@ export async function POST(req: NextRequest) {
     
     // Calculate lease options if requested
     if (calculationType === "lease" || calculationType === "both") {
-      const leaseOptions = [];
+      const leaseOptions: any[] = [];
       
       // Multiple lease scenarios
       const termOptions = data.lease_term_months ? [data.lease_term_months] : [24, 36, 48];

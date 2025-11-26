@@ -216,7 +216,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 // Utility function to get CSS classes based on theme
 export const getThemeClasses = (theme: ThemeSettings, isDark: boolean) => {
-  const classes = [];
+  const classes: string[] = [];
   
   // Base theme class
   classes.push(isDark ? 'theme-dark' : 'theme-light');

@@ -200,7 +200,7 @@ export function getTenantMetadata(tenant: Tenant, page?: string) {
  * Check if tenant is within usage limits
  */
 export function checkTenantLimits(tenant: Tenant, currentUsage: { users: number; storage_mb: number }) {
-  const issues = [];
+  const issues: string[] = [];
   
   if (currentUsage.users > tenant.user_limit) {
     issues.push(`User limit exceeded: ${currentUsage.users}/${tenant.user_limit}`);

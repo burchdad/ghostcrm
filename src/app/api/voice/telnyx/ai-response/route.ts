@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     const aiResponse = await generateAIResponse(customerSpeech, conversationState, isSpanish);
     
     // Determine next action based on conversation state
-    let commands = [];
+    let commands: any[] = [];
     
     if (conversationState === 'interested') {
       commands = [

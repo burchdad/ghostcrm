@@ -38,6 +38,9 @@ export function verifyJwtToken(token: string): JwtPayload {
  * Get JWT secret (for compatibility with existing code)
  */
 export function getJwtSecret(): string {
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
   return JWT_SECRET;
 }
 

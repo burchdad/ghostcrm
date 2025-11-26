@@ -261,7 +261,7 @@ export async function POST(request: NextRequest) {
         .eq('organization_id', orgData.id)
         .single();
 
-      const changes = [];
+      const changes: any[] = [];
       const current = currentSettings?.settings || {};
 
       // Detect changes in core organization info

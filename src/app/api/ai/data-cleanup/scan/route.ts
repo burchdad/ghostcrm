@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 }
 
 async function scanDataQualityIssues() {
-  const issues = [];
+  const issues: any[] = [];
   
   try {
     // Check for leads data quality issues

@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     "https://ghostcrm.com"
   ];
   const origin = req.headers.get("origin") || req.headers.get("referer") || "";
-  if (!allowedOrigins.some(o => origin.startsWith(o))) {
+  if (origin && !allowedOrigins.some(o => origin.startsWith(o))) {
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   }
   const { email } = await req.json();
@@ -68,7 +68,7 @@ export async function PUT(req: Request) {
     "https://ghostcrm.com"
   ];
   const origin = req.headers.get("origin") || req.headers.get("referer") || "";
-  if (!allowedOrigins.some(o => origin.startsWith(o))) {
+  if (origin && !allowedOrigins.some(o => origin.startsWith(o))) {
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   }
   const { email, assertionResponse } = await req.json();

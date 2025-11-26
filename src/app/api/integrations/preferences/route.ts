@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create integration setup tasks for implementation team
-    const integrationTasks = []
+    const integrationTasks: any[] = [];
     
     // Database integration task
     if (integrationPreferences.database?.type !== 'supabase') {

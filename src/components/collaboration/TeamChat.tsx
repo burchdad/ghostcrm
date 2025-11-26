@@ -150,7 +150,7 @@ export default function TeamChat({ isOpen, onClose, onStartVideoCall, className 
 
   const extractMentions = (text: string): string[] => {
     const mentionRegex = /@([a-zA-Z0-9-_]+)/g;
-    const mentions = [];
+    const mentions: string[] = [];
     let match;
     while ((match = mentionRegex.exec(text)) !== null) {
       mentions.push(match[1]);

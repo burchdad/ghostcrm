@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     console.log('✅ Created promo code:', promoCode.code);
 
     // Also create some other useful promo codes
-    const promoCodes = [];
+    const promoCodes: any[] = [];
 
     // 50% off for early adopters
     const earlyAdopterCoupon = await stripe.coupons.create({

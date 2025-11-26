@@ -2,7 +2,7 @@
 // Instead of large static arrays, we generate data dynamically
 
 export const generateActivityData = (days: number = 30) => {
-  const data = [];
+  const data: any[] = [];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);

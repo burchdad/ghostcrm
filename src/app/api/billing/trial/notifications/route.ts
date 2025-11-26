@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     let notificationsSent = 0;
     let errorCount = 0;
-    const results = [];
+    const results: any[] = [];
 
     for (const trial of expiringTrials) {
       try {

@@ -375,8 +375,8 @@ async function registerHandler(req: Request) {
       userId: user.id,
       email: user.email,
       role: "owner", // Always owner for registrations - don't rely on user.role which may not be updated yet
-      organizationId: organizationId,
-      tenantId: organizationId, // For backward compatibility
+      organizationId: organizationId || undefined,
+      tenantId: organizationId || undefined, // For backward compatibility
     });
 
     // --- Create Supabase Auth user and establish session

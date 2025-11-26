@@ -11,9 +11,7 @@ interface DashboardTopbarProps {
 }
 
 const DashboardTopbar: React.FC<DashboardTopbarProps> = ({ bulkMode, setBulkMode, t }) => {
-	const [onlineUsers, setOnlineUsers] = useState([]);
-
-	useEffect(() => {
+  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);	useEffect(() => {
 		getOnlineUsers().then(result => {
 			if (Array.isArray(result)) {
 				setOnlineUsers(result);

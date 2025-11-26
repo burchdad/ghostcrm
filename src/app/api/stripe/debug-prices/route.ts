@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Find mismatches
-    const mismatches = [];
-    const validMappings = [];
+    const mismatches: any[] = [];
+    const validMappings: any[] = [];
 
     for (const mapping of dbMappings || []) {
       const stripePrice = stripePrices.data.find(p => p.id === mapping.stripe_price_id);

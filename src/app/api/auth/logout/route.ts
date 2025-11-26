@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     "https://ghostcrm.com"
   ];
   const origin = req.headers.get("origin") || req.headers.get("referer") || "";
-  if (!allowedOrigins.some(o => origin.startsWith(o))) {
+  if (origin && !allowedOrigins.some(o => origin.startsWith(o))) {
     console.log("❌ [LOGOUT] Invalid origin:", origin);
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   }

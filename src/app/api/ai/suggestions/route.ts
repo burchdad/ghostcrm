@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 }
 
 async function generateSuggestions(leads: any[]) {
-  const suggestions = [];
+  const suggestions: any[] = [];
   const now = new Date();
 
   // Lead opportunity suggestions

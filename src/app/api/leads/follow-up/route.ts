@@ -229,7 +229,7 @@ export async function GET(req: NextRequest) {
       if (error) throw new Error(error.message);
       
       // Determine suggested actions based on lead stage and data
-      const suggestedActions = [];
+      const suggestedActions: any[] = [];
       const now = new Date();
       
       switch (lead.stage) {

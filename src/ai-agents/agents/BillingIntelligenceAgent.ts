@@ -224,7 +224,7 @@ export class BillingIntelligenceAgent extends BaseAgent {
   private async fetchRecentPaymentEvents(): Promise<any[]> {
     // In production, this would fetch from Stripe and database
     // For now, simulate some events
-    const events = [];
+    const events: any[] = [];
     const eventTypes = ['payment_success', 'payment_failed', 'subscription_created', 'subscription_cancelled'];
     
     for (let i = 0; i < Math.floor(Math.random() * 10) + 1; i++) {

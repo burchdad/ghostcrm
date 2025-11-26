@@ -470,8 +470,8 @@ export async function POST(req: NextRequest) {
       const { data: leads, error: fetchError } = await query;
       if (fetchError) throw new Error(fetchError.message);
 
-      const processedLeads = [];
-      const scoreUpdates = [];
+      const processedLeads: any[] = [];
+      const scoreUpdates: any[] = [];
 
       // Process each lead
       for (const lead of leads || []) {
@@ -600,7 +600,7 @@ function generateRecommendation(scoreAnalysis: any, lead: any): string {
   }
   
   // Add specific action items
-  const actions = [];
+  const actions: string[] = [];
   if (lead.urgency_level === "immediate") {
     actions.push("Call within 2 hours");
   } else if (lead.vehicle_interest?.financing_type === "cash") {
@@ -624,7 +624,7 @@ function generateLeadScores(leads: any[]) {
   return leads.map(lead => {
     // Simple scoring algorithm based on available data
     let score = 50; // Base score
-    const factors = [];
+    const factors: string[] = [];
     
     // Stage-based scoring
     switch (lead.stage) {
