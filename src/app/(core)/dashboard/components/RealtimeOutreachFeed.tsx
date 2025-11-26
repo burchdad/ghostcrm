@@ -3,6 +3,18 @@ import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import DashboardCardSettingsModal from "./DashboardCardSettingsModal";
 
+interface OutreachEvent {
+  id: number;
+  channel: string;
+  status: string;
+  step_index: number;
+  provider_id: string;
+  lead_name: string;
+  campaign_name: string;
+  created_at: string;
+  error: string | null;
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -244,7 +256,7 @@ export default function RealtimeOutreachFeed() {
       return demoEvents.slice(0, feedSettings.maxEvents);
     } else {
       // Generate live-looking data with more variation
-      const liveEvents = [];
+      const liveEvents: OutreachEvent[] = [];
       const channels = ["email", "sms", "linkedin", "phone"];
       const statuses = ["sent", "delivered", "opened", "clicked", "replied", "failed", "completed"];
       const providers = ["sendgrid", "twilio", "linkedin_api", "telnyx"];
