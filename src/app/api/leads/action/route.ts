@@ -66,16 +66,18 @@ export async function POST(req: Request) {
         // For now, just log to console
         console.log(`ALERT: New message for lead ${leadId} via ${action}`);
 
-        await supabase.from('messages').insert([
-          {
-            lead_id: leadId,
-            action_type: 'sms',
-            contact: phone,
-            content: message,
-            rep_id: null,
+        if (supabase) {
+          await supabase.from('messages').insert([
+            {
+              lead_id: leadId,
+              action_type: 'sms',
+              contact: phone,
+              content: message,
+              rep_id: null,
             metadata: {}
           }
         ]);
+        }
 
         return NextResponse.json({ success: true, sid: result.data.id, message: `SMS sent to ${phone}` });
       } catch (err: any) {
@@ -117,16 +119,18 @@ export async function POST(req: Request) {
         
         // Still save to database for tracking
         console.log('💾 Saving email to database...');
-        await supabase.from('messages').insert([
-          {
-            lead_id: leadId,
-            action_type: 'email',
-            contact: email,
-            content: message,
-            rep_id: null,
-            metadata: { dev_mode: true, subject: subject || 'CRM Lead Notification' }
-          }
-        ]);
+        if (supabase) {
+          await supabase.from('messages').insert([
+            {
+              lead_id: leadId,
+              action_type: 'email',
+              contact: email,
+              content: message,
+              rep_id: null,
+              metadata: { dev_mode: true, subject: subject || 'CRM Lead Notification' }
+            }
+          ]);
+        }
         console.log('✅ Email logged and saved to database (dev mode)');
         
         return NextResponse.json({ 
@@ -149,16 +153,18 @@ export async function POST(req: Request) {
         console.log('✅ Email sent successfully via SendGrid');
 
         console.log('💾 Saving email to database...');
-        await supabase.from('messages').insert([
-          {
-            lead_id: leadId,
-            action_type: 'email',
-            contact: email,
-            content: message,
-            rep_id: null,
-            metadata: {}
-          }
-        ]);
+        if (supabase) {
+          await supabase.from('messages').insert([
+            {
+              lead_id: leadId,
+              action_type: 'email',
+              contact: email,
+              content: message,
+              rep_id: null,
+              metadata: {}
+            }
+          ]);
+        }
 
         console.log('✅ Email saved to database');
         return NextResponse.json({ success: true, message: `Email sent to ${email}` });
@@ -168,15 +174,17 @@ export async function POST(req: Request) {
       }
     }
 
-    const { error } = await supabase.from('leads').insert([
-      {
-        // ...fields...
-      }
-    ]);
+    if (supabase) {
+      const { error } = await supabase.from('leads').insert([
+        {
+          // ...fields...
+        }
+      ]);
 
-    if (error) {
-      console.error('[Supabase Insert Error]', error);
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      if (error) {
+        console.error('[Supabase Insert Error]', error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ success: true });
