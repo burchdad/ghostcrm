@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
+interface FixResult {
+  issueId?: string;
+  status: string;
+  message: string;
+  recordsFixed?: number;
+  recordsDeleted?: number;
+}
 
 export const dynamic = 'force-dynamic';
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
@@ -23,7 +30,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function fixDataIssues(issueIds: string[]) {
-  const results = [];
+  const results: FixResult[] = [];
   
   for (const issueId of issueIds) {
     try {
