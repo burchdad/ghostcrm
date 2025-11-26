@@ -49,7 +49,6 @@ export async function POST(request: NextRequest) {
     console.log('✅ Product sync completed:', result)
     
     return NextResponse.json({
-      success: true,
       message: 'Products synced successfully with Stripe',
       ...result
     })
