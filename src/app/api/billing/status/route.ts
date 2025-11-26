@@ -69,8 +69,14 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    let subscriptionData = null;
-    let trialStatus = null;
+    let subscriptionData: {
+      id: string;
+      status: string;
+      current_period_start: string | null;
+      current_period_end: string | null;
+      trial_end: string | null;
+    } | null = null;
+    let trialStatus: any = null;
 
     // If there's a subscription, fetch from Stripe
     if (billingData.stripe_subscription_id) {
