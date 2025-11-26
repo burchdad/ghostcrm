@@ -344,12 +344,13 @@ export class SecurityComplianceAgent extends BaseAgent {
         temperature: 0.1
       });
 
-      this.complianceStatus = {
+      const status: ComplianceStatus = {
         ...JSON.parse(compliance.choices[0]?.message?.content || '{}'),
         lastChecked: new Date().toISOString()
       };
 
-      return this.complianceStatus;
+      this.complianceStatus = status;
+      return status;
 
     } catch (error) {
       console.error('🛡️ [SECURITY_AGENT] Error performing compliance check:', error);
