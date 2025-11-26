@@ -696,7 +696,7 @@ export default function WorkflowBuilderPage() {
                 <svg className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }}>
                   {currentWorkflow?.nodes.map(node => 
                     node.connections.map(connectionId => {
-                      const targetNode = currentWorkflow.nodes.find(n => n.id === connectionId);
+                      const targetNode = currentWorkflow?.nodes.find(n => n.id === connectionId);
                       if (!targetNode) return null;
 
                       const startX = node.position.x + 192;
