@@ -311,7 +311,7 @@ export default function TenantSalesManagerCalendarPage() {
   const renderCalendarGrid = () => {
     const daysCount = daysInMonth(currentMonth, currentYear);
     const firstDay = firstDayOfMonth(currentMonth, currentYear);
-    const days = [];
+    const days: any[] = [];
 
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {

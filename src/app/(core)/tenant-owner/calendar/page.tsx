@@ -187,7 +187,7 @@ export default function TenantOwnerCalendarPage() {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
   // Generate calendar days array
-  const calendarDays = [];
+  const calendarDays: any[] = [];
   
   // Add previous month's trailing days
   for (let i = startingDayOfWeek - 1; i >= 0; i--) {

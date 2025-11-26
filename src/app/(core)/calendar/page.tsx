@@ -29,7 +29,7 @@ function CalendarContent() {
   ];
   
   // Generate calendar days array
-  const calendarDays = [];
+  const calendarDays: any[] = [];
   
   // Add previous month's trailing days
   for (let i = startingDayOfWeek - 1; i >= 0; i--) {

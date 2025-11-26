@@ -141,7 +141,7 @@ export class DatabaseManager {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      const results = [];
+      const results: any[] = [];
       
       for (const query of queries) {
         const result = await client.query(query.text, query.params);

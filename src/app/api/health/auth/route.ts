@@ -19,8 +19,8 @@ export async function GET() {
     missingRecommended: RECOMMENDED_ENVS.filter(k => !process.env[k]),
   };
 
-  let missingTables = [];
-  let missingUserCols = [];
+  let missingTables: string[] = [];
+  let missingUserCols: string[] = [];
   let userCount = 0;
 
   try {

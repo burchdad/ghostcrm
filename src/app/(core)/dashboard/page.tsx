@@ -81,14 +81,14 @@ function DashboardContent() {
       const hasOrganizationContext = user?.tenantId && user.tenantId.trim() !== '';
       const isOwner = user?.role === 'owner';
       
-      setIsTenantOwner(isOwner && hasOrganizationContext);
+      setIsTenantOwner(!!isOwner && !!hasOrganizationContext);
       setTenantSubdomain(user?.tenantId || '');
       
       console.log('🏢 [DASHBOARD CONTEXT]', {
         userRole: user?.role,
         tenantId: user?.tenantId,
         hasOrganizationContext,
-        isTenantOwner: isOwner && hasDealershipContext
+        isTenantOwner: isOwner && hasOrganizationContext
       });
     }
   }, [user]);
