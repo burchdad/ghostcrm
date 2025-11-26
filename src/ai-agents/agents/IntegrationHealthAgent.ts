@@ -446,7 +446,7 @@ export class IntegrationHealthAgent extends BaseAgent {
     }
 
     // Perform health check on all integrations
-    const results = [];
+    const results: any[] = [];
     for (const [id, health] of this.integrationHealth) {
       results.push(await this.detailedHealthCheck(health));
     }
@@ -557,7 +557,7 @@ export class IntegrationHealthAgent extends BaseAgent {
       'Testing connectivity'
     ];
 
-    const results = [];
+    const results: any[] = [];
     for (const action of repairActions) {
       results.push({
         action,
@@ -688,7 +688,7 @@ export class IntegrationHealthAgent extends BaseAgent {
   }
 
   private async getHealthRecommendations(): Promise<string[]> {
-    const recommendations = [];
+    const recommendations: string[] = [];
 
     const failingIntegrations = Array.from(this.integrationHealth.values())
       .filter(i => i.status === 'error' || i.status === 'disconnected');
@@ -715,7 +715,7 @@ export class IntegrationHealthAgent extends BaseAgent {
   }
 
   private async getIntegrationRecommendations(health: IntegrationHealth): Promise<string[]> {
-    const recommendations = [];
+    const recommendations: string[] = [];
 
     if (health.errorRate > 0.05) {
       recommendations.push('High error rate detected - consider troubleshooting');
