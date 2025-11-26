@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Try to create queued row first
-    let messageRow = null;
+    let messageRow: any | null = null;
     try {
       const { data: row, error: insErr } = await s.from("messages").insert({
         org_id, lead_id: lead_id ?? null, direction: "outbound", channel,
