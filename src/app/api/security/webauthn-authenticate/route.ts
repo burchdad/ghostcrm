@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     process.env.NEXT_PUBLIC_DEPLOY_URL,
     "http://localhost:3000",
     "https://ghostcrm.com"
-  ];
+  ].filter((url): url is string => Boolean(url));
   const origin = req.headers.get("origin") || req.headers.get("referer") || "";
   if (origin && !allowedOrigins.some(o => origin.startsWith(o))) {
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
