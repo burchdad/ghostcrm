@@ -823,7 +823,7 @@ export default function WorkflowBuilderPage() {
       )}
 
       {/* Workflow Settings Modal */}
-      {showWorkflowSettings && (
+      {showWorkflowSettings && currentWorkflow && (
         <WorkflowSettingsModal 
           workflow={currentWorkflow}
           onClose={() => setShowWorkflowSettings(false)}
