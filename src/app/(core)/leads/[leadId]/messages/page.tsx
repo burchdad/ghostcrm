@@ -1,15 +1,12 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
 import { UserCircle2, Mail, MessageSquare, Search } from "lucide-react";
 // @ts-ignore
 import jsPDF from "jspdf";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createClient();
 
 const ACTION_TYPES = ["all", "sms", "email"];
 const STATUS_TYPES = ["all", "Delivered", "Failed", "Pending"];
