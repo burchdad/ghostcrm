@@ -119,9 +119,9 @@ const ActivityLog: React.FC<ActivityLogProps> = ({
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         // Separate items by age
-        const active = [];
-        const warm = [];
-        const cold = [];
+        const active: ActivityLogItem[] = [];
+        const warm: ActivityLogItem[] = [];
+        const cold: ActivityLogItem[] = [];
         (data.records || []).forEach((item: ActivityLogItem) => {
           const itemDate = new Date(item.created_at);
           if (itemDate < thirtyDaysAgo) {
