@@ -117,9 +117,14 @@ function SuccessContent() {
       
       // Redirect to subdomain login page
       if (successData.userSubdomain) {
-        const subdomainUrl = `https://${successData.userSubdomain}.ghostcrm.ai/login-owner`
-        console.log('🌐 Redirecting to subdomain login:', subdomainUrl)
-        window.location.href = subdomainUrl
+        // For now, redirect to main domain with tenant parameter until subdomains are configured
+        // TODO: Change back to subdomain when Vercel subdomain routing is set up
+        const fallbackUrl = `https://ghostcrm.ai/login-owner?tenant=${successData.userSubdomain}`
+        console.log('🌐 Redirecting to tenant login (fallback):', fallbackUrl)
+        window.location.href = fallbackUrl
+        
+        // Original subdomain URL (commented out until Vercel subdomain setup):
+        // const subdomainUrl = `https://${successData.userSubdomain}.ghostcrm.ai/login-owner`
       } else {
         // Fallback to main domain login
         console.log('⚠️ No subdomain found, redirecting to main domain login')
@@ -129,7 +134,8 @@ function SuccessContent() {
       console.error('Error during logout and redirect:', error)
       // Even if logout fails, try to redirect
       if (successData.userSubdomain) {
-        window.location.href = `https://${successData.userSubdomain}.ghostcrm.ai/login-owner`
+        const fallbackUrl = `https://ghostcrm.ai/login-owner?tenant=${successData.userSubdomain}`
+        window.location.href = fallbackUrl
       } else {
         router.push('/login-owner')
       }

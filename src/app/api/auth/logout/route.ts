@@ -12,11 +12,14 @@ export async function POST(req: Request) {
     process.env.NEXT_PUBLIC_DEPLOY_URL,
     "http://localhost:3000",
     "http://localhost:3001",
-    "https://ghostcrm.com"
+    "https://ghostcrm.com",
+    "https://ghostcrm.ai",
+    "https://www.ghostcrm.ai"
   ].filter((url): url is string => Boolean(url)); // Remove undefined values with type guard
   const origin = req.headers.get("origin") || req.headers.get("referer") || "";
   if (origin && !allowedOrigins.some(o => origin.startsWith(o))) {
     console.log("❌ [LOGOUT] Invalid origin:", origin);
+    console.log("❌ [LOGOUT] Allowed origins:", allowedOrigins);
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   }
   
