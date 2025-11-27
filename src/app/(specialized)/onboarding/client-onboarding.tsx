@@ -1073,81 +1073,72 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
   const CurrentStepComponent = steps[currentStep]?.component
 
   return (
-    <div className={`${onComplete ? 'bg-white' : 'min-h-screen'}`} style={{
-      background: onComplete ? 'white' : 'linear-gradient(135deg, #0c0c1e 0%, #1a1a2e 35%, #16213e 100%)',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      {/* Floating Background Elements */}
-      {!onComplete && (
-        <>
-          <div style={{
-            position: 'absolute',
-            top: '10%',
-            left: '5%',
-            width: '200px',
-            height: '200px',
-            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1))',
-            borderRadius: '50%',
-            filter: 'blur(60px)',
-            animation: 'float 20s ease-in-out infinite'
-          }} />
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            right: '10%',
-            width: '150px',
-            height: '150px',
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(167, 139, 250, 0.1))',
-            borderRadius: '50%',
-            filter: 'blur(50px)',
-            animation: 'float 25s ease-in-out infinite reverse'
-          }} />
-          <div style={{
-            position: 'absolute',
-            bottom: '20%',
-            left: '20%',
-            width: '100px',
-            height: '100px',
-            background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.1), rgba(139, 92, 246, 0.1))',
-            borderRadius: '50%',
-            filter: 'blur(40px)',
-            animation: 'float 15s ease-in-out infinite'
-          }} />
-          <div style={{
-            position: 'absolute',
-            top: '30%',
-            right: '30%',
-            width: '80px',
-            height: '80px',
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.08))',
-            borderRadius: '50%',
-            filter: 'blur(30px)',
-            animation: 'float 18s ease-in-out infinite'
-          }} />
-        </>
-      )}
-
-      {/* Header */}
-      <div className={onComplete ? "bg-white shadow-sm" : ""} style={{
+    <div className="p-6 max-w-4xl mx-auto">
+      {/* Onboarding Content Container - Centered in Main Area */}
+      <div className={`${onComplete ? 'bg-white' : ''} rounded-2xl`} style={{
         background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.05)',
         backdropFilter: onComplete ? 'none' : 'blur(10px)',
-        borderBottom: onComplete ? '' : '1px solid rgba(255, 255, 255, 0.1)',
+        border: onComplete ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
         position: 'relative',
-        zIndex: 10
+        overflow: 'hidden',
+        padding: '2rem'
       }}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
+        {/* Floating Background Elements - Within Container */}
+        {!onComplete && (
+          <>
+            <div style={{
+              position: 'absolute',
+              top: '10%',
+              left: '5%',
+              width: '120px',
+              height: '120px',
+              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1))',
+              borderRadius: '50%',
+              filter: 'blur(40px)',
+              animation: 'float 20s ease-in-out infinite'
+            }} />
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              right: '10%',
+              width: '100px',
+              height: '100px',
+              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(167, 139, 250, 0.1))',
+              borderRadius: '50%',
+              filter: 'blur(35px)',
+              animation: 'float 25s ease-in-out infinite reverse'
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: '20%',
+              left: '20%',
+              width: '80px',
+              height: '80px',
+              background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.1), rgba(139, 92, 246, 0.1))',
+              borderRadius: '50%',
+              filter: 'blur(30px)',
+              animation: 'float 15s ease-in-out infinite'
+            }} />
+          </>
+        )}
+
+        {/* Header - Simplified for In-Layout Use */}
+        <div className="relative z-10 mb-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{
                 background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
                 boxShadow: '0 8px 25px rgba(139, 92, 246, 0.3)'
               }}>
-                <span className="text-white font-bold text-lg">G</span>
+                <span className="text-white font-bold text-xl">G</span>
               </div>
-              <span className={`text-xl font-bold ${onComplete ? 'text-gray-900' : 'text-white'}`}>
-                Ghost Auto CRM
+              <span className={`text-2xl font-bold ${onComplete ? 'text-gray-900' : 'text-white'}`}>
+                Complete Your Organization Setup
               </span>
+            </div>
+            <p className={`text-lg ${onComplete ? 'text-gray-600' : 'text-gray-300'} mb-6`}>
+              Add the missing details to complete your organization setup
+            </p>
             </div>
             <button
               onClick={skipToIntegrations}
@@ -1176,87 +1167,76 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
             >
               Skip to Integrations →
             </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Progress Bar */}
-      <div className={onComplete ? "bg-white border-b" : ""} style={{
-        background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.02)',
-        borderBottom: onComplete ? '' : '1px solid rgba(255, 255, 255, 0.05)',
-        position: 'relative',
-        zIndex: 10
-      }}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-center space-x-8 mb-3">
-            {steps.map((step, index) => {
-              const Icon = step.icon
-              const isActive = index === currentStep
-              const isCompleted = index < currentStep
-              
-              return (
-                <div key={step.id} className="flex items-center">
-                  <div className={`
-                    flex items-center justify-center w-10 h-10 rounded-xl border-2 transition-all duration-300 shadow-lg
-                    ${isActive ? 'text-white transform scale-110' : 
-                      isCompleted ? 'text-white' :
-                      onComplete ? 'border-gray-300 bg-white text-gray-400' : 'text-white/40'}
-                  `} style={
-                    isActive 
-                      ? { 
-                          background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-                          border: 'none',
-                          boxShadow: '0 6px 20px rgba(139, 92, 246, 0.4)'
-                        }
-                      : isCompleted 
-                        ? { 
-                            background: 'linear-gradient(135deg, #10b981, #059669)',
-                            border: 'none',
-                            boxShadow: '0 3px 12px rgba(16, 185, 129, 0.3)'
-                          }
-                        : { 
-                            background: onComplete ? '#f9fafb' : 'rgba(255, 255, 255, 0.05)',
-                            border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.1)',
-                            backdropFilter: onComplete ? 'none' : 'blur(10px)'
-                          }
-                  }>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div className="ml-2 min-w-0">
-                    <p className={`text-xs font-semibold ${
-                      isActive ? onComplete ? 'text-blue-600' : 'text-white' : 
-                      isCompleted ? onComplete ? 'text-green-600' : 'text-green-300' : 
-                      onComplete ? 'text-gray-500' : 'text-white/60'
-                    }`}>
-                      {step.title}
-                    </p>
-                  </div>
-                  {index < steps.length - 1 && (
+            {/* Progress Bar - Centered */}
+            <div className="flex items-center justify-center space-x-6 mb-8">
+              {steps.map((step, index) => {
+                const Icon = step.icon
+                const isActive = index === currentStep
+                const isCompleted = index < currentStep
+                
+                return (
+                  <div key={step.id} className="flex items-center">
                     <div className={`
-                      w-8 h-1 ml-4 transition-all duration-300 hidden sm:block rounded-full
-                      ${isCompleted ? onComplete ? 'bg-green-200' : 'bg-green-400/40' : onComplete ? 'bg-gray-200' : 'bg-white/20'}
-                    `} />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-          <div className="text-center">
-            <p className={`text-xs font-medium ${onComplete ? 'text-gray-500' : 'text-white/70'}`}>
-              Step {currentStep + 1} of {steps.length}
-            </p>
+                      flex items-center justify-center w-10 h-10 rounded-xl border-2 transition-all duration-300 shadow-lg
+                      ${isActive ? 'text-white transform scale-110' : 
+                        isCompleted ? 'text-white' :
+                        onComplete ? 'border-gray-300 bg-white text-gray-400' : 'text-white/40'}
+                    `} style={
+                      isActive 
+                        ? { 
+                            background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                            border: 'none',
+                            boxShadow: '0 6px 20px rgba(139, 92, 246, 0.4)'
+                          }
+                        : isCompleted 
+                          ? { 
+                              background: 'linear-gradient(135deg, #10b981, #059669)',
+                              border: 'none',
+                              boxShadow: '0 3px 12px rgba(16, 185, 129, 0.3)'
+                            }
+                          : { 
+                              background: onComplete ? '#f9fafb' : 'rgba(255, 255, 255, 0.05)',
+                              border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.1)',
+                              backdropFilter: onComplete ? 'none' : 'blur(10px)'
+                            }
+                    }>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div className="ml-2 min-w-0">
+                      <p className={`text-xs font-semibold ${
+                        isActive ? onComplete ? 'text-blue-600' : 'text-white' : 
+                        isCompleted ? onComplete ? 'text-green-600' : 'text-green-300' : 
+                        onComplete ? 'text-gray-500' : 'text-white/60'
+                      }`}>
+                        {step.title}
+                      </p>
+                    </div>
+                    {index < steps.length - 1 && (
+                      <div className={`
+                        w-8 h-1 ml-4 transition-all duration-300 hidden sm:block rounded-full
+                        ${isCompleted ? onComplete ? 'bg-green-200' : 'bg-green-400/40' : onComplete ? 'bg-gray-200' : 'bg-white/20'}
+                      `} />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            <div className="text-center mb-8">
+              <p className={`text-sm font-medium ${onComplete ? 'text-gray-500' : 'text-white/70'}`}>
+                Step {currentStep + 1} of {steps.length}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6" style={{ position: 'relative', zIndex: 10 }}>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+        {/* Main Content - Centered */}
+        <div className="relative z-10">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
             className="rounded-2xl shadow-2xl p-6"
             style={{
@@ -1348,7 +1328,10 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
             </div>
           </div>
         )}
+          </motion.div>
+        </AnimatePresence>
       </div>
+    </div>
     </div>
   )
 }
