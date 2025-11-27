@@ -14,6 +14,8 @@ interface SuccessData {
   userSubdomain?: string
   processed?: boolean
   gatewayError?: boolean
+  subdomainStatus?: 'checking' | 'pending_payment' | 'active' | 'error'
+  isSubdomainActivated?: boolean
 }
 
 function SuccessContent() {
@@ -21,7 +23,9 @@ function SuccessContent() {
   const [successData, setSuccessData] = useState<SuccessData>({
     isSoftwareOwner: false,
     shouldStartOnboarding: true,
-    userSubdomain: undefined
+    userSubdomain: undefined,
+    subdomainStatus: 'checking',
+    isSubdomainActivated: false
   })
   const [loading, setLoading] = useState(true)
 
@@ -75,6 +79,38 @@ function SuccessContent() {
         const usedSoftwareOwnerPromo = promoCode === 'SOFTWAREOWNER'
         const shouldStartOnboarding = !isSoftwareOwner && !usedSoftwareOwnerPromo
         
+        // For non-software owners, check real subdomain activation status
+        let subdomainStatus: 'checking' | 'pending_payment' | 'active' | 'error' = 'checking'
+        let isSubdomainActivated = false
+        
+        if (!isSoftwareOwner && !usedSoftwareOwnerPromo && userEmail) {
+          try {
+            console.log('🔍 [BILLING-SUCCESS] Checking real subdomain status...')
+            const statusResponse = await fetch('/api/subdomains/status', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userEmail })
+            })
+            const statusResult = await statusResponse.json()
+            
+            if (statusResult.success && statusResult.subdomain) {
+              subdomainStatus = statusResult.subdomain.status || 'error'
+              isSubdomainActivated = statusResult.subdomain.status === 'active'
+              console.log(`✅ [BILLING-SUCCESS] Subdomain status confirmed: ${subdomainStatus}`)
+            } else {
+              subdomainStatus = 'error'
+              console.warn('⚠️ [BILLING-SUCCESS] Could not verify subdomain status:', statusResult.error)
+            }
+          } catch (statusError) {
+            subdomainStatus = 'error'
+            console.warn('⚠️ [BILLING-SUCCESS] Error checking subdomain status:', statusError)
+          }
+        } else {
+          // Software owners don't need subdomain activation
+          subdomainStatus = 'active'
+          isSubdomainActivated = true
+        }
+
         setSuccessData({
           sessionId: sessionId || undefined,
           promoCode: promoCode || undefined,
@@ -82,11 +118,13 @@ function SuccessContent() {
           shouldStartOnboarding,
           userSubdomain: userSubdomain || undefined,
           processed,
-          gatewayError
+          gatewayError,
+          subdomainStatus,
+          isSubdomainActivated
         })
         
         // Note: Subdomain activation now happens in payment gateway before success page
-        // No need for backup activation here since gateway handles it proactively
+        // Status checking here provides real-time confirmation for UI updates
         
         // Only auto-redirect software owners
         if (isSoftwareOwner || usedSoftwareOwnerPromo) {
@@ -185,29 +223,23 @@ function SuccessContent() {
           
           {/* Payment Gateway Status Indicator */}
           {!successData.isSoftwareOwner && (
-            <div className={`gateway-status ${successData.processed ? 'processed' : successData.gatewayError ? 'error' : 'standard'}`}>
-              {successData.processed ? (
-                <span className="gateway-processed">✅ Account activated instantly through secure payment gateway</span>
-              ) : successData.gatewayError ? (
-                <span className="gateway-error">⚠️ Payment successful - Account activation processing</span>
-              ) : (
-                <span className="gateway-standard">💳 Payment confirmed - Activating your account</span>
-              )}
+            <div className={`gateway-status ${getGatewayStatusClass(successData)}`}>
+              {getGatewayStatusMessage(successData)}
             </div>
           )}
         </div>
 
-        <div className="status-card">
+        <div className={`status-card ${!successData.isSoftwareOwner ? (successData.isSubdomainActivated ? 'activated' : 'pending') : ''}`}>
           <div className="status-header">
-            <CheckCircle className="status-icon" />
+            <CheckCircle className={`status-icon ${!successData.isSoftwareOwner && !successData.isSubdomainActivated ? 'pending' : ''}`} />
             <h3 className="status-title">
-              {successData.isSoftwareOwner ? 'Software Owner Access' : 'Subscription Activated'}
+              {successData.isSoftwareOwner ? 'Software Owner Access' : getSubdomainStatusTitle(successData)}
             </h3>
           </div>
           <p className="status-description">
             {successData.isSoftwareOwner 
               ? 'Full system access granted. You can manage all tenants and system settings.'
-              : 'Your GhostCRM subscription is now active and your custom subdomain portal is ready to use.'
+              : getSubdomainStatusDescription(successData)
             }
           </p>
           {successData.promoCode && (
@@ -274,6 +306,62 @@ function SuccessContent() {
       </div>
     </div>
   )
+}
+
+// Helper function to determine gateway status CSS class
+function getGatewayStatusClass(successData: SuccessData): string {
+  if (successData.isSubdomainActivated) {
+    return 'processed';
+  } else if (successData.gatewayError || successData.subdomainStatus === 'error') {
+    return 'error';
+  } else if (successData.subdomainStatus === 'pending_payment') {
+    return 'pending';
+  } else {
+    return 'standard';
+  }
+}
+
+// Helper function to get gateway status message
+function getGatewayStatusMessage(successData: SuccessData): JSX.Element {
+  if (successData.isSubdomainActivated) {
+    return <span className="gateway-processed">✅ Account activated instantly through secure payment gateway</span>;
+  } else if (successData.gatewayError) {
+    return <span className="gateway-error">⚠️ Payment successful - Account activation processing</span>;
+  } else if (successData.subdomainStatus === 'error') {
+    return <span className="gateway-error">⚠️ Activation verification in progress</span>;
+  } else if (successData.subdomainStatus === 'pending_payment') {
+    return <span className="gateway-pending">🔄 Payment confirmed - Finalizing subdomain activation</span>;
+  } else if (successData.subdomainStatus === 'checking') {
+    return <span className="gateway-standard">🔍 Payment confirmed - Verifying account activation</span>;
+  } else {
+    return <span className="gateway-standard">💳 Payment confirmed - Activating your account</span>;
+  }
+}
+
+// Helper function to get subdomain status title
+function getSubdomainStatusTitle(successData: SuccessData): string {
+  if (successData.isSubdomainActivated) {
+    return 'Subscription Activated';
+  } else if (successData.subdomainStatus === 'pending_payment') {
+    return 'Activation In Progress';
+  } else if (successData.subdomainStatus === 'error') {
+    return 'Activation Pending';
+  } else {
+    return 'Processing Activation';
+  }
+}
+
+// Helper function to get subdomain status description
+function getSubdomainStatusDescription(successData: SuccessData): string {
+  if (successData.isSubdomainActivated) {
+    return 'Your GhostCRM subscription is now active and your custom subdomain portal is ready to use.';
+  } else if (successData.subdomainStatus === 'pending_payment') {
+    return 'Your payment has been confirmed. We are finalizing your subdomain activation and it will be ready shortly.';
+  } else if (successData.subdomainStatus === 'error') {
+    return 'Your payment was successful. We are working on activating your subdomain portal.';
+  } else {
+    return 'Your payment has been confirmed and we are processing your account activation.';
+  }
 }
 
 export default function CheckoutSuccessPage() {

@@ -409,11 +409,43 @@
   color: #2563eb;
 }
 
+.gateway-status.pending {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #d97706;
+}
+
 .gateway-processed,
 .gateway-error,
-.gateway-standard {
+.gateway-standard,
+.gateway-pending {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+}
+
+/* Status Card Dynamic Styles */
+.status-card.pending {
+  background: rgba(245, 158, 11, 0.05);
+  border-left: 4px solid #f59e0b;
+}
+
+.status-card.activated {
+  background: rgba(34, 197, 94, 0.05);
+  border-left: 4px solid #22c55e;
+}
+
+.status-icon.pending {
+  color: #f59e0b;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
