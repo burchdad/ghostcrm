@@ -25,23 +25,35 @@ export async function POST(req: NextRequest) {
     
     const supabase = await createSupabaseServer();
 
-    // Find user by email
-    const { data: user, error: userError } = await supabase
+    // Find user by email - handle multiple users with same email
+    const { data: users, error: userError } = await supabase
       .from('users')
       .select('id, organization_id, email')
-      .eq('email', userEmail)
-      .single();
+      .eq('email', userEmail);
 
-    console.log('👤 [MANUAL-ACTIVATE] User lookup result:', { user, userError });
+    console.log('👤 [MANUAL-ACTIVATE] User lookup result:', { users, userError, emailSearched: userEmail });
 
-    if (userError || !user) {
-      console.error('❌ [MANUAL-ACTIVATE] User not found:', userError);
+    if (userError) {
+      console.error('❌ [MANUAL-ACTIVATE] Database error during user lookup:', userError);
+      return NextResponse.json({ 
+        error: `Database error: ${userError.message}`,
+        success: false,
+        userEmail 
+      }, { status: 500 });
+    }
+
+    if (!users || users.length === 0) {
+      console.error('❌ [MANUAL-ACTIVATE] No users found for email:', userEmail);
       return NextResponse.json({ 
         error: 'User not found',
         success: false,
         userEmail 
       }, { status: 404 });
     }
+
+    // If multiple users, use the first one (or we could add logic to pick the right one)
+    const user = users[0];
+    console.log('👤 [MANUAL-ACTIVATE] Selected user from results:', user);
 
     if (!user.organization_id) {
       console.error('❌ [MANUAL-ACTIVATE] User has no organization:', user);
