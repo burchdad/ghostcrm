@@ -1,14 +1,25 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import BrandPanel from "@/components/auth/BrandPanel";
 import AuthForm from "@/components/auth/AuthForm";
 
 export default function TenantOwnerLoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading } = useAuth();
+  const [tenantContext, setTenantContext] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Get tenant context from URL parameters
+    const tenant = searchParams.get('tenant');
+    if (tenant) {
+      setTenantContext(tenant);
+      console.log('🏢 [LOGIN-OWNER] Tenant context:', tenant);
+    }
+  }, [searchParams]);
 
   // Redirect if already authenticated based on role
   useEffect(() => {
@@ -28,12 +39,14 @@ export default function TenantOwnerLoginPage() {
         router.push('/onboarding');
       } else {
         // Already completed onboarding, go to dashboard
-        router.push("/tenant-owner/dashboard");
+        const returnTo = searchParams.get('return_to') || 'tenant-owner/dashboard';
+        router.push(`/${returnTo}`);
       }
     } catch (error) {
       console.error('Error checking onboarding status:', error);
       // Default to dashboard if check fails
-      router.push("/tenant-owner/dashboard");
+      const returnTo = searchParams.get('return_to') || 'tenant-owner/dashboard';
+      router.push(`/${returnTo}`);
     }
   };
 
@@ -133,7 +146,27 @@ export default function TenantOwnerLoginPage() {
 
           {/* Auth Form */}
           <div style={{ position: 'relative', zIndex: 2 }} className="auth-form-container-mobile">
-            <AuthForm showOwnerAccess={false} />
+            {tenantContext && (
+              <div style={{
+                marginBottom: '1.5rem',
+                padding: '1rem',
+                background: 'rgba(139, 92, 246, 0.1)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                borderRadius: '0.75rem',
+                textAlign: 'center'
+              }}>
+                <p style={{ color: '#8b5cf6', fontWeight: '600', margin: 0 }}>
+                  Tenant Login: {tenantContext}
+                </p>
+                <p style={{ color: '#a78bfa', fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
+                  You're logging into the {tenantContext} organization
+                </p>
+              </div>
+            )}
+            <AuthForm 
+              showOwnerAccess={false} 
+              tenantContext={tenantContext} 
+            />
           </div>
         </div>
       </div>

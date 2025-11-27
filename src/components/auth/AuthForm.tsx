@@ -11,9 +11,10 @@ import { loginSchema, LoginFormData } from "./schemas";
 
 interface AuthFormProps {
   showOwnerAccess?: boolean; // Controls whether to show Software Owner Access section
+  tenantContext?: string | null; // Tenant context for multi-tenant login
 }
 
-export default function AuthForm({ showOwnerAccess = true }: AuthFormProps) {
+export default function AuthForm({ showOwnerAccess = true, tenantContext = null }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showContactSales, setShowContactSales] = useState(false);
   const { login, isLoading } = useAuth();

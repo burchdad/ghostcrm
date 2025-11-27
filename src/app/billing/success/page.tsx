@@ -206,9 +206,9 @@ function SuccessContent() {
     }
     
     if (successData.userSubdomain) {
-      // Clear session and redirect to subdomain
+      // Clear session and redirect to main domain with subdomain parameter
       fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
-        window.location.href = `https://${successData.userSubdomain}.ghostcrm.ai/login-owner`
+        window.location.href = `https://ghostcrm.ai/tenant-login?subdomain=${successData.userSubdomain}`
       })
     } else {
       // Fallback to main login
