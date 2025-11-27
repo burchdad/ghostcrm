@@ -62,7 +62,7 @@ function SuccessContent() {
           promoCode: promoCode || undefined,
           isSoftwareOwner: isSoftwareOwner || usedSoftwareOwnerPromo,
           shouldStartOnboarding,
-          userSubdomain
+          userSubdomain: userSubdomain || undefined
         })
         
         // Auto-redirect after 3 seconds based on user type
