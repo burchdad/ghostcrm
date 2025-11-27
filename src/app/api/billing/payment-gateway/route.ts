@@ -36,8 +36,11 @@ export async function GET(request: NextRequest) {
     const activationResult = await activateSubdomainAfterPayment(session);
     
     if (!activationResult.success) {
-      console.warn('⚠️ [PAYMENT-GATEWAY] Subdomain activation failed but allowing success page:', activationResult.error);
+      console.error('❌ [PAYMENT-GATEWAY] Subdomain activation failed:', activationResult.error);
       // Don't block success page for activation failures - user paid successfully
+      // But redirect with error flag so we can show appropriate message
+      const errorUrl = `${process.env.NEXT_PUBLIC_APP_URL}/billing/success?session_id=${sessionId}&gateway_error=true&activation_error=${encodeURIComponent(activationResult.error || 'Unknown error')}`;
+      return NextResponse.redirect(errorUrl);
     } else {
       console.log('✅ [PAYMENT-GATEWAY] Subdomain activated successfully');
     }
@@ -68,44 +71,77 @@ async function activateSubdomainAfterPayment(session: any): Promise<{
 }> {
   try {
     console.log('🌐 [PAYMENT-GATEWAY] Activating subdomain for session:', session.id);
+    console.log('🔍 [PAYMENT-GATEWAY] Session details:', {
+      id: session.id,
+      customer_email: session.customer_email,
+      customer_details: session.customer_details,
+      payment_status: session.payment_status
+    });
 
     // Get customer email from session
     const customerEmail = session.customer_email || session.customer_details?.email;
     
     if (!customerEmail) {
+      console.error('❌ [PAYMENT-GATEWAY] No customer email found in session');
       return { success: false, error: 'No customer email found in session' };
     }
+
+    console.log('📧 [PAYMENT-GATEWAY] Customer email found:', customerEmail);
 
     const supabase = await createSupabaseServer();
 
     // Find the user by email
+    console.log('👤 [PAYMENT-GATEWAY] Looking up user by email...');
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, organization_id')
+      .select('id, organization_id, email')
       .eq('email', customerEmail)
       .single();
 
+    console.log('👤 [PAYMENT-GATEWAY] User lookup result:', { user, userError });
+
     if (userError || !user) {
+      console.error('❌ [PAYMENT-GATEWAY] User not found:', userError);
       return { success: false, error: `User not found for email: ${customerEmail}` };
     }
 
     if (!user.organization_id) {
+      console.error('❌ [PAYMENT-GATEWAY] User has no organization:', user);
       return { success: false, error: 'User has no organization' };
     }
 
+    console.log('🏢 [PAYMENT-GATEWAY] Found user with organization:', user.organization_id);
+
     // Find and activate ALL pending subdomains for this organization
+    console.log('🌐 [PAYMENT-GATEWAY] Looking for pending subdomains for organization:', user.organization_id);
     const { data: pendingSubdomains, error: subdomainError } = await supabase
       .from('subdomains')
       .select('*')
       .eq('organization_id', user.organization_id)
       .eq('status', 'pending_payment');
 
+    console.log('🌐 [PAYMENT-GATEWAY] Subdomain query result:', { 
+      pendingSubdomains, 
+      subdomainError,
+      organizationId: user.organization_id 
+    });
+
     if (subdomainError) {
+      console.error('❌ [PAYMENT-GATEWAY] Database error querying subdomains:', subdomainError);
       return { success: false, error: `Database error: ${subdomainError.message}` };
     }
 
     if (!pendingSubdomains || pendingSubdomains.length === 0) {
-      console.log('ℹ️ [PAYMENT-GATEWAY] No pending subdomains found - may already be activated');
+      console.log('ℹ️ [PAYMENT-GATEWAY] No pending subdomains found - checking if any exist...');
+      
+      // Check if there are ANY subdomains for this organization
+      const { data: allSubdomains, error: allSubdomainsError } = await supabase
+        .from('subdomains')
+        .select('*')
+        .eq('organization_id', user.organization_id);
+      
+      console.log('🌐 [PAYMENT-GATEWAY] All subdomains for org:', { allSubdomains, allSubdomainsError });
+      
       return { success: true, error: 'No pending subdomains found' };
     }
 
