@@ -50,9 +50,8 @@ function SuccessContent() {
           if (isSoftwareOwner || usedSoftwareOwnerPromo) {
             router.push('/owner/dashboard')
           } else {
-            // Clear current session and redirect to tenant owner login
-            await fetch('/api/auth/logout', { method: 'POST' });
-            router.push('/login-owner')
+            // Tenant owner - redirect to dashboard (auth middleware will handle routing)
+            router.push('/dashboard')
           }
         }, 3000)
         

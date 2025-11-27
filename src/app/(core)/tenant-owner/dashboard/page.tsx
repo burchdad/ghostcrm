@@ -8,6 +8,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { ToastProvider } from "@/components/utils/ToastProvider";
 import { I18nProvider, useI18n } from "@/components/utils/I18nProvider";
+import OnboardingGuard from "@/components/onboarding/OnboardingGuard";
 import "./page.css";
 import { 
   Crown, 
@@ -754,12 +755,14 @@ function TenantOwnerDashboard() {
 
 export default function TenantOwnerDashboardPage() {
   return (
-    <I18nProvider>
-      <ToastProvider>
-        <DndProvider backend={HTML5Backend}>
-          <TenantOwnerDashboard />
-        </DndProvider>
-      </ToastProvider>
-    </I18nProvider>
+    <OnboardingGuard requireCompleted={true} mode="modal">
+      <I18nProvider>
+        <ToastProvider>
+          <DndProvider backend={HTML5Backend}>
+            <TenantOwnerDashboard />
+          </DndProvider>
+        </ToastProvider>
+      </I18nProvider>
+    </OnboardingGuard>
   );
 }
