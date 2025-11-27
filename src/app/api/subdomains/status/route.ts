@@ -17,72 +17,49 @@ export async function POST(req: NextRequest) {
     
     const supabase = await createSupabaseServer();
 
-    // Find user by email - handle multiple users with same email
-    const { data: users, error: userError } = await supabase
-      .from('users')
-      .select('id, organization_id, email')
-      .eq('email', userEmail);
+    // Find subdomain directly by owner_email - more reliable approach
+    const { data: subdomains, error: subdomainError } = await supabase
+      .from('subdomains')
+      .select('*')
+      .eq('owner_email', userEmail);
 
-    console.log('👤 [SUBDOMAIN-STATUS] User lookup result:', { users, userError, emailSearched: userEmail });
+    console.log('🌐 [SUBDOMAIN-STATUS] Subdomain lookup result:', { 
+      subdomains, 
+      subdomainError, 
+      ownerEmailSearched: userEmail 
+    });
 
-    if (userError) {
-      console.error('❌ [SUBDOMAIN-STATUS] Database error during user lookup:', userError);
+    if (subdomainError) {
+      console.error('❌ [SUBDOMAIN-STATUS] Database error querying subdomains:', subdomainError);
       return NextResponse.json({ 
-        error: `Database error: ${userError.message}`,
+        error: `Database error: ${subdomainError.message}`,
         success: false 
       }, { status: 500 });
     }
 
-    if (!users || users.length === 0) {
-      console.error('❌ [SUBDOMAIN-STATUS] No users found for email:', userEmail);
+    if (!subdomains || subdomains.length === 0) {
+      console.error('❌ [SUBDOMAIN-STATUS] No subdomains found for email:', userEmail);
       return NextResponse.json({ 
-        error: 'User not found',
-        success: false 
+        error: 'No subdomains found for this email',
+        success: false,
+        searchedEmail: userEmail
       }, { status: 404 });
     }
 
-    // If multiple users, use the first one (or we could add logic to pick the right one)
-    const user = users[0];
-    console.log('👤 [SUBDOMAIN-STATUS] Selected user from results:', user);
-
-    if (!user.organization_id) {
-      console.error('❌ [SUBDOMAIN-STATUS] User has no organization');
-      return NextResponse.json({ 
-        error: 'User has no organization',
-        success: false 
-      }, { status: 400 });
-    }
-
-    // Find subdomain for this organization
-    const { data: subdomain, error: subdomainError } = await supabase
-      .from('subdomains')
-      .select('*')
-      .eq('organization_id', user.organization_id)
-      .single();
-
-    if (subdomainError || !subdomain) {
-      console.error('❌ [SUBDOMAIN-STATUS] No subdomain found for organization:', subdomainError?.message);
-      return NextResponse.json({ 
-        error: 'No subdomain found',
-        success: false 
-      }, { status: 404 });
-    }
-
-    console.log(`✅ [SUBDOMAIN-STATUS] Found subdomain: ${subdomain.subdomain} with status: ${subdomain.status}`);
+    // Use the first subdomain if multiple found
+    const subdomain = subdomains[0];
+    console.log(`✅ [SUBDOMAIN-STATUS] Found subdomain: ${subdomain.subdomain} (${subdomain.status})`);
 
     return NextResponse.json({
       success: true,
       subdomain: {
+        id: subdomain.id,
         subdomain: subdomain.subdomain,
         status: subdomain.status,
+        organization_id: subdomain.organization_id,
+        owner_email: subdomain.owner_email,
         created_at: subdomain.created_at,
-        updated_at: subdomain.updated_at,
-        provisioned_at: subdomain.provisioned_at
-      },
-      user: {
-        id: user.id,
-        email: user.email,
-        organization_id: user.organization_id
+        updated_at: subdomain.updated_at
       }
     });
 

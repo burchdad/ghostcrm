@@ -25,50 +25,11 @@ export async function POST(req: NextRequest) {
     
     const supabase = await createSupabaseServer();
 
-    // Find user by email - handle multiple users with same email
-    const { data: users, error: userError } = await supabase
-      .from('users')
-      .select('id, organization_id, email')
-      .eq('email', userEmail);
-
-    console.log('👤 [MANUAL-ACTIVATE] User lookup result:', { users, userError, emailSearched: userEmail });
-
-    if (userError) {
-      console.error('❌ [MANUAL-ACTIVATE] Database error during user lookup:', userError);
-      return NextResponse.json({ 
-        error: `Database error: ${userError.message}`,
-        success: false,
-        userEmail 
-      }, { status: 500 });
-    }
-
-    if (!users || users.length === 0) {
-      console.error('❌ [MANUAL-ACTIVATE] No users found for email:', userEmail);
-      return NextResponse.json({ 
-        error: 'User not found',
-        success: false,
-        userEmail 
-      }, { status: 404 });
-    }
-
-    // If multiple users, use the first one (or we could add logic to pick the right one)
-    const user = users[0];
-    console.log('👤 [MANUAL-ACTIVATE] Selected user from results:', user);
-
-    if (!user.organization_id) {
-      console.error('❌ [MANUAL-ACTIVATE] User has no organization:', user);
-      return NextResponse.json({ 
-        error: 'User has no organization',
-        success: false,
-        user 
-      }, { status: 400 });
-    }
-
-    // Find subdomains to activate
+    // Find subdomains directly by owner_email - more reliable approach
     let query = supabase
       .from('subdomains')
       .select('*')
-      .eq('organization_id', user.organization_id);
+      .eq('owner_email', userEmail);
     
     if (subdomain) {
       query = query.eq('subdomain', subdomain);
@@ -78,10 +39,11 @@ export async function POST(req: NextRequest) {
 
     const { data: subdomains, error: subdomainError } = await query;
 
-    console.log('🌐 [MANUAL-ACTIVATE] Subdomain query result:', { 
+    console.log('🌐 [MANUAL-ACTIVATE] Subdomain lookup result:', { 
       subdomains, 
       subdomainError,
-      organizationId: user.organization_id 
+      ownerEmailSearched: userEmail,
+      subdomainFilter: subdomain || 'pending_payment_status'
     });
 
     if (subdomainError) {
@@ -93,19 +55,20 @@ export async function POST(req: NextRequest) {
     }
 
     if (!subdomains || subdomains.length === 0) {
-      console.log('ℹ️ [MANUAL-ACTIVATE] No subdomains found to activate');
+      console.log('ℹ️ [MANUAL-ACTIVATE] No subdomains found to activate for this email');
       
-      // Check if there are ANY subdomains for this organization
+      // Check if there are ANY subdomains for this email
       const { data: allSubdomains, error: allSubdomainsError } = await supabase
         .from('subdomains')
         .select('*')
-        .eq('organization_id', user.organization_id);
+        .eq('owner_email', userEmail);
       
-      console.log('🌐 [MANUAL-ACTIVATE] All subdomains for org:', { allSubdomains, allSubdomainsError });
+      console.log('🌐 [MANUAL-ACTIVATE] All subdomains for email:', { allSubdomains, allSubdomainsError });
       
       return NextResponse.json({ 
-        error: 'No subdomains found to activate',
+        error: 'No subdomains found to activate for this email',
         success: false,
+        searchedEmail: userEmail,
         allSubdomains: allSubdomains || []
       }, { status: 404 });
     }
@@ -155,10 +118,7 @@ export async function POST(req: NextRequest) {
       activatedCount: successful.length,
       failedCount: failed.length,
       results: activationResults,
-      user: {
-        email: user.email,
-        organization_id: user.organization_id
-      }
+      searchedEmail: userEmail
     });
 
   } catch (error) {
