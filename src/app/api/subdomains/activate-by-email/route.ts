@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServer } from '@/utils/supabase/server';
 
+// Type for activation results
+interface DirectActivationResult {
+  subdomain: string;
+  success: boolean;
+  action: string;
+  previousStatus: string;
+  error?: string;
+  data?: any;
+}
+
 /**
  * POST /api/subdomains/activate-by-email  
  * Direct activation by email (bypasses Stripe session lookup)
@@ -70,7 +80,7 @@ export async function POST(req: NextRequest) {
     console.log(`🔍 [DIRECT-ACTIVATE] Found ${subdomains.length} subdomain(s):`, subdomains);
 
     // Activate ALL subdomains for this organization
-    const activationResults = [];
+    const activationResults: DirectActivationResult[] = [];
     
     for (const subdomain of subdomains) {
       console.log(`🔄 [DIRECT-ACTIVATE] Processing subdomain: ${subdomain.subdomain} (current status: ${subdomain.status})`);
@@ -113,7 +123,7 @@ export async function POST(req: NextRequest) {
           success: true,
           action: 'activated',
           previousStatus: subdomain.status,
-          updatedData: updatedData?.[0]
+          data: updatedData?.[0]
         });
       }
     }

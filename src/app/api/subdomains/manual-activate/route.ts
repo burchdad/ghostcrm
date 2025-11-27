@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServer } from '@/utils/supabase/server';
 
+// Type for activation results
+interface ActivationResult {
+  success: boolean;
+  subdomain: string;
+  error?: string;
+  data?: any;
+}
+
 /**
  * POST /api/subdomains/manual-activate
  * Manually activate a subdomain by email (for testing)
@@ -93,7 +101,7 @@ export async function POST(req: NextRequest) {
     console.log(`🔄 [MANUAL-ACTIVATE] Activating ${subdomains.length} subdomain(s)...`);
 
     // Activate all found subdomains
-    const activationResults = [];
+    const activationResults: ActivationResult[] = [];
     
     for (const subdomainRecord of subdomains) {
       console.log(`🔄 [MANUAL-ACTIVATE] Activating subdomain: ${subdomainRecord.subdomain} (ID: ${subdomainRecord.id})`);

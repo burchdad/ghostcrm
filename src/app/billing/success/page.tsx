@@ -141,7 +141,7 @@ function SuccessContent() {
     }
 
     checkUserStatus()
-  }, [])
+  }, [router])
 
   // Manual activation function
   const handleManualActivation = async () => {
@@ -216,23 +216,7 @@ function SuccessContent() {
         router.push('/login-owner')
       })
     }
-        // Tenant owners will use the manual button to clear session and redirect
-        
-      } catch (error) {
-        console.error('Error checking user status:', error)
-        // Default to regular client flow
-        setSuccessData({
-          isSoftwareOwner: false,
-          shouldStartOnboarding: true,
-          userSubdomain: undefined
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-    
-    checkUserStatus()
-  }, [router])
+  }
 
   async function checkPromoCodeUsed(sessionId: string): Promise<string | null> {
     try {
@@ -242,37 +226,6 @@ function SuccessContent() {
     } catch (error) {
       console.error('Error checking promo code:', error)
       return null
-    }
-  }
-
-  async function handleGoToSubdomain() {
-    try {
-      // Clear current session and JWT tokens
-      console.log('🔄 Clearing session and redirecting to subdomain login...')
-      await fetch('/api/auth/logout', { method: 'POST' });
-      
-      // Clear any local storage auth data
-      localStorage.removeItem('ghost_session');
-      localStorage.removeItem('auth_token');
-      
-      // Redirect to subdomain login page (now that subdomain is activated)
-      if (successData.userSubdomain) {
-        const subdomainUrl = `https://${successData.userSubdomain}.ghostcrm.ai/login-owner`
-        console.log('🌐 Redirecting to subdomain login:', subdomainUrl)
-        window.location.href = subdomainUrl
-      } else {
-        // Fallback to main domain login
-        console.log('⚠️ No subdomain found, redirecting to main domain login')
-        router.push('/login-owner')
-      }
-    } catch (error) {
-      console.error('Error during logout and redirect:', error)
-      // Even if logout fails, try to redirect
-      if (successData.userSubdomain) {
-        window.location.href = `https://${successData.userSubdomain}.ghostcrm.ai/login-owner`
-      } else {
-        router.push('/login-owner')
-      }
     }
   }
 
