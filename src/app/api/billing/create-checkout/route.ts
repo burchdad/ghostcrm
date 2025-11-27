@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
         // Prepare session parameters
         const baseSessionParams: any = {
           mode: 'subscription',
-          success_url: successUrl || `${process.env.NEXT_PUBLIC_APP_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+          success_url: successUrl || `${process.env.NEXT_PUBLIC_APP_URL}/api/billing/payment-gateway?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: cancelUrl || `${process.env.NEXT_PUBLIC_APP_URL}/billing/cancel`,
           metadata: {
             planId,

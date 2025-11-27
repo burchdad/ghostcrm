@@ -12,6 +12,8 @@ interface SuccessData {
   isSoftwareOwner: boolean
   shouldStartOnboarding: boolean
   userSubdomain?: string
+  processed?: boolean
+  gatewayError?: boolean
 }
 
 function SuccessContent() {
@@ -29,6 +31,15 @@ function SuccessContent() {
         // Get URL params
         const urlParams = new URLSearchParams(window.location.search)
         const sessionId = urlParams.get('session_id')
+        const processed = urlParams.get('processed') === 'true'
+        const gatewayError = urlParams.get('gateway_error') === 'true'
+        
+        // Show messaging based on payment gateway processing
+        if (processed) {
+          console.log('✅ [BILLING-SUCCESS] Payment processed through gateway successfully')
+        } else if (gatewayError) {
+          console.warn('⚠️ [BILLING-SUCCESS] Gateway processing error - payment may need manual verification')
+        }
         
         // Check if user is software owner by checking their session/role
         const response = await fetch('/api/auth/check-owner-status')
@@ -69,29 +80,13 @@ function SuccessContent() {
           promoCode: promoCode || undefined,
           isSoftwareOwner: isSoftwareOwner || usedSoftwareOwnerPromo,
           shouldStartOnboarding,
-          userSubdomain: userSubdomain || undefined
+          userSubdomain: userSubdomain || undefined,
+          processed,
+          gatewayError
         })
         
-        // BACKUP: Ensure subdomain is activated after payment success
-        // This covers cases where Stripe webhook might have failed
-        if (!isSoftwareOwner && !usedSoftwareOwnerPromo && userEmail) {
-          try {
-            console.log('🔄 [BILLING-SUCCESS] Ensuring subdomain activation...')
-            const activationResponse = await fetch('/api/subdomains/ensure-activation', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userEmail })
-            })
-            const activationResult = await activationResponse.json()
-            if (activationResult.success) {
-              console.log('✅ [BILLING-SUCCESS] Subdomain activation confirmed')
-            } else {
-              console.warn('⚠️ [BILLING-SUCCESS] Subdomain activation check failed:', activationResult.error)
-            }
-          } catch (activationError) {
-            console.warn('⚠️ [BILLING-SUCCESS] Error checking subdomain activation:', activationError)
-          }
-        }
+        // Note: Subdomain activation now happens in payment gateway before success page
+        // No need for backup activation here since gateway handles it proactively
         
         // Only auto-redirect software owners
         if (isSoftwareOwner || usedSoftwareOwnerPromo) {
@@ -187,6 +182,19 @@ function SuccessContent() {
               : 'Thank you for your subscription. You will now be redirected to login to your tenant portal!'
             }
           </p>
+          
+          {/* Payment Gateway Status Indicator */}
+          {!successData.isSoftwareOwner && (
+            <div className={`gateway-status ${successData.processed ? 'processed' : successData.gatewayError ? 'error' : 'standard'}`}>
+              {successData.processed ? (
+                <span className="gateway-processed">✅ Account activated instantly through secure payment gateway</span>
+              ) : successData.gatewayError ? (
+                <span className="gateway-error">⚠️ Payment successful - Account activation processing</span>
+              ) : (
+                <span className="gateway-standard">💳 Payment confirmed - Activating your account</span>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="status-card">
