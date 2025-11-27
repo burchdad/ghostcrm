@@ -1058,19 +1058,19 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
 
   // Skip to integrations for demo
   const skipToIntegrations = () => {
-    setCurrentStep(3) // Integration step
-  }
+    setCurrentStep(3); // Integration step
+  };
 
   if (isCompleted) {
-    return <CompletionStep />
+    return <CompletionStep />;
   }
 
   // If we're on the integration step, render the full integration component
   if (currentStep === 3) {
-    return <IntegrationSetupWrapper />
+    return <IntegrationSetupWrapper />;
   }
 
-  const CurrentStepComponent = steps[currentStep]?.component
+  const CurrentStepComponent = steps[currentStep]?.component;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -1237,20 +1237,20 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="rounded-2xl shadow-2xl p-6"
-            style={{
-              background: onComplete 
-                ? 'white' 
-                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
-              backdropFilter: onComplete ? 'none' : 'blur(20px)',
-              border: onComplete ? '1px solid #e5e7eb' : '1px solid rgba(255, 255, 255, 0.1)',
-              boxShadow: onComplete 
-                ? '0 20px 40px rgba(0, 0, 0, 0.1)' 
-                : '0 20px 40px rgba(0, 0, 0, 0.2)'
-            }}
-          >
-            {CurrentStepComponent && <CurrentStepComponent />}
+              transition={{ duration: 0.3 }}
+              className="rounded-2xl shadow-2xl p-6"
+              style={{
+                background: onComplete 
+                  ? 'white' 
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+                backdropFilter: onComplete ? 'none' : 'blur(20px)',
+                border: onComplete ? '1px solid #e5e7eb' : '1px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: onComplete 
+                  ? '0 20px 40px rgba(0, 0, 0, 0.1)' 
+                  : '0 20px 40px rgba(0, 0, 0, 0.2)'
+              }}
+            >
+              {CurrentStepComponent && <CurrentStepComponent />}
           </motion.div>
         </AnimatePresence>
 
@@ -1328,10 +1328,10 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
             </div>
           </div>
         )}
-          </motion.div>
-        </AnimatePresence>
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
     </div>
   )
 }
