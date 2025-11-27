@@ -28,6 +28,7 @@ function SuccessContent() {
     isSubdomainActivated: false
   })
   const [loading, setLoading] = useState(true)
+  const [manualActivating, setManualActivating] = useState(false)
 
   useEffect(() => {
     async function checkUserStatus() {
@@ -132,6 +133,89 @@ function SuccessContent() {
             router.push('/owner/dashboard')
           }, 3000)
         }
+      } catch (error) {
+        console.error('Error checking user status:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkUserStatus()
+  }, [])
+
+  // Manual activation function
+  const handleManualActivation = async () => {
+    setManualActivating(true)
+    
+    try {
+      const urlParams = new URLSearchParams(window.location.search)
+      const sessionId = urlParams.get('session_id')
+      
+      // Get user email from current session
+      const authResponse = await fetch('/api/auth/me')
+      const authData = await authResponse.json()
+      const userEmail = authData.user?.email
+      
+      if (!userEmail) {
+        alert('Could not find user email. Please try logging in again.')
+        return
+      }
+      
+      // Call manual activation API
+      const response = await fetch('/api/subdomains/manual-activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        // Refresh the subdomain status
+        const statusResponse = await fetch('/api/subdomains/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userEmail })
+        })
+        const statusResult = await statusResponse.json()
+        
+        if (statusResult.success && statusResult.subdomain) {
+          setSuccessData(prev => ({
+            ...prev,
+            subdomainStatus: statusResult.subdomain.status,
+            isSubdomainActivated: statusResult.subdomain.status === 'active'
+          }))
+        }
+        
+        alert('Subdomain activated successfully!')
+      } else {
+        alert(`Activation failed: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Manual activation error:', error)
+      alert('Activation failed. Please try again.')
+    } finally {
+      setManualActivating(false)
+    }
+  }
+
+  const handleGoToSubdomain = () => {
+    if (!successData.isSubdomainActivated) {
+      alert('Please wait for subdomain activation to complete before accessing your portal.')
+      return
+    }
+    
+    if (successData.userSubdomain) {
+      // Clear session and redirect to subdomain
+      fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+        window.location.href = `https://${successData.userSubdomain}.ghostcrm.ai/login-owner`
+      })
+    } else {
+      // Fallback to main login
+      fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+        router.push('/login-owner')
+      })
+    }
         // Tenant owners will use the manual button to clear session and redirect
         
       } catch (error) {
@@ -280,10 +364,25 @@ function SuccessContent() {
             </Link>
           ) : (
             <>
+              {/* Manual Activation Button */}
+              {!successData.isSubdomainActivated && (
+                <button 
+                  onClick={handleManualActivation}
+                  className="manual-activate-button"
+                  disabled={manualActivating}
+                >
+                  {manualActivating ? (
+                    <span>⏳ Activating...</span>
+                  ) : (
+                    <span>🔄 Activate Subdomain Manually</span>
+                  )}
+                </button>
+              )}
+              
               <button 
                 onClick={handleGoToSubdomain}
-                className="primary-button"
-                disabled={!successData.userSubdomain}
+                className={`primary-button ${!successData.isSubdomainActivated ? 'disabled' : ''}`}
+                disabled={!successData.userSubdomain || !successData.isSubdomainActivated}
               >
                 <ArrowRight className="button-icon" />
                 Go to My Tenant Portal

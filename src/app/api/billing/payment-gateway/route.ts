@@ -18,31 +18,70 @@ export async function GET(request: NextRequest) {
 
     // Get session details from Stripe
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    
+    if (!stripe) {
+      console.error('❌ [PAYMENT-GATEWAY] Stripe not configured');
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/billing/error?error=stripe-not-configured`);
+    }
+
+    let session;
+    try {
+      session = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ['customer', 'subscription']
+      });
+      console.log('✅ [PAYMENT-GATEWAY] Stripe session retrieved:', {
+        id: session.id,
+        customer_email: session.customer_email,
+        customer_details: session.customer_details,
+        payment_status: session.payment_status,
+        mode: session.mode,
+        status: session.status
+      });
+    } catch (stripeError) {
+      console.error('❌ [PAYMENT-GATEWAY] Failed to retrieve Stripe session:', stripeError);
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/billing/error?error=stripe-session-failed`);
+    }
 
     if (!session) {
-      console.error('❌ [PAYMENT-GATEWAY] Invalid session ID');
+      console.error('❌ [PAYMENT-GATEWAY] Invalid session ID - session is null');
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/billing/error?error=invalid-session`);
     }
 
+    console.log('🔍 [PAYMENT-GATEWAY] Session payment status check:', {
+      payment_status: session.payment_status,
+      status: session.status,
+      mode: session.mode
+    });
+
     if (session.payment_status !== 'paid') {
-      console.error('❌ [PAYMENT-GATEWAY] Payment not completed');
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/billing/error?error=payment-failed`);
+      console.error('❌ [PAYMENT-GATEWAY] Payment not completed:', {
+        payment_status: session.payment_status,
+        status: session.status,
+        session_id: session.id
+      });
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/billing/error?error=payment-failed&payment_status=${session.payment_status}`);
     }
 
     console.log('✅ [PAYMENT-GATEWAY] Payment confirmed, activating subdomain...');
 
     // Activate subdomain for this payment
+    console.log('🔄 [PAYMENT-GATEWAY] Starting subdomain activation process...');
     const activationResult = await activateSubdomainAfterPayment(session);
     
+    console.log('🔍 [PAYMENT-GATEWAY] Activation result:', activationResult);
+    
     if (!activationResult.success) {
-      console.error('❌ [PAYMENT-GATEWAY] Subdomain activation failed:', activationResult.error);
+      console.error('❌ [PAYMENT-GATEWAY] Subdomain activation failed:', {
+        error: activationResult.error,
+        session_id: sessionId,
+        customer_email: session.customer_email || session.customer_details?.email
+      });
       // Don't block success page for activation failures - user paid successfully
       // But redirect with error flag so we can show appropriate message
       const errorUrl = `${process.env.NEXT_PUBLIC_APP_URL}/billing/success?session_id=${sessionId}&gateway_error=true&activation_error=${encodeURIComponent(activationResult.error || 'Unknown error')}`;
       return NextResponse.redirect(errorUrl);
     } else {
-      console.log('✅ [PAYMENT-GATEWAY] Subdomain activated successfully');
+      console.log('✅ [PAYMENT-GATEWAY] Subdomain activated successfully:', activationResult);
     }
 
     // Update any other payment-related status
