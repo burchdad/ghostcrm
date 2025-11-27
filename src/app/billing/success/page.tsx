@@ -205,17 +205,10 @@ function SuccessContent() {
       return
     }
     
-    if (successData.userSubdomain) {
-      // Clear session and redirect to main domain with subdomain parameter
-      fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
-        window.location.href = `https://ghostcrm.ai/tenant-login?subdomain=${successData.userSubdomain}`
-      })
-    } else {
-      // Fallback to main login
-      fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
-        router.push('/login-owner')
-      })
-    }
+    // Clear session and redirect directly to login-owner page
+    fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+      router.push('/login-owner')
+    })
   }
 
   async function checkPromoCodeUsed(sessionId: string): Promise<string | null> {
