@@ -65,25 +65,13 @@ function SuccessContent() {
           userSubdomain: userSubdomain || undefined
         })
         
-        // Auto-redirect after 3 seconds based on user type
-        setTimeout(async () => {
-          if (isSoftwareOwner || usedSoftwareOwnerPromo) {
+        // Only auto-redirect software owners
+        if (isSoftwareOwner || usedSoftwareOwnerPromo) {
+          setTimeout(() => {
             router.push('/owner/dashboard')
-          } else {
-            // Tenant owner - redirect to their subdomain's login page
-            if (userSubdomain) {
-              // Clear current session and redirect to tenant owner login on their subdomain
-              await fetch('/api/auth/logout', { method: 'POST' });
-              const subdomainUrl = `https://${userSubdomain}.ghostcrm.ai/login-owner`
-              console.log('🔄 Redirecting tenant-owner to subdomain login:', subdomainUrl)
-              window.location.href = subdomainUrl
-            } else {
-              // Fallback to main domain if subdomain not found
-              await fetch('/api/auth/logout', { method: 'POST' });
-              router.push('/login-owner')
-            }
-          }
-        }, 3000)
+          }, 3000)
+        }
+        // Tenant owners will use the manual button to clear session and redirect
         
       } catch (error) {
         console.error('Error checking user status:', error)
@@ -109,6 +97,37 @@ function SuccessContent() {
     } catch (error) {
       console.error('Error checking promo code:', error)
       return null
+    }
+  }
+
+  async function handleGoToSubdomain() {
+    try {
+      // Clear current session and JWT tokens
+      console.log('🔄 Clearing session and redirecting to subdomain login...')
+      await fetch('/api/auth/logout', { method: 'POST' });
+      
+      // Clear any local storage auth data
+      localStorage.removeItem('ghost_session');
+      localStorage.removeItem('auth_token');
+      
+      // Redirect to subdomain login page
+      if (successData.userSubdomain) {
+        const subdomainUrl = `https://${successData.userSubdomain}.ghostcrm.ai/login-owner`
+        console.log('🌐 Redirecting to subdomain login:', subdomainUrl)
+        window.location.href = subdomainUrl
+      } else {
+        // Fallback to main domain login
+        console.log('⚠️ No subdomain found, redirecting to main domain login')
+        router.push('/login-owner')
+      }
+    } catch (error) {
+      console.error('Error during logout and redirect:', error)
+      // Even if logout fails, try to redirect
+      if (successData.userSubdomain) {
+        window.location.href = `https://${successData.userSubdomain}.ghostcrm.ai/login-owner`
+      } else {
+        router.push('/login-owner')
+      }
     }
   }
 
@@ -163,19 +182,49 @@ function SuccessContent() {
         </div>
 
         <div className="redirect-card">
-          <p className="redirect-text">
-            Redirecting you to{' '}
-            <span className="redirect-destination">
-              {successData.isSoftwareOwner ? 'Software Owner Dashboard' : 'Tenant Owner Login'}
-            </span>
-            {' '}in 3 seconds...
-          </p>
+          {successData.isSoftwareOwner ? (
+            <p className="redirect-text">
+              Redirecting you to{' '}
+              <span className="redirect-destination">Software Owner Dashboard</span>
+              {' '}in 3 seconds...
+            </p>
+          ) : (
+            <div className="tenant-redirect-info">
+              <p className="redirect-text">
+                Your custom subdomain portal is ready:{' '}
+                {successData.userSubdomain && (
+                  <span className="redirect-destination">
+                    {successData.userSubdomain}.ghostcrm.ai
+                  </span>
+                )}
+              </p>
+              <p className="redirect-subtitle">
+                Click below to clear your session and login to your tenant portal
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="button-group">
-          <Link href="/billing" className="secondary-button">
-            Manage Subscription
-          </Link>
+          {successData.isSoftwareOwner ? (
+            <Link href="/billing" className="secondary-button">
+              Manage Subscription
+            </Link>
+          ) : (
+            <>
+              <button 
+                onClick={handleGoToSubdomain}
+                className="primary-button"
+                disabled={!successData.userSubdomain}
+              >
+                <ArrowRight className="button-icon" />
+                Go to My Tenant Portal
+              </button>
+              <Link href="/billing" className="secondary-button">
+                Manage Subscription
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="support-text">
