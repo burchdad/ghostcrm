@@ -11,13 +11,15 @@ interface SuccessData {
   promoCode?: string
   isSoftwareOwner: boolean
   shouldStartOnboarding: boolean
+  userSubdomain?: string
 }
 
 function SuccessContent() {
   const router = useRouter()
   const [successData, setSuccessData] = useState<SuccessData>({
     isSoftwareOwner: false,
-    shouldStartOnboarding: true
+    shouldStartOnboarding: true,
+    userSubdomain: undefined
   })
   const [loading, setLoading] = useState(true)
 
@@ -32,6 +34,23 @@ function SuccessContent() {
         const response = await fetch('/api/auth/check-owner-status')
         const { isSoftwareOwner, userRole } = await response.json()
         
+        // Get user's organization/subdomain info for proper redirect
+        let userSubdomain = null
+        if (!isSoftwareOwner) {
+          try {
+            const orgResponse = await fetch('/api/auth/me')
+            const userData = await orgResponse.json()
+            if (userData.user?.tenantId) {
+              // Get organization details to find subdomain
+              const orgDetailsResponse = await fetch(`/api/organization/${userData.user.tenantId}`)
+              const orgData = await orgDetailsResponse.json()
+              userSubdomain = orgData.organization?.subdomain
+            }
+          } catch (error) {
+            console.warn('Could not fetch user organization info:', error)
+          }
+        }
+        
         // Check if they used the SOFTWAREOWNER promo code
         const promoCode = sessionId ? await checkPromoCodeUsed(sessionId) : null
         
@@ -42,7 +61,8 @@ function SuccessContent() {
           sessionId: sessionId || undefined,
           promoCode: promoCode || undefined,
           isSoftwareOwner: isSoftwareOwner || usedSoftwareOwnerPromo,
-          shouldStartOnboarding
+          shouldStartOnboarding,
+          userSubdomain
         })
         
         // Auto-redirect after 3 seconds based on user type
@@ -50,8 +70,18 @@ function SuccessContent() {
           if (isSoftwareOwner || usedSoftwareOwnerPromo) {
             router.push('/owner/dashboard')
           } else {
-            // Tenant owner - redirect to dashboard (auth middleware will handle routing)
-            router.push('/dashboard')
+            // Tenant owner - redirect to their subdomain's login page
+            if (userSubdomain) {
+              // Clear current session and redirect to tenant owner login on their subdomain
+              await fetch('/api/auth/logout', { method: 'POST' });
+              const subdomainUrl = `https://${userSubdomain}.ghostcrm.ai/login-owner`
+              console.log('🔄 Redirecting tenant-owner to subdomain login:', subdomainUrl)
+              window.location.href = subdomainUrl
+            } else {
+              // Fallback to main domain if subdomain not found
+              await fetch('/api/auth/logout', { method: 'POST' });
+              router.push('/login-owner')
+            }
           }
         }, 3000)
         
@@ -60,7 +90,8 @@ function SuccessContent() {
         // Default to regular client flow
         setSuccessData({
           isSoftwareOwner: false,
-          shouldStartOnboarding: true
+          shouldStartOnboarding: true,
+          userSubdomain: undefined
         })
       } finally {
         setLoading(false)
