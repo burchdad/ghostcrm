@@ -40,11 +40,16 @@ function SuccessContent() {
           try {
             const orgResponse = await fetch('/api/auth/me')
             const userData = await orgResponse.json()
-            if (userData.user?.tenantId) {
-              // Get organization details to find subdomain
+            if (userData.user?.organizationSubdomain) {
+              // Use the organizationSubdomain from the user data directly
+              userSubdomain = userData.user.organizationSubdomain
+              console.log('🔍 [BILLING-SUCCESS] Found user subdomain:', userSubdomain)
+            } else if (userData.user?.tenantId) {
+              // Fallback: Get organization details to find subdomain
               const orgDetailsResponse = await fetch(`/api/organization/${userData.user.tenantId}`)
               const orgData = await orgDetailsResponse.json()
               userSubdomain = orgData.organization?.subdomain
+              console.log('🔍 [BILLING-SUCCESS] Found subdomain from org API:', userSubdomain)
             }
           } catch (error) {
             console.warn('Could not fetch user organization info:', error)

@@ -23,9 +23,10 @@ export default function QuickAddButton() {
     if (pathname === '/' || 
         pathname === '/login' || 
         pathname === '/register' || 
-        pathname === '/billing' ||           // <- Added billing page
-        pathname === '/reset-password' ||   // <- Added reset password
-        pathname === '/unauthorized' ||     // <- Added unauthorized
+        pathname === '/billing' ||
+        pathname.startsWith('/billing/') ||  // <- Include all billing subpages
+        pathname === '/reset-password' ||
+        pathname === '/unauthorized' ||
         pathname.includes('/marketing')) {
       return false;
     }
