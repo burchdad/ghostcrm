@@ -1073,72 +1073,73 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
   const CurrentStepComponent = steps[currentStep]?.component;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      {/* Onboarding Content Container - Centered in Main Area */}
-      <div className={`${onComplete ? 'bg-white' : ''} rounded-2xl`} style={{
-        background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.05)',
-        backdropFilter: onComplete ? 'none' : 'blur(10px)',
-        border: onComplete ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
-        position: 'relative',
-        overflow: 'hidden',
-        padding: '2rem'
-      }}>
-        {/* Floating Background Elements - Within Container */}
-        {!onComplete && (
-          <>
-            <div style={{
-              position: 'absolute',
-              top: '10%',
-              left: '5%',
-              width: '120px',
-              height: '120px',
-              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1))',
-              borderRadius: '50%',
-              filter: 'blur(40px)',
-              animation: 'float 20s ease-in-out infinite'
-            }} />
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              right: '10%',
-              width: '100px',
-              height: '100px',
-              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(167, 139, 250, 0.1))',
-              borderRadius: '50%',
-              filter: 'blur(35px)',
-              animation: 'float 25s ease-in-out infinite reverse'
-            }} />
-            <div style={{
-              position: 'absolute',
-              bottom: '20%',
-              left: '20%',
-              width: '80px',
-              height: '80px',
-              background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.1), rgba(139, 92, 246, 0.1))',
-              borderRadius: '50%',
-              filter: 'blur(30px)',
-              animation: 'float 15s ease-in-out infinite'
-            }} />
-          </>
-        )}
+    <>
+      <div className="p-6 max-w-4xl mx-auto">
+        {/* Onboarding Content Container - Centered in Main Area */}
+        <div className={`${onComplete ? 'bg-white' : ''} rounded-2xl`} style={{
+          background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: onComplete ? 'none' : 'blur(10px)',
+          border: onComplete ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+          position: 'relative',
+          overflow: 'hidden',
+          padding: '2rem'
+        }}>
+          {/* Floating Background Elements - Within Container */}
+          {!onComplete && (
+            <>
+              <div style={{
+                position: 'absolute',
+                top: '10%',
+                left: '5%',
+                width: '120px',
+                height: '120px',
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1))',
+                borderRadius: '50%',
+                filter: 'blur(40px)',
+                animation: 'float 20s ease-in-out infinite'
+              }} />
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                right: '10%',
+                width: '100px',
+                height: '100px',
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(167, 139, 250, 0.1))',
+                borderRadius: '50%',
+                filter: 'blur(35px)',
+                animation: 'float 25s ease-in-out infinite reverse'
+              }} />
+              <div style={{
+                position: 'absolute',
+                bottom: '20%',
+                left: '20%',
+                width: '80px',
+                height: '80px',
+                background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.1), rgba(139, 92, 246, 0.1))',
+                borderRadius: '50%',
+                filter: 'blur(30px)',
+                animation: 'float 15s ease-in-out infinite'
+              }} />
+            </>
+          )}
 
-        {/* Header - Simplified for In-Layout Use */}
-        <div className="relative z-10 mb-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{
-                background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-                boxShadow: '0 8px 25px rgba(139, 92, 246, 0.3)'
-              }}>
-                <span className="text-white font-bold text-xl">G</span>
+          {/* Header - Simplified for In-Layout Use */}
+          <div className="relative z-10 mb-8">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{
+                  background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                  boxShadow: '0 8px 25px rgba(139, 92, 246, 0.3)'
+                }}>
+                  <span className="text-white font-bold text-xl">G</span>
+                </div>
+                <span className={`text-2xl font-bold ${onComplete ? 'text-gray-900' : 'text-white'}`}>
+                  Complete Your Organization Setup
+                </span>
               </div>
-              <span className={`text-2xl font-bold ${onComplete ? 'text-gray-900' : 'text-white'}`}>
-                Complete Your Organization Setup
-              </span>
-            </div>
-            <p className={`text-lg ${onComplete ? 'text-gray-600' : 'text-gray-300'} mb-6`}>
-              Add the missing details to complete your organization setup
-            </p>
+              <p className={`text-lg ${onComplete ? 'text-gray-600' : 'text-gray-300'} mb-6`}>
+                Add the missing details to complete your organization setup
+              </p>
             </div>
             <button
               onClick={skipToIntegrations}
@@ -1328,10 +1329,8 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
             </div>
           </div>
         )}
-            </motion.div>
-          </AnimatePresence>
         </div>
       </div>
-    </div>
-  )
+    </>
+  );
 }
