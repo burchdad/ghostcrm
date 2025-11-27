@@ -36,10 +36,12 @@ function SuccessContent() {
         
         // Get user's organization/subdomain info for proper redirect
         let userSubdomain = null
+        let userEmail = null
         if (!isSoftwareOwner) {
           try {
             const orgResponse = await fetch('/api/auth/me')
             const userData = await orgResponse.json()
+            userEmail = userData.user?.email // Store email for activation check
             if (userData.user?.organizationSubdomain) {
               // Use the organizationSubdomain from the user data directly
               userSubdomain = userData.user.organizationSubdomain
@@ -69,6 +71,27 @@ function SuccessContent() {
           shouldStartOnboarding,
           userSubdomain: userSubdomain || undefined
         })
+        
+        // BACKUP: Ensure subdomain is activated after payment success
+        // This covers cases where Stripe webhook might have failed
+        if (!isSoftwareOwner && !usedSoftwareOwnerPromo && userEmail) {
+          try {
+            console.log('🔄 [BILLING-SUCCESS] Ensuring subdomain activation...')
+            const activationResponse = await fetch('/api/subdomains/ensure-activation', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userEmail })
+            })
+            const activationResult = await activationResponse.json()
+            if (activationResult.success) {
+              console.log('✅ [BILLING-SUCCESS] Subdomain activation confirmed')
+            } else {
+              console.warn('⚠️ [BILLING-SUCCESS] Subdomain activation check failed:', activationResult.error)
+            }
+          } catch (activationError) {
+            console.warn('⚠️ [BILLING-SUCCESS] Error checking subdomain activation:', activationError)
+          }
+        }
         
         // Only auto-redirect software owners
         if (isSoftwareOwner || usedSoftwareOwnerPromo) {
@@ -115,16 +138,11 @@ function SuccessContent() {
       localStorage.removeItem('ghost_session');
       localStorage.removeItem('auth_token');
       
-      // Redirect to subdomain login page
+      // Redirect to subdomain login page (now that subdomain is activated)
       if (successData.userSubdomain) {
-        // For now, redirect to main domain with tenant parameter until subdomains are configured
-        // TODO: Change back to subdomain when Vercel subdomain routing is set up
-        const fallbackUrl = `https://ghostcrm.ai/login-owner?tenant=${successData.userSubdomain}`
-        console.log('🌐 Redirecting to tenant login (fallback):', fallbackUrl)
-        window.location.href = fallbackUrl
-        
-        // Original subdomain URL (commented out until Vercel subdomain setup):
-        // const subdomainUrl = `https://${successData.userSubdomain}.ghostcrm.ai/login-owner`
+        const subdomainUrl = `https://${successData.userSubdomain}.ghostcrm.ai/login-owner`
+        console.log('🌐 Redirecting to subdomain login:', subdomainUrl)
+        window.location.href = subdomainUrl
       } else {
         // Fallback to main domain login
         console.log('⚠️ No subdomain found, redirecting to main domain login')
@@ -134,8 +152,7 @@ function SuccessContent() {
       console.error('Error during logout and redirect:', error)
       // Even if logout fails, try to redirect
       if (successData.userSubdomain) {
-        const fallbackUrl = `https://ghostcrm.ai/login-owner?tenant=${successData.userSubdomain}`
-        window.location.href = fallbackUrl
+        window.location.href = `https://${successData.userSubdomain}.ghostcrm.ai/login-owner`
       } else {
         router.push('/login-owner')
       }
