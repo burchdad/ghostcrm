@@ -1074,54 +1074,91 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
 
   return (
     <>
-      <div className="p-6 max-w-4xl mx-auto">
-        {/* Onboarding Content Container - Centered in Main Area */}
-        <div className={`${onComplete ? 'bg-white' : ''} rounded-2xl`} style={{
-          background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.05)',
-          backdropFilter: onComplete ? 'none' : 'blur(10px)',
-          border: onComplete ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
-          position: 'relative',
-          overflow: 'hidden',
-          padding: '2rem'
-        }}>
-          {/* Floating Background Elements - Within Container */}
-          {!onComplete && (
-            <>
-              <div style={{
-                position: 'absolute',
-                top: '10%',
-                left: '5%',
-                width: '120px',
-                height: '120px',
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1))',
-                borderRadius: '50%',
-                filter: 'blur(40px)',
-                animation: 'float 20s ease-in-out infinite'
-              }} />
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                right: '10%',
-                width: '100px',
-                height: '100px',
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(167, 139, 250, 0.1))',
-                borderRadius: '50%',
-                filter: 'blur(35px)',
-                animation: 'float 25s ease-in-out infinite reverse'
-              }} />
-              <div style={{
-                position: 'absolute',
-                bottom: '20%',
-                left: '20%',
-                width: '80px',
-                height: '80px',
-                background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.1), rgba(139, 92, 246, 0.1))',
-                borderRadius: '50%',
-                filter: 'blur(30px)',
-                animation: 'float 15s ease-in-out infinite'
-              }} />
-            </>
-          )}
+      {/* Enhanced CSS animations */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          25% { transform: translateY(-20px) rotate(2deg); }
+          50% { transform: translateY(-15px) rotate(-1deg); }
+          75% { transform: translateY(-25px) rotate(1deg); }
+        }
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
+          50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.8); }
+        }
+      `}</style>
+      
+      {/* Override layout background for onboarding */}
+      <div 
+        className="fixed inset-0 z-40" 
+        style={{
+          background: onComplete ? '#f8fafc' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #020617 100%)',
+          top: 'var(--unified-toolbar-h, 64px)'
+        }}
+      >
+        <div className="h-full overflow-y-auto">
+          <div className="min-h-full flex flex-col justify-center py-12">
+            <div className="max-w-6xl mx-auto px-6">
+              {/* Onboarding Content Container - Centered and Prominent */}
+              <div className={`${onComplete ? 'bg-white' : ''} rounded-3xl mx-auto`} style={{
+                background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.08)',
+                backdropFilter: onComplete ? 'none' : 'blur(20px)',
+                border: onComplete ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.15)',
+                position: 'relative',
+                overflow: 'hidden',
+                padding: '3rem',
+                boxShadow: onComplete ? '0 25px 50px -12px rgba(0, 0, 0, 0.25)' : '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                maxWidth: '1200px'
+              }}>
+                {/* Enhanced Floating Background Elements */}
+                {!onComplete && (
+                  <>
+                    <div style={{
+                      position: 'absolute',
+                      top: '8%',
+                      left: '3%',
+                      width: '160px',
+                      height: '160px',
+                      background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.15))',
+                      borderRadius: '50%',
+                      filter: 'blur(50px)',
+                      animation: 'float 20s ease-in-out infinite'
+                    }} />
+                    <div style={{
+                      position: 'absolute',
+                      top: '45%',
+                      right: '5%',
+                      width: '140px',
+                      height: '140px',
+                      background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(167, 139, 250, 0.15))',
+                      borderRadius: '50%',
+                      filter: 'blur(45px)',
+                      animation: 'float 25s ease-in-out infinite reverse'
+                    }} />
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '15%',
+                      left: '15%',
+                      width: '120px',
+                      height: '120px',
+                      background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.2), rgba(139, 92, 246, 0.15))',
+                      borderRadius: '50%',
+                      filter: 'blur(40px)',
+                      animation: 'float 15s ease-in-out infinite'
+                    }} />
+                    <div style={{
+                      position: 'absolute',
+                      top: '25%',
+                      left: '50%',
+                      width: '100px',
+                      height: '100px',
+                      background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1))',
+                      borderRadius: '50%',
+                      filter: 'blur(35px)',
+                      animation: 'float 30s ease-in-out infinite reverse'
+                    }} />
+                  </>
+                )}
 
           {/* Header - Simplified for In-Layout Use */}
           <div className="relative z-10 mb-8">
@@ -1329,6 +1366,9 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
             </div>
           </div>
         )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

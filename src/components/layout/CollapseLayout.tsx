@@ -78,6 +78,7 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
         style={{
           top: "var(--unified-toolbar-h, 64px)",
           width: `${sidebarWidth}px`,
+          height: "calc(100vh - var(--unified-toolbar-h, 64px))"
         }}
       >
         <div className="h-full overflow-hidden w-full">
