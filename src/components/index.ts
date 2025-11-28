@@ -33,6 +33,5 @@ export { ToastProvider } from "./utils";
 // Legacy exports for compatibility
 // These will be removed in future versions
 export { default as CollapseLayout } from "./layout/CollapseLayout";
-export { default as ConditionalLayout } from "./layout/ConditionalLayout";
 export { default as UnifiedToolbar } from "./navigation/UnifiedToolbar";
 export { default as ComingSoonWrapper } from "./feedback/ComingSoonWrapper";

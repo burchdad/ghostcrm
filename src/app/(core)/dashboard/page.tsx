@@ -26,7 +26,6 @@ import { useDashboardData } from "./hooks/useDashboardData";
 // import DashboardImportedList from "./components/DashboardImportedList"; // unused
 import DashboardCharts from "./components/DashboardCharts";
 import DashboardCustomization from "./components/DashboardCustomization";
-import OnboardingGuard from "@/components/onboarding/OnboardingGuard";
 import RealtimeOutreachFeed from "./components/RealtimeOutreachFeed";
 import CampaignAnalytics from "./components/CampaignAnalytics";
 import CombinedMetricsCard from "./components/CombinedMetricsCard";
@@ -57,6 +56,7 @@ function DashboardContent() {
   const { user, tenant } = useAuth();
   const { messages, aiAlerts } = useDashboardData();
   const [loading, setLoading] = useState(true);
+  const [onboardingLoading, setOnboardingLoading] = useState(true);
   const { t } = useI18n();
 
   // Real-time analytics with empty state detection
@@ -74,6 +74,36 @@ function DashboardContent() {
   // Detect tenant context using dealership field instead of subdomain
   const [isTenantOwner, setIsTenantOwner] = useState(false);
   const [tenantSubdomain, setTenantSubdomain] = useState<string>('');
+
+  // Check onboarding status for non-tenant owners
+  useEffect(() => {
+    async function checkOnboardingStatus() {
+      if (!user || user.role === 'owner') {
+        setOnboardingLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/onboarding/status');
+        const { isCompleted } = await response.json();
+        
+        if (!isCompleted) {
+          console.log('🔄 [DASHBOARD] Redirecting to onboarding - not completed');
+          router.push('/onboarding');
+          return;
+        }
+        
+        setOnboardingLoading(false);
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        setOnboardingLoading(false);
+      }
+    }
+
+    if (user) {
+      checkOnboardingStatus();
+    }
+  }, [user, router]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -164,7 +194,7 @@ function DashboardContent() {
     }
   }, [aiAlerts.length, user]);
 
-  if (loading && user?.role !== 'owner') {
+  if ((loading || onboardingLoading) && user?.role !== 'owner') {
     return (
       <main className="space-y-6 p-4 md:p-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -298,36 +328,11 @@ function DashboardContent() {
 }
 
 export default function Dashboard() {
-  // Check if user is a tenant owner to skip onboarding
-  const [isTenantOwner, setIsTenantOwner] = useState(false);
-  
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname;
-      const isSubdomain = hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname.includes('.localhost');
-      setIsTenantOwner(isSubdomain);
-    }
-  }, []);
-
-  // For tenant owners, skip onboarding entirely since they've already set up their organization
-  if (isTenantOwner) {
-    return (
-      <ToastProvider>
-        <I18nProvider>
-          <DashboardContent />
-        </I18nProvider>
-      </ToastProvider>
-    );
-  }
-
-  // For main domain users, use onboarding guard
   return (
-    <OnboardingGuard requireCompleted={true} mode="modal">
-      <ToastProvider>
-        <I18nProvider>
-          <DashboardContent />
-        </I18nProvider>
-      </ToastProvider>
-    </OnboardingGuard>
+    <ToastProvider>
+      <I18nProvider>
+        <DashboardContent />
+      </I18nProvider>
+    </ToastProvider>
   );
 }

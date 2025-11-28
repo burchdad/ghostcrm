@@ -34,7 +34,6 @@ src/components/
 ├── integrations/               # Integration-specific components
 ├── layout/                     # Layout and structural components
 │   ├── CollapseLayout.tsx
-│   ├── ConditionalLayout.tsx
 │   ├── Sidebar.tsx
 │   ├── Topbar.tsx
 │   ├── Drawer.tsx
@@ -135,7 +134,7 @@ import { UserProfileDropdown } from "@/components/navigation/UserProfileDropdown
 
 ### Barrel imports (from category)
 ```typescript
-import { CollapseLayout, Sidebar, ConditionalLayout } from "@/components/layout";
+import { CollapseLayout, Sidebar } from "@/components/layout";
 import { Modal, SettingsModal, UserProfileModal } from "@/components/modals";
 import { UnifiedToolbar, QuickAddButton } from "@/components/navigation";
 ```

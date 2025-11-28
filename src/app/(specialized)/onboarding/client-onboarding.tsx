@@ -1072,6 +1072,9 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
 
   const CurrentStepComponent = steps[currentStep]?.component;
 
+  // Detect if we're in modal mode (when onComplete prop is provided)
+  const isModalMode = typeof onComplete === 'function';
+
   return (
     <>
       {/* Enhanced CSS animations */}
@@ -1088,14 +1091,31 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
         }
       `}</style>
       
-      {/* Override layout background for onboarding */}
-      <div 
-        className="fixed inset-0 z-40" 
-        style={{
-          background: onComplete ? '#f8fafc' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #020617 100%)',
-          top: 'var(--unified-toolbar-h, 64px)'
-        }}
-      >
+      {/* Conditional wrapper - full screen overlay only when NOT in modal mode */}
+      {isModalMode ? (
+        // Modal mode: render content directly without fixed overlay
+        <div className="h-full overflow-y-auto">
+          <OnboardingContent />
+        </div>
+      ) : (
+        // Standalone page mode: render with full screen overlay
+        <div 
+          className="fixed inset-0 z-40" 
+          style={{
+            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #020617 100%)',
+            top: 'var(--unified-toolbar-h, 64px)'
+          }}
+        >
+          <div className="h-full overflow-y-auto">
+            <OnboardingContent />
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  function OnboardingContent() {
+    return (
         <div className="h-full overflow-y-auto">
           <div className="min-h-full flex flex-col justify-center py-12">
             <div className="max-w-6xl mx-auto px-6">
@@ -1370,7 +1390,6 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
             </div>
           </div>
         </div>
-      </div>
-    </>
-  );
+      );
+    }
 }
