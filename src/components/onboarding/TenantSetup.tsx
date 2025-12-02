@@ -291,7 +291,7 @@ export default function TenantSetup({
                   pattern="[a-z0-9-]+"
                 />
                 <div className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-sm text-gray-600">
-                  .ghostcrm.com
+                  .ghostcrm.ai
                 </div>
               </div>
               

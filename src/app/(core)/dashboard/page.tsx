@@ -75,34 +75,54 @@ function DashboardContent() {
   const [isTenantOwner, setIsTenantOwner] = useState(false);
   const [tenantSubdomain, setTenantSubdomain] = useState<string>('');
 
-  // Check onboarding status for non-tenant owners
+  // Restrict main dashboard to software owners only (via owner_session authentication)
   useEffect(() => {
-    async function checkOnboardingStatus() {
-      if (!user || user.role === 'owner') {
-        setOnboardingLoading(false);
-        return;
-      }
+    if (!user) {
+      setOnboardingLoading(false);
+      return;
+    }
 
+    // Check if user has software owner access
+    const checkSoftwareOwnerAccess = async () => {
       try {
-        const response = await fetch('/api/onboarding/status');
-        const { isCompleted } = await response.json();
+        const response = await fetch('/api/auth/check-owner-status');
+        const data = await response.json();
         
-        if (!isCompleted) {
-          console.log('🔄 [DASHBOARD] Redirecting to onboarding - not completed');
-          router.push('/onboarding');
+        if (!data.isSoftwareOwner) {
+          console.log('🔄 [DASHBOARD] User does not have software owner access, redirecting based on role:', user.role);
+          
+          switch (user.role) {
+            case 'owner':
+              router.push('/tenant-owner/dashboard');
+              break;
+            case 'admin':
+            case 'manager':
+              router.push('/tenant-salesmanager/leads');
+              break;
+            case 'sales_rep':
+            case 'user':
+              router.push('/tenant-salesrep/leads');
+              break;
+            default:
+              router.push('/login');
+          }
           return;
         }
         
+        console.log('✅ [DASHBOARD] Software owner access confirmed');
         setOnboardingLoading(false);
       } catch (error) {
-        console.error('Error checking onboarding status:', error);
-        setOnboardingLoading(false);
+        console.error('Error checking software owner status:', error);
+        // Fallback redirect based on user role
+        if (user.role === 'owner') {
+          router.push('/tenant-owner/dashboard');
+        } else {
+          router.push('/login');
+        }
       }
-    }
+    };
 
-    if (user) {
-      checkOnboardingStatus();
-    }
+    checkSoftwareOwnerAccess();
   }, [user, router]);
 
   useEffect(() => {
@@ -189,12 +209,11 @@ function DashboardContent() {
       }
     }
 
-    if (user && user.role !== 'owner') {
-      fetchDashboardData();
-    }
+    // Fetch dashboard data for software owners
+    fetchDashboardData();
   }, [aiAlerts.length, user]);
 
-  if ((loading || onboardingLoading) && user?.role !== 'owner') {
+  if (loading || onboardingLoading) {
     return (
       <main className="space-y-6 p-4 md:p-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

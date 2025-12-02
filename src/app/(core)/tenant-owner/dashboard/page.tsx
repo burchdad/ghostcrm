@@ -102,6 +102,7 @@ function TenantOwnerDashboard() {
     systemHealth: 0
   });
   const [loading, setLoading] = useState(true);
+  const [onboardingLoading, setOnboardingLoading] = useState(true);
   
   // Chart marketplace state
   const [showMarketplace, setShowMarketplace] = useState(false);
@@ -125,6 +126,45 @@ function TenantOwnerDashboard() {
     ],
     disable: []
   });
+
+  // Onboarding guard for tenant owners
+  useEffect(() => {
+    async function checkOnboardingStatus() {
+      if (!user) {
+        setOnboardingLoading(false);
+        return;
+      }
+
+      // Only owners should be on this dashboard
+      if (user.role !== 'owner') {
+        console.log('🔄 [TENANT-OWNER-DASHBOARD] Non-owner accessing tenant dashboard, redirecting to appropriate page');
+        router.push('/dashboard');
+        return;
+      }
+
+      try {
+        console.log('🔍 [TENANT-OWNER-DASHBOARD] Checking onboarding status for owner:', user.email);
+        const response = await fetch('/api/onboarding/status');
+        const { isCompleted } = await response.json();
+        
+        console.log('🔍 [TENANT-OWNER-DASHBOARD] Onboarding status:', { isCompleted });
+        
+        if (!isCompleted) {
+          console.log('🔄 [TENANT-OWNER-DASHBOARD] Redirecting to onboarding - not completed');
+          router.push('/onboarding');
+          return;
+        }
+        
+        console.log('✅ [TENANT-OWNER-DASHBOARD] Onboarding completed, proceeding to dashboard');
+        setOnboardingLoading(false);
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        setOnboardingLoading(false);
+      }
+    }
+
+    checkOnboardingStatus();
+  }, [user, router]);
 
   // Redirect non-owners to regular dashboard
   useEffect(() => {
@@ -355,7 +395,7 @@ function TenantOwnerDashboard() {
     });
   };
 
-  if (loading) {
+  if (loading || onboardingLoading) {
     return (
       <div className="tenant-dashboard-loading">
         <div className="tenant-dashboard-loading-spinner">

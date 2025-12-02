@@ -15,6 +15,7 @@ import { IntegrationOnboarding } from '@/components/onboarding/IntegrationOnboar
 import { IntegrationPreferences } from '@/lib/integrations'
 import OnboardingGuard from '@/components/onboarding/OnboardingGuard'
 import { markOnboardingComplete } from '@/hooks/useOnboardingStatus'
+import styles from './onboarding.module.css'
 
 interface Organization {
   id: string;
@@ -22,47 +23,7 @@ interface Organization {
   subdomain: string;
 }
 
-// Add floating animation styles
-const floatingStyles = `
-  @keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    33% { transform: translateY(-10px) rotate(1deg); }
-    66% { transform: translateY(5px) rotate(-1deg); }
-  }
-  
-  @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
-    50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.6); }
-  }
-  
-  @keyframes gradient-shift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-  }
-  
-  /* Force visible placeholder text for team invitation inputs */
-  .team-invite-input::placeholder {
-    color: #6b7280 !important;
-    opacity: 1 !important;
-    font-weight: 400 !important;
-  }
-  
-  .team-invite-select {
-    color: #1f2937 !important;
-  }
-  
-  .team-invite-select option {
-    color: #111827 !important;
-    background: white !important;
-  }
-`;
-
-// Inject styles into document head
-if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement('style');
-  styleSheet.textContent = floatingStyles;
-  document.head.appendChild(styleSheet);
-}
+// Styles are now handled by the CSS module
 
 interface OnboardingStep {
   id: string
@@ -187,20 +148,17 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
 
   // Organization Setup Component
   const OrganizationSetup = () => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg" style={{
-            background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-            boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3)'
-          }}>
-            <BuildingOfficeIcon className="w-8 h-8 text-white" />
+    <div className={styles['space-y-8']}>
+      <div className={styles['text-center']}>
+        <div className={`${styles['flex']} ${styles['justify-center']} ${styles['mb-6']}`}>
+          <div className={styles['step-icon-container']}>
+            <BuildingOfficeIcon className={`${styles['w-8']} ${styles['h-8']} ${styles['text-white']}`} />
           </div>
         </div>
-        <h2 className={`text-2xl font-bold mb-2 ${onComplete ? 'text-gray-900' : 'text-white'}`}>
+        <h2 className={`${styles['step-title']} ${onComplete ? styles['step-title--light'] : styles['step-title--dark']}`}>
           {isUpdateMode ? 'Complete Your Organization Setup' : 'Set Up Your Organization'}
         </h2>
-        <p className={`text-sm ${onComplete ? 'text-gray-600' : 'text-white font-medium'}`}>
+        <p className={`${styles['step-subtitle']} ${onComplete ? styles['step-subtitle--light'] : styles['step-subtitle--dark']}`}>
           {isUpdateMode 
             ? 'Add the missing details to complete your organization setup'
             : 'Tell us about your company to personalize your CRM experience'
@@ -208,26 +166,23 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
         </p>
       </div>
 
-      <div className="max-w-lg mx-auto space-y-4">
-        <div>
-          <label className={`block text-sm font-bold mb-1 ${onComplete ? 'text-gray-700' : 'text-white'}`}>
-            Company Name * {isUpdateMode && <span className="text-xs opacity-75">(already set)</span>}
+      <div className={styles['form-container']}>
+        <div className={styles['form-group']}>
+          <label className={`${styles['form-label']} ${onComplete ? styles['form-label--light'] : styles['form-label--dark']}`}>
+            Company Name * {isUpdateMode && <span className={styles['label-note']}>(already set)</span>}
           </label>
           <input
             type="text"
             required
             value={onboardingData.organization.name}
             readOnly={isUpdateMode}
-            className="w-full px-3 py-2 text-base rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-4"
-            style={{
-              background: isUpdateMode 
-                ? (onComplete ? '#f3f4f6' : 'rgba(255, 255, 255, 0.1)')
-                : (onComplete ? 'white' : 'rgba(255, 255, 255, 0.2)'),
-              backdropFilter: onComplete ? 'none' : 'blur(15px)',
-              border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.4)',
-              color: onComplete ? '#111827' : 'white',
-              cursor: isUpdateMode ? 'not-allowed' : 'text'
-            }}
+            className={`${styles['form-input']} ${
+              onComplete ? styles['form-input--light'] : styles['form-input--dark']
+            } ${
+              isUpdateMode ? (onComplete ? styles['form-input--readonly-light'] : styles['form-input--readonly-dark']) : ''
+            } ${
+              isUpdateMode ? styles['form-input--readonly'] : ''
+            }`}
             placeholder="Enter your company name"
             onChange={isUpdateMode ? undefined : handleCompanyNameChange}
             onFocus={isUpdateMode ? undefined : handleInputFocus}
@@ -235,30 +190,26 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
           />
         </div>
 
-        <div>
-          <label className={`block text-sm font-bold mb-1 ${onComplete ? 'text-gray-700' : 'text-white'}`}>
-            Subdomain * {isUpdateMode && <span className="text-xs opacity-75">(already set)</span>}
+        <div className={styles['form-group']}>
+          <label className={`${styles['form-label']} ${onComplete ? styles['form-label--light'] : styles['form-label--dark']}`}>
+            Subdomain * {isUpdateMode && <span className={styles['label-note']}>(already set)</span>}
           </label>
-          <div className="flex">
+          <div className={styles['input-group']}>
             <input
               type="text"
               required
               value={onboardingData.organization.subdomain}
               readOnly={isUpdateMode}
-              className="flex-1 px-3 py-2 text-base rounded-l-xl border-2 transition-all duration-300 focus:outline-none focus:ring-4"
-              style={{
-                background: isUpdateMode 
-                  ? (onComplete ? '#f3f4f6' : 'rgba(255, 255, 255, 0.1)')
-                  : (onComplete ? 'white' : 'rgba(255, 255, 255, 0.2)'),
-                backdropFilter: onComplete ? 'none' : 'blur(15px)',
-                border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.4)',
-                borderRight: 'none',
-                color: onComplete ? '#111827' : 'white',
-                cursor: isUpdateMode ? 'not-allowed' : 'text'
-              }}
+              className={`${styles['form-input']} ${
+                onComplete ? styles['form-input--light'] : styles['form-input--dark']
+              } ${
+                isUpdateMode ? (onComplete ? styles['form-input--readonly-light'] : styles['form-input--readonly-dark']) : ''
+              } ${
+                isUpdateMode ? styles['form-input--readonly'] : ''
+              } ${styles['border-radius-left']}`}
               placeholder="your-company"
               onChange={(e) => {
-                if (isUpdateMode) return; // Prevent changes in update mode
+                if (isUpdateMode) return;
                 
                 const subdomain = e.target.value.toLowerCase()
                   .replace(/[^a-z0-9-]/g, '')
@@ -271,96 +222,71 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
                 }));
               }}
             />
-            <span className="inline-flex items-center px-3 rounded-r-xl border-2 border-l-0 text-base font-medium" style={{
-              background: onComplete ? '#f9fafb' : 'rgba(255, 255, 255, 0.15)',
-              border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.4)',
-              color: onComplete ? '#6b7280' : 'rgba(255, 255, 255, 0.95)'
-            }}>
-              .ghostcrm.com
+            <span className={`${styles['input-suffix']} ${onComplete ? styles['input-suffix--light'] : styles['input-suffix--dark']}`}>
+              .ghostcrm.ai
             </span>
           </div>
           {onboardingData.organization.subdomain && (
-            <p className={`mt-1 text-xs ${onComplete ? 'text-gray-500' : 'text-white font-medium'}`}>
-              Your CRM will be available at: <span className="font-bold">{onboardingData.organization.subdomain}.ghostcrm.com</span>
+            <p className={`${styles['subdomain-info']} ${onComplete ? styles['subdomain-info--light'] : styles['subdomain-info--dark']}`}>
+              Your CRM will be available at: <span className={styles['subdomain-info--highlight']}>{onboardingData.organization.subdomain}.ghostcrm.com</span>
             </p>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className={`block text-sm font-bold mb-1 ${onComplete ? 'text-gray-700' : 'text-white'}`}>
+        <div className={styles['grid-cols-2']}>
+          <div className={styles['form-group']}>
+            <label className={`${styles['form-label']} ${onComplete ? styles['form-label--light'] : styles['form-label--dark']}`}>
               Industry
             </label>
             <select 
-              className="w-full px-3 py-2 text-base rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-4"
-              style={{
-                background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.2)',
-                backdropFilter: onComplete ? 'none' : 'blur(15px)',
-                border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.4)',
-                color: onComplete ? '#111827' : 'white'
-              }}
+              className={`${styles['form-input']} ${onComplete ? styles['form-input--light'] : styles['form-input--dark']}`}
               value={onboardingData.organization.industry}
               onChange={(e) => setOnboardingData(prev => ({
                 ...prev,
                 organization: { ...prev.organization, industry: e.target.value }
               }))}
             >
-              <option value="" style={{ background: '#1f2937', color: 'white' }}>Select industry</option>
-              <option value="automotive" style={{ background: '#1f2937', color: 'white' }}>Automotive</option>
-              <option value="real-estate" style={{ background: '#1f2937', color: 'white' }}>Real Estate</option>
-              <option value="insurance" style={{ background: '#1f2937', color: 'white' }}>Insurance</option>
-              <option value="finance" style={{ background: '#1f2937', color: 'white' }}>Finance</option>
-              <option value="healthcare" style={{ background: '#1f2937', color: 'white' }}>Healthcare</option>
-              <option value="technology" style={{ background: '#1f2937', color: 'white' }}>Technology</option>
-              <option value="manufacturing" style={{ background: '#1f2937', color: 'white' }}>Manufacturing</option>
-              <option value="other" style={{ background: '#1f2937', color: 'white' }}>Other</option>
+              <option value="" className={styles['select-option']}>Select industry</option>
+              <option value="automotive" className={styles['select-option']}>Automotive</option>
+              <option value="real-estate" className={styles['select-option']}>Real Estate</option>
+              <option value="insurance" className={styles['select-option']}>Insurance</option>
+              <option value="finance" className={styles['select-option']}>Finance</option>
+              <option value="healthcare" className={styles['select-option']}>Healthcare</option>
+              <option value="technology" className={styles['select-option']}>Technology</option>
+              <option value="manufacturing" className={styles['select-option']}>Manufacturing</option>
+              <option value="other" className={styles['select-option']}>Other</option>
             </select>
           </div>
 
-          <div>
-            <label className={`block text-sm font-bold mb-1 ${onComplete ? 'text-gray-700' : 'text-white'}`}>
+          <div className={styles['form-group']}>
+            <label className={`${styles['form-label']} ${onComplete ? styles['form-label--light'] : styles['form-label--dark']}`}>
               Company Size
             </label>
             <select 
-              className="w-full px-3 py-2 text-base rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-4"
-              style={{
-                background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.2)',
-                backdropFilter: onComplete ? 'none' : 'blur(15px)',
-                border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.4)',
-                color: onComplete ? '#111827' : 'white'
-              }}
+              className={`${styles['form-input']} ${onComplete ? styles['form-input--light'] : styles['form-input--dark']}`}
               value={onboardingData.organization.teamSize}
               onChange={(e) => setOnboardingData(prev => ({
                 ...prev,
                 organization: { ...prev.organization, teamSize: e.target.value }
               }))}
             >
-              <option value="" style={{ background: '#1f2937', color: 'white' }}>Select size</option>
-              <option value="1-10" style={{ background: '#1f2937', color: 'white' }}>1-10 employees</option>
-              <option value="11-50" style={{ background: '#1f2937', color: 'white' }}>11-50 employees</option>
-              <option value="51-200" style={{ background: '#1f2937', color: 'white' }}>51-200 employees</option>
-              <option value="201-1000" style={{ background: '#1f2937', color: 'white' }}>201-1,000 employees</option>
-              <option value="1000+" style={{ background: '#1f2937', color: 'white' }}>1,000+ employees</option>
+              <option value="" className={styles['select-option']}>Select size</option>
+              <option value="1-10" className={styles['select-option']}>1-10 employees</option>
+              <option value="11-50" className={styles['select-option']}>11-50 employees</option>
+              <option value="51-200" className={styles['select-option']}>51-200 employees</option>
+              <option value="201-1000" className={styles['select-option']}>201-1,000 employees</option>
+              <option value="1000+" className={styles['select-option']}>1,000+ employees</option>
             </select>
           </div>
         </div>
 
         {apiError && (
-          <div className="p-4 rounded-xl mb-4 border-2" style={{
-            background: onComplete 
-              ? 'rgba(254, 242, 242, 1)' 
-              : 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2))',
-            border: '2px solid rgba(239, 68, 68, 0.5)',
-            backdropFilter: onComplete ? 'none' : 'blur(10px)',
-            boxShadow: '0 4px 20px rgba(239, 68, 68, 0.3)'
-          }}>
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0">
-                <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">!</span>
-                </div>
+          <div className={`${styles['error-container']} ${onComplete ? styles['error-container--light'] : styles['error-container--dark']}`}>
+            <div className={styles['error-content']}>
+              <div className={styles['error-icon']}>
+                <span className={styles['error-icon-text']}>!</span>
               </div>
-              <p className={`text-base font-semibold ${onComplete ? 'text-red-700' : 'text-red-100'}`}>
+              <p className={`${styles['error-text']} ${onComplete ? styles['error-text--light'] : styles['error-text--dark']}`}>
                 {apiError}
               </p>
             </div>
@@ -372,104 +298,57 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
 
   // Team Setup Component
   const TeamSetup = () => (
-    <div className="space-y-8">
-      <div className="text-center">
-        <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg" style={{
-            background: 'linear-gradient(135deg, #10b981, #059669)',
-            boxShadow: '0 10px 25px rgba(16, 185, 129, 0.3)'
-          }}>
-            <UsersIcon className="w-10 h-10 text-white" />
+    <div className={styles['space-y-8']}>
+      <div className={styles['text-center']}>
+        <div className={`${styles['flex']} ${styles['justify-center']} ${styles['mb-6']}`}>
+          <div className={styles['step-icon-container--team']}>
+            <UsersIcon className={`${styles['w-10']} ${styles['h-10']} ${styles['text-white']}`} />
           </div>
         </div>
-        <h2 className={`text-3xl font-bold mb-3 ${onComplete ? 'text-gray-900' : 'text-white'}`}>
+        <h2 className={`${styles['step-title']} ${onComplete ? styles['step-title--light'] : styles['step-title--dark']}`}>
           Invite Your Team
         </h2>
-        <p className={`text-lg ${onComplete ? 'text-gray-600' : 'text-white font-medium'}`}>
+        <p className={`${styles['step-subtitle']} ${onComplete ? styles['step-subtitle--light'] : styles['step-subtitle--dark']}`}>
           Get your team started with Ghost Auto CRM
         </p>
       </div>
 
-      <div className="max-w-md mx-auto">
-        <div className="p-6 rounded-xl mb-6" style={{
-          background: onComplete 
-            ? 'linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.1))' 
-            : 'linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05))',
-          border: onComplete ? '1px solid rgba(251, 191, 36, 0.3)' : '1px solid rgba(251, 191, 36, 0.2)',
-          backdropFilter: onComplete ? 'none' : 'blur(10px)'
-        }}>
-          <div className="flex gap-2">
-            <div className={`text-sm ${onComplete ? 'text-amber-800' : 'text-amber-200'}`}>
-              <strong>Pro Tip:</strong> You can invite team members now or skip and do it later from your dashboard.
-            </div>
+      <div className={`${styles['max-w-md']} ${styles['m-auto']}`}>
+        <div className={`${styles['team-pro-tip']} ${onComplete ? styles['team-pro-tip--light'] : styles['team-pro-tip--dark']}`}>
+          <div className={`${styles['team-pro-tip-text']} ${onComplete ? styles['team-pro-tip-text--light'] : styles['team-pro-tip-text--dark']}`}>
+            <strong>Pro Tip:</strong> You can invite team members now or skip and do it later from your dashboard.
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className={styles['space-y-6']}>
           {[1, 2, 3].map((index) => (
-            <div key={index} className="flex gap-4 items-center">
+            <div key={index} className={styles['team-member-item']}>
               {/* Visual indicator/checkbox area */}
-              <div 
-                className="w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0"
-                style={{
-                  background: onComplete ? '#f3f4f6' : 'rgba(255, 255, 255, 0.2)',
-                  border: onComplete ? '2px solid #d1d5db' : '2px solid rgba(255, 255, 255, 0.4)',
-                }}
-              >
-                <span className="text-xs font-bold" style={{ color: onComplete ? '#6b7280' : 'rgba(255, 255, 255, 0.7)' }}>
+              <div className={`${styles['team-member-indicator']} ${onComplete ? styles['team-member-indicator--light'] : styles['team-member-indicator--dark']}`}>
+                <span className={`${styles['team-member-indicator-number']} ${onComplete ? styles['team-member-indicator-number--light'] : styles['team-member-indicator-number--dark']}`}>
                   {index}
                 </span>
               </div>
               
               <input
                 type="email"
-                className={`px-4 py-3 text-lg rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 ${
-                  onComplete ? '' : 'team-invite-input'
-                }`}
-                style={{
-                  background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.9)',
-                  backdropFilter: onComplete ? 'none' : 'blur(15px)',
-                  border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.9)',
-                  color: onComplete ? '#111827' : '#1f2937',
-                  boxShadow: onComplete ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.2)',
-                  fontWeight: onComplete ? 'normal' : '500',
-                  fontSize: '16px',
-                  minHeight: '52px',
-                  width: '320px'  // Fixed width for email inputs - much wider
-                }}
+                className={`${styles['form-input']} ${onComplete ? styles['form-input--light'] : styles['form-input--dark']} ${styles['team-invite-input']}`}
                 placeholder="teammate@company.com"
               />
               <select 
-                className={`px-3 py-3 text-base rounded-xl border-2 transition-all duration-300 focus:outline-none ${
-                  onComplete ? '' : 'team-invite-select'
-                }`}
-                style={{
-                  background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.9)',
-                  backdropFilter: onComplete ? 'none' : 'blur(15px)',
-                  border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.9)',
-                  color: onComplete ? '#111827' : '#1f2937',
-                  boxShadow: onComplete ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.2)',
-                  fontWeight: onComplete ? 'normal' : '500',
-                  fontSize: '14px',  // Smaller font for compact dropdown
-                  minHeight: '52px',
-                  width: '120px'  // Fixed smaller width - just enough for text
-                }}
+                className={`${styles['form-input']} ${onComplete ? styles['form-input--light'] : styles['form-input--dark']} team-invite-select`}
               >
-                <option value="sales_rep" style={{ color: '#111827', background: 'white' }}>Sales Rep</option>
-                <option value="sales_manager" style={{ color: '#111827', background: 'white' }}>Sales Manager</option>
-                <option value="admin" style={{ color: '#111827', background: 'white' }}>Admin</option>
+                <option value="sales_rep" className={styles['select-option-light']}>Sales Rep</option>
+                <option value="sales_manager" className={styles['select-option-light']}>Sales Manager</option>
+                <option value="admin" className={styles['select-option-light']}>Admin</option>
               </select>
             </div>
           ))}
         </div>
 
-        <button className={`mt-6 text-sm font-semibold px-4 py-2 rounded-lg transition-all duration-300 hover:transform hover:scale-105 ${
-          onComplete ? 'text-blue-600 hover:text-blue-800 hover:bg-blue-50' : 'text-blue-300 hover:text-blue-200'
-        }`} style={!onComplete ? {
-          background: 'rgba(59, 130, 246, 0.1)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(59, 130, 246, 0.2)'
-        } : {}}>
+        <button className={`${styles['team-add-button']} ${
+          onComplete ? styles['team-add-button--light'] : styles['team-add-button--dark']
+        }`}>
           + Add more team members
         </button>
       </div>
@@ -478,28 +357,25 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
 
   // Billing Setup Component
   const BillingSetup = () => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg" style={{
-            background: 'linear-gradient(135deg, #a855f7, #7c3aed)',
-            boxShadow: '0 8px 20px rgba(168, 85, 247, 0.3)'
-          }}>
-            <CreditCardIcon className="w-8 h-8 text-white" />
+    <div className={styles['space-y-6']}>
+      <div className={styles['text-center']}>
+        <div className={`${styles['flex']} ${styles['justify-center']} ${styles['mb-4']}`}>
+          <div className={styles['step-icon-container--billing']}>
+            <CreditCardIcon className={`${styles['w-8']} ${styles['h-8']} ${styles['text-white']}`} />
           </div>
         </div>
-        <h2 className={`text-2xl font-bold mb-2 ${onComplete ? 'text-gray-900' : 'text-white'}`}>
+        <h2 className={`${styles['text-2xl']} ${styles['font-bold']} ${styles['mb-2']} ${onComplete ? styles['text-gray-900'] : styles['text-white']}`}>
           Choose Your Role & Pricing
         </h2>
-        <p className={`text-sm ${onComplete ? 'text-gray-600' : 'text-white font-medium'} mb-1`}>
+        <p className={`${styles['text-sm']} ${styles['mb-1']} ${onComplete ? styles['text-gray-600'] : `${styles['text-white']} ${styles['font-medium']}`}`}>
           Simple per-user pricing based on your role and responsibilities. Add team members later at the same rates.
         </p>
-        <p className={`text-xs ${onComplete ? 'text-gray-500' : 'text-white/70'} mb-6`}>
+        <p className={`${styles['text-xs']} ${styles['mb-6']} ${onComplete ? styles['text-gray-500'] : styles['text-white-70']}`}>
           All roles include full CRM features, mobile app access, and email integration - pricing reflects access level
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4 max-w-5xl mx-auto">
+      <div className={`${styles['grid-md-cols-3']} ${styles['max-w-5xl']} ${styles['mx-auto']}`}>
         {[
           {
             tier: 'Sales Rep',
@@ -575,8 +451,8 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
             }}
           >
             {plan.popular && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <div className="px-4 py-1 rounded-full text-xs font-bold text-white shadow-lg" style={{
+              <div className={`${styles['absolute']} ${styles['top-minus-3']} ${styles['left-half']} ${styles['transform']}`}>
+                <div className={`${styles['px-4']} ${styles['py-1']} ${styles['rounded-full']} ${styles['text-xs']} ${styles['font-bold']} ${styles['text-white']} ${styles['shadow-lg']}`} style={{
                   background: `linear-gradient(135deg, ${plan.color}, ${plan.color}dd)`
                 }}>
                   Most Popular
@@ -584,45 +460,45 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
               </div>
             )}
             
-            <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center" style={{
+            <div className={styles['text-center']}>
+              <div className={`${styles['w-12']} ${styles['h-12']} ${styles['mx-auto']} ${styles['mb-3']} ${styles['rounded-xl']} ${styles['flex']} ${styles['items-center']} ${styles['justify-center']}`} style={{
                 background: `linear-gradient(135deg, ${plan.color}, ${plan.color}dd)`,
                 boxShadow: `0 6px 20px ${plan.color}40`
               }}>
-                <span className="text-lg font-bold text-white">{plan.tier[0]}</span>
+                <span className={`${styles['text-lg']} ${styles['font-bold']} ${styles['text-white']}`}>{plan.tier[0]}</span>
               </div>
               
-              <h3 className={`text-lg font-bold mb-1 ${onComplete ? 'text-gray-900' : 'text-white'}`}>
+              <h3 className={`${styles['pricing-plan-name']} ${onComplete ? styles['text-gray-900'] : styles['text-white']}`}>
                 {plan.tier}
               </h3>
-              <p className={`text-xs ${onComplete ? 'text-gray-600' : 'text-white/80'} mb-3`}>
+              <p className={`${styles['pricing-plan-description']} ${onComplete ? styles['text-gray-600'] : styles['text-white\/80']}`}>
                 {plan.description}
               </p>
-              <div className={`text-2xl font-bold mb-1 ${onComplete ? 'text-gray-900' : 'text-white'}`}>
-                ${plan.price}<span className="text-sm font-normal opacity-70">/month per user</span>
+              <div className={`${styles['pricing-plan-price']} ${onComplete ? styles['text-gray-900'] : styles['text-white']}`}>
+                ${plan.price}<span className={`${styles['text-sm']} ${styles['font-normal']} ${styles['opacity-70']}`}>/month per user</span>
               </div>
-              <div className={`text-xs ${onComplete ? 'text-gray-600' : 'text-white/70'} mb-4`}>
+              <div className={`${styles['pricing-plan-setup-fee']} ${onComplete ? styles['text-gray-600'] : styles['text-white\/70']}`}>
                 + $50 setup fee per user
               </div>
             </div>
             
-            <div className="space-y-3">
-              <ul className="space-y-2">
+            <div className={styles['space-y-3']}>
+              <ul className={styles['space-y-2']}>
                 {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{
+                  <li key={index} className={`${styles['flex']} ${styles['items-center']} ${styles['gap-2']}`}>
+                    <div className={`${styles['w-4']} ${styles['h-4']} ${styles['rounded-full']} ${styles['flex']} ${styles['items-center']} ${styles['justify-center']}`} style={{
                       background: `linear-gradient(135deg, #10b981, #059669)`
                     }}>
-                      <CheckCircleIcon className="w-2.5 h-2.5 text-white" />
+                      <CheckCircleIcon className={`${styles['w-2-5']} ${styles['h-2-5']} ${styles['text-white']}`} />
                     </div>
-                    <span className={`text-xs ${onComplete ? 'text-gray-700' : 'text-white font-medium'}`}>
+                    <span className={`${styles['pricing-feature-text']} ${onComplete ? styles['text-gray-700'] : styles['text-white font-medium']}`}>
                       {feature}
                     </span>
                   </li>
                 ))}
               </ul>
               
-              <button className="w-full py-2 px-4 rounded-xl font-semibold text-white transition-all duration-300 hover:transform hover:scale-105 shadow-lg text-sm" style={{
+              <button className={`${styles['w-full']} ${styles['py-2']} ${styles['px-4']} ${styles['rounded-xl']} ${styles['font-semibold']} ${styles['text-white']} ${styles['transition-all']} ${styles['duration-300']} ${styles['hover-scale-105']} ${styles['shadow-lg']} ${styles['text-sm']}`} style={{
                 background: `linear-gradient(135deg, ${plan.color}, ${plan.color}dd)`,
                 boxShadow: `0 6px 20px ${plan.color}40`
               }}>
@@ -634,7 +510,7 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
       </div>
       
       {/* Skip Option */}
-      <div className="text-center mt-8">
+      <div className={`${styles['pricing-skip-text']}`}>
         <button
           onClick={() => {
             // Skip billing selection and move to next step
@@ -642,19 +518,22 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
             // Use nextStep() to properly advance to the next step
             setCurrentStep(currentStep + 1)
           }}
-          className={`px-6 py-2 text-sm font-medium rounded-xl transition-all duration-300 hover:transform hover:scale-105 cursor-pointer ${
+          className={`${styles['px-4']} ${styles['py-2']} ${styles['text-sm']} ${styles['font-medium']} ${styles['rounded-xl']} ${styles['transition-all']} ${styles['hover-scale-105']} ${styles['cursor-pointer']} ${
             onComplete 
-              ? 'text-gray-600 hover:text-gray-800 border border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50' 
-              : 'text-white/80 hover:text-white border border-white/30 hover:border-white/50 hover:bg-white/10'
+              ? `${styles['text-gray-600']} ${styles['border']} ${styles['border-gray-300']}`
+              : `${styles['text-white-80']} ${styles['border']} ${styles['border-white-30']}`
           }`}
           style={{
             backdropFilter: onComplete ? 'none' : 'blur(10px)',
-            boxShadow: onComplete ? '0 2px 8px rgba(0, 0, 0, 0.1)' : '0 4px 15px rgba(0, 0, 0, 0.2)'
+            boxShadow: onComplete ? '0 2px 8px rgba(0, 0, 0, 0.1)' : '0 4px 15px rgba(0, 0, 0, 0.2)',
+            borderColor: onComplete ? '#d1d5db' : 'rgba(255, 255, 255, 0.3)',
+            color: onComplete ? '#4b5563' : 'rgba(255, 255, 255, 0.8)',
+            backgroundColor: onComplete ? '#ffffff' : 'transparent'
           }}
         >
           Skip role selection - Choose later
         </button>
-        <p className={`text-xs mt-2 ${onComplete ? 'text-gray-500' : 'text-white/60'}`}>
+        <p className={`${styles['text-xs']} ${styles['mt-2']} ${onComplete ? styles['text-gray-500'] : styles['text-white-70']}`}>
           You can select your role and start your billing later from your account settings
         </p>
       </div>
@@ -676,23 +555,23 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
 
   // Completion Component
   const CompletionStep = () => (
-    <div className="text-center space-y-8 py-12">
+    <div className={`${styles['text-center']} ${styles['space-y-8']} ${styles['py-12']}`}>
       <motion.div
         initial={{ scale: 0, rotate: -180 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 200, damping: 20, duration: 0.8 }}
       >
-        <div className="w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center" style={{
+        <div className={`${styles['w-24']} ${styles['h-24']} ${styles['mx-auto']} ${styles['mb-6']} ${styles['rounded-full']} ${styles['flex']} ${styles['items-center']} ${styles['justify-center']}`} style={{
           background: 'linear-gradient(135deg, #10b981, #059669)',
           boxShadow: '0 20px 40px rgba(16, 185, 129, 0.4)',
           animation: 'pulse-glow 2s ease-in-out infinite'
         }}>
-          <CheckCircleIcon className="w-12 h-12 text-white" />
+          <CheckCircleIcon className={`${styles['w-12']} ${styles['h-12']} ${styles['text-white']}`} />
         </div>
       </motion.div>
       
       <div>
-        <h2 className="text-4xl font-bold mb-4" style={{
+        <h2 className={`${styles['text-4xl']} ${styles['font-bold']} ${styles['mb-4']}`} style={{
           background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
           WebkitBackgroundClip: 'text',
           backgroundClip: 'text',
@@ -701,91 +580,91 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
           Welcome to Ghost Auto CRM!
         </h2>
         {createdOrganization ? (
-          <div className="space-y-6">
-            <p className="text-xl text-gray-600 mb-6 max-w-2xl mx-auto">
-              Your organization <strong className="text-gray-900">{createdOrganization.name}</strong> has been successfully created!
+          <div className={styles['space-y-6']}>
+            <p className={`${styles['text-xl']} ${styles['text-gray-600']} ${styles['mb-6']} ${styles['max-w-2xl']} ${styles['mx-auto']}`}>
+              Your organization <strong className={styles['text-gray-900']}>{createdOrganization.name}</strong> has been successfully created!
             </p>
-            <div className="rounded-2xl p-6 max-w-md mx-auto" style={{
+            <div className={`${styles['rounded-2xl']} ${styles['px-4']} ${styles['py-6']} ${styles['max-w-md']} ${styles['mx-auto']}`} style={{
               background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05))',
               border: '1px solid rgba(59, 130, 246, 0.2)',
               backdropFilter: 'blur(10px)'
             }}>
-              <p className="text-sm text-blue-800 mb-2 font-semibold">Your CRM is ready at:</p>
-              <p className="font-mono text-blue-900 font-bold text-lg">
+              <p className={`${styles['text-sm']} ${styles['text-blue-800']} ${styles['mb-2']} ${styles['font-semibold']}`}>Your CRM is ready at:</p>
+              <p className={`font-mono ${styles['text-blue-900']} ${styles['font-bold']} ${styles['text-lg']}`}>
                 {createdOrganization.subdomain}.ghostcrm.com
               </p>
             </div>
           </div>
         ) : (
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className={`${styles['text-xl']} ${styles['text-gray-600']} mb-8 ${styles['max-w-2xl']} ${styles['mx-auto']}`}>
             Your account has been successfully created and configured. You can now start managing your leads, 
             deals, and customer relationships with our powerful CRM platform.
           </p>
         )}
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <div className={`${styles['grid']} ${styles['md-grid-cols-3']} ${styles['gap-6']} ${styles['max-w-5xl']} ${styles['mx-auto']}`}>
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="rounded-2xl p-8" 
+          className={`${styles['rounded-2xl']} ${styles['p-8']}`} 
           style={{
             background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05))',
             border: '1px solid rgba(59, 130, 246, 0.2)',
             backdropFilter: 'blur(10px)'
           }}
         >
-          <div className="w-16 h-16 mx-auto mb-4 rounded-xl flex items-center justify-center" style={{
+          <div className={`${styles['w-16']} ${styles['h-16']} ${styles['mx-auto']} ${styles['mb-4']} ${styles['rounded-xl']} ${styles['flex']} ${styles['items-center']} ${styles['justify-center']}`} style={{
             background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
             boxShadow: '0 8px 25px rgba(59, 130, 246, 0.3)'
           }}>
-            <BuildingOfficeIcon className="w-8 h-8 text-white" />
+            <BuildingOfficeIcon className={`${styles['w-8']} ${styles['h-8']} ${styles['text-white']}`} />
           </div>
-          <h3 className="font-bold text-gray-900 mb-2 text-lg">Organization Set Up</h3>
-          <p className="text-gray-600">Your company profile and settings are configured</p>
+          <h3 className={`${styles['font-bold']} ${styles['text-gray-900']} ${styles['mb-2']} ${styles['text-lg']}`}>Organization Set Up</h3>
+          <p className={styles['text-gray-600']}>Your company profile and settings are configured</p>
         </motion.div>
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
-          className="rounded-2xl p-8"
+          className={`${styles['rounded-2xl']} ${styles['p-8']}`}
           style={{
             background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05))',
             border: '1px solid rgba(16, 185, 129, 0.2)',
             backdropFilter: 'blur(10px)'
           }}
         >
-          <div className="w-16 h-16 mx-auto mb-4 rounded-xl flex items-center justify-center" style={{
+          <div className={`${styles['w-16']} ${styles['h-16']} ${styles['mx-auto']} ${styles['mb-4']} ${styles['rounded-xl']} ${styles['flex']} ${styles['items-center']} ${styles['justify-center']}`} style={{
             background: 'linear-gradient(135deg, #10b981, #059669)',
             boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)'
           }}>
-            <UsersIcon className="w-8 h-8 text-white" />
+            <UsersIcon className={`${styles['w-8']} ${styles['h-8']} ${styles['text-white']}`} />
           </div>
-          <h3 className="font-bold text-gray-900 mb-2 text-lg">Team Ready</h3>
-          <p className="text-gray-600">Team invitations have been sent</p>
+          <h3 className={`${styles['font-bold']} ${styles['text-gray-900']} ${styles['mb-2']} ${styles['text-lg']}`}>Team Ready</h3>
+          <p className={styles['text-gray-600']}>Team invitations have been sent</p>
         </motion.div>
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
-          className="rounded-2xl p-8"
+          className={`${styles['rounded-2xl']} ${styles['p-8']}`}
           style={{
             background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(124, 58, 237, 0.05))',
             border: '1px solid rgba(168, 85, 247, 0.2)',
             backdropFilter: 'blur(10px)'
           }}
         >
-          <div className="w-16 h-16 mx-auto mb-4 rounded-xl flex items-center justify-center" style={{
+          <div className={`${styles['w-16']} ${styles['h-16']} ${styles['mx-auto']} ${styles['mb-4']} ${styles['rounded-xl']} ${styles['flex']} ${styles['items-center']} ${styles['justify-center']}`} style={{
             background: 'linear-gradient(135deg, #a855f7, #7c3aed)',
             boxShadow: '0 8px 25px rgba(168, 85, 247, 0.3)'
           }}>
-            <CogIcon className="w-8 h-8 text-white" />
+            <CogIcon className={`${styles['w-8']} ${styles['h-8']} ${styles['text-white']}`} />
           </div>
-          <h3 className="font-bold text-gray-900 mb-2 text-lg">Integrations Ready</h3>
-          <p className="text-gray-600">Your preferred systems are being configured</p>
+          <h3 className={`${styles['font-bold']} ${styles['text-gray-900']} ${styles['mb-2']} ${styles['text-lg']}`}>Integrations Ready</h3>
+          <p className={styles['text-gray-600']}>Your preferred systems are being configured</p>
         </motion.div>
       </div>
 
@@ -793,7 +672,7 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 0.5 }}
-        className="space-y-6"
+        className={styles['space-y-6']}
       >
         <button
           onClick={() => {
@@ -808,7 +687,7 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
               router.push('/dashboard');
             }
           }}
-          className="inline-flex items-center gap-3 px-10 py-4 text-xl font-bold text-white rounded-2xl transition-all duration-300 hover:transform hover:scale-105 shadow-lg"
+          className={`${styles['inline-flex']} ${styles['items-center']} ${styles['gap-3']} ${styles['px-10']} ${styles['py-4']} ${styles['text-xl']} ${styles['font-bold']} ${styles['text-white']} ${styles['rounded-2xl']} ${styles['transition-all']} ${styles['duration-300']} ${styles['hover-scale-105']} ${styles['shadow-lg']}`}
           style={{
             background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
             boxShadow: '0 20px 40px rgba(139, 92, 246, 0.4)'
@@ -821,11 +700,11 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
           }}
         >
           Go to Dashboard
-          <ArrowRightIcon className="w-6 h-6" />
+          <ArrowRightIcon className={`${styles['w-6']} ${styles['h-6']}`} />
         </button>
         
-        <div className="text-sm text-gray-500">
-          Need help getting started? Check out our <a href="/docs" className="text-blue-600 hover:underline font-semibold">documentation</a> or <a href="/support" className="text-blue-600 hover:underline font-semibold">contact support</a>.
+        <div className={`${styles['text-sm']} ${styles['text-gray-500']}`}>
+          Need help getting started? Check out our <a href="/docs" className={`${styles['text-blue-600']} ${styles['hover-underline']} ${styles['font-semibold']}`}>documentation</a> or <a href="/support" className={`${styles['text-blue-600']} ${styles['hover-underline']} ${styles['font-semibold']}`}>contact support</a>.
         </div>
       </motion.div>
     </div>
@@ -1076,320 +955,50 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
   const isModalMode = typeof onComplete === 'function';
 
   return (
-    <>
-      {/* Enhanced CSS animations */}
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          25% { transform: translateY(-20px) rotate(2deg); }
-          50% { transform: translateY(-15px) rotate(-1deg); }
-          75% { transform: translateY(-25px) rotate(1deg); }
-        }
-        @keyframes pulse-glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
-          50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.8); }
-        }
-      `}</style>
-      
-      {/* Conditional wrapper - full screen overlay only when NOT in modal mode */}
-      {isModalMode ? (
-        // Modal mode: render content directly without fixed overlay
-        <div className="h-full overflow-y-auto">
-          <OnboardingContent />
-        </div>
-      ) : (
-        // Standalone page mode: render with full screen overlay
-        <div 
-          className="fixed inset-0 z-40" 
-          style={{
-            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #020617 100%)',
-            top: 'var(--unified-toolbar-h, 64px)'
-          }}
-        >
-          <div className="h-full overflow-y-auto">
-            <OnboardingContent />
-          </div>
-        </div>
-      )}
-    </>
-  );
-
-  function OnboardingContent() {
-    return (
-        <div className="h-full overflow-y-auto">
-          <div className="min-h-full flex flex-col justify-center py-12">
-            <div className="max-w-6xl mx-auto px-6">
-              {/* Onboarding Content Container - Centered and Prominent */}
-              <div className={`${onComplete ? 'bg-white' : ''} rounded-3xl mx-auto`} style={{
-                background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.08)',
-                backdropFilter: onComplete ? 'none' : 'blur(20px)',
-                border: onComplete ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.15)',
-                position: 'relative',
-                overflow: 'hidden',
-                padding: '3rem',
-                boxShadow: onComplete ? '0 25px 50px -12px rgba(0, 0, 0, 0.25)' : '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                maxWidth: '1200px'
-              }}>
-                {/* Enhanced Floating Background Elements */}
-                {!onComplete && (
-                  <>
-                    <div style={{
-                      position: 'absolute',
-                      top: '8%',
-                      left: '3%',
-                      width: '160px',
-                      height: '160px',
-                      background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.15))',
-                      borderRadius: '50%',
-                      filter: 'blur(50px)',
-                      animation: 'float 20s ease-in-out infinite'
-                    }} />
-                    <div style={{
-                      position: 'absolute',
-                      top: '45%',
-                      right: '5%',
-                      width: '140px',
-                      height: '140px',
-                      background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(167, 139, 250, 0.15))',
-                      borderRadius: '50%',
-                      filter: 'blur(45px)',
-                      animation: 'float 25s ease-in-out infinite reverse'
-                    }} />
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '15%',
-                      left: '15%',
-                      width: '120px',
-                      height: '120px',
-                      background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.2), rgba(139, 92, 246, 0.15))',
-                      borderRadius: '50%',
-                      filter: 'blur(40px)',
-                      animation: 'float 15s ease-in-out infinite'
-                    }} />
-                    <div style={{
-                      position: 'absolute',
-                      top: '25%',
-                      left: '50%',
-                      width: '100px',
-                      height: '100px',
-                      background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1))',
-                      borderRadius: '50%',
-                      filter: 'blur(35px)',
-                      animation: 'float 30s ease-in-out infinite reverse'
-                    }} />
-                  </>
-                )}
-
-          {/* Header - Simplified for In-Layout Use */}
-          <div className="relative z-10 mb-8">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{
-                  background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-                  boxShadow: '0 8px 25px rgba(139, 92, 246, 0.3)'
-                }}>
-                  <span className="text-white font-bold text-xl">G</span>
-                </div>
-                <span className={`text-2xl font-bold ${onComplete ? 'text-gray-900' : 'text-white'}`}>
-                  Complete Your Organization Setup
-                </span>
+    <div className={styles['onboarding-container']}>
+      <div className={styles['onboarding-wrapper']}>
+        <div className={`${styles['content-card']} ${onComplete ? styles['content-card--light'] : styles['content-card--dark']}`}>
+          {/* Progress Indicator */}
+          <div className={styles['progress-container']}>
+            {steps.map((step, index) => (
+              <div key={step.id} className={`${styles['progress-step']} ${index <= currentStep ? styles['progress-step--active'] : ''}`}>
+                <step.icon className={styles['progress-icon']} />
+                <span>{step.title}</span>
               </div>
-              <p className={`text-lg ${onComplete ? 'text-gray-600' : 'text-gray-300'} mb-6`}>
-                Add the missing details to complete your organization setup
-              </p>
-            </div>
+            ))}
+          </div>
+
+          {/* Step Content */}
+          <div className={styles['step-content']}>
+            {CurrentStepComponent && <CurrentStepComponent />}
+          </div>
+
+          {/* Navigation */}
+          <div className={styles['navigation-container']}>
             <button
-              onClick={skipToIntegrations}
-              className={`text-sm font-medium px-4 py-2 rounded-lg transition-all duration-300 ${
-                onComplete 
-                  ? 'text-blue-600 hover:text-blue-800 hover:bg-blue-50' 
-                  : 'text-white hover:text-white'
-              }`}
-              style={!onComplete ? {
-                background: 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
-              } : {}}
-              onMouseEnter={(e) => {
-                if (!onComplete) {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
-                  e.currentTarget.style.transform = 'translateY(-1px)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!onComplete) {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
-                  e.currentTarget.style.transform = 'translateY(0)'
-                }
-              }}
+              onClick={prevStep}
+              disabled={currentStep === 0}
+              className={`${styles['nav-button']} ${styles['nav-button--secondary']}`}
             >
-              Skip to Integrations →
+              Previous
             </button>
-            {/* Progress Bar - Centered */}
-            <div className="flex items-center justify-center space-x-6 mb-8">
-              {steps.map((step, index) => {
-                const Icon = step.icon
-                const isActive = index === currentStep
-                const isCompleted = index < currentStep
-                
-                return (
-                  <div key={step.id} className="flex items-center">
-                    <div className={`
-                      flex items-center justify-center w-10 h-10 rounded-xl border-2 transition-all duration-300 shadow-lg
-                      ${isActive ? 'text-white transform scale-110' : 
-                        isCompleted ? 'text-white' :
-                        onComplete ? 'border-gray-300 bg-white text-gray-400' : 'text-white/40'}
-                    `} style={
-                      isActive 
-                        ? { 
-                            background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-                            border: 'none',
-                            boxShadow: '0 6px 20px rgba(139, 92, 246, 0.4)'
-                          }
-                        : isCompleted 
-                          ? { 
-                              background: 'linear-gradient(135deg, #10b981, #059669)',
-                              border: 'none',
-                              boxShadow: '0 3px 12px rgba(16, 185, 129, 0.3)'
-                            }
-                          : { 
-                              background: onComplete ? '#f9fafb' : 'rgba(255, 255, 255, 0.05)',
-                              border: onComplete ? '2px solid #e5e7eb' : '2px solid rgba(255, 255, 255, 0.1)',
-                              backdropFilter: onComplete ? 'none' : 'blur(10px)'
-                            }
-                    }>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div className="ml-2 min-w-0">
-                      <p className={`text-xs font-semibold ${
-                        isActive ? onComplete ? 'text-blue-600' : 'text-white' : 
-                        isCompleted ? onComplete ? 'text-green-600' : 'text-green-300' : 
-                        onComplete ? 'text-gray-500' : 'text-white/60'
-                      }`}>
-                        {step.title}
-                      </p>
-                    </div>
-                    {index < steps.length - 1 && (
-                      <div className={`
-                        w-8 h-1 ml-4 transition-all duration-300 hidden sm:block rounded-full
-                        ${isCompleted ? onComplete ? 'bg-green-200' : 'bg-green-400/40' : onComplete ? 'bg-gray-200' : 'bg-white/20'}
-                      `} />
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-            <div className="text-center mb-8">
-              <p className={`text-sm font-medium ${onComplete ? 'text-gray-500' : 'text-white/70'}`}>
-                Step {currentStep + 1} of {steps.length}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content - Centered */}
-        <div className="relative z-10">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="rounded-2xl shadow-2xl p-6"
-              style={{
-                background: onComplete 
-                  ? 'white' 
-                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
-                backdropFilter: onComplete ? 'none' : 'blur(20px)',
-                border: onComplete ? '1px solid #e5e7eb' : '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: onComplete 
-                  ? '0 20px 40px rgba(0, 0, 0, 0.1)' 
-                  : '0 20px 40px rgba(0, 0, 0, 0.2)'
-              }}
+            
+            <button
+              onClick={nextStep}
+              className={`${styles['nav-button']} ${styles['nav-button--primary']}`}
             >
-              {CurrentStepComponent && <CurrentStepComponent />}
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Navigation */}
-        <div className="flex justify-between items-center mt-6">
-          <button
-            onClick={prevStep}
-            disabled={currentStep === 0}
-            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 ${
-              currentStep === 0 
-                ? (onComplete ? 'bg-gray-100 text-gray-400' : 'bg-white/5 text-white/40') + ' cursor-not-allowed'
-                : (onComplete ? 'border-gray-300 text-gray-700 hover:bg-gray-50' : 'text-white hover:bg-white/20') + ' hover:transform hover:scale-105'
-            }`}
-            style={currentStep === 0 ? {} : {
-              background: onComplete ? 'white' : 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: onComplete ? 'none' : 'blur(10px)',
-              border: onComplete ? '1px solid #d1d5db' : '1px solid rgba(255, 255, 255, 0.2)'
-            }}
-          >
-            Previous
-          </button>
-
-          <div className={`text-sm font-medium ${onComplete ? 'text-gray-500' : 'text-white/70'}`}>
-            {currentStep + 1} / {steps.length}
+              {currentStep === steps.length - 1 ? 'Complete Setup' : 'Continue'}
+            </button>
           </div>
 
-          <button
-            onClick={() => {
-              console.log('🖱️ BUTTON CLICKED - TEST!');
-              console.log('🔍 isLoading state:', isLoading);
-              nextStep();
-            }}
-            className="px-6 py-2 text-sm font-medium text-white rounded-xl transition-all duration-300 hover:transform hover:scale-105 cursor-pointer shadow-lg"
-            style={{
-              background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-              boxShadow: '0 6px 20px rgba(139, 92, 246, 0.4)',
-              border: 'none'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(139, 92, 246, 0.6)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)'
-            }}
-          >
-            {isLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                {isUpdateMode ? 'Updating...' : 'Creating...'}
-              </div>
-            ) : (
-              currentStep === steps.length - 1 ? 'Complete Setup' : 'Continue'
-            )}
-          </button>
-        </div>
-
-        {apiError && (
-          <div className="mt-4 p-4 rounded-xl border-2" style={{
-            background: onComplete 
-              ? 'rgba(254, 242, 242, 1)' 
-              : 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2))',
-            border: '2px solid rgba(239, 68, 68, 0.5)',
-            backdropFilter: onComplete ? 'none' : 'blur(10px)',
-            boxShadow: '0 4px 20px rgba(239, 68, 68, 0.3)'
-          }}>
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0">
-                <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">!</span>
-                </div>
-              </div>
-              <p className={`text-base font-semibold ${onComplete ? 'text-red-700' : 'text-red-100'}`}>
-                {apiError}
-              </p>
+          {/* Error Display */}
+          {apiError && (
+            <div className={styles['error-container']}>
+              <p className={styles['error-text']}>{apiError}</p>
             </div>
-          </div>
-        )}
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-      );
-    }
+      </div>
+    </div>
+  );
 }

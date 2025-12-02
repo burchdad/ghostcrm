@@ -1,50 +1,37 @@
 "use client";
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus'
 import { Skeleton } from '@/components/feedback/Skeleton'
-import OnboardingModal from '@/components/modals/OnboardingModal'
-import ClientOnboardingPage from '@/app/(specialized)/onboarding/client-onboarding'
 
 interface OnboardingGuardProps {
   children: React.ReactNode
   requireCompleted?: boolean
   redirectTo?: string
-  mode?: 'redirect' | 'modal'
 }
 
 export default function OnboardingGuard({ 
   children, 
   requireCompleted = false,
-  redirectTo,
-  mode = 'redirect'
+  redirectTo
 }: OnboardingGuardProps) {
   const router = useRouter()
   const { isCompleted, isLoading } = useOnboardingStatus()
-  const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
     console.log('🔍 [ONBOARDING_GUARD] Status check:', {
       isLoading,
       isCompleted,
       requireCompleted,
-      mode,
-      redirectTo,
-      shouldShowModal: requireCompleted && !isCompleted && mode === 'modal'
+      redirectTo
     });
 
     if (!isLoading) {
       if (requireCompleted && !isCompleted) {
-        if (mode === 'modal') {
-          // Show onboarding modal overlay
-          console.log('🎭 [ONBOARDING_GUARD] Setting modal to show');
-          setShowModal(true)
-        } else {
-          // Redirect to onboarding page
-          console.log('🔄 [ONBOARDING_GUARD] Redirecting incomplete user to onboarding');
-          router.push('/onboarding')
-        }
+        // Redirect to onboarding page
+        console.log('🔄 [ONBOARDING_GUARD] Redirecting incomplete user to onboarding');
+        router.push('/onboarding')
       } else if (!requireCompleted && isCompleted && redirectTo) {
         // User has completed onboarding, redirect away from onboarding pages
         console.log('🔄 [ONBOARDING_GUARD] Redirecting completed user to:', redirectTo);
@@ -53,14 +40,7 @@ export default function OnboardingGuard({
         console.log('✅ [ONBOARDING_GUARD] No action needed - user can proceed');
       }
     }
-  }, [isLoading, isCompleted, requireCompleted, redirectTo, router, mode])
-
-  // Handle modal completion
-  const handleOnboardingComplete = () => {
-    setShowModal(false)
-    // Optionally refresh the page or trigger a status check
-    window.location.reload()
-  }
+  }, [isLoading, isCompleted, requireCompleted, redirectTo, router])
 
   // Show loading state while checking onboarding status
   if (isLoading) {
@@ -79,21 +59,6 @@ export default function OnboardingGuard({
     )
   }
 
-  // Show children with optional modal overlay
-  return (
-    <>
-      {children}
-      
-      {/* Onboarding Modal Overlay */}
-      {mode === 'modal' && (
-        <OnboardingModal 
-          isOpen={showModal} 
-          allowClose={false}
-          className="max-w-5xl"
-        >
-          <ClientOnboardingPage onComplete={handleOnboardingComplete} />
-        </OnboardingModal>
-      )}
-    </>
-  )
+  // Simply render children - redirects are handled by useEffect
+  return children
 }

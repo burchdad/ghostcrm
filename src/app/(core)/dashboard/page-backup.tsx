@@ -263,7 +263,7 @@ function DashboardPageContent() {
 
 export default function DashboardPage() {
   return (
-    <OnboardingGuard requireCompleted={true} mode="modal">
+    <OnboardingGuard requireCompleted={true}>
       <DashboardContent />
     </OnboardingGuard>
   );
