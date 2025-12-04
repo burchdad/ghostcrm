@@ -51,6 +51,45 @@
 
 /* 
   ===========================================
+  🎯 STEP ICON CONTAINERS (DIRECT STYLES)
+  ===========================================
+  Emergency fallback for step icon containers
+*/
+.stepIconContainer {
+  width: 4rem !important;
+  height: 4rem !important;
+  border-radius: 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3) !important;
+}
+
+.stepIconContainerTeam {
+  width: 5rem !important;
+  height: 5rem !important;
+  border-radius: 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #10b981, #047857) !important;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3) !important;
+}
+
+.stepIconContainerBilling {
+  width: 5rem !important;
+  height: 5rem !important;
+  border-radius: 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3) !important;
+}
+
+/* 
+  ===========================================
   🔧 UTILITY SYSTEM
   ===========================================
 */

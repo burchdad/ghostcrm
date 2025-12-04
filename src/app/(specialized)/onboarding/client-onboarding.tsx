@@ -151,7 +151,7 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
     <div className={styles['space-y-8']}>
       <div className={styles['text-center']}>
         <div className={`${styles['flex']} ${styles['justify-center']} ${styles['mb-6']}`}>
-          <div className={styles.stepIconContainer}>
+          <div className="stepIconContainer">
             <BuildingOfficeIcon className={`${styles['w-8']} ${styles['h-8']} ${styles['text-white']}`} />
           </div>
         </div>
@@ -301,7 +301,7 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
     <div className={styles['space-y-8']}>
       <div className={styles['text-center']}>
         <div className={`${styles['flex']} ${styles['justify-center']} ${styles['mb-6']}`}>
-          <div className={styles.stepIconContainerTeam}>
+          <div className="stepIconContainerTeam">
             <UsersIcon className={`${styles['w-10']} ${styles['h-10']} ${styles['text-white']}`} />
           </div>
         </div>
@@ -360,7 +360,7 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
     <div className={styles['space-y-6']}>
       <div className={styles['text-center']}>
         <div className={`${styles['flex']} ${styles['justify-center']} ${styles['mb-4']}`}>
-          <div className={styles.stepIconContainerBilling}>
+          <div className="stepIconContainerBilling">
             <CreditCardIcon className={`${styles['w-8']} ${styles['h-8']} ${styles['text-white']}`} />
           </div>
         </div>
