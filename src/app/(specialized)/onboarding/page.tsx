@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import OnboardingGuard from "@/components/onboarding/OnboardingGuard";
-import OnboardingModal from "@/components/onboarding/OnboardingModal";
+import ClientOnboardingModal from "./client-onboarding";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -121,7 +121,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* Onboarding Modal */}
-        <OnboardingModal 
+        <ClientOnboardingModal 
           isOpen={showModal}
           onClose={handleModalClose}
           onComplete={handleOnboardingComplete}
