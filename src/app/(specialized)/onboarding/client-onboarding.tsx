@@ -591,7 +591,7 @@ export default function ClientOnboardingPage({ onComplete }: ClientOnboardingPag
             }}>
               <p className={`${styles['text-sm']} ${styles['text-blue-800']} ${styles['mb-2']} ${styles['font-semibold']}`}>Your CRM is ready at:</p>
               <p className={`font-mono ${styles['text-blue-900']} ${styles['font-bold']} ${styles['text-lg']}`}>
-                {createdOrganization.subdomain}.ghostcrm.com
+                {createdOrganization.subdomain}.ghostcrm.ai
               </p>
             </div>
           </div>
