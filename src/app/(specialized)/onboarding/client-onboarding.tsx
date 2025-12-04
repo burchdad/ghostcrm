@@ -219,68 +219,100 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
      ========================= */
 
   const OrganizationSetup: React.FC = () => (
-    <div className={styles['space-y-8']}>
-      <div className={styles['text-center']}>
-        <div className={`${styles['flex']} ${styles['justify-center']} ${styles['mb-6']}`}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
           <StepIcon type="organization" />
         </div>
-        <h2 className={`${styles['step-title']} ${isLightTheme ? styles['step-title--light'] : styles['step-title--dark']}`}>
+        <h2 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#111827', margin: '0 0 1rem 0' }}>
           {isUpdateMode ? 'Complete Your Organization Setup' : 'Set Up Your Organization'}
         </h2>
-        <p className={`${styles['step-subtitle']} ${isLightTheme ? styles['step-subtitle--light'] : styles['step-subtitle--dark']}`}>
+        <p style={{ color: '#6b7280', fontSize: '1.125rem', margin: '0', lineHeight: '1.6' }}>
           {isUpdateMode
             ? 'Add the missing details to complete your organization setup'
             : 'Tell us about your company to personalize your CRM experience'}
         </p>
       </div>
 
-      <div className={styles['form-container']}>
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {/* Company name */}
-        <div className={styles['form-group']}>
-          <label className={`${styles['form-label']} ${isLightTheme ? styles['form-label--light'] : styles['form-label--dark']}`}>
-            Company Name * {isUpdateMode && <span className={styles['label-note']}>(already set)</span>}
+        <div>
+          <label style={{ 
+            display: 'block', 
+            fontSize: '1rem', 
+            fontWeight: '600', 
+            color: '#374151', 
+            marginBottom: '0.5rem',
+            textAlign: 'left'
+          }}>
+            Company Name * {isUpdateMode && <span style={{ color: '#6b7280', fontSize: '0.875rem', fontWeight: '400' }}>(already set)</span>}
           </label>
           <input
             type="text"
             required
             value={onboardingData.organization.name}
             readOnly={isUpdateMode}
-            className={`${styles['form-input']} ${
-              isLightTheme ? styles['form-input--light'] : styles['form-input--dark']
-            } ${
-              isUpdateMode
-                ? isLightTheme
-                  ? styles['form-input--readonly-light']
-                  : styles['form-input--readonly-dark']
-                : ''
-            } ${isUpdateMode ? styles['form-input--readonly'] : ''}`}
+            style={{
+              width: '100%',
+              padding: '0.875rem 1rem',
+              border: '2px solid #d1d5db',
+              borderRadius: '0.75rem',
+              fontSize: '1rem',
+              backgroundColor: isUpdateMode ? '#f9fafb' : '#ffffff',
+              color: isUpdateMode ? '#6b7280' : '#111827',
+              cursor: isUpdateMode ? 'not-allowed' : 'text',
+              transition: 'border-color 0.2s ease',
+              outline: 'none'
+            }}
             placeholder="Enter your company name"
             onChange={isUpdateMode ? undefined : handleCompanyNameChange}
-            onFocus={isUpdateMode ? undefined : handleInputFocus}
             autoComplete="organization"
+            onFocus={(e) => {
+              if (!isUpdateMode) {
+                e.target.style.borderColor = '#3b82f6'
+                handleInputFocus?.()
+              }
+            }}
+            onBlur={(e) => {
+              if (!isUpdateMode) {
+                e.target.style.borderColor = '#d1d5db'
+              }
+            }}
           />
         </div>
 
         {/* Subdomain */}
-        <div className={styles['form-group']}>
-          <label className={`${styles['form-label']} ${isLightTheme ? styles['form-label--light'] : styles['form-label--dark']}`}>
-            Subdomain * {isUpdateMode && <span className={styles['label-note']}>(already set)</span>}
+        <div>
+          <label style={{ 
+            display: 'block', 
+            fontSize: '1rem', 
+            fontWeight: '600', 
+            color: '#374151', 
+            marginBottom: '0.5rem',
+            textAlign: 'left'
+          }}>
+            Subdomain * {isUpdateMode && <span style={{ color: '#6b7280', fontSize: '0.875rem', fontWeight: '400' }}>(already set)</span>}
           </label>
-          <div className={styles['input-group']}>
+          <div style={{ display: 'flex', alignItems: 'stretch' }}>
             <input
               type="text"
               required
               value={onboardingData.organization.subdomain}
               readOnly={isUpdateMode}
-              className={`${styles['form-input']} ${
-                isLightTheme ? styles['form-input--light'] : styles['form-input--dark']
-              } ${
-                isUpdateMode
-                  ? isLightTheme
-                    ? styles['form-input--readonly-light']
-                    : styles['form-input--readonly-dark']
-                  : ''
-              } ${isUpdateMode ? styles['form-input--readonly'] : ''} ${styles['border-radius-left']}`}
+              style={{
+                flex: 1,
+                padding: '0.875rem 1rem',
+                border: '2px solid #d1d5db',
+                borderRight: 'none',
+                borderTopLeftRadius: '0.75rem',
+                borderBottomLeftRadius: '0.75rem',
+                fontSize: '1rem',
+                backgroundColor: isUpdateMode ? '#f9fafb' : '#ffffff',
+                color: isUpdateMode ? '#6b7280' : '#111827',
+                cursor: isUpdateMode ? 'not-allowed' : 'text',
+                transition: 'border-color 0.2s ease',
+                outline: 'none'
+              }}
               placeholder="your-company"
               onChange={(e) => {
                 if (isUpdateMode) return
@@ -295,15 +327,47 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
                   organization: { ...prev.organization, subdomain }
                 }))
               }}
+              onFocus={(e) => {
+                if (!isUpdateMode) {
+                  e.target.style.borderColor = '#3b82f6'
+                  const nextElement = e.target.nextElementSibling as HTMLElement
+                  if (nextElement) nextElement.style.borderColor = '#3b82f6'
+                }
+              }}
+              onBlur={(e) => {
+                if (!isUpdateMode) {
+                  e.target.style.borderColor = '#d1d5db'
+                  const nextElement = e.target.nextElementSibling as HTMLElement
+                  if (nextElement) nextElement.style.borderColor = '#d1d5db'
+                }
+              }}
             />
-            <span className={`${styles['input-suffix']} ${isLightTheme ? styles['input-suffix--light'] : styles['input-suffix--dark']}`}>
+            <span style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '0.875rem 1rem',
+              backgroundColor: '#f9fafb',
+              border: '2px solid #d1d5db',
+              borderLeft: 'none',
+              borderTopRightRadius: '0.75rem',
+              borderBottomRightRadius: '0.75rem',
+              color: '#6b7280',
+              fontSize: '1rem',
+              fontWeight: '500'
+            }}>
               .ghostcrm.ai
             </span>
           </div>
           {onboardingData.organization.subdomain && (
-            <p className={`${styles['subdomain-info']} ${isLightTheme ? styles['subdomain-info--light'] : styles['subdomain-info--dark']}`}>
+            <p style={{ 
+              marginTop: '0.75rem', 
+              fontSize: '0.875rem', 
+              color: '#6b7280', 
+              textAlign: 'left',
+              margin: '0.75rem 0 0 0'
+            }}>
               Your CRM will be available at:{' '}
-              <span className={styles['subdomain-info--highlight']}>
+              <span style={{ color: '#3b82f6', fontWeight: '600' }}>
                 {onboardingData.organization.subdomain}.ghostcrm.ai
               </span>
             </p>
@@ -311,13 +375,31 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
         </div>
 
         {/* Industry / size */}
-        <div className={styles['grid-cols-2']}>
-          <div className={styles['form-group']}>
-            <label className={`${styles['form-label']} ${isLightTheme ? styles['form-label--light'] : styles['form-label--dark']}`}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div>
+            <label style={{ 
+              display: 'block', 
+              fontSize: '1rem', 
+              fontWeight: '600', 
+              color: '#374151', 
+              marginBottom: '0.5rem',
+              textAlign: 'left'
+            }}>
               Industry
             </label>
             <select
-              className={`${styles['form-input']} ${isLightTheme ? styles['form-input--light'] : styles['form-input--dark']}`}
+              style={{
+                width: '100%',
+                padding: '0.875rem 1rem',
+                border: '2px solid #d1d5db',
+                borderRadius: '0.75rem',
+                fontSize: '1rem',
+                backgroundColor: '#ffffff',
+                color: '#111827',
+                cursor: 'pointer',
+                transition: 'border-color 0.2s ease',
+                outline: 'none'
+              }}
               value={onboardingData.organization.industry}
               onChange={(e) =>
                 setOnboardingData(prev => ({
@@ -325,25 +407,45 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
                   organization: { ...prev.organization, industry: e.target.value }
                 }))
               }
+              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
             >
-              <option value="" className={styles['select-option']}>Select industry</option>
-              <option value="automotive" className={styles['select-option']}>Automotive</option>
-              <option value="real-estate" className={styles['select-option']}>Real Estate</option>
-              <option value="insurance" className={styles['select-option']}>Insurance</option>
-              <option value="finance" className={styles['select-option']}>Finance</option>
-              <option value="healthcare" className={styles['select-option']}>Healthcare</option>
-              <option value="technology" className={styles['select-option']}>Technology</option>
-              <option value="manufacturing" className={styles['select-option']}>Manufacturing</option>
-              <option value="other" className={styles['select-option']}>Other</option>
+              <option value="">Select industry</option>
+              <option value="automotive">Automotive</option>
+              <option value="real-estate">Real Estate</option>
+              <option value="insurance">Insurance</option>
+              <option value="finance">Finance</option>
+              <option value="healthcare">Healthcare</option>
+              <option value="technology">Technology</option>
+              <option value="manufacturing">Manufacturing</option>
+              <option value="other">Other</option>
             </select>
           </div>
 
-          <div className={styles['form-group']}>
-            <label className={`${styles['form-label']} ${isLightTheme ? styles['form-label--light'] : styles['form-label--dark']}`}>
+          <div>
+            <label style={{ 
+              display: 'block', 
+              fontSize: '1rem', 
+              fontWeight: '600', 
+              color: '#374151', 
+              marginBottom: '0.5rem',
+              textAlign: 'left'
+            }}>
               Company Size
             </label>
             <select
-              className={`${styles['form-input']} ${isLightTheme ? styles['form-input--light'] : styles['form-input--dark']}`}
+              style={{
+                width: '100%',
+                padding: '0.875rem 1rem',
+                border: '2px solid #d1d5db',
+                borderRadius: '0.75rem',
+                fontSize: '1rem',
+                backgroundColor: '#ffffff',
+                color: '#111827',
+                cursor: 'pointer',
+                transition: 'border-color 0.2s ease',
+                outline: 'none'
+              }}
               value={onboardingData.organization.teamSize}
               onChange={(e) =>
                 setOnboardingData(prev => ({
@@ -351,27 +453,35 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
                   organization: { ...prev.organization, teamSize: e.target.value }
                 }))
               }
+              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
             >
-              <option value="" className={styles['select-option']}>Select size</option>
-              <option value="1-10" className={styles['select-option']}>1-10 employees</option>
-              <option value="11-50" className={styles['select-option']}>11-50 employees</option>
-              <option value="51-200" className={styles['select-option']}>51-200 employees</option>
-              <option value="201-1000" className={styles['select-option']}>201-1,000 employees</option>
-              <option value="1000+" className={styles['select-option']}>1,000+ employees</option>
+              <option value="">Select size</option>
+              <option value="1-10">1-10 employees</option>
+              <option value="11-50">11-50 employees</option>
+              <option value="51-200">51-200 employees</option>
+              <option value="201-1000">201-1,000 employees</option>
+              <option value="1000+">1,000+ employees</option>
             </select>
           </div>
         </div>
 
         {apiError && (
-          <div className={`${styles['error-container']} ${isLightTheme ? styles['error-container--light'] : styles['error-container--dark']}`}>
-            <div className={styles['error-content']}>
-              <div className={styles['error-icon']}>
-                <span className={styles['error-icon-text']}>!</span>
-              </div>
-              <p className={`${styles['error-text']} ${isLightTheme ? styles['error-text--light'] : styles['error-text--dark']}`}>
-                {apiError}
-              </p>
-            </div>
+          <div style={{ 
+            padding: '1rem',
+            backgroundColor: '#fef2f2',
+            border: '2px solid #fecaca',
+            borderRadius: '0.75rem',
+            textAlign: 'center'
+          }}>
+            <p style={{ 
+              color: '#dc2626', 
+              fontSize: '0.875rem', 
+              fontWeight: '500',
+              margin: '0'
+            }}>
+              {apiError}
+            </p>
           </div>
         )}
       </div>
@@ -383,56 +493,35 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
      ===================== */
 
   const TeamSetup: React.FC = () => (
-    <div className={styles['space-y-8']}>
-      <div className={styles['text-center']}>
-        <div className={`${styles['flex']} ${styles['justify-center']} ${styles['mb-6']}`}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
           <StepIcon type="team" />
         </div>
-        <h2 className={`${styles['step-title']} ${isLightTheme ? styles['step-title--light'] : styles['step-title--dark']}`}>
+        <h2 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#111827', margin: '0 0 1rem 0' }}>
           Invite Your Team
         </h2>
-        <p className={`${styles['step-subtitle']} ${isLightTheme ? styles['step-subtitle--light'] : styles['step-subtitle--dark']}`}>
+        <p style={{ color: '#6b7280', fontSize: '1.125rem', margin: '0', lineHeight: '1.6' }}>
           Get your team started with Ghost Auto CRM
         </p>
       </div>
 
-      <div className={`${styles['max-w-md']} ${styles['m-auto']}`}>
-        <div className={`${styles['team-pro-tip']} ${isLightTheme ? styles['team-pro-tip--light'] : styles['team-pro-tip--dark']}`}>
-          <div className={`${styles['team-pro-tip-text']} ${isLightTheme ? styles['team-pro-tip-text--light'] : styles['team-pro-tip-text--dark']}`}>
-            <strong>Pro Tip:</strong> You can invite team members now or skip and do it later from your dashboard.
-          </div>
+      <div style={{ width: '100%', maxWidth: '400px' }}>
+        <div style={{
+          padding: '1.5rem',
+          backgroundColor: '#f0f9ff',
+          border: '2px solid #0ea5e9',
+          borderRadius: '1rem',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>💡</div>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0c4a6e', margin: '0 0 0.75rem 0' }}>
+            Pro Tip
+          </h3>
+          <p style={{ color: '#075985', fontSize: '0.9rem', margin: '0', lineHeight: '1.5' }}>
+            You can invite team members later from your dashboard. Skip this step for now and get started!
+          </p>
         </div>
-
-        <div className={styles['space-y-6']}>
-          {[1, 2, 3].map((index) => (
-            <div key={index} className={styles['team-member-item']}>
-              <div className={`${styles['team-member-indicator']} ${isLightTheme ? styles['team-member-indicator--light'] : styles['team-member-indicator--dark']}`}>
-                <span className={`${styles['team-member-indicator-number']} ${isLightTheme ? styles['team-member-indicator-number--light'] : styles['team-member-indicator-number--dark']}`}>
-                  {index}
-                </span>
-              </div>
-
-              <input
-                type="email"
-                className={`${styles['form-input']} ${isLightTheme ? styles['form-input--light'] : styles['form-input--dark']} ${styles['team-invite-input']}`}
-                placeholder="teammate@company.com"
-              />
-              <select
-                className={`${styles['form-input']} ${isLightTheme ? styles['form-input--light'] : styles['form-input--dark']} ${styles['team-invite-select']}`}
-              >
-                <option value="sales_rep" className={styles['select-option-light']}>Sales Rep</option>
-                <option value="sales_manager" className={styles['select-option-light']}>Sales Manager</option>
-                <option value="admin" className={styles['select-option-light']}>Admin</option>
-              </select>
-            </div>
-          ))}
-        </div>
-
-        <button className={`${styles['team-add-button']} ${
-          isLightTheme ? styles['team-add-button--light'] : styles['team-add-button--dark']
-        }`}>
-          + Add more team members
-        </button>
       </div>
     </div>
   )
@@ -442,192 +531,35 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
      ===================== */
 
   const BillingSetup: React.FC = () => (
-    <div className={styles['space-y-6']}>
-      <div className={styles['text-center']}>
-        <div className={`${styles['flex']} ${styles['justify-center']} ${styles['mb-4']}`}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
           <StepIcon type="billing" />
         </div>
-        <h2 className={`${styles['text-2xl']} ${styles['font-bold']} ${styles['mb-2']} ${styles['text-gray-900']}`}>
-          Choose Your Role & Pricing
+        <h2 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#111827', margin: '0 0 1rem 0' }}>
+          Subscription & Billing
         </h2>
-        <p className={`${styles['text-sm']} ${styles['mb-1']} ${styles['text-gray-600']}`}>
-          Simple per-user pricing based on your role and responsibilities. Add team members later at the same rates.
-        </p>
-        <p className={`${styles['text-xs']} ${styles['mb-6']} ${styles['text-gray-500']}`}>
-          All roles include full CRM features, mobile app access, and email integration - pricing reflects access level
+        <p style={{ color: '#6b7280', fontSize: '1.125rem', margin: '0', lineHeight: '1.6' }}>
+          Your subscription will activate once your trial period ends
         </p>
       </div>
 
-      <div className={`${styles['grid-md-cols-3']} ${styles['max-w-5xl']} ${styles['mx-auto']}`}>
-        {[
-          {
-            tier: 'Sales Rep',
-            price: 5,
-            setupFee: 50,
-            features: [
-              'Lead management & tracking',
-              'Contact database access',
-              'Basic activity logging',
-              'Email templates & sending',
-              'Mobile app access',
-              'Personal reporting',
-              'View own leads & contacts',
-              'Basic CRM functionality'
-            ],
-            popular: false,
-            color: '#3b82f6',
-            description: 'Perfect for front-line sales team members'
-          },
-          {
-            tier: 'Sales Manager',
-            price: 10,
-            setupFee: 50,
-            features: [
-              'Everything Sales Rep includes',
-              'Team lead assignment',
-              'Team performance dashboards',
-              'Lead distribution management',
-              'Goal tracking & monitoring',
-              'Team activity oversight',
-              'Advanced reporting',
-              'Pipeline management'
-            ],
-            popular: true,
-            color: '#8b5cf6',
-            description: 'Team oversight and performance management'
-          },
-          {
-            tier: 'Admin',
-            price: 15,
-            setupFee: 50,
-            features: [
-              'Everything Sales Manager includes',
-              'User management & permissions',
-              'Organization settings',
-              'Billing & subscription control',
-              'System configuration',
-              'Data export & backup',
-              'Security settings',
-              'Full system access'
-            ],
-            popular: false,
-            color: '#ec4899',
-            description: 'Full system access and organizational control'
-          }
-        ].map((plan) => (
-          <div
-            key={plan.tier}
-            className={`border-2 rounded-2xl p-6 cursor-pointer transition-all duration-300 relative hover-transform ${
-              plan.popular ? 'ring-4' : ''
-            }`}
-            style={{
-              background: 'white',
-              backdropFilter: 'none',
-              border: plan.popular ? `2px solid ${plan.color}` : '2px solid #e5e7eb',
-              boxShadow: plan.popular
-                ? `0 20px 40px ${plan.color}40`
-                : '0 8px 20px rgba(0, 0, 0, 0.1)'
-            }}
-          >
-            {plan.popular && (
-              <div className={`${styles['absolute']} ${styles['top-minus-3']} ${styles['left-half']} ${styles['transform']}`}>
-                <div
-                  className={`${styles['px-4']} ${styles['py-1']} ${styles['rounded-full']} ${styles['text-xs']} ${styles['font-bold']} ${styles['text-white']} ${styles['shadow-lg']}`}
-                  style={{
-                    background: `linear-gradient(135deg, ${plan.color}, ${plan.color}dd)`
-                  }}
-                >
-                  Most Popular
-                </div>
-              </div>
-            )}
-
-            <div className={styles['text-center']}>
-              <div
-                className={`${styles['w-12']} ${styles['h-12']} ${styles['mx-auto']} ${styles['mb-3']} ${styles['rounded-xl']} ${styles['flex']} ${styles['items-center']} ${styles['justify-center']}`}
-                style={{
-                  background: `linear-gradient(135deg, ${plan.color}, ${plan.color}dd)`,
-                  boxShadow: `0 6px 20px ${plan.color}40`
-                }}
-              >
-                <span className={`${styles['text-lg']} ${styles['font-bold']} ${styles['text-white']}`}>
-                  {plan.tier[0]}
-                </span>
-              </div>
-
-              <h3 className={`${styles['pricing-plan-name']} ${styles['text-gray-900']}`}>
-                {plan.tier}
-              </h3>
-              <p className={`${styles['pricing-plan-description']} ${styles['text-gray-600']}`}>
-                {plan.description}
-              </p>
-              <div className={`${styles['pricing-plan-price']} ${styles['text-gray-900']}`}>
-                ${plan.price}
-                <span className={`${styles['text-sm']} ${styles['font-normal']} ${styles['opacity-70']}`}>
-                  /month per user
-                </span>
-              </div>
-              <div className={`${styles['pricing-plan-setup-fee']} ${styles['text-gray-600']}`}>
-                + ${plan.setupFee} setup fee per user
-              </div>
-            </div>
-
-            <div className={styles['space-y-3']}>
-              <ul className={styles['space-y-2']}>
-                {plan.features.map((feature, index) => (
-                  <li key={index} className={`${styles['flex']} ${styles['items-center']} ${styles['gap-2']}`}>
-                    <div
-                      className={`${styles['w-4']} ${styles['h-4']} ${styles['rounded-full']} ${styles['flex']} ${styles['items-center']} ${styles['justify-center']}`}
-                      style={{
-                        background: 'linear-gradient(135deg, #10b981, #059669)'
-                      }}
-                    >
-                      <CheckCircleIcon className={`${styles['w-2-5']} ${styles['h-2-5']} ${styles['text-white']}`} />
-                    </div>
-                    <span className={`${styles['pricing-feature-text']} ${styles['text-gray-700']}`}>
-                      {feature}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                className={`${styles['w-full']} ${styles['py-2']} ${styles['px-4']} ${styles['rounded-xl']} ${styles['font-semibold']} ${styles['text-white']} ${styles['transition-all']} ${styles['duration-300']} ${styles['hover-scale-105']} ${styles['shadow-lg']} ${styles['text-sm']}`}
-                style={{
-                  background: `linear-gradient(135deg, ${plan.color}, ${plan.color}dd)`,
-                  boxShadow: `0 6px 20px ${plan.color}40`
-                }}
-              >
-                Select {plan.tier}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Skip Option */}
-      <div className={styles['pricing-skip-text']}>
-        <button
-          onClick={() => {
-            setOnboardingData(prev => ({ ...prev, billing: { skipped: true } }))
-            setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1))
-          }}
-          className={`${styles['px-4']} ${styles['py-2']} ${styles['text-sm']} ${styles['font-medium']} ${styles['rounded-xl']} ${styles['transition-all']} ${styles['hover-scale-105']} ${styles['cursor-pointer']}`}
-          style={{
-            backdropFilter: 'none',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            borderColor: '#d1d5db',
-            color: '#4b5563',
-            backgroundColor: '#ffffff',
-            borderStyle: 'solid',
-            borderWidth: 1
-          }}
-        >
-          Skip role selection - Choose later
-        </button>
-        <p className={`${styles['text-xs']} ${styles['mt-2']} ${styles['text-gray-500']}`}>
-          You can select your role and start your billing later from your account settings
-        </p>
+      <div style={{ width: '100%', maxWidth: '400px' }}>
+        <div style={{
+          padding: '1.5rem',
+          backgroundColor: '#fef7ff',
+          border: '2px solid #a855f7',
+          borderRadius: '1rem',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🎉</div>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#7c2d12', margin: '0 0 0.75rem 0' }}>
+            Trial Active
+          </h3>
+          <p style={{ color: '#a16207', fontSize: '0.9rem', margin: '0', lineHeight: '1.5' }}>
+            Enjoy full access to all features during your trial. We'll handle billing setup automatically when you're ready.
+          </p>
+        </div>
       </div>
     </div>
   )
@@ -1025,11 +957,13 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        width="900px"
-        maxHeight="90vh"
+        width="1000px"
+        maxHeight="95vh"
         ariaLabel="Onboarding Complete"
       >
-        <CompletionStep />
+        <div style={{ padding: '2rem' }}>
+          <CompletionStep />
+        </div>
       </Modal>
     )
   }
@@ -1040,11 +974,13 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        width="900px"
-        maxHeight="90vh"
+        width="1000px"
+        maxHeight="95vh"
         ariaLabel="Onboarding Integrations"
       >
-        <IntegrationSetupWrapper />
+        <div style={{ padding: '2rem' }}>
+          <IntegrationSetupWrapper />
+        </div>
       </Modal>
     )
   }
@@ -1055,42 +991,45 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      width="900px"
-      maxHeight="90vh"
+      width="1000px"
+      maxHeight="95vh"
       ariaLabel="Onboarding Setup"
     >
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 1.5rem 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2rem 2rem 1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827' }}>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#111827', margin: '0' }}>
               Welcome to Ghost CRM
             </h1>
-            <p style={{ color: '#6b7280', marginTop: '0.25rem' }}>
+            <p style={{ color: '#6b7280', marginTop: '0.5rem', margin: '0.5rem 0 0 0', fontSize: '1rem' }}>
               Step {currentStep + 1} of {steps.length}
             </p>
           </div>
           <button
             onClick={onClose}
             style={{
-              padding: '0.5rem',
+              padding: '0.75rem',
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              borderRadius: '0.25rem'
+              borderRadius: '0.5rem',
+              transition: 'background-color 0.2s'
             }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
             <XMarkIcon style={{ width: '1.5rem', height: '1.5rem', color: '#6b7280' }} />
           </button>
         </div>
 
         {/* Progress Bar */}
-        <div style={{ padding: '0 1.5rem', marginTop: '1rem' }}>
-          <div style={{ background: '#f3f4f6', borderRadius: '0.25rem', height: '0.5rem' }}>
+        <div style={{ padding: '0 2rem', marginBottom: '2rem' }}>
+          <div style={{ background: '#f3f4f6', borderRadius: '0.375rem', height: '0.5rem' }}>
             <div
               style={{
                 background: '#3b82f6',
-                borderRadius: '0.25rem',
+                borderRadius: '0.375rem',
                 height: '100%',
                 width: `${((currentStep + 1) / steps.length) * 100}%`,
                 transition: 'width 0.3s ease'
@@ -1100,22 +1039,39 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
         </div>
 
         {/* Step Content */}
-        <div style={{ padding: '1rem 1.5rem 0.5rem' }}>
+        <div style={{ 
+          flex: 1, 
+          padding: '0 2rem', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          justifyContent: 'center',
+          minHeight: '400px'
+        }}>
           {CurrentStepComponent && <CurrentStepComponent />}
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          padding: '1.5rem 2rem 2rem',
+          borderTop: '1px solid #f3f4f6',
+          marginTop: '1rem'
+        }}>
           <button
             onClick={prevStep}
             disabled={currentStep === 0}
             style={{
-              padding: '0.75rem 1.5rem',
+              padding: '0.875rem 2rem',
               background: currentStep === 0 ? '#f3f4f6' : '#ffffff',
-              border: '1px solid #d1d5db',
-              borderRadius: '0.5rem',
+              border: '2px solid #d1d5db',
+              borderRadius: '0.75rem',
               color: currentStep === 0 ? '#9ca3af' : '#374151',
-              cursor: currentStep === 0 ? 'not-allowed' : 'pointer'
+              cursor: currentStep === 0 ? 'not-allowed' : 'pointer',
+              fontSize: '1rem',
+              fontWeight: '500',
+              transition: 'all 0.2s ease'
             }}
           >
             Previous
@@ -1125,15 +1081,18 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
             onClick={nextStep}
             disabled={isLoading}
             style={{
-              padding: '0.75rem 1.5rem',
-              background: '#3b82f6',
+              padding: '0.875rem 2rem',
+              background: isLoading ? '#93c5fd' : '#3b82f6',
               color: 'white',
               border: 'none',
-              borderRadius: '0.5rem',
+              borderRadius: '0.75rem',
               cursor: isLoading ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              gap: '0.75rem',
+              fontSize: '1rem',
+              fontWeight: '600',
+              transition: 'all 0.2s ease'
             }}
           >
             {isLoading
@@ -1143,17 +1102,28 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
               : 'Continue'}
             {!isLoading &&
               (currentStep === steps.length - 1 ? (
-                <CheckCircleIcon style={{ width: '1rem', height: '1rem' }} />
+                <CheckCircleIcon style={{ width: '1.25rem', height: '1.25rem' }} />
               ) : (
-                <ArrowRightIcon style={{ width: '1rem', height: '1rem' }} />
+                <ArrowRightIcon style={{ width: '1.25rem', height: '1.25rem' }} />
               ))}
           </button>
         </div>
 
         {/* Error Display */}
         {apiError && (
-          <div style={{ padding: '0 1.5rem 1.5rem', textAlign: 'center' }}>
-            <p style={{ color: '#ef4444', fontSize: '0.875rem', fontWeight: 500 }}>{apiError}</p>
+          <div style={{ padding: '0 2rem 1rem', textAlign: 'center' }}>
+            <p style={{ 
+              color: '#ef4444', 
+              fontSize: '0.875rem', 
+              fontWeight: '500',
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '0.5rem',
+              padding: '0.75rem 1rem',
+              margin: '0'
+            }}>
+              {apiError}
+            </p>
           </div>
         )}
       </div>
