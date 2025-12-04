@@ -43,7 +43,27 @@ export default function OnboardingPage() {
 
   // Show loading spinner while auth is initializing
   if (!authReady || isLoading) {
-    return <OnboardingGuard />;
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        background: '#111827' 
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ 
+            border: '4px solid #374151', 
+            borderTop: '4px solid #3b82f6', 
+            borderRadius: '50%', 
+            width: '2rem', 
+            height: '2rem', 
+            margin: '0 auto 1rem'
+          }} />
+          <p style={{ color: 'white' }}>Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
