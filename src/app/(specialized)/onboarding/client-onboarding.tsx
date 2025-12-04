@@ -111,10 +111,6 @@ interface OnboardingStep {
   component: React.ComponentType<any>
 }
 
-interface ClientOnboardingPageProps {
-  onComplete?: () => void
-}
-
 export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: OnboardingModalProps) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
@@ -229,8 +225,7 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
     <div className={styles['space-y-8']}>
       <div className={styles['text-center']}>
         <div className={`${styles['flex']} ${styles['justify-center']} ${styles['mb-6']}`}>
-          <div className="stepIconContainer">
-            <BuildingOfficeIcon className={`${styles['w-8']} ${styles['h-8']} ${styles['text-white']}`} />
+          <StepIcon type="organization" />
           </div>
         </div>
         <h2 className={`${styles['step-title']} ${onComplete ? styles['step-title--light'] : styles['step-title--dark']}`}>
@@ -379,8 +374,7 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
     <div className={styles['space-y-8']}>
       <div className={styles['text-center']}>
         <div className={`${styles['flex']} ${styles['justify-center']} ${styles['mb-6']}`}>
-          <div className="stepIconContainerTeam">
-            <UsersIcon className={`${styles['w-10']} ${styles['h-10']} ${styles['text-white']}`} />
+          <StepIcon type="team" />
           </div>
         </div>
         <h2 className={`${styles['step-title']} ${onComplete ? styles['step-title--light'] : styles['step-title--dark']}`}>
@@ -438,8 +432,7 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
     <div className={styles['space-y-6']}>
       <div className={styles['text-center']}>
         <div className={`${styles['flex']} ${styles['justify-center']} ${styles['mb-4']}`}>
-          <div className="stepIconContainerBilling">
-            <CreditCardIcon className={`${styles['w-8']} ${styles['h-8']} ${styles['text-white']}`} />
+          <StepIcon type="billing" />
           </div>
         </div>
         <h2 className={`${styles['text-2xl']} ${styles['font-bold']} ${styles['mb-2']} ${onComplete ? styles['text-gray-900'] : styles['text-white']}`}>
@@ -1033,50 +1026,108 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
   const isModalMode = typeof onComplete === 'function';
 
   return (
-    <div className={styles['onboarding-container']}>
-      <div className={styles['onboarding-wrapper']}>
-        <div className={`${styles['content-card']} ${onComplete ? styles['content-card--light'] : styles['content-card--dark']}`}>
-          {/* Progress Indicator */}
-          <div className={styles['progress-container']}>
-            {steps.map((step, index) => (
-              <div key={step.id} className={`${styles['progress-step']} ${index <= currentStep ? styles['progress-step--active'] : ''}`}>
-                <step.icon className={styles['progress-icon']} />
-                <span>{step.title}</span>
-              </div>
-            ))}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      width="900px"
+      maxHeight="90vh"
+      ariaLabel="Onboarding Setup"
+    >
+      <div style={{ position: 'relative' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 1.5rem 0' }}>
+          <div>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827' }}>
+              Welcome to Ghost CRM
+            </h1>
+            <p style={{ color: '#6b7280', marginTop: '0.25rem' }}>
+              Step {currentStep + 1} of {steps.length}
+            </p>
           </div>
+          <button
+            onClick={onClose}
+            style={{ 
+              padding: '0.5rem', 
+              background: 'transparent', 
+              border: 'none', 
+              cursor: 'pointer',
+              borderRadius: '0.25rem'
+            }}
+          >
+            <XMarkIcon style={{ width: '1.5rem', height: '1.5rem', color: '#6b7280' }} />
+          </button>
+        </div>
 
+        {/* Progress Bar */}
+        <div style={{ padding: '0 1.5rem', marginTop: '1rem' }}>
+          <div style={{ background: '#f3f4f6', borderRadius: '0.25rem', height: '0.5rem' }}>
+            <div 
+              style={{ 
+                background: '#3b82f6', 
+                borderRadius: '0.25rem', 
+                height: '100%',
+                width: `${((currentStep + 1) / steps.length) * 100}%`,
+                transition: 'width 0.3s ease'
+              }}
+            />
+          </div>
+        </div>
+
+        <div style={{ padding: '1rem' }}>
           {/* Step Content */}
-          <div className={styles['step-content']}>
+          <div>
             {CurrentStepComponent && <CurrentStepComponent />}
           </div>
-
-          {/* Navigation */}
-          <div className={styles['navigation-container']}>
-            <button
-              onClick={prevStep}
-              disabled={currentStep === 0}
-              className={`${styles['nav-button']} ${styles['nav-button--secondary']}`}
-            >
-              Previous
-            </button>
-            
-            <button
-              onClick={nextStep}
-              className={`${styles['nav-button']} ${styles['nav-button--primary']}`}
-            >
-              {currentStep === steps.length - 1 ? 'Complete Setup' : 'Continue'}
-            </button>
-          </div>
-
-          {/* Error Display */}
-          {apiError && (
-            <div className={styles['error-container']}>
-              <p className={styles['error-text']}>{apiError}</p>
-            </div>
-          )}
         </div>
+
+        {/* Footer */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem' }}>
+          <button
+            onClick={prevStep}
+            disabled={currentStep === 0}
+            style={{
+              padding: '0.75rem 1.5rem',
+              background: currentStep === 0 ? '#f3f4f6' : '#ffffff',
+              border: '1px solid #d1d5db',
+              borderRadius: '0.5rem',
+              color: currentStep === 0 ? '#9ca3af' : '#374151',
+              cursor: currentStep === 0 ? 'not-allowed' : 'pointer'
+            }}
+          >
+            Previous
+          </button>
+
+          <button
+            onClick={nextStep}
+            disabled={isLoading}
+            style={{
+              padding: '0.75rem 1.5rem',
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.5rem',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            {isLoading ? 'Loading...' : (currentStep === steps.length - 1 ? 'Complete Setup' : 'Continue')}
+            {!isLoading && (
+              currentStep === steps.length - 1 ? 
+                <CheckCircleIcon style={{ width: '1rem', height: '1rem' }} /> :
+                <ArrowRightIcon style={{ width: '1rem', height: '1rem' }} />
+            )}
+          </button>
+        </div>
+
+        {/* Error Display */}
+        {apiError && (
+          <div style={{ padding: '0 1.5rem 1.5rem', textAlign: 'center' }}>
+            <p style={{ color: '#ef4444', fontSize: '0.875rem', fontWeight: '500' }}>{apiError}</p>
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }
