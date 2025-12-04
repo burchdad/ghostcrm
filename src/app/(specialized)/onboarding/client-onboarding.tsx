@@ -580,7 +580,19 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
         setOnboardingData(prev => ({ ...prev, integrations: preferences }))
         handleComplete()
       }}
-      onSkip={() => handleComplete()}
+      onSkip={() => {
+        // Skip integrations - directly redirect to tenant subdomain
+        markOnboardingComplete(createdOrganization?.id)
+        if (createdOrganization) {
+          const baseUrl =
+            process.env.NODE_ENV === 'development'
+              ? `http://${createdOrganization.subdomain}.localhost:3000`
+              : `https://${createdOrganization.subdomain}.ghostcrm.ai`
+          window.location.href = `${baseUrl}/login-owner`
+        } else {
+          router.push('/dashboard')
+        }
+      }}
       orgTier="pro"
       userTier="admin_pro"
     />

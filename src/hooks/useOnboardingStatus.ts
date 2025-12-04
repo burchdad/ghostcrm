@@ -128,6 +128,17 @@ export function markOnboardingComplete(organizationId?: string) {
   if (organizationId) {
     localStorage.setItem('onboarding-organization-id', organizationId)
   }
+
+  // Also update the database
+  if (organizationId) {
+    fetch('/api/onboarding/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ organizationId })
+    }).catch(error => {
+      console.error('Failed to mark onboarding complete in database:', error)
+    })
+  }
 }
 
 export function resetOnboardingStatus() {

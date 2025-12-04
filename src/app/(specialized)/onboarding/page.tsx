@@ -38,7 +38,7 @@ export default function OnboardingPage() {
 
   const handleOnboardingComplete = () => {
     setShowModal(false);
-    router.push('/dashboard');
+    // Let the modal handle the redirect - don't override it
   };
 
   // Show loading spinner while auth is initializing
