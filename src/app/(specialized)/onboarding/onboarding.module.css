@@ -90,7 +90,8 @@
 }
 
 .onboarding-wrapper {
-  max-width: 64rem;
+  /* Widen onboarding modal so content can use more horizontal space */
+  max-width: 90rem;
   margin: 0 auto;
   padding: 0 1rem;
 }
@@ -130,6 +131,12 @@
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.3);
+}
+
+/* Ensure the main content card inside the onboarding wrapper can expand to the full modal width */
+.onboarding-wrapper .content-card {
+  max-width: 100%;
+  width: 100%;
 }
 
 /* ========================================
@@ -390,7 +397,9 @@
   border-radius: 1.5rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   padding: 2.5rem;
-  max-width: 48rem;
+  /* Expand step card to use modal width so fields and content don't force horizontal scrolling */
+  max-width: 100%;
+  width: 100%;
   margin: 0 auto;
   transition: all 0.4s ease-out;
 }
@@ -478,9 +487,10 @@
   justify-content: space-between;
   align-items: center;
   margin-top: 2.5rem;
-  max-width: 48rem;
-  margin-left: auto;
-  margin-right: auto;
+  /* Let navigation use full width of the step card/modal */
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .nav-button {
