@@ -12,6 +12,11 @@ const nextConfig = {
         ...config.optimization,
         minimize: false,
       };
+      // Avoid webpack's automatic publicPath behavior in browsers that
+      // don't support `document.currentScript`. Use a fixed publicPath
+      // so runtime asset loading doesn't attempt 'auto' detection.
+      config.output = config.output || {};
+      config.output.publicPath = '/_next/';
     }
     return config;
   },
