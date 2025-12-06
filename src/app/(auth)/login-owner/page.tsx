@@ -36,17 +36,24 @@ export default function TenantOwnerLoginPage() {
       
       if (!isCompleted) {
         // Redirect to onboarding flow first
+        console.log('🔄 [LOGIN-OWNER] Redirecting to onboarding - not completed');
         router.push('/onboarding');
       } else {
         // Already completed onboarding, go to dashboard
-        const returnTo = searchParams.get('return_to') || 'tenant-owner/dashboard';
-        router.push(`/${returnTo}`);
+        console.log('✅ [LOGIN-OWNER] Onboarding completed, redirecting to dashboard');
+        
+        // Force navigation to tenant-owner dashboard
+        const dashboardUrl = '/tenant-owner/dashboard';
+        console.log('🔄 [LOGIN-OWNER] Redirecting to:', dashboardUrl);
+        
+        // Use replace to prevent back button issues
+        router.replace(dashboardUrl);
       }
     } catch (error) {
       console.error('Error checking onboarding status:', error);
       // Default to dashboard if check fails
-      const returnTo = searchParams.get('return_to') || 'tenant-owner/dashboard';
-      router.push(`/${returnTo}`);
+      console.log('⚠️ [LOGIN-OWNER] Error checking status, defaulting to dashboard');
+      router.replace('/tenant-owner/dashboard');
     }
   };
 
@@ -167,6 +174,36 @@ export default function TenantOwnerLoginPage() {
               showOwnerAccess={false} 
               tenantContext={tenantContext} 
             />
+            
+            {/* Debug Section - Only show if user is authenticated but stuck on login page */}
+            {user && (
+              <div style={{
+                marginTop: '1.5rem',
+                padding: '1rem',
+                background: 'rgba(34, 197, 94, 0.1)',
+                border: '1px solid rgba(34, 197, 94, 0.2)',
+                borderRadius: '0.75rem',
+                textAlign: 'center'
+              }}>
+                <p style={{ color: '#22c55e', fontWeight: '600', margin: '0 0 0.5rem 0' }}>
+                  Already logged in as {user.email}
+                </p>
+                <button
+                  onClick={() => router.replace('/tenant-owner/dashboard')}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: '#22c55e',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    cursor: 'pointer',
+                    fontWeight: '600'
+                  }}
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
