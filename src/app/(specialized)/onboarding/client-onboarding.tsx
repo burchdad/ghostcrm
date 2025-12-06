@@ -581,14 +581,20 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
         handleComplete()
       }}
       onSkip={() => {
-        // Skip integrations - directly redirect to tenant subdomain
+        // Skip integrations - mark onboarding complete then clear session and redirect to tenant subdomain login
         markOnboardingComplete(createdOrganization?.id)
         if (createdOrganization) {
           const baseUrl =
             process.env.NODE_ENV === 'development'
               ? `http://${createdOrganization.subdomain}.localhost:3000`
               : `https://${createdOrganization.subdomain}.ghostcrm.ai`
-          window.location.href = `${baseUrl}/login-owner`
+
+          // Call logout API to clear cookies (include credentials) before navigating to tenant login
+          fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+            .finally(() => {
+              try { localStorage.removeItem('auth_token') } catch (e) {}
+              window.location.href = `${baseUrl}/login-owner`
+            })
         } else {
           router.push('/dashboard')
         }
@@ -748,7 +754,12 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
                 process.env.NODE_ENV === 'development'
                   ? `http://${createdOrganization.subdomain}.localhost:3000`
                   : `https://${createdOrganization.subdomain}.ghostcrm.ai`
-              window.location.href = `${baseUrl}/login-owner`
+
+              // Ensure current session is cleared before navigating to tenant login
+              fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(() => {
+                try { localStorage.removeItem('auth_token') } catch (e) {}
+                window.location.href = `${baseUrl}/login-owner`
+              })
             } else {
               router.push('/dashboard')
             }

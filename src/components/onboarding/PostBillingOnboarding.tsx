@@ -195,7 +195,12 @@ export default function PostBillingOnboarding({
           const baseUrl = process.env.NODE_ENV === 'development' 
             ? `http://${data.organization.subdomain}.localhost:3000`
             : `https://${data.organization.subdomain}.ghostcrm.ai`;
-          window.location.href = `${baseUrl}/login-owner`
+
+          // Ensure session cookies are cleared before navigating to tenant login
+          fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(() => {
+            try { localStorage.removeItem('auth_token') } catch (e) {}
+            window.location.href = `${baseUrl}/login-owner`
+          })
         } else {
           router.push('/dashboard')
         }
@@ -234,16 +239,20 @@ export default function PostBillingOnboarding({
 
         <button
           onClick={() => {
-            // Check if we have organization data with subdomain
-            if (createdOrganization && createdOrganization.subdomain) {
-              const baseUrl = process.env.NODE_ENV === 'development' 
-                ? `http://${createdOrganization.subdomain}.localhost:3000`
-                : `https://${createdOrganization.subdomain}.ghostcrm.ai`;
-              window.location.href = `${baseUrl}/login-owner`
-            } else {
-              router.push('/dashboard')
-            }
-          }}
+              // Check if we have organization data with subdomain
+              if (createdOrganization && createdOrganization.subdomain) {
+                const baseUrl = process.env.NODE_ENV === 'development' 
+                  ? `http://${createdOrganization.subdomain}.localhost:3000`
+                  : `https://${createdOrganization.subdomain}.ghostcrm.ai`;
+
+                fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(() => {
+                  try { localStorage.removeItem('auth_token') } catch (e) {}
+                  window.location.href = `${baseUrl}/login-owner`
+                })
+              } else {
+                router.push('/dashboard')
+              }
+            }}
           className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200"
         >
           Go to Dashboard
