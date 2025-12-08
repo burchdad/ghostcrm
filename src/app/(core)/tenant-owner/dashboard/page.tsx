@@ -103,6 +103,8 @@ function TenantOwnerDashboard() {
     pendingTasks: 0,
     systemHealth: 0
   });
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [tasksAndAlerts, setTasksAndAlerts] = useState({ tasks: [], alerts: [] });
   const [loading, setLoading] = useState(true);
   const [onboardingLoading, setOnboardingLoading] = useState(true);
   
@@ -176,6 +178,37 @@ function TenantOwnerDashboard() {
     router.push('/tenant-owner/analytics');
   };
 
+  // Helper function to format relative time
+  const formatRelativeTime = (timestamp: string) => {
+    const now = new Date();
+    const past = new Date(timestamp);
+    const diffMs = now.getTime() - past.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffDays > 0) {
+      return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+    } else if (diffHours > 0) {
+      return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+    } else {
+      return 'Just now';
+    }
+  };
+
+  // Handle activity item clicks
+  const handleActivityClick = (activity: any) => {
+    if (activity.drilldown?.url) {
+      router.push(activity.drilldown.url);
+    }
+  };
+
+  // Handle task/alert clicks
+  const handleTaskClick = (item: any) => {
+    if (item.drilldown?.url) {
+      router.push(item.drilldown.url);
+    }
+  };
+
   // Fetch owner-specific analytics
   useEffect(() => {
     async function fetchOwnerAnalytics() {
@@ -193,15 +226,19 @@ function TenantOwnerDashboard() {
         }
         
         // Fetch enhanced owner metrics
-        const [dashboardRes, analyticsRes, teamRes] = await Promise.all([
+        const [dashboardRes, analyticsRes, teamRes, activityRes, tasksRes] = await Promise.all([
           fetch("/api/dashboard/live"),
           fetch("/api/owner/analytics").catch(() => null),
-          fetch("/api/team/performance").catch(() => null)
+          fetch("/api/team/performance").catch(() => null),
+          fetch("/api/dashboard/activity").catch(() => null),
+          fetch("/api/dashboard/tasks").catch(() => null)
         ]);
 
         const dashboardData = dashboardRes.ok ? await dashboardRes.json() : {};
         const analyticsData = analyticsRes && analyticsRes.ok ? await analyticsRes.json() : {};
         const teamData = teamRes && teamRes.ok ? await teamRes.json() : {};
+        const activityData = activityRes && activityRes.ok ? await activityRes.json() : { activities: [] };
+        const tasksData = tasksRes && tasksRes.ok ? await tasksRes.json() : { tasks: [], alerts: [] };
 
         setAnalytics({
           totalRevenue: analyticsData?.revenue?.total || 485000,
@@ -210,8 +247,18 @@ function TenantOwnerDashboard() {
           customerSatisfaction: analyticsData?.customers?.satisfaction ? (analyticsData.customers.satisfaction * 20) : 92, // Convert 5-star to percentage
           totalCustomers: analyticsData?.customers?.total || 245,
           activeDeals: dashboardData?.todayDeals || analyticsData?.performance?.leadsGenerated || 18,
-          pendingTasks: dashboardData?.metrics?.pendingTasks || 7,
+          pendingTasks: tasksData?.summary?.totalTasks || 7,
           systemHealth: dashboardData?.metrics?.customerSatisfaction || 98
+        });
+        
+        setRecentActivities(activityData.activities || []);
+        setTasksAndAlerts({
+          tasks: tasksData.tasks || [],
+          alerts: tasksData.alerts || []
+        });
+        setTasksAndAlerts({
+          tasks: tasksData.tasks || [],
+          alerts: tasksData.alerts || []
         });
 
         // Install a default demo chart if none exist
@@ -600,30 +647,35 @@ function TenantOwnerDashboard() {
           <div className="tenant-dashboard-section">
             <h3 className="tenant-dashboard-section-title">Recent Activity</h3>
             <div>
-              <div className="tenant-dashboard-activity-item success">
-                <div className="tenant-dashboard-activity-dot success"></div>
-                <div className="tenant-dashboard-activity-content">
-                  <div className="tenant-dashboard-activity-title">New sale completed</div>
-                  <div className="tenant-dashboard-activity-description success">2024 Honda Civic - $28,500</div>
-                  <div className="tenant-dashboard-activity-time">2 hours ago</div>
+              {recentActivities.length > 0 ? (
+                recentActivities.map((activity: any) => (
+                  <div 
+                    key={activity.id} 
+                    className={`tenant-dashboard-activity-item ${activity.status} clickable`}
+                    onClick={() => handleActivityClick(activity)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) => e.key === 'Enter' && handleActivityClick(activity)}
+                    title={activity.drilldown?.action || 'Click for details'}
+                  >
+                    <div className={`tenant-dashboard-activity-dot ${activity.status}`}></div>
+                    <div className="tenant-dashboard-activity-content">
+                      <div className="tenant-dashboard-activity-title">{activity.title}</div>
+                      <div className={`tenant-dashboard-activity-description ${activity.status}`}>{activity.description}</div>
+                      <div className="tenant-dashboard-activity-time">{formatRelativeTime(activity.timestamp)}</div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="tenant-dashboard-activity-item info">
+                  <div className="tenant-dashboard-activity-dot info"></div>
+                  <div className="tenant-dashboard-activity-content">
+                    <div className="tenant-dashboard-activity-title">No recent activity</div>
+                    <div className="tenant-dashboard-activity-description info">Activities will appear here as they occur</div>
+                    <div className="tenant-dashboard-activity-time">-</div>
+                  </div>
                 </div>
-              </div>
-              <div className="tenant-dashboard-activity-item info">
-                <div className="tenant-dashboard-activity-dot info"></div>
-                <div className="tenant-dashboard-activity-content">
-                  <div className="tenant-dashboard-activity-title">Team member added</div>
-                  <div className="tenant-dashboard-activity-description info">Sarah Johnson joined as Sales Rep</div>
-                  <div className="tenant-dashboard-activity-time">5 hours ago</div>
-                </div>
-              </div>
-              <div className="tenant-dashboard-activity-item warning">
-                <div className="tenant-dashboard-activity-dot warning"></div>
-                <div className="tenant-dashboard-activity-content">
-                  <div className="tenant-dashboard-activity-title">Inventory update</div>
-                  <div className="tenant-dashboard-activity-description warning">15 new vehicles added</div>
-                  <div className="tenant-dashboard-activity-time">1 day ago</div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -631,37 +683,62 @@ function TenantOwnerDashboard() {
           <div className="tenant-dashboard-section">
             <h3 className="tenant-dashboard-section-title">Alerts & Tasks</h3>
             <div>
-              {analytics.pendingTasks > 0 && (
-                <div className="tenant-dashboard-alert warning">
-                  <div className="tenant-dashboard-alert-icon warning">
+              {/* Render Tasks */}
+              {tasksAndAlerts.tasks.map((task: any) => (
+                <div 
+                  key={task.id} 
+                  className={`tenant-dashboard-alert ${task.priority === 'high' ? 'warning' : 'info'} clickable`}
+                  onClick={() => handleTaskClick(task)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyPress={(e) => e.key === 'Enter' && handleTaskClick(task)}
+                  title={task.drilldown?.action || 'Click for details'}
+                >
+                  <div className={`tenant-dashboard-alert-icon ${task.priority === 'high' ? 'warning' : 'info'}`}>
                     <AlertTriangle />
                   </div>
-                  <div className="tenant-dashboard-alert-content warning">
-                    <h4>{analytics.pendingTasks} pending tasks</h4>
-                    <p>Requires your attention</p>
+                  <div className={`tenant-dashboard-alert-content ${task.priority === 'high' ? 'warning' : 'info'}`}>
+                    <h4>{task.title}</h4>
+                    <p>{task.description}</p>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Render Alerts */}
+              {tasksAndAlerts.alerts.map((alert: any) => (
+                <div 
+                  key={alert.id} 
+                  className={`tenant-dashboard-alert ${alert.status} clickable`}
+                  onClick={() => handleTaskClick(alert)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyPress={(e) => e.key === 'Enter' && handleTaskClick(alert)}
+                  title={alert.drilldown?.action || 'Click for details'}
+                >
+                  <div className={`tenant-dashboard-alert-icon ${alert.status}`}>
+                    {alert.status === 'success' && <CheckCircle />}
+                    {alert.status === 'info' && <Calendar />}
+                    {alert.status === 'warning' && <AlertTriangle />}
+                  </div>
+                  <div className={`tenant-dashboard-alert-content ${alert.status}`}>
+                    <h4>{alert.title}</h4>
+                    <p>{alert.description}</p>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Fallback if no tasks or alerts */}
+              {tasksAndAlerts.tasks.length === 0 && tasksAndAlerts.alerts.length === 0 && (
+                <div className="tenant-dashboard-alert success">
+                  <div className="tenant-dashboard-alert-icon success">
+                    <CheckCircle />
+                  </div>
+                  <div className="tenant-dashboard-alert-content success">
+                    <h4>All caught up!</h4>
+                    <p>No pending tasks or alerts</p>
                   </div>
                 </div>
               )}
-              
-              <div className="tenant-dashboard-alert success">
-                <div className="tenant-dashboard-alert-icon success">
-                  <CheckCircle />
-                </div>
-                <div className="tenant-dashboard-alert-content success">
-                  <h4>System healthy</h4>
-                  <p>All systems operational</p>
-                </div>
-              </div>
-              
-              <div className="tenant-dashboard-alert info">
-                <div className="tenant-dashboard-alert-icon info">
-                  <Calendar />
-                </div>
-                <div className="tenant-dashboard-alert-content info">
-                  <h4>Monthly review</h4>
-                  <p>Scheduled for next week</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
