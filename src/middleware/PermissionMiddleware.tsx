@@ -330,6 +330,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
       '/pricing',      // public pricing page  
       '/features',     // public features page
       '/demo',         // free demo landing
+      '/inventory/qr-vehicle-profile', // Public QR vehicle profiles
       '/terms',
       '/privacy'
     ];
