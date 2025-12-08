@@ -159,6 +159,23 @@ function TenantOwnerDashboard() {
     }
   }, [user, loading, router]);
 
+  // Navigation handlers for metric cards
+  const handleRevenueClick = () => {
+    router.push('/tenant-owner/finance');
+  };
+
+  const handleTeamClick = () => {
+    router.push('/tenant-owner/team');
+  };
+
+  const handleDealsClick = () => {
+    router.push('/tenant-owner/deals');
+  };
+
+  const handleSatisfactionClick = () => {
+    router.push('/tenant-owner/analytics');
+  };
+
   // Fetch owner-specific analytics
   useEffect(() => {
     async function fetchOwnerAnalytics() {
@@ -427,7 +444,13 @@ function TenantOwnerDashboard() {
         {/* Enhanced Key Metrics Grid with Animations */}
         <div className="tenant-dashboard-metrics-grid">
           {/* Total Revenue Card */}
-          <div className="tenant-dashboard-metric-card revenue">
+          <div 
+            className="tenant-dashboard-metric-card revenue clickable" 
+            onClick={handleRevenueClick}
+            role="button"
+            tabIndex={0}
+            onKeyPress={(e) => e.key === 'Enter' && handleRevenueClick()}
+          >
             <div className="tenant-dashboard-metric-header">
               <div>
                 <div className="tenant-dashboard-metric-label revenue">Total Revenue</div>
@@ -446,7 +469,13 @@ function TenantOwnerDashboard() {
           </div>
 
           {/* Team Performance Card */}
-          <div className="tenant-dashboard-metric-card performance">
+          <div 
+            className="tenant-dashboard-metric-card performance clickable" 
+            onClick={handleTeamClick}
+            role="button"
+            tabIndex={0}
+            onKeyPress={(e) => e.key === 'Enter' && handleTeamClick()}
+          >
             <div className="tenant-dashboard-metric-header">
               <div>
                 <div className="tenant-dashboard-metric-label performance">Team Performance</div>
@@ -465,7 +494,13 @@ function TenantOwnerDashboard() {
           </div>
 
           {/* Active Deals Card */}
-          <div className="tenant-dashboard-metric-card deals">
+          <div 
+            className="tenant-dashboard-metric-card deals clickable" 
+            onClick={handleDealsClick}
+            role="button"
+            tabIndex={0}
+            onKeyPress={(e) => e.key === 'Enter' && handleDealsClick()}
+          >
             <div className="tenant-dashboard-metric-header">
               <div>
                 <div className="tenant-dashboard-metric-label deals">Active Deals</div>
@@ -481,7 +516,13 @@ function TenantOwnerDashboard() {
           </div>
 
           {/* Customer Satisfaction Card */}
-          <div className="tenant-dashboard-metric-card satisfaction">
+          <div 
+            className="tenant-dashboard-metric-card satisfaction clickable" 
+            onClick={handleSatisfactionClick}
+            role="button"
+            tabIndex={0}
+            onKeyPress={(e) => e.key === 'Enter' && handleSatisfactionClick()}
+          >
             <div className="tenant-dashboard-metric-header">
               <div>
                 <div className="tenant-dashboard-metric-label satisfaction">Customer Satisfaction</div>

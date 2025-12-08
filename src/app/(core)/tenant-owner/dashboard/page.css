@@ -265,6 +265,21 @@
   transform: translateY(0);
 }
 
+/* Clickable card styles */
+.tenant-dashboard-metric-card.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.tenant-dashboard-metric-card.clickable:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+.tenant-dashboard-metric-card.clickable:active {
+  transform: translateY(-4px) scale(0.98);
+}
+
 .tenant-dashboard-metric-card:hover {
   transform: translateY(-8px);
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
