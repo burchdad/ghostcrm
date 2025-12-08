@@ -144,25 +144,9 @@ function TenantOwnerDashboard() {
         return;
       }
 
-      try {
-        console.log('🔍 [TENANT-OWNER-DASHBOARD] Checking onboarding status for owner:', user.email);
-        const response = await fetch('/api/onboarding/status');
-        const { isCompleted } = await response.json();
-        
-        console.log('🔍 [TENANT-OWNER-DASHBOARD] Onboarding status:', { isCompleted });
-        
-        if (!isCompleted) {
-          console.log('🔄 [TENANT-OWNER-DASHBOARD] Redirecting to onboarding - not completed');
-          router.push('/onboarding');
-          return;
-        }
-        
-        console.log('✅ [TENANT-OWNER-DASHBOARD] Onboarding completed, proceeding to dashboard');
-        setOnboardingLoading(false);
-      } catch (error) {
-        console.error('Error checking onboarding status:', error);
-        setOnboardingLoading(false);
-      }
+      // Skip onboarding check - allow access to dashboard
+      console.log('✅ [TENANT-OWNER-DASHBOARD] Owner access granted, proceeding to dashboard');
+      setOnboardingLoading(false);
     }
 
     checkOnboardingStatus();

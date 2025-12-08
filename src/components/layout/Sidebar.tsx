@@ -184,33 +184,12 @@ export default function Sidebar() {
   // Check if user has tenant/organization context (indicates tenant owner vs software owner)
   const hasOrganizationContext = user?.tenantId && user.tenantId.trim() !== '';
   
-  // Debug logging for sidebar role detection
-  console.log('🔍 [SIDEBAR] Role Detection Debug:', {
-    user: user ? {
-      email: user.email,
-      role: user.role,
-      tenantId: user.tenantId,
-      organizationId: user.organizationId,
-      organizationSubdomain: user.organizationSubdomain
-    } : null,
-    hasOrganizationContext,
-    pathname
-  });
-  
   // Role-based access determination
   const isSoftwareOwner = user?.role === 'owner' && !hasOrganizationContext; // Platform owner
   const isTenantOwner = user?.role === 'owner' && hasOrganizationContext; // Dealership owner
   const isTenantAdmin = user?.role === 'admin' && hasOrganizationContext; // Dealership admin
   const isSalesManager = user?.role === 'manager' && hasOrganizationContext; // Sales Manager
   const isSalesRep = user?.role === 'sales_rep' && hasOrganizationContext; // Sales Rep
-  
-  console.log('🔍 [SIDEBAR] Role Assignments:', {
-    isSoftwareOwner,
-    isTenantOwner,
-    isTenantAdmin,
-    isSalesManager,
-    isSalesRep
-  });
 
   // Determine if sidebar should be blurred during onboarding
   const shouldBlurSidebar = isTenantOwner && !onboardingCompleted;
