@@ -125,6 +125,9 @@ export default function TenantOwnerInventoryPage() {
   };
 
   const handlePrintQRCode = (item: any) => {
+    console.log("🔍 [QR CODE] Button clicked, item:", item);
+    console.log("🔍 [QR CODE] Setting selectedVehicle and opening modal");
+    
     // Open QR code configuration modal
     setSelectedVehicle(item);
     setQrModalOpen(true);

@@ -52,6 +52,9 @@ interface QRFeature {
 export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalProps) {
   const { toast } = useToast();
   
+  // Debug logging
+  console.log("🔍 [QR MODAL] Component rendered with props:", { isOpen, vehicle: vehicle?.id });
+  
   // QR Configuration State
   const [qrConfig, setQRConfig] = useState({
     vehicleInfo: {
@@ -172,15 +175,24 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
   };
 
   const handleSaveConfiguration = async () => {
+    if (!vehicle) {
+      toast({
+        title: "Error",
+        description: "No vehicle selected for configuration.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       // Save QR configuration to database
-      const response = await fetch(`/api/inventory/qr-config/${vehicle.id}`, {
+      const response = await fetch(`/api/inventory/qr-config/${vehicle.id || vehicle.sku}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          vehicleId: vehicle.id,
+          vehicleId: vehicle.id || vehicle.sku,
           config: qrConfig,
           features: availableFeatures
         }),
@@ -204,6 +216,15 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
   };
 
   const handlePrintQRCode = () => {
+    if (!vehicle) {
+      toast({
+        title: "Error",
+        description: "No vehicle selected for QR code generation.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsGenerating(true);
     
     try {
@@ -254,7 +275,8 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
     }));
   };
 
-  if (!vehicle) return null;
+  console.log("🔍 [QR MODAL] Rendering with vehicle:", vehicle);
+  console.log("🔍 [QR MODAL] isOpen:", isOpen);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -262,7 +284,7 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <QrCode className="h-5 w-5" />
-            QR Code Configuration - {vehicle.year} {vehicle.make} {vehicle.model}
+            QR Code Configuration - {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Vehicle'}
           </DialogTitle>
         </DialogHeader>
 
@@ -460,7 +482,7 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
                       
                       <div>
                         <Label>Vehicle ID</Label>
-                        <Input value={vehicle.id || vehicle.sku} readOnly />
+                        <Input value={vehicle?.id || vehicle?.sku || 'N/A'} readOnly />
                       </div>
                     </div>
                   </CardContent>
@@ -497,7 +519,7 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
                     <QrCode className="h-16 w-16 mx-auto text-gray-400 mb-2" />
                     <p className="text-sm text-gray-500">QR Code Preview</p>
                     <p className="text-xs text-gray-400 mt-1">
-                      {vehicle.year} {vehicle.make} {vehicle.model}
+                      {vehicle?.year || 'N/A'} {vehicle?.make || ''} {vehicle?.model || ''}
                     </p>
                   </div>
                 </div>
