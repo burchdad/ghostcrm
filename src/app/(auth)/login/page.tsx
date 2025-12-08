@@ -15,7 +15,9 @@ export default function LoginPage() {
     if (user && !isLoading) {
       // Check if we're on a tenant subdomain (for tenant owners vs software owners)
       const hostname = window.location.hostname;
-      const isSubdomain = hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname.includes('.localhost');
+      const isSubdomain = hostname !== 'localhost' && 
+                          hostname !== '127.0.0.1' && 
+                          (hostname.includes('.localhost') || hostname.includes('.ghostcrm.ai'));
       
       // Try to determine login intent from referring URL or cookie
       const currentPath = window.location.pathname;
