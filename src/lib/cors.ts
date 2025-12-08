@@ -59,8 +59,10 @@ export function isOriginAllowed(origin: string | null, config: CORSConfig = defa
     if (url.hostname.endsWith('.vercel.app')) {
       return true;
     }
-    // Allow production ghostcrm.ai domains
-    if (url.hostname === 'ghostcrm.ai' || url.hostname === 'www.ghostcrm.ai') {
+    // Allow production ghostcrm.ai domains and subdomains
+    if (url.hostname === 'ghostcrm.ai' || 
+        url.hostname === 'www.ghostcrm.ai' ||
+        url.hostname.endsWith('.ghostcrm.ai')) {
       return true;
     }
   } catch {
