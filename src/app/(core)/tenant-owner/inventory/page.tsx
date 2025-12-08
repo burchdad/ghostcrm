@@ -12,6 +12,7 @@ import { Search, Plus, Package, AlertTriangle, TrendingUp, Eye, Edit, Trash2, Qr
 import EmptyStateComponent from "@/components/feedback/EmptyStateComponent";
 import { useI18n } from "@/components/utils/I18nProvider";
 import { useToast } from "@/hooks/use-toast";
+import QRCodeModal from "@/components/inventory/QRCodeModal";
 import "./page.css";
 
 export default function TenantOwnerInventoryPage() {
@@ -41,6 +42,8 @@ export default function TenantOwnerInventoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIdxs, setSelectedIdxs] = useState<number[]>([]);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
 
   // Check if user is owner
   if (user && !['owner'].includes(user.role)) {
@@ -122,25 +125,13 @@ export default function TenantOwnerInventoryPage() {
   };
 
   const handlePrintQRCode = (item: any) => {
-    // Generate and print QR code for the vehicle
-    const vehicleId = item.id || item.sku;
-    const qrUrl = `/inventory/qr-vehicle-profile/${vehicleId}`;
-    
-    // Open QR code page in new window for printing
-    const printWindow = window.open(qrUrl, '_blank', 'width=800,height=600');
-    if (printWindow) {
-      printWindow.focus();
-      // Auto-print when page loads
-      printWindow.onload = () => {
-        setTimeout(() => {
-          printWindow.print();
-        }, 1000);
-      };
-    }
+    // Open QR code configuration modal
+    setSelectedVehicle(item);
+    setQrModalOpen(true);
     
     toast({
-      title: "QR Code Generated",
-      description: `Patent-pending QR code for ${item.name} is ready for printing.`,
+      title: "QR Code Manager",
+      description: "Configure QR code features and settings.",
     });
   };
 
@@ -388,6 +379,16 @@ export default function TenantOwnerInventoryPage() {
           </Table>
         )}
       </Card>
+      
+      {/* QR Code Management Modal */}
+      <QRCodeModal 
+        isOpen={qrModalOpen}
+        onClose={() => {
+          setQrModalOpen(false);
+          setSelectedVehicle(null);
+        }}
+        vehicle={selectedVehicle}
+      />
     </div>
   );
 }
