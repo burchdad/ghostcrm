@@ -91,6 +91,8 @@ interface InstalledChart {
 function TenantOwnerDashboard() {
   const { user, tenant } = useAuth();
   const router = useRouter();
+  
+  // Force deployment refresh - Dashboard page updated Dec 8, 2025
   const [analytics, setAnalytics] = useState<TenantOwnerAnalytics>({
     totalRevenue: 0,
     monthlyGrowth: 0,
