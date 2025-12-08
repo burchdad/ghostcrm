@@ -10,11 +10,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Mock live dashboard data
+    // Mock live dashboard data - realistic automotive dealership metrics
     const liveData = {
       activeUsers: Math.floor(Math.random() * 50) + 10,
       todayLeads: Math.floor(Math.random() * 20) + 5,
-      todayDeals: Math.floor(Math.random() * 10) + 2,
+      todayDeals: Math.floor(Math.random() * 10) + 8, // More realistic for active deals
       systemHealth: 'healthy',
       notifications: [
         {
@@ -34,7 +34,10 @@ export async function GET(request: NextRequest) {
         conversionRate: 12.5,
         avgResponseTime: '2.3 hours',
         teamPerformance: 87,
-        customerSatisfaction: 94
+        customerSatisfaction: 94,
+        totalCustomers: 245,
+        activeDeals: 18,
+        pendingTasks: 7
       }
     };
 

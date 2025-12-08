@@ -187,14 +187,14 @@ function TenantOwnerDashboard() {
         const teamData = teamRes && teamRes.ok ? await teamRes.json() : {};
 
         setAnalytics({
-          totalRevenue: analyticsData?.revenue || 125000,
-          monthlyGrowth: analyticsData?.growth || 12.5,
-          teamPerformance: teamData?.performance || 87,
-          customerSatisfaction: analyticsData?.satisfaction || 92,
-          totalCustomers: dashboardData?.metrics?.totalCustomers || 245,
-          activeDeals: dashboardData?.metrics?.activeDeals || 18,
+          totalRevenue: analyticsData?.revenue?.total || 485000,
+          monthlyGrowth: analyticsData?.revenue?.growth || 12.5,
+          teamPerformance: teamData?.overview?.avgPerformance || 87,
+          customerSatisfaction: analyticsData?.customers?.satisfaction ? (analyticsData.customers.satisfaction * 20) : 92, // Convert 5-star to percentage
+          totalCustomers: analyticsData?.customers?.total || 245,
+          activeDeals: dashboardData?.todayDeals || analyticsData?.performance?.leadsGenerated || 18,
           pendingTasks: dashboardData?.metrics?.pendingTasks || 7,
-          systemHealth: 98
+          systemHealth: dashboardData?.metrics?.customerSatisfaction || 98
         });
 
         // Install a default demo chart if none exist
