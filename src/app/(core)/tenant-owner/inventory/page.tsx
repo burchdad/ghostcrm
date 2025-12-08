@@ -12,6 +12,7 @@ import { Search, Plus, Package, AlertTriangle, TrendingUp, Eye, Edit, Trash2 } f
 import EmptyStateComponent from "@/components/feedback/EmptyStateComponent";
 import { useI18n } from "@/components/utils/I18nProvider";
 import { useToast } from "@/hooks/use-toast";
+import "./page.css";
 
 export default function TenantOwnerInventoryPage() {
   const { user } = useAuth();
@@ -36,6 +37,7 @@ export default function TenantOwnerInventoryPage() {
   // State management
   const [inventory, setInventory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [organizationName, setOrganizationName] = useState('Your Organization');
   const [searchTerm, setSearchTerm] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIdxs, setSelectedIdxs] = useState<number[]>([]);
@@ -49,6 +51,15 @@ export default function TenantOwnerInventoryPage() {
   useEffect(() => {
     async function fetchInventory() {
       try {
+        // Fetch organization data for proper name display
+        const organizationRes = await fetch('/api/organization').catch(() => null);
+        if (organizationRes && organizationRes.ok) {
+          const orgData = await organizationRes.json();
+          if (orgData?.organization?.name) {
+            setOrganizationName(orgData.organization.name);
+          }
+        }
+        
         // For now, using mock data since no inventory API exists yet
         const mockData = [
           { id: 1, name: "2024 Honda Civic", sku: "HC2024001", category: "Sedan", quantity: 5, price: 28500, status: "in_stock", location: "Lot A" },
@@ -120,7 +131,7 @@ export default function TenantOwnerInventoryPage() {
         <div className="header-content">
           <div className="title-section">
             <h1 className="page-title">
-              📦 {user?.tenantId} - Inventory Management
+              📦 {organizationName} - Inventory Management
             </h1>
             <p className="page-subtitle">Owner Dashboard - Full Access</p>
           </div>

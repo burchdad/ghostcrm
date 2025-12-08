@@ -1,0 +1,540 @@
+/* 
+  ===========================================
+  📦 TENANT OWNER INVENTORY MANAGEMENT STYLES
+  ===========================================
+  Component: Inventory Management Page
+  Purpose: Tenant owner inventory listing and management
+  Theme: Modern glass morphism with professional inventory theme
+*/
+
+/* Page Container */
+.tenant-owner-inventory-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #fff7ed 20%, #fed7aa 40%, #fdba74 60%, #fb923c 80%, #ea580c 100%);
+  position: relative;
+  overflow-x: hidden;
+  padding: 0;
+}
+
+.tenant-owner-inventory-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 25% 25%, rgba(234, 88, 12, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 75% 25%, rgba(251, 146, 60, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 25% 75%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 75% 75%, rgba(16, 185, 129, 0.08) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 1;
+  animation: inventoryFloat 28s infinite ease-in-out;
+}
+
+@keyframes inventoryFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  20% { transform: translateY(-10px) rotate(0.2deg); }
+  40% { transform: translateY(5px) rotate(-0.1deg); }
+  60% { transform: translateY(-8px) rotate(0.15deg); }
+  80% { transform: translateY(3px) rotate(-0.05deg); }
+}
+
+/* Page Header */
+.page-header {
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 4px 10px -5px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  padding: 2rem 1.5rem;
+}
+
+.header-content {
+  max-width: 80rem;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.title-section {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+  background: linear-gradient(135deg, #ea580c, #fb923c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.page-subtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ea580c, #fb923c);
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 15px rgba(234, 88, 12, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(234, 88, 12, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary .icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Analytics Grid */
+.analytics-grid {
+  position: relative;
+  z-index: 2;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.analytics-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.analytics-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 25px 35px -5px rgba(0, 0, 0, 0.15),
+    0 15px 15px -5px rgba(0, 0, 0, 0.06);
+}
+
+.analytics-card.inventory::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #ea580c, #fb923c);
+}
+
+.analytics-card.warning::before {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.analytics-card.alert::before {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.analytics-card.trends::before {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.card-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.metric-info h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1;
+}
+
+.metric-trend {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0.5rem 0 0 0;
+  font-weight: 500;
+}
+
+.metric-trend.positive {
+  color: #059669;
+}
+
+.metric-trend.negative {
+  color: #dc2626;
+}
+
+.metric-icon {
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  opacity: 0.7;
+}
+
+.analytics-card.inventory .metric-icon {
+  background: linear-gradient(135deg, #fed7aa, #fdba74);
+  color: #ea580c;
+}
+
+.analytics-card.warning .metric-icon {
+  background: linear-gradient(135deg, #fef3c7, #fcd34d);
+  color: #f59e0b;
+}
+
+.analytics-card.alert .metric-icon {
+  background: linear-gradient(135deg, #fecaca, #f87171);
+  color: #ef4444;
+}
+
+.analytics-card.trends .metric-icon {
+  background: linear-gradient(135deg, #a7f3d0, #6ee7b7);
+  color: #10b981;
+}
+
+/* Search and Actions */
+.inventory-actions {
+  position: relative;
+  z-index: 2;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 2rem;
+}
+
+.search-container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.search-wrapper {
+  position: relative;
+  max-width: 24rem;
+}
+
+.search-input {
+  width: 100%;
+  background: rgba(248, 250, 252, 0.8);
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  font-size: 0.875rem;
+  color: #334155;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #ea580c;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+/* Inventory Table */
+.inventory-table-container {
+  position: relative;
+  z-index: 2;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+
+.inventory-table-wrapper {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inventory-table th {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  padding: 1rem 1.25rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #475569;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.inventory-table td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+  color: #334155;
+  vertical-align: middle;
+}
+
+.inventory-table tr:hover {
+  background: rgba(248, 250, 252, 0.8);
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-badge.in-stock {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #166534;
+}
+
+.status-badge.low-stock {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+}
+
+.status-badge.out-of-stock {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #991b1b;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #64748b;
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  color: #334155;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn.view {
+  color: #3b82f6;
+}
+
+.action-btn.edit {
+  color: #f59e0b;
+}
+
+.action-btn.delete {
+  color: #ef4444;
+}
+
+.action-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Loading Skeleton */
+.loading-skeleton {
+  position: relative;
+  z-index: 2;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.skeleton-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 1rem;
+  height: 6rem;
+  margin-bottom: 2rem;
+  animation: skeletonPulse 2s infinite ease-in-out;
+}
+
+.skeleton-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.skeleton-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 1rem;
+  height: 8rem;
+  animation: skeletonPulse 2s infinite ease-in-out;
+}
+
+.skeleton-table {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 1rem;
+  height: 20rem;
+  animation: skeletonPulse 2s infinite ease-in-out;
+}
+
+@keyframes skeletonPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .analytics-grid {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .inventory-table-container {
+    padding: 0 1rem 2rem;
+  }
+
+  .inventory-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .inventory-table {
+    min-width: 600px;
+  }
+
+  .inventory-table th,
+  .inventory-table td {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tenant-owner-inventory-container {
+    padding: 0;
+  }
+
+  .page-header {
+    padding: 1.5rem 1rem;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  .analytics-grid {
+    padding: 0.5rem;
+  }
+
+  .analytics-card {
+    padding: 1rem;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .btn-primary {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+  }
+}
