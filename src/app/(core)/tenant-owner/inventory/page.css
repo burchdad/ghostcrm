@@ -407,12 +407,27 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+.icon-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
 .action-btn.view {
   color: #3b82f6;
 }
 
 .action-btn.edit {
   color: #f59e0b;
+}
+
+.action-btn.qr-code {
+  color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.action-btn.qr-code:hover {
+  background: rgba(139, 92, 246, 0.2);
+  color: #7c3aed;
 }
 
 .action-btn.delete {

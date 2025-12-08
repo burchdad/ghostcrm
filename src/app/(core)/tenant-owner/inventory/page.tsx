@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Search, Plus, Package, AlertTriangle, TrendingUp, Eye, Edit, Trash2 } from "lucide-react";
+import { Search, Plus, Package, AlertTriangle, TrendingUp, Eye, Edit, Trash2, QrCode } from "lucide-react";
 import EmptyStateComponent from "@/components/feedback/EmptyStateComponent";
 import { useI18n } from "@/components/utils/I18nProvider";
 import { useToast } from "@/hooks/use-toast";
@@ -86,6 +86,63 @@ export default function TenantOwnerInventoryPage() {
     item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Action handlers for inventory items
+  const handleViewItem = (item: any) => {
+    // Navigate to detailed view
+    router.push(`/tenant-owner/inventory/${item.id || item.sku}`);
+  };
+
+  const handleEditItem = (item: any) => {
+    // Navigate to edit page
+    router.push(`/tenant-owner/inventory/edit/${item.id || item.sku}`);
+  };
+
+  const handleDeleteItem = async (item: any) => {
+    if (window.confirm(`Are you sure you want to delete ${item.name}? This action cannot be undone.`)) {
+      try {
+        // Here you would call your delete API
+        // await fetch(`/api/inventory/${item.id}`, { method: 'DELETE' });
+        
+        // For now, remove from state (mock deletion)
+        setInventory(prev => prev.filter(inv => inv.id !== item.id));
+        
+        toast({
+          title: "Item Deleted",
+          description: `${item.name} has been removed from inventory.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Delete Failed",
+          description: "Unable to delete item. Please try again.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const handlePrintQRCode = (item: any) => {
+    // Generate and print QR code for the vehicle
+    const vehicleId = item.id || item.sku;
+    const qrUrl = `/inventory/qr-vehicle-profile/${vehicleId}`;
+    
+    // Open QR code page in new window for printing
+    const printWindow = window.open(qrUrl, '_blank', 'width=800,height=600');
+    if (printWindow) {
+      printWindow.focus();
+      // Auto-print when page loads
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+        }, 1000);
+      };
+    }
+    
+    toast({
+      title: "QR Code Generated",
+      description: `Patent-pending QR code for ${item.name} is ready for printing.`,
+    });
+  };
 
   // Calculate analytics
   const analytics = {
@@ -286,13 +343,40 @@ export default function TenantOwnerInventoryPage() {
                     <TableCell>{item.location}</TableCell>
                     <TableCell>
                       <div className="action-buttons">
-                        <Button size="sm" variant="ghost">
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          className="action-btn view"
+                          onClick={() => handleViewItem(item)}
+                          title="View Details"
+                        >
                           <Eye className="icon-sm" />
                         </Button>
-                        <Button size="sm" variant="ghost">
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          className="action-btn edit"
+                          onClick={() => handleEditItem(item)}
+                          title="Edit Item"
+                        >
                           <Edit className="icon-sm" />
                         </Button>
-                        <Button size="sm" variant="ghost">
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          className="action-btn qr-code"
+                          onClick={() => handlePrintQRCode(item)}
+                          title="Print QR Code (Patent Pending)"
+                        >
+                          <QrCode className="icon-sm" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          className="action-btn delete"
+                          onClick={() => handleDeleteItem(item)}
+                          title="Delete Item"
+                        >
                           <Trash2 className="icon-sm" />
                         </Button>
                       </div>
