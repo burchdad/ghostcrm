@@ -595,17 +595,6 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
           router.push('/dashboard')
         }
       }}
-              window.location.href = `${baseUrl}/login-owner`
-            })
-=======
-          
-          // Go directly to dashboard since user is already authenticated
-          window.location.href = `${baseUrl}/tenant-owner/dashboard`
->>>>>>> 14622a94 (Fix: Resolve onboarding to dashboard routing authentication conflict)
-        } else {
-          router.push('/dashboard')
-        }
-      }}}
       orgTier="pro"
       userTier="admin_pro"
     />
