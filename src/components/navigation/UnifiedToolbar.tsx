@@ -410,8 +410,8 @@ export default function UnifiedToolbar({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-      <div className="flex items-center h-16">
+    <header className="unified-toolbar">
+      <div className="toolbar-container">
         {/* Logo Section */}
         <div className="flex items-center gap-3 px-4 border-r border-gray-200 bg-gray-50">
           <div className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white text-xl">
