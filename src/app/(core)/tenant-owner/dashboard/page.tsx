@@ -105,6 +105,7 @@ function TenantOwnerDashboard() {
   });
   const [recentActivities, setRecentActivities] = useState([]);
   const [tasksAndAlerts, setTasksAndAlerts] = useState({ tasks: [], alerts: [] });
+  const [organizationName, setOrganizationName] = useState('Your Organization');
   const [loading, setLoading] = useState(true);
   const [onboardingLoading, setOnboardingLoading] = useState(true);
   
@@ -226,12 +227,13 @@ function TenantOwnerDashboard() {
         }
         
         // Fetch enhanced owner metrics
-        const [dashboardRes, analyticsRes, teamRes, activityRes, tasksRes] = await Promise.all([
+        const [dashboardRes, analyticsRes, teamRes, activityRes, tasksRes, organizationRes] = await Promise.all([
           fetch("/api/dashboard/live"),
           fetch("/api/owner/analytics").catch(() => null),
           fetch("/api/team/performance").catch(() => null),
           fetch("/api/dashboard/activity").catch(() => null),
-          fetch("/api/dashboard/tasks").catch(() => null)
+          fetch("/api/dashboard/tasks").catch(() => null),
+          fetch("/api/organization").catch(() => null)
         ]);
 
         const dashboardData = dashboardRes.ok ? await dashboardRes.json() : {};
@@ -239,6 +241,7 @@ function TenantOwnerDashboard() {
         const teamData = teamRes && teamRes.ok ? await teamRes.json() : {};
         const activityData = activityRes && activityRes.ok ? await activityRes.json() : { activities: [] };
         const tasksData = tasksRes && tasksRes.ok ? await tasksRes.json() : { tasks: [], alerts: [] };
+        const organizationData = organizationRes && organizationRes.ok ? await organizationRes.json() : null;
 
         setAnalytics({
           totalRevenue: analyticsData?.revenue?.total || 485000,
@@ -256,6 +259,16 @@ function TenantOwnerDashboard() {
           tasks: tasksData.tasks || [],
           alerts: tasksData.alerts || []
         });
+        
+        // Set organization name from API or fallback to tenant name
+        if (organizationData?.organization?.name) {
+          setOrganizationName(organizationData.organization.name);
+        } else if (tenant?.name && !tenant.name.includes('-')) {
+          // Only use tenant name if it's not a UUID-like string
+          setOrganizationName(tenant.name);
+        } else {
+          setOrganizationName('Your Organization');
+        }
         setTasksAndAlerts({
           tasks: tasksData.tasks || [],
           alerts: tasksData.alerts || []
@@ -475,7 +488,7 @@ function TenantOwnerDashboard() {
             </div>
             <div>
               <h1 className="tenant-dashboard-title">
-                {tenant?.name || 'Default Organization'} - Owner Dashboard
+                {organizationName} - Owner Dashboard
               </h1>
               <p className="tenant-dashboard-subtitle">Comprehensive business overview and management</p>
             </div>
