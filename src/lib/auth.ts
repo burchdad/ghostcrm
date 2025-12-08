@@ -8,6 +8,8 @@ export interface User {
   lastName: string;
   role: UserRole;
   tenantId: string; // Company/Dealership ID
+  organizationId?: string; // Organization/Company UUID
+  organizationSubdomain?: string; // Subdomain for tenant access
   isActive: boolean;
   lastLogin?: string;
   createdAt: string;
