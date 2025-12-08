@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -279,14 +279,27 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
   console.log("🔍 [QR MODAL] isOpen:", isOpen);
   console.log("🔍 [QR MODAL] onClose function:", typeof onClose);
 
+  // Force the modal to stay open for debugging
+  const forceOpen = isOpen;
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={forceOpen} onOpenChange={(open) => {
+      console.log('🔍 [QR MODAL] onOpenChange called with:', open);
+      console.log('🔍 [QR MODAL] Current isOpen state:', isOpen);
+      if (!open && isOpen) {
+        console.log('🔍 [QR MODAL] Calling onClose');
+        onClose();
+      }
+    }}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" style={{ zIndex: 9999 }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <QrCode className="h-5 w-5" />
             QR Code Configuration - {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Vehicle'}
           </DialogTitle>
+          <DialogDescription>
+            Configure QR code features and settings for this vehicle. Select which information and features will be accessible when customers scan the QR code.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">

@@ -200,16 +200,19 @@ export default function TenantOwnerInventoryPage() {
     console.log("🔍 [QR CODE] Current qrModalOpen state:", qrModalOpen);
     console.log("🔍 [QR CODE] Current selectedVehicle state:", selectedVehicle);
     
-    // Open QR code configuration modal
-    setSelectedVehicle(item);
-    setQrModalOpen(true);
-    
-    console.log("🔍 [QR CODE] After setState calls");
-    
-    toast({
-      title: "QR Code Manager",
-      description: "Configure QR code features and settings.",
-    });
+    // Use setTimeout to ensure state updates are processed properly
+    setTimeout(() => {
+      // Open QR code configuration modal
+      setSelectedVehicle(item);
+      setQrModalOpen(true);
+      
+      console.log("🔍 [QR CODE] After setState calls");
+      
+      toast({
+        title: "QR Code Manager",
+        description: "Configure QR code features and settings.",
+      });
+    }, 10);
   };
 
   // Calculate analytics
@@ -433,7 +436,11 @@ export default function TenantOwnerInventoryPage() {
                           size="sm" 
                           variant="ghost"
                           className="action-btn qr-code"
-                          onClick={() => handlePrintQRCode(item)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            handlePrintQRCode(item);
+                          }}
                           title="Print QR Code (Patent Pending)"
                         >
                           <QrCode className="icon-sm" />
