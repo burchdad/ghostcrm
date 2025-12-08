@@ -65,11 +65,81 @@ export default function TenantOwnerInventoryPage() {
         
         // For now, using mock data since no inventory API exists yet
         const mockData = [
-          { id: 1, name: "2024 Honda Civic", sku: "HC2024001", category: "Sedan", quantity: 5, price: 28500, status: "in_stock", location: "Lot A" },
-          { id: 2, name: "2024 Toyota Camry", sku: "TC2024001", category: "Sedan", quantity: 8, price: 32000, status: "in_stock", location: "Lot A" },
-          { id: 3, name: "2024 Ford F-150", sku: "FF2024001", category: "Truck", quantity: 3, price: 45000, status: "low_stock", location: "Lot B" },
-          { id: 4, name: "2024 Chevrolet Equinox", sku: "CE2024001", category: "SUV", quantity: 0, price: 35000, status: "out_of_stock", location: "Lot C" },
-          { id: 5, name: "2024 BMW X3", sku: "BX2024001", category: "SUV", quantity: 12, price: 55000, status: "in_stock", location: "Premium Lot" }
+          { 
+            id: 1, 
+            name: "2024 Honda Civic", 
+            sku: "HC2024001", 
+            category: "Sedan", 
+            quantity: 5, 
+            price: 28500, 
+            status: "in_stock", 
+            location: "Lot A",
+            year: "2024",
+            make: "Honda", 
+            model: "Civic",
+            trim: "LX",
+            vin: "1HGBH41JXMN109186"
+          },
+          { 
+            id: 2, 
+            name: "2024 Toyota Camry", 
+            sku: "TC2024001", 
+            category: "Sedan", 
+            quantity: 8, 
+            price: 32000, 
+            status: "in_stock", 
+            location: "Lot A",
+            year: "2024",
+            make: "Toyota", 
+            model: "Camry",
+            trim: "SE",
+            vin: "4T1BE46K59U123456"
+          },
+          { 
+            id: 3, 
+            name: "2024 Ford F-150", 
+            sku: "FF2024001", 
+            category: "Truck", 
+            quantity: 3, 
+            price: 45000, 
+            status: "low_stock", 
+            location: "Lot B",
+            year: "2024",
+            make: "Ford", 
+            model: "F-150",
+            trim: "XLT",
+            vin: "1FTEW1E51JFA12345"
+          },
+          { 
+            id: 4, 
+            name: "2024 Chevrolet Equinox", 
+            sku: "CE2024001", 
+            category: "SUV", 
+            quantity: 0, 
+            price: 35000, 
+            status: "out_of_stock", 
+            location: "Lot C",
+            year: "2024",
+            make: "Chevrolet", 
+            model: "Equinox",
+            trim: "LT",
+            vin: "2GNAXKEV1L6123456"
+          },
+          { 
+            id: 5, 
+            name: "2024 BMW X3", 
+            sku: "BX2024001", 
+            category: "SUV", 
+            quantity: 12, 
+            price: 55000, 
+            status: "in_stock", 
+            location: "Premium Lot",
+            year: "2024",
+            make: "BMW", 
+            model: "X3",
+            trim: "xDrive30i",
+            vin: "5UX23DU06N9123456"
+          }
         ];
         setInventory(mockData);
       } catch (error) {
@@ -127,10 +197,14 @@ export default function TenantOwnerInventoryPage() {
   const handlePrintQRCode = (item: any) => {
     console.log("🔍 [QR CODE] Button clicked, item:", item);
     console.log("🔍 [QR CODE] Setting selectedVehicle and opening modal");
+    console.log("🔍 [QR CODE] Current qrModalOpen state:", qrModalOpen);
+    console.log("🔍 [QR CODE] Current selectedVehicle state:", selectedVehicle);
     
     // Open QR code configuration modal
     setSelectedVehicle(item);
     setQrModalOpen(true);
+    
+    console.log("🔍 [QR CODE] After setState calls");
     
     toast({
       title: "QR Code Manager",
