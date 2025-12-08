@@ -581,24 +581,31 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
         handleComplete()
       }}
       onSkip={() => {
-        // Skip integrations - mark onboarding complete then clear session and redirect to tenant subdomain login
+        // Skip integrations - mark complete and go directly to tenant dashboard
         markOnboardingComplete(createdOrganization?.id)
         if (createdOrganization) {
           const baseUrl =
             process.env.NODE_ENV === 'development'
               ? `http://${createdOrganization.subdomain}.localhost:3000`
               : `https://${createdOrganization.subdomain}.ghostcrm.ai`
-
-          // Call logout API to clear cookies (include credentials) before navigating to tenant login
-          fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-            .finally(() => {
-              try { localStorage.removeItem('auth_token') } catch (e) {}
-              window.location.href = `${baseUrl}/login-owner`
-            })
+          
+          // Go directly to dashboard since user is already authenticated
+          window.location.href = `${baseUrl}/tenant-owner/dashboard`
         } else {
           router.push('/dashboard')
         }
       }}
+              window.location.href = `${baseUrl}/login-owner`
+            })
+=======
+          
+          // Go directly to dashboard since user is already authenticated
+          window.location.href = `${baseUrl}/tenant-owner/dashboard`
+>>>>>>> 14622a94 (Fix: Resolve onboarding to dashboard routing authentication conflict)
+        } else {
+          router.push('/dashboard')
+        }
+      }}}
       orgTier="pro"
       userTier="admin_pro"
     />
@@ -754,12 +761,9 @@ export default function ClientOnboardingModal({ isOpen, onClose, onComplete }: O
                 process.env.NODE_ENV === 'development'
                   ? `http://${createdOrganization.subdomain}.localhost:3000`
                   : `https://${createdOrganization.subdomain}.ghostcrm.ai`
-
-              // Ensure current session is cleared before navigating to tenant login
-              fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(() => {
-                try { localStorage.removeItem('auth_token') } catch (e) {}
-                window.location.href = `${baseUrl}/login-owner`
-              })
+              
+              // Go directly to dashboard since user is already authenticated
+              window.location.href = `${baseUrl}/tenant-owner/dashboard`
             } else {
               router.push('/dashboard')
             }
