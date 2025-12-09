@@ -1,0 +1,81 @@
+/* 
+  ===========================================
+  📱 QR CODE MODAL ENHANCED STYLES
+  ===========================================
+  Component: QR Code Configuration Modal
+  Purpose: Enhanced styling for comprehensive QR features
+*/
+
+.qr-modal-content {
+  max-width: 72rem !important;
+  width: 95vw;
+  max-height: 95vh;
+}
+
+.qr-feature-card {
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.qr-feature-card:hover {
+  border-color: #f97316;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.1);
+}
+
+.qr-feature-card.enabled {
+  border-color: #f97316;
+  background: rgba(249, 115, 22, 0.05);
+}
+
+.qr-section-header {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.qr-checkbox-label {
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.qr-input-group {
+  display: grid;
+  gap: 1rem;
+}
+
+.qr-time-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.qr-preview-card {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 2px dashed #cbd5e1;
+  padding: 2rem;
+  text-align: center;
+  border-radius: 0.75rem;
+}
+
+.qr-action-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+@media (max-width: 768px) {
+  .qr-modal-content {
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .qr-action-buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}

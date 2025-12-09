@@ -33,6 +33,7 @@ import {
   Plus
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import "./QRCodeModal.css";
 
 interface QRCodeModalProps {
   isOpen: boolean;
@@ -62,25 +63,44 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
       showMileage: true,
       showFeatures: true,
       showSpecs: true,
+      showSimilarVehicles: true,
+      showColorOptions: true,
+      showTrimLevels: true,
       customDescription: "",
       highlightedFeatures: [] as string[]
     },
     photos: {
       enabled: true,
-      selectedPhotos: [] as string[],
-      allowUploads: false,
-      maxPhotos: 10
+      showAllPhotos: true,
+      enableZoom: true,
+      enable360View: false,
+      allowCustomerPhotos: true,
+      showPhotoCategories: true,
+      quality: "high",
+      maxPhotos: 25
     },
     testDrive: {
       enabled: true,
       allowScheduling: true,
-      availableTimes: ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM"],
+      instantBooking: false,
       requiresApproval: true,
+      requireLicense: true,
+      requireInsurance: true,
+      ageRestriction: true,
+      duration: "30min",
+      advanceNotice: "24hours",
+      availableTimes: ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM"],
       customMessage: "Schedule your test drive today!"
     },
     contact: {
       enabled: true,
+      assignmentMethod: "round-robin",
+      enablePhone: true,
+      enableEmail: true,
+      enableText: true,
+      enableVideoCall: false,
       salesPerson: {
+        id: "1",
         name: "John Doe",
         phone: "(555) 123-4567",
         email: "john.doe@burchmotors.com"
@@ -94,7 +114,17 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
     financing: {
       enabled: true,
       showCalculator: true,
+      showTradeIn: true,
+      showLeaseCalculator: true,
+      enablePreApproval: true,
+      softCreditPull: true,
+      instantDecision: false,
+      budgetQuiz: true,
+      affordabilityCalculator: true,
+      financingEducation: true,
       showIncentives: true,
+      manufacturerRebates: true,
+      seasonalOffers: true,
       customOffers: [] as string[]
     },
     reviews: {
@@ -291,7 +321,7 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
         onClose();
       }
     }}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="qr-modal-content overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <QrCode className="h-5 w-5" />
@@ -303,16 +333,6 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* SIMPLE TEST CONTENT TO VERIFY VISIBILITY */}
-          <div style={{ padding: '20px', background: 'yellow', border: '3px solid red' }}>
-            <h2>🚨 MODAL IS VISIBLE! 🚨</h2>
-            <p>Vehicle: {vehicle?.name || 'No vehicle'}</p>
-            <p>State: isOpen = {isOpen ? 'TRUE' : 'FALSE'}</p>
-            <button onClick={onClose} style={{ padding: '10px', background: 'red', color: 'white' }}>
-              CLOSE MODAL
-            </button>
-          </div>
-
           <Tabs defaultValue="features" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="features">Features</TabsTrigger>
