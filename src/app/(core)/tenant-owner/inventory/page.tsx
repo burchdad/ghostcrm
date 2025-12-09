@@ -255,28 +255,9 @@ export default function TenantOwnerInventoryPage() {
 
   return (
     <div className="tenant-owner-inventory-container">
-      <div className="page-header">
-        <div className="header-content">
-          <div className="title-section">
-            <h1 className="page-title">
-              📦 {organizationName} - Inventory Management
-            </h1>
-            <p className="page-subtitle">Owner Dashboard - Full Access</p>
-          </div>
-          <div className="header-actions">
-            <Button 
-              className="btn-primary"
-              onClick={() => router.push('/tenant-owner/new-inventory')}
-            >
-              <Plus className="icon" />
-              Add Item
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Analytics Cards */}
-      <div className="analytics-grid">
+      <div className="page-header">
+        <div className="analytics-grid">
         <Card className="analytics-card inventory">
           <div className="card-content">
             <div className="metric-info">
@@ -330,27 +311,36 @@ export default function TenantOwnerInventoryPage() {
         </Card>
       </div>
 
-      {/* Controls */}
-      <div className="controls-section">
-        <div className="search-container">
-          <Search className="search-icon" />
-          <Input
-            placeholder="Search inventory by name, SKU, or category..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
+      {/* Main Content Area */}
+      <div className="inventory-content">
+        {/* Controls */}
+        <div className="controls-section">
+          <div className="search-container">
+            <Search className="search-icon" />
+            <Input
+              placeholder="Search inventory by name, SKU, or category..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
+          <div className="control-actions">
+            <Button
+              variant={bulkMode ? "default" : "outline"}
+              onClick={() => setBulkMode(!bulkMode)}
+              className="bulk-mode-btn"
+            >
+              Bulk Actions
+            </Button>
+            <Button 
+              className="btn-primary"
+              onClick={() => router.push('/tenant-owner/new-inventory')}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Item
+            </Button>
+          </div>
         </div>
-        <div className="control-actions">
-          <Button
-            variant={bulkMode ? "default" : "outline"}
-            onClick={() => setBulkMode(!bulkMode)}
-            className="bulk-mode-btn"
-          >
-            Bulk Actions
-          </Button>
-        </div>
-      </div>
 
       {/* Inventory Table */}
       <Card className="inventory-table-card">
@@ -463,6 +453,7 @@ export default function TenantOwnerInventoryPage() {
           </Table>
         )}
       </Card>
+      </div>
       
       {/* QR Code Management Modal */}
       <QRCodeModal 
