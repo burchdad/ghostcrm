@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           const authTenant: Tenant = {
             id: userData.user.tenantId,
-            name: userData.user.organizationId || 'Default Organization',
+            name: userData.user.organizationName || userData.user.companyName || 'Ghost Auto CRM',
             domain: 'localhost',
             type: 'dealership',
             isActive: true,
@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               branding: {
                 primaryColor: '#3B82F6',
                 secondaryColor: '#1E40AF',
-                companyName: userData.user.organizationId || 'Default Organization'
+                companyName: userData.user.organizationName || userData.user.companyName || 'Ghost Auto CRM'
               },
               features: {
                 inventory: true,
