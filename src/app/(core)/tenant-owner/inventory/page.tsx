@@ -264,7 +264,10 @@ export default function TenantOwnerInventoryPage() {
             <p className="page-subtitle">Owner Dashboard - Full Access</p>
           </div>
           <div className="header-actions">
-            <Button className="btn-primary">
+            <Button 
+              className="btn-primary"
+              onClick={() => router.push('/tenant-owner/new-inventory')}
+            >
               <Plus className="icon" />
               Add Item
             </Button>
@@ -358,10 +361,7 @@ export default function TenantOwnerInventoryPage() {
             description="Get started by adding your first inventory item or adjust your search filters."
             actionLabel="Add Item"
             onAction={() => {
-              toast({
-                title: "New Inventory Item",
-                description: "Item creation modal would open here",
-              });
+              router.push('/tenant-owner/new-inventory');
             }}
           />
         ) : (

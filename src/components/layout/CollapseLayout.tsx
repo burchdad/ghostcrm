@@ -34,9 +34,9 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
   // Check if we're on a marketing page (should use marketing layout)
   const isMarketingPage = pathname.startsWith("/marketing");
   
-  // Fixed sidebar widths - reduced for more dashboard space
-  const sidebarWidth = 200; // w-50 = 200px (reduced from 256px)
-  const collaborationSidebarWidth = 240; // w-60 = 240px (reduced from 320px)
+  // Fixed sidebar widths - updated for better readability
+  const sidebarWidth = 240; // w-60 = 240px (increased from 200px for better text visibility)
+  const collaborationSidebarWidth = 240; // w-60 = 240px
 
   // If on auth pages (login/register), render children directly with no layout
   if (isAuthPage) {

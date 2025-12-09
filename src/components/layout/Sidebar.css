@@ -13,7 +13,7 @@
   flex-direction: column;
   height: 100%;
   position: relative;
-  width: 12.5rem; /* w-50 equivalent */
+  width: 15rem; /* w-60 equivalent - increased for better text visibility */
   background: linear-gradient(180deg, 
     rgba(248, 250, 252, 0.95) 0%, 
     rgba(241, 245, 249, 0.95) 50%, 
