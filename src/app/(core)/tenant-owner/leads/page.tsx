@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Search, Plus, Phone, MessageSquare, Mail, Download, X, Trash2, Crown, Users, TrendingUp, Upload, Zap, Bot, FileText, Settings, RefreshCw, BarChart3 } from "lucide-react";
+import { Search, Plus, Phone, MessageSquare, Mail, Download, X, Trash2, Users, TrendingUp, Upload, Zap, Bot, FileText, Settings, RefreshCw, BarChart3 } from "lucide-react";
 import OptOutTable from "../../leads/OptOutTable";
 import EmptyStateComponent from "@/components/feedback/EmptyStateComponent";
 import { useI18n } from "@/components/utils/I18nProvider";
@@ -458,22 +458,9 @@ export default function TenantOwnerLeads() {
 
   return (
     <div className="tenant-owner-leads-page">
-      {/* Enhanced Header with Glass Effect */}
+      {/* Analytics Cards Grid */}
       <div className="tenant-owner-leads-header">
         <div className="tenant-owner-leads-header-content">
-          <div className="tenant-owner-leads-title-section">
-            <div>
-              <h1 className="tenant-owner-leads-title">
-                {tenant?.name || 'Tenant'} - Lead Management
-              </h1>
-            </div>
-            <div className="tenant-owner-leads-badge">
-              <Crown className="tenant-owner-leads-status-icon" />
-              Owner Access
-            </div>
-          </div>
-
-          {/* Analytics Cards Grid */}
           <div className="tenant-owner-leads-analytics-grid">
             <div className="tenant-owner-leads-analytics-card total">
               <div className="tenant-owner-leads-card-header">
