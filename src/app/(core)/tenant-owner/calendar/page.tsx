@@ -137,35 +137,8 @@ export default function TenantOwnerCalendarPage() {
       // const membersData = await response.json();
       // setMentionSuggestions(membersData);
 
-      // Mock organization members for now
-      const mockMembers = [
-        {
-          id: "1",
-          name: "John Smith",
-          email: "john.smith@burch-enterprises.com",
-        },
-        {
-          id: "2",
-          name: "Sarah Johnson",
-          email: "sarah.johnson@burch-enterprises.com",
-        },
-        {
-          id: "3",
-          name: "Mike Davis",
-          email: "mike.davis@burch-enterprises.com",
-        },
-        {
-          id: "4",
-          name: "Emily Wilson",
-          email: "emily.wilson@burch-enterprises.com",
-        },
-        {
-          id: "5",
-          name: "David Brown",
-          email: "david.brown@burch-enterprises.com",
-        },
-      ];
-      setMentionSuggestions(mockMembers);
+      // For now, set empty array until API integration
+      setMentionSuggestions([]);
     } catch (error) {
       console.error("Error loading organization members:", error);
     }
@@ -192,12 +165,19 @@ export default function TenantOwnerCalendarPage() {
 
   const loadEvents = async () => {
     try {
-      // TODO: Replace with actual API call
+      // TODO: Replace with actual API call to load calendar events
+      // This should fetch all meetings, appointments, tasks, and other scheduled events
       // const response = await fetch(`/api/calendar/events?month=${currentMonth}&year=${currentYear}&tenantId=${user?.tenantId}`);
       // const eventsData = await response.json();
       // setEvents(eventsData);
 
-      // For now, using empty array instead of mock data
+      // Note: Future integration should include:
+      // - Meeting events from calendar integrations (Google Calendar, Outlook, etc.)
+      // - Sales appointments and demo bookings
+      // - Task deadlines and follow-up reminders  
+      // - Team meetings and collaboration sessions
+      
+      // For now, using empty array until API integration is complete
       setEvents([]);
     } catch (error) {
       console.error("Error loading events:", error);
@@ -660,7 +640,12 @@ export default function TenantOwnerCalendarPage() {
             <Calendar className="stat-icon" />
             <div>
               <h3>Today's Events</h3>
-              <p>3 scheduled</p>
+              <p>{events.filter(event => {
+                const today = new Date();
+                return event.date === today.getDate() && 
+                       event.month === today.getMonth() && 
+                       event.year === today.getFullYear();
+              }).length} scheduled</p>
             </div>
           </div>
         </Card>
@@ -669,7 +654,17 @@ export default function TenantOwnerCalendarPage() {
             <Clock className="stat-icon" />
             <div>
               <h3>This Week</h3>
-              <p>12 meetings</p>
+              <p>{events.filter(event => {
+                const today = new Date();
+                const eventDate = new Date(event.year, event.month, event.date);
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay());
+                startOfWeek.setHours(0, 0, 0, 0);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                endOfWeek.setHours(23, 59, 59, 999);
+                return eventDate >= startOfWeek && eventDate <= endOfWeek;
+              }).length} meetings</p>
             </div>
           </div>
         </Card>
@@ -678,7 +673,7 @@ export default function TenantOwnerCalendarPage() {
             <Users className="stat-icon" />
             <div>
               <h3>Team Availability</h3>
-              <p>8 available</p>
+              <p>{mentionSuggestions.length} members</p>
             </div>
           </div>
         </Card>
