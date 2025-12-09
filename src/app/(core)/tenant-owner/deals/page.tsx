@@ -190,15 +190,7 @@ export default function TenantOwnerDealsPage() {
     <div className="tenant-owner-deals-container">
       <div className="page-header">
         <div className="header-content">
-          <div className="title-section">
-            <h1 className="page-title">
-              {user?.tenantId} - Deal Management
-            </h1>
-            <p className="page-subtitle">Owner Access</p>
-          </div>
-        </div>
-
-        {/* Analytics Cards in Header */}
+          {/* Analytics Cards in Header */}
         <div className="analytics-grid">
           <Card className="analytics-card revenue">
             <div className="card-content">
