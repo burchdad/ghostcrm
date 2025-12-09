@@ -695,7 +695,7 @@ export default function TenantOwnerCalendarPage() {
                 </Button>
                 <Button 
                   className="btn-create" 
-                  onClick={handleCreateEvent}
+                  onClick={handleEventFormSubmit}
                   disabled={!newEventData.title || !newEventData.date || !newEventData.time}
                 >
                   Create Event
@@ -777,7 +777,7 @@ export default function TenantOwnerCalendarPage() {
                 </Button>
                 <Button 
                   className="btn-create-inline" 
-                  onClick={handleCreateEvent}
+                  onClick={handleEventFormSubmit}
                   disabled={!newEventData.title || !newEventData.date || !newEventData.time}
                 >
                   Create Event
