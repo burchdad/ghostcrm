@@ -277,7 +277,7 @@ export default function TenantOwnerCalendarPage() {
       location: '',
       isAllDay: false
     });
-    setIsNewEventModalOpen(true);
+    setIsNewEventModalOpen(!isNewEventModalOpen); // Toggle inline section
   };
 
   const handleEventTypeSelect = (eventType: string) => {
@@ -624,6 +624,169 @@ export default function TenantOwnerCalendarPage() {
         </Card>
       </div>
 
+      {/* Inline Event Creation Section */}
+      {isNewEventModalOpen && (
+        <Card className="event-creation-inline">
+          <div className="event-creation-header">
+            <h3 className="event-creation-title">
+              {selectedEventType ? `Create ${eventTypes.find(et => et.id === selectedEventType)?.label}` : 'Select Event Type'}
+            </h3>
+            <button 
+              onClick={() => {
+                setIsNewEventModalOpen(false);
+                setSelectedEventType('');
+              }}
+              className="event-creation-close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {!selectedEventType ? (
+            /* Event Type Selection */
+            <div className="event-type-grid-inline">
+              {eventTypes.map((eventType) => (
+                <button
+                  key={eventType.id}
+                  onClick={() => handleEventTypeSelect(eventType.id)}
+                  className="event-type-card-inline"
+                >
+                  <div className="event-type-icon-inline">
+                    {eventType.icon}
+                  </div>
+                  <div className="event-type-content-inline">
+                    <h4>{eventType.label}</h4>
+                    <p>{eventType.description}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            /* Event Creation Form - abbreviated version for inline */
+            <div className="event-form-inline">
+              <div className="form-row">
+                <input
+                  type="text"
+                  placeholder="Event title"
+                  value={newEventData.title}
+                  onChange={(e) => setNewEventData(prev => ({ ...prev, title: e.target.value }))}
+                  className="form-input"
+                />
+                <input
+                  type="date"
+                  value={newEventData.date}
+                  onChange={(e) => setNewEventData(prev => ({ ...prev, date: e.target.value }))}
+                  className="form-input"
+                />
+                <input
+                  type="time"
+                  value={newEventData.time}
+                  onChange={(e) => setNewEventData(prev => ({ ...prev, time: e.target.value }))}
+                  className="form-input"
+                />
+              </div>
+              <div className="form-actions">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSelectedEventType('')}
+                  className="btn-back"
+                >
+                  Back
+                </Button>
+                <Button 
+                  className="btn-create" 
+                  onClick={handleCreateEvent}
+                  disabled={!newEventData.title || !newEventData.date || !newEventData.time}
+                >
+                  Create Event
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Inline Event Creation Section */}
+      {isNewEventModalOpen && (
+        <Card className="event-creation-inline">
+          <div className="event-creation-header">
+            <h3 className="event-creation-title">
+              {selectedEventType ? `Create ${eventTypes.find(et => et.id === selectedEventType)?.label}` : 'Select Event Type'}
+            </h3>
+            <button 
+              onClick={() => {
+                setIsNewEventModalOpen(false);
+                setSelectedEventType('');
+              }}
+              className="event-creation-close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {!selectedEventType ? (
+            /* Event Type Selection */
+            <div className="event-type-grid-inline">
+              {eventTypes.map((eventType) => (
+                <button
+                  key={eventType.id}
+                  onClick={() => handleEventTypeSelect(eventType.id)}
+                  className="event-type-card-inline"
+                >
+                  <div className="event-type-icon-inline">
+                    {eventType.icon}
+                  </div>
+                  <div className="event-type-content-inline">
+                    <h4>{eventType.label}</h4>
+                    <p>{eventType.description}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            /* Event Creation Form - abbreviated version for inline */
+            <div className="event-form-inline">
+              <div className="form-row-inline">
+                <input
+                  type="text"
+                  placeholder="Event title"
+                  value={newEventData.title}
+                  onChange={(e) => setNewEventData(prev => ({ ...prev, title: e.target.value }))}
+                  className="form-input-inline"
+                />
+                <input
+                  type="date"
+                  value={newEventData.date}
+                  onChange={(e) => setNewEventData(prev => ({ ...prev, date: e.target.value }))}
+                  className="form-input-inline"
+                />
+                <input
+                  type="time"
+                  value={newEventData.time}
+                  onChange={(e) => setNewEventData(prev => ({ ...prev, time: e.target.value }))}
+                  className="form-input-inline"
+                />
+              </div>
+              <div className="form-actions-inline">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSelectedEventType('')}
+                  className="btn-back-inline"
+                >
+                  Back
+                </Button>
+                <Button 
+                  className="btn-create-inline" 
+                  onClick={handleCreateEvent}
+                  disabled={!newEventData.title || !newEventData.date || !newEventData.time}
+                >
+                  Create Event
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Calendar Grid */}
       <Card className="calendar-card">
