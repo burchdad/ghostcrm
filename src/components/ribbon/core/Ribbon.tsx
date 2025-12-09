@@ -1,6 +1,6 @@
 "use client";
 import React, { useMemo, useRef, useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useRibbon } from "../providers/RibbonProvider";
 import { useContextualRibbon, prioritizeNotifications, getContextualShortcuts } from "../providers/ContextualRibbon";
@@ -66,7 +66,7 @@ function getContextualTabName(pathname: string): string {
 }
 
 // Function to get contextual controls based on the current page
-function getContextualControls(contextualTab: string): any[] {
+function getContextualControls(contextualTab: string, router?: any): any[] {
   switch (contextualTab) {
     case "Dashboard":
       return [
@@ -134,7 +134,7 @@ function getContextualControls(contextualTab: string): any[] {
       ];
     default: // Home
       return [
-        { id: "home-welcome" as any, group: "Home", label: "Welcome", icon: "🏠", onClick: () => console.log("Welcome") },
+        { id: "home-welcome" as any, group: "Home", label: "Welcome", icon: "🏠", onClick: () => router?.push('/tenant-owner/dashboard') },
         { id: "home-tour" as any, group: "Home", label: "Tour", icon: "🎯", onClick: () => console.log("Take Tour") },
         { id: "home-help" as any, group: "Home", label: "Help", icon: "❓", onClick: () => console.log("Help") },
         { id: "home-support" as any, group: "Home", label: "Support", icon: "🆘", onClick: () => console.log("Support") }
@@ -314,9 +314,10 @@ function DesktopRibbonGroup({ title, items, isTablet = false, user }: { title: s
 
 export default function Ribbon() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useAuth();
   const contextualTab = getContextualTabName(pathname);
-  const contextualControls = getContextualControls(contextualTab);
+  const contextualControls = getContextualControls(contextualTab, router);
   
   // Smart contextual ribbon system
   const contextualConfig = useContextualRibbon();

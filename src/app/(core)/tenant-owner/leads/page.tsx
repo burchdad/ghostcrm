@@ -82,6 +82,43 @@ export default function TenantOwnerLeads() {
     notes: ""
   });
 
+  // Analytics calculations
+  const analytics = useMemo(() => {
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    const newToday = leads.filter(lead => {
+      const leadDate = new Date(lead.created_at || lead.createdAt);
+      return leadDate >= todayStart;
+    });
+    
+    // Calculate follow-ups due (leads with follow_up_date today or overdue)
+    const followUpsDue = leads.filter(lead => {
+      if (!lead.follow_up_date) return false;
+      const followUpDate = new Date(lead.follow_up_date);
+      return followUpDate <= today;
+    });
+    
+    // Calculate conversion rate (leads with status 'converted' or 'closed-won')
+    const convertedLeads = leads.filter(lead => 
+      lead.status === 'converted' || lead.status === 'closed-won' || lead.status === 'customer'
+    );
+    const conversionRate = leads.length > 0 ? (convertedLeads.length / leads.length * 100) : 0;
+    
+    // Calculate hot leads (priority high or score > 80)
+    const hotLeads = newToday.filter(lead => 
+      lead.priority === 'high' || lead.score > 80 || lead.status === 'hot'
+    );
+    
+    return {
+      totalLeads: leads.length,
+      newToday: newToday.length,
+      hotLeadsToday: hotLeads.length,
+      followUpsDue: followUpsDue.length,
+      conversionRate: conversionRate.toFixed(1)
+    };
+  }, [leads]);
+
   // Check if user is owner - wait for user context to load first
   if (!user) {
     // Still loading user context, show loading
@@ -427,7 +464,7 @@ export default function TenantOwnerLeads() {
           <div className="tenant-owner-leads-title-section">
             <div>
               <h1 className="tenant-owner-leads-title">
-                {user?.tenantId} - Lead Management
+                {tenant?.name || 'Tenant'} - Lead Management
               </h1>
             </div>
             <div className="tenant-owner-leads-badge">
@@ -445,10 +482,10 @@ export default function TenantOwnerLeads() {
                   <Users />
                 </div>
               </div>
-              <div className="tenant-owner-leads-card-value">{leads.length}</div>
+              <div className="tenant-owner-leads-card-value">{analytics.totalLeads}</div>
               <div className="tenant-owner-leads-card-trend">
                 <TrendingUp />
-                +12% this month
+                {analytics.totalLeads > 0 ? 'Active pipeline' : 'Getting started'}
               </div>
             </div>
 
@@ -459,10 +496,10 @@ export default function TenantOwnerLeads() {
                   <TrendingUp />
                 </div>
               </div>
-              <div className="tenant-owner-leads-card-value">24.8%</div>
+              <div className="tenant-owner-leads-card-value">{analytics.conversionRate}%</div>
               <div className="tenant-owner-leads-card-trend">
                 <TrendingUp />
-                Above average
+                {parseFloat(analytics.conversionRate) > 20 ? 'Above average' : 'Room for growth'}
               </div>
             </div>
 
@@ -473,10 +510,10 @@ export default function TenantOwnerLeads() {
                   <Plus />
                 </div>
               </div>
-              <div className="tenant-owner-leads-card-value">8</div>
+              <div className="tenant-owner-leads-card-value">{analytics.newToday}</div>
               <div className="tenant-owner-leads-card-trend">
                 <TrendingUp />
-                2 hot leads
+                {analytics.hotLeadsToday > 0 ? `${analytics.hotLeadsToday} hot leads` : 'No hot leads yet'}
               </div>
             </div>
 
@@ -487,10 +524,10 @@ export default function TenantOwnerLeads() {
                   <Phone />
                 </div>
               </div>
-              <div className="tenant-owner-leads-card-value">15</div>
+              <div className="tenant-owner-leads-card-value">{analytics.followUpsDue}</div>
               <div className="tenant-owner-leads-card-trend">
                 <TrendingUp />
-                Needs attention
+                {analytics.followUpsDue > 0 ? 'Needs attention' : 'All caught up'}
               </div>
             </div>
           </div>

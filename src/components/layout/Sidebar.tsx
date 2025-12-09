@@ -68,7 +68,7 @@ const DEFAULT_ITEMS: SidebarItem[] = [
   
   // Tenant Owner Features
   { 
-    name: "🏠 Home Dashboard", 
+    name: "Business Dashboard", 
     path: "/tenant-owner/dashboard", 
     icon: LucideHome, 
     role: ["owner"], 
