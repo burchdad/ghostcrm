@@ -302,15 +302,17 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
           </DialogDescription>
         </DialogHeader>
 
-        {/* SIMPLE TEST CONTENT TO VERIFY VISIBILITY */}
-        <div style={{ padding: '20px', background: 'yellow', border: '3px solid red' }}>
-          <h2>🚨 MODAL IS VISIBLE! 🚨</h2>
-          <p>Vehicle: {vehicle?.name || 'No vehicle'}</p>
-          <p>State: isOpen = {isOpen ? 'TRUE' : 'FALSE'}</p>
-          <button onClick={onClose} style={{ padding: '10px', background: 'red', color: 'white' }}>
-            CLOSE MODAL
-          </button>
-        </div>
+        <div className="space-y-6">
+          {/* SIMPLE TEST CONTENT TO VERIFY VISIBILITY */}
+          <div style={{ padding: '20px', background: 'yellow', border: '3px solid red' }}>
+            <h2>🚨 MODAL IS VISIBLE! 🚨</h2>
+            <p>Vehicle: {vehicle?.name || 'No vehicle'}</p>
+            <p>State: isOpen = {isOpen ? 'TRUE' : 'FALSE'}</p>
+            <button onClick={onClose} style={{ padding: '10px', background: 'red', color: 'white' }}>
+              CLOSE MODAL
+            </button>
+          </div>
+
           <Tabs defaultValue="features" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="features">Features</TabsTrigger>
