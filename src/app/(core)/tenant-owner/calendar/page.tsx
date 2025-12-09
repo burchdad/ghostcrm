@@ -579,27 +579,6 @@ export default function TenantOwnerCalendarPage() {
 
   return (
     <div className="tenant-owner-calendar-container">
-      <div className="page-header">
-        <div className="header-content">
-          <div className="title-section">
-            <h1 className="page-title">
-              📅 {user?.tenantId} - Calendar & Scheduling
-            </h1>
-            <p className="page-subtitle">Owner Dashboard - Full Access</p>
-          </div>
-          <div className="header-actions">
-            <Button className="btn-secondary" onClick={handleSyncCalendar}>
-              <Calendar className="icon" />
-              Sync Calendar
-            </Button>
-            <Button className="btn-primary" onClick={handleNewEvent}>
-              <Plus className="icon" />
-              New Event
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Quick Stats */}
       <div className="calendar-stats">
         <Card className="stat-card">
@@ -629,7 +608,22 @@ export default function TenantOwnerCalendarPage() {
             </div>
           </div>
         </Card>
+        <Card className="stat-card action-card">
+          <div className="stat-content">
+            <div className="action-buttons">
+              <Button className="btn-secondary" onClick={handleSyncCalendar}>
+                <Calendar className="icon" />
+                Sync Calendar
+              </Button>
+              <Button className="btn-primary" onClick={handleNewEvent}>
+                <Plus className="icon" />
+                New Event
+              </Button>
+            </div>
+          </div>
+        </Card>
       </div>
+
 
       {/* Calendar Grid */}
       <Card className="calendar-card">
