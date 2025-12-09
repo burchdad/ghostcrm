@@ -258,18 +258,18 @@ export default function TenantOwnerInventoryPage() {
       {/* Analytics Cards */}
       <div className="page-header">
         <div className="analytics-grid">
-        <Card className="analytics-card inventory">
-          <div className="card-content">
-            <div className="metric-info">
-              <h3>Total Items</h3>
-              <p className="metric-value">{analytics.totalItems}</p>
-              <p className="metric-change neutral">{inventory.length} unique products</p>
+          <Card className="analytics-card inventory">
+            <div className="card-content">
+              <div className="metric-info">
+                <h3>Total Items</h3>
+                <p className="metric-value">{analytics.totalItems}</p>
+                <p className="metric-change neutral">{inventory.length} unique products</p>
+              </div>
+              <div className="metric-icon">
+                <Package />
+              </div>
             </div>
-            <div className="metric-icon">
-              <Package />
-            </div>
-          </div>
-        </Card>
+          </Card>
 
         <Card className="analytics-card value">
           <div className="card-content">
@@ -309,6 +309,7 @@ export default function TenantOwnerInventoryPage() {
             </div>
           </div>
         </Card>
+        </div>
       </div>
 
       {/* Main Content Area */}
@@ -342,8 +343,8 @@ export default function TenantOwnerInventoryPage() {
           </div>
         </div>
 
-      {/* Inventory Table */}
-      <Card className="inventory-table-card">
+        {/* Inventory Table */}
+        <Card className="inventory-table-card">
         {filteredInventory.length === 0 ? (
           <EmptyStateComponent
             type="general"
