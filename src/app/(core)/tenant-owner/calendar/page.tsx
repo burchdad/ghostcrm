@@ -165,20 +165,20 @@ export default function TenantOwnerCalendarPage() {
 
   const loadEvents = async () => {
     try {
-      // TODO: Replace with actual API call to load calendar events
-      // This should fetch all meetings, appointments, tasks, and other scheduled events
-      // const response = await fetch(`/api/calendar/events?month=${currentMonth}&year=${currentYear}&tenantId=${user?.tenantId}`);
-      // const eventsData = await response.json();
-      // setEvents(eventsData);
-
-      // Note: Future integration should include:
-      // - Meeting events from calendar integrations (Google Calendar, Outlook, etc.)
-      // - Sales appointments and demo bookings
-      // - Task deadlines and follow-up reminders  
-      // - Team meetings and collaboration sessions
+      // Load calendar events from database
+      const response = await fetch(`/api/calendar/events?month=${currentMonth}&year=${currentYear}&tenantId=${user?.tenantId}`);
+      const result = await response.json();
       
-      // For now, using empty array until API integration is complete
-      setEvents([]);
+      if (result.success) {
+        setEvents(result.data.events || []);
+      } else {
+        console.error('Failed to load events:', result.error);
+        toast({
+          title: "Error",
+          description: result.error || "Failed to load calendar events.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Error loading events:", error);
       toast({
@@ -416,41 +416,76 @@ export default function TenantOwnerCalendarPage() {
     setIsSubmittingEvent(true);
 
     try {
+      // Convert date and time to proper format for API
       const eventDate = new Date(newEventData.date);
-      const newEvent: CalendarEvent = {
-        id: `event_${Date.now()}`,
+      const startTime = newEventData.isAllDay 
+        ? eventDate.toISOString().split('T')[0] + 'T00:00:00.000Z'
+        : `${newEventData.date}T${newEventData.time}:00.000Z`;
+      
+      const endTime = newEventData.endTime && !newEventData.isAllDay
+        ? `${newEventData.date}T${newEventData.endTime}:00.000Z`
+        : startTime;
+
+      const eventPayload = {
         title: newEventData.title,
         description: newEventData.description,
+        start_time: startTime,
+        end_time: endTime,
+        type: newEventData.type,
+        status: 'confirmed'
+      };
+
+      // Send to API
+      const response = await fetch('/api/calendar/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(eventPayload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to create event');
+      }
+
+      // Add the new event to local state with the API response
+      setEvents((prev) => [...prev, {
+        id: result.data.id,
+        title: result.data.title,
+        description: result.data.description,
         date: eventDate.getDate(),
         month: eventDate.getMonth(),
         year: eventDate.getFullYear(),
         time: newEventData.time,
         endTime: newEventData.endTime,
-        type: newEventData.type,
+        type: result.data.type,
         attendees: newEventData.attendees
           .split(",")
           .map((a) => a.trim())
           .filter((a) => a),
         location: newEventData.location,
         isAllDay: newEventData.isAllDay,
-        createdBy: user?.id || "",
-        tenantId: user?.tenantId || "",
-      };
-
-      // TODO: Replace with actual API call
-      // await fetch('/api/calendar/events', { ... });
-
-      // For now, add to local state
-      setEvents((prev) => [...prev, newEvent]);
+        createdBy: result.data.user_id || "",
+        tenantId: result.data.organization_id || "",
+      }]);
 
       // Send calendar invitations if attendees are specified
-      if (newEvent.attendees.length > 0) {
-        await sendCalendarInvitations(newEvent, newEvent.attendees);
+      if (newEventData.attendees && newEventData.attendees.trim()) {
+        const attendeesList = newEventData.attendees
+          .split(",")
+          .map((a) => a.trim())
+          .filter((a) => a);
+        
+        if (attendeesList.length > 0) {
+          await sendCalendarInvitations(result.data, attendeesList);
+        }
       }
 
       toast({
         title: "Event Created",
-        description: `Successfully created "${newEvent.title}".`,
+        description: `Successfully created "${result.data.title}".`,
       });
 
       setIsNewEventInlineOpen(false);
@@ -470,7 +505,7 @@ export default function TenantOwnerCalendarPage() {
       console.error("Error creating event:", error);
       toast({
         title: "Error",
-        description: "Failed to create event. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create event. Please try again.",
         variant: "destructive",
       });
     } finally {
