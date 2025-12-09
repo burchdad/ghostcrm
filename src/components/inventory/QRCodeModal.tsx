@@ -332,7 +332,7 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="qr-space-y-6">
           <Tabs defaultValue="features" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="features">Features</TabsTrigger>
