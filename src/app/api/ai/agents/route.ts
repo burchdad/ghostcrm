@@ -45,6 +45,9 @@ export async function GET(request: NextRequest) {
     const action = searchParams.get('action');
     const agentId = searchParams.get('agentId');
     const jobId = searchParams.get('jobId');
+    const category = searchParams.get('category');
+    const page = searchParams.get('page');
+    const status = searchParams.get('status');
 
     switch (action) {
       case 'status':
@@ -182,52 +185,51 @@ export async function GET(request: NextRequest) {
 
       default:
         // Default behavior for compatibility
-        const registry = getPageAgentRegistry();
-        let agents = registry.getAllAgents();
+        const pageRegistry = getPageAgentRegistry();
+        let agents = pageRegistry.getAllAgents();
 
-    // Apply filters
-    if (category) {
-      agents = agents.filter(agent => agent.category === category);
-    }
-    if (page) {
-      agents = agents.filter(agent => agent.page.includes(page));
-    }
-    if (status) {
-      agents = agents.filter(agent => agent.status === status);
-    }
-
-    // Get registry status
-    const registryStatus = await registry.getRegistryStatus();
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        agents: agents.map(agent => addAgentSecurityInfo({
-          id: agent.id,
-          name: agent.name,
-          description: agent.description,
-          page: agent.page,
-          category: agent.category,
-          status: agent.status,
-          lastActivity: agent.lastActivity,
-          config: agent.config,
-          metrics: agent.metrics,
-          health: agent.health,
-        })),
-        registry: {
-          ...registryStatus,
-          systemAgents: SYSTEM_AGENT_IDS.length,
-          protectionActive: true
-        },
-        securityInfo: {
-          systemAgentIds: SYSTEM_AGENT_IDS,
-          protectionLevel: 'tenant-restricted',
-          note: 'System agents are read-only for tenants'
+        // Apply filters
+        if (category) {
+          agents = agents.filter(agent => agent.category === category);
         }
-      }
-    });
+        if (page) {
+          agents = agents.filter(agent => agent.page.includes(page));
+        }
+        if (status) {
+          agents = agents.filter(agent => agent.status === status);
+        }
 
-  } catch (error: any) {
+        // Get registry status
+        const registryStatus = await pageRegistry.getRegistryStatus();
+
+        return NextResponse.json({
+          success: true,
+          data: {
+            agents: agents.map(agent => addAgentSecurityInfo({
+              id: agent.id,
+              name: agent.name,
+              description: agent.description,
+              page: agent.page,
+              category: agent.category,
+              status: agent.status,
+              lastActivity: agent.lastActivity,
+              config: agent.config,
+              metrics: agent.metrics,
+              health: agent.health,
+            })),
+            registry: {
+              ...registryStatus,
+              systemAgents: SYSTEM_AGENT_IDS.length,
+              protectionActive: true
+            },
+            securityInfo: {
+              systemAgentIds: SYSTEM_AGENT_IDS,
+              protectionLevel: 'tenant-restricted',
+              note: 'System agents are read-only for tenants'
+            }
+          }
+        });
+    }  } catch (error: any) {
     console.error('AI Agents API Error:', error);
     return NextResponse.json(
       { 
