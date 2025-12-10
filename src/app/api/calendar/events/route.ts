@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
         endTime: endDate ? endDate.toTimeString().slice(0, 5) : undefined,
         type: event.type || 'meeting',
         attendees: [], // TODO: Implement attendees relationship
-        location: null, // TODO: Add location field to schema
+        location: undefined, // TODO: Add location field to schema
         isAllDay: false, // TODO: Calculate from start/end times
         createdBy: event.user_id || '',
         tenantId: userOrg.organization_id
@@ -224,7 +224,7 @@ export async function POST(request: NextRequest) {
       endTime: endDate.toTimeString().slice(0, 5),
       type: newEvent.type || 'meeting',
       attendees: [],
-      location: null,
+      location: undefined,
       isAllDay: false,
       createdBy: newEvent.user_id || '',
       tenantId: userOrg.organization_id
@@ -316,7 +316,7 @@ export async function PUT(request: NextRequest) {
       endTime: endDate.toTimeString().slice(0, 5),
       type: updatedEvent.type || 'meeting',
       attendees: [],
-      location: null,
+      location: undefined,
       isAllDay: false,
       createdBy: updatedEvent.user_id || '',
       tenantId: userOrg.organization_id
