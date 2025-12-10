@@ -78,6 +78,44 @@ export async function POST(request: NextRequest, { params }: AgentParams) {
     const agent = agentInfo.instance;
 
     switch (operation) {
+      case 'get-insights':
+        // Get general page insights without specific entity analysis
+        let insights;
+        
+        switch (agentId) {
+          case 'leads':
+            insights = await (agent as any).generateLeadInsights();
+            break;
+            
+          case 'deals':
+            insights = await (agent as any).generateDealInsights();
+            break;
+            
+          case 'inventory':
+            insights = await (agent as any).generateInventoryInsights();
+            break;
+            
+          case 'calendar':
+            insights = await (agent as any).generateCalendarInsights?.() || { insights: [], message: 'Calendar insights not implemented yet' };
+            break;
+            
+          case 'collaboration':
+            insights = await (agent as any).generateCollaborationInsights?.() || { insights: [], message: 'Collaboration insights not implemented yet' };
+            break;
+            
+          case 'workflow':
+            insights = await (agent as any).generateWorkflowInsights?.() || { insights: [], message: 'Workflow insights not implemented yet' };
+            break;
+            
+          default:
+            insights = { insights: [], message: `Insights not available for ${agentId}` };
+        }
+        
+        return NextResponse.json({
+          success: true,
+          data: insights.insights || insights || []
+        });
+
       case 'analyze':
         // Agent-specific analysis operations
         let result;
@@ -161,40 +199,40 @@ export async function POST(request: NextRequest, { params }: AgentParams) {
 
       case 'get-insights':
         // Get stored insights for specific entities
-        let insights;
+        let storedInsights;
         
         switch (agentId) {
           case 'leads':
-            insights = operationData.leadId 
+            storedInsights = operationData.leadId 
               ? await (agent as any).getLeadRecommendations(operationData.leadId)
               : await (agent as any).generateLeadInsights();
             break;
             
           case 'deals':
-            insights = await (agent as any).generateDealInsights();
+            storedInsights = await (agent as any).generateDealInsights();
             break;
             
           case 'inventory':
-            insights = await (agent as any).generateInventoryInsights();
+            storedInsights = await (agent as any).generateInventoryInsights();
             break;
             
           case 'collaboration':
-            insights = operationData.teamId
+            storedInsights = operationData.teamId
               ? await (agent as any).generateTeamInsights(operationData.teamId)
               : await (agent as any).generateTeamInsights('default');
             break;
             
           case 'workflow':
-            insights = await (agent as any).generateWorkflowInsights();
+            storedInsights = await (agent as any).generateWorkflowInsights();
             break;
             
           default:
-            insights = [];
+            storedInsights = [];
         }
 
         return NextResponse.json({
           success: true,
-          data: insights,
+          data: storedInsights,
           operation: 'get-insights',
           agentId
         });

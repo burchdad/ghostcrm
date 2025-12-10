@@ -159,6 +159,64 @@
   margin-top: 1.5rem;
 }
 
+/* New Top Section Layout with 2x2 Grid and AI Assistant */
+.tenant-owner-leads-top-section {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  margin-top: 1.5rem;
+}
+
+.tenant-owner-leads-metrics-container {
+  flex: 1;
+  min-width: 0;
+}
+
+.tenant-owner-leads-analytics-grid-2x2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.tenant-owner-leads-ai-container {
+  flex: 0 0 400px;
+  position: sticky;
+  top: 1.5rem;
+}
+
+.tenant-owner-leads-ai-assistant {
+  width: 100%;
+  max-width: none;
+}
+
+@media (max-width: 1200px) {
+  .tenant-owner-leads-top-section {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .tenant-owner-leads-ai-container {
+    flex: none;
+    position: static;
+  }
+  
+  .tenant-owner-leads-analytics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .tenant-owner-leads-analytics-grid-2x2 {
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1rem;
+  }
+  
+  .tenant-owner-leads-ai-container {
+    flex: none;
+  }
+}
+
 @media (max-width: 1200px) {
   .tenant-owner-leads-analytics-grid {
     grid-template-columns: repeat(2, 1fr);

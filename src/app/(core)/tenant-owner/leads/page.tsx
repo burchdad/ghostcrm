@@ -459,64 +459,78 @@ export default function TenantOwnerLeads() {
 
   return (
     <div className="tenant-owner-leads-page">
-      {/* Analytics Cards Grid */}
+      {/* Analytics Cards Grid with AI Assistant */}
       <div className="tenant-owner-leads-header">
         <div className="tenant-owner-leads-header-content">
-          <div className="tenant-owner-leads-analytics-grid">
-            <div className="tenant-owner-leads-analytics-card total">
-              <div className="tenant-owner-leads-card-header">
-                <span className="tenant-owner-leads-card-label">Total Leads</span>
-                <div className="tenant-owner-leads-card-icon total">
-                  <Users />
+          <div className="tenant-owner-leads-top-section">
+            {/* Metrics in 2x2 Grid */}
+            <div className="tenant-owner-leads-metrics-container">
+              <div className="tenant-owner-leads-analytics-grid-2x2">
+                <div className="tenant-owner-leads-analytics-card total">
+                  <div className="tenant-owner-leads-card-header">
+                    <span className="tenant-owner-leads-card-label">TOTAL LEADS</span>
+                    <div className="tenant-owner-leads-card-icon total">
+                      <Users />
+                    </div>
+                  </div>
+                  <div className="tenant-owner-leads-card-value">{analytics.totalLeads}</div>
+                  <div className="tenant-owner-leads-card-trend">
+                    <TrendingUp />
+                    {analytics.totalLeads > 0 ? 'Getting started' : 'Getting started'}
+                  </div>
                 </div>
-              </div>
-              <div className="tenant-owner-leads-card-value">{analytics.totalLeads}</div>
-              <div className="tenant-owner-leads-card-trend">
-                <TrendingUp />
-                {analytics.totalLeads > 0 ? 'Active pipeline' : 'Getting started'}
+
+                <div className="tenant-owner-leads-analytics-card conversion">
+                  <div className="tenant-owner-leads-card-header">
+                    <span className="tenant-owner-leads-card-label">CONVERSION RATE</span>
+                    <div className="tenant-owner-leads-card-icon conversion">
+                      <TrendingUp />
+                    </div>
+                  </div>
+                  <div className="tenant-owner-leads-card-value">{analytics.conversionRate}%</div>
+                  <div className="tenant-owner-leads-card-trend">
+                    <TrendingUp />
+                    {parseFloat(analytics.conversionRate) > 20 ? 'Room for growth' : 'Room for growth'}
+                  </div>
+                </div>
+
+                <div className="tenant-owner-leads-analytics-card new-today">
+                  <div className="tenant-owner-leads-card-header">
+                    <span className="tenant-owner-leads-card-label">NEW TODAY</span>
+                    <div className="tenant-owner-leads-card-icon new-today">
+                      <Plus />
+                    </div>
+                  </div>
+                  <div className="tenant-owner-leads-card-value">{analytics.newToday}</div>
+                  <div className="tenant-owner-leads-card-trend">
+                    <TrendingUp />
+                    {analytics.hotLeadsToday > 0 ? 'No hot leads yet' : 'No hot leads yet'}
+                  </div>
+                </div>
+
+                <div className="tenant-owner-leads-analytics-card follow-ups">
+                  <div className="tenant-owner-leads-card-header">
+                    <span className="tenant-owner-leads-card-label">FOLLOW-UPS DUE</span>
+                    <div className="tenant-owner-leads-card-icon follow-ups">
+                      <Phone />
+                    </div>
+                  </div>
+                  <div className="tenant-owner-leads-card-value">{analytics.followUpsDue}</div>
+                  <div className="tenant-owner-leads-card-trend">
+                    <TrendingUp />
+                    {analytics.followUpsDue > 0 ? 'All caught up' : 'All caught up'}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="tenant-owner-leads-analytics-card conversion">
-              <div className="tenant-owner-leads-card-header">
-                <span className="tenant-owner-leads-card-label">Conversion Rate</span>
-                <div className="tenant-owner-leads-card-icon conversion">
-                  <TrendingUp />
-                </div>
-              </div>
-              <div className="tenant-owner-leads-card-value">{analytics.conversionRate}%</div>
-              <div className="tenant-owner-leads-card-trend">
-                <TrendingUp />
-                {parseFloat(analytics.conversionRate) > 20 ? 'Above average' : 'Room for growth'}
-              </div>
-            </div>
-
-            <div className="tenant-owner-leads-analytics-card new-today">
-              <div className="tenant-owner-leads-card-header">
-                <span className="tenant-owner-leads-card-label">New Today</span>
-                <div className="tenant-owner-leads-card-icon new-today">
-                  <Plus />
-                </div>
-              </div>
-              <div className="tenant-owner-leads-card-value">{analytics.newToday}</div>
-              <div className="tenant-owner-leads-card-trend">
-                <TrendingUp />
-                {analytics.hotLeadsToday > 0 ? `${analytics.hotLeadsToday} hot leads` : 'No hot leads yet'}
-              </div>
-            </div>
-
-            <div className="tenant-owner-leads-analytics-card follow-ups">
-              <div className="tenant-owner-leads-card-header">
-                <span className="tenant-owner-leads-card-label">Follow-ups Due</span>
-                <div className="tenant-owner-leads-card-icon follow-ups">
-                  <Phone />
-                </div>
-              </div>
-              <div className="tenant-owner-leads-card-value">{analytics.followUpsDue}</div>
-              <div className="tenant-owner-leads-card-trend">
-                <TrendingUp />
-                {analytics.followUpsDue > 0 ? 'Needs attention' : 'All caught up'}
-              </div>
+            {/* AI Assistant aligned to the right */}
+            <div className="tenant-owner-leads-ai-container">
+              <PageAIAssistant 
+                agentId="leads" 
+                pageTitle="Lead Management"
+                className="tenant-owner-leads-ai-assistant"
+              />
             </div>
           </div>
         </div>
@@ -525,14 +539,6 @@ export default function TenantOwnerLeads() {
       {/* Scrollable Content Container */}
       <div className="tenant-owner-leads-content-wrapper">
         <div className="tenant-owner-leads-content">
-          {/* AI Assistant - positioned at the top of the content */}
-          <div className="mb-6">
-            <PageAIAssistant 
-              agentId="leads" 
-              pageTitle="Lead Management"
-              className="max-w-md ml-auto"
-            />
-          </div>
 
         {/* Enhanced Search and Controls */}
         <div className="tenant-owner-leads-controls">
