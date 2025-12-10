@@ -51,17 +51,16 @@ export async function GET(request: NextRequest) {
         throw error;
       }
 
-      if (error || !activities) {
-        // Return mock data if table doesn't exist
-        const mockActivity = getMockActivity();
-        return NextResponse.json({ activity: mockActivity });
+      if (error) {
+        console.error('Error fetching automation activity:', error);
+        return NextResponse.json({ error: 'Failed to fetch automation activity' }, { status: 500 });
       }
 
       // Format activities for frontend
-      const formattedActivities = activities.map(activity => ({
+      const formattedActivities = (activities || []).map(activity => ({
         id: activity.id,
         type: 'workflow',
-        name: activity.workflow_name,
+        name: activity.workflow_name || (activity as any).automation_workflows?.name || 'Unknown Workflow',
         action: activity.action_type,
         timestamp: formatTimestamp(activity.created_at),
         status: activity.status
@@ -70,9 +69,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ activity: formattedActivities });
 
     } catch (dbError) {
-      console.log('Database query failed, using mock data:', dbError);
-      const mockActivity = getMockActivity();
-      return NextResponse.json({ activity: mockActivity });
+      console.error('Database query failed:', dbError);
+      return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
 
   } catch (error) {
@@ -95,47 +93,3 @@ function formatTimestamp(timestamp: string): string {
   return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
 }
 
-function getMockActivity() {
-  return [
-    {
-      id: '1',
-      type: 'workflow',
-      name: 'New Lead Welcome Sequence',
-      action: 'Executed',
-      timestamp: '2 minutes ago',
-      status: 'success'
-    },
-    {
-      id: '2',
-      type: 'trigger',
-      name: 'Email Open Trigger',
-      action: 'Activated',
-      timestamp: '5 minutes ago',
-      status: 'success'
-    },
-    {
-      id: '3',
-      type: 'workflow',
-      name: 'Task Auto Assignment',
-      action: 'Executed',
-      timestamp: '5 minutes ago',
-      status: 'success'
-    },
-    {
-      id: '4',
-      type: 'workflow',
-      name: 'Lead Scoring Automation',
-      action: 'Executed',
-      timestamp: '15 minutes ago',
-      status: 'success'
-    },
-    {
-      id: '5',
-      type: 'trigger',
-      name: 'Appointment Reminder',
-      action: 'Scheduled',
-      timestamp: '1 hour ago',
-      status: 'pending'
-    }
-  ];
-}
