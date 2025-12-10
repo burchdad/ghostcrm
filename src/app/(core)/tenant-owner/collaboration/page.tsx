@@ -786,7 +786,7 @@ export default function TenantOwnerCollaborationPage() {
         <div className="header-content">
           <div className="title-section">
             <h1 className="page-title">
-              💬 {user?.tenantId} - Team Collaboration
+              💬 Team Collaboration
             </h1>
             <p className="page-subtitle">Owner Dashboard - Communication & Teamwork</p>
           </div>
