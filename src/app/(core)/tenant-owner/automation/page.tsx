@@ -24,6 +24,7 @@ import {
   Edit,
   Loader
 } from "lucide-react";
+import PageAIAssistant from "@/components/ai/PageAIAssistant";
 import './automation.css';
 
 interface WorkflowCard {
@@ -282,6 +283,18 @@ export default function TenantOwnerAutomationPage() {
 
   return (
     <div className="automation-page">
+      {/* AI Assistant */}
+      <PageAIAssistant 
+        agentId="workflow"
+        pageTitle="Automation & Workflows"
+        entityData={{
+          totalWorkflows: workflows.length,
+          activeWorkflows: workflows.filter(w => w.status === 'active').length,
+          avgExecutionTime: 2.3, // Calculate from workflows data
+          successRate: 0.94 // Calculate from workflows data
+        }}
+        className="mb-6"
+      />
 
       <div className="automation-container">
         {/* Header with Quick Actions Dropdown */}

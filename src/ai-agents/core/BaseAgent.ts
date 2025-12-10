@@ -182,6 +182,13 @@ export abstract class BaseAgent implements AgentInterface {
   }
 
   /**
+   * Get agent ID
+   */
+  getId(): string {
+    return this.id;
+  }
+
+  /**
    * Get health information
    */
   async getHealth(): Promise<AgentHealth> {

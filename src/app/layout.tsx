@@ -7,6 +7,7 @@ import { RouteGuard } from "@/middleware/PermissionMiddleware";
 import { I18nProvider } from "@/components/utils/I18nProvider";
 import GlobalAIAssistant from "@/components/global/GlobalAIAssistant";
 import QuickAddButton from "@/components/navigation/QuickAddButton";
+import AIAgentInitializer from "@/components/ai/AIAgentInitializer";
 import { Toaster } from "@/components/ui/toaster";
 import "../styles/globals.css";  // <— REQUIRED
 import "../styles/modal.css";    // <— Modal styles
@@ -32,6 +33,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <RibbonProvider>
                       <RouteGuard>
                         <CollapseLayout>{children}</CollapseLayout>
+                        {/* AI Agent System Initializer */}
+                        <AIAgentInitializer />
                         {/* Global AI Assistant - available on all pages */}
                         <GlobalAIAssistant />
                         {/* Quick Add Button - available on all pages */}

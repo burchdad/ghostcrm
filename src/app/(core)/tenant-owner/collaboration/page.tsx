@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/components/utils/I18nProvider";
 import { useToast } from "@/hooks/use-toast";
+import PageAIAssistant from "@/components/ai/PageAIAssistant";
 import "./page.css";
 
 interface TeamMember {
@@ -782,6 +783,20 @@ export default function TenantOwnerCollaborationPage() {
 
   return (
     <div className="collaboration-container">
+      {/* AI Assistant */}
+      <PageAIAssistant 
+        agentId="collaboration"
+        pageTitle="Team Collaboration"
+        entityData={{
+          totalMessages: messages.length,
+          activeTeamMembers: teamMembers.filter(m => m.status === 'online').length,
+          totalTeamMembers: teamMembers.length,
+          totalChannels: channels.length,
+          recentCalls: teamMembers.filter(m => m.status === 'online').length // Use online members as proxy for recent calls
+        }}
+        className="mb-6"
+      />
+
       <div className="page-header">
         <div className="header-content">
           <div className="title-section">

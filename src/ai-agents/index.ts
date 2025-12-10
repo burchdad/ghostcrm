@@ -59,6 +59,23 @@ export { TenantManagementAgent } from './agents/TenantManagementAgent';
 // Code intelligence and development agents
 export { CodeIntelligenceAgent } from './agents/CodeIntelligenceAgent';
 
+// Page-specific AI agents
+export { LeadsAgent } from './pages/LeadsAgent';
+export { DealsAgent } from './pages/DealsAgent';
+export { InventoryAgent } from './pages/InventoryAgent';
+export { CalendarAgent } from './pages/CalendarAgent';
+export { CollaborationAgent } from './pages/CollaborationAgent';
+export { WorkflowAgent } from './pages/WorkflowAgent';
+
+// Page agent registry
+export { 
+  PageAgentRegistry,
+  getPageAgentRegistry,
+  initializePageAgentRegistry,
+  type PageAgentInfo,
+  type AgentRegistryConfig,
+} from './registry/PageAgentRegistry';
+
 // Utility functions exports
 export {
   initializeAgentSystem,

@@ -13,6 +13,7 @@ import EmptyStateComponent from "@/components/feedback/EmptyStateComponent";
 import { useI18n } from "@/components/utils/I18nProvider";
 import { useToast } from "@/hooks/use-toast";
 import QRCodeModal from "@/components/inventory/QRCodeModal";
+import PageAIAssistant from "@/components/ai/PageAIAssistant";
 import "./page.css";
 
 export default function TenantOwnerInventoryPage() {
@@ -311,6 +312,19 @@ export default function TenantOwnerInventoryPage() {
         </Card>
         </div>
       </div>
+
+      {/* AI Assistant */}
+      <PageAIAssistant 
+        agentId="inventory"
+        pageTitle="Inventory Management"
+        entityData={{
+          totalVehicles: inventory.length,
+          totalValue: inventory.reduce((sum, v) => sum + (v.price || 0), 0),
+          avgDaysOnLot: Math.round(inventory.reduce((sum, v) => sum + (v.daysOnLot || 0), 0) / Math.max(inventory.length, 1)),
+          slowMovers: inventory.filter(v => (v.daysOnLot || 0) > 60).length
+        }}
+        className="mb-6"
+      />
 
       {/* Main Content Area */}
       <div className="inventory-content">

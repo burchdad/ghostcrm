@@ -21,6 +21,7 @@ import { AICallScriptModal } from "@/components/modals/AICallScriptModal";
 import { AISMSModal } from "@/components/modals/AISMSModal";
 import { AIEmailModal } from "@/components/modals/AIEmailModal";
 import NewLeadModal from "@/components/modals/NewLeadModal";
+import PageAIAssistant from "@/components/ai/PageAIAssistant";
 import "./page.css";
 
 export default function TenantOwnerLeads() {
@@ -524,6 +525,15 @@ export default function TenantOwnerLeads() {
       {/* Scrollable Content Container */}
       <div className="tenant-owner-leads-content-wrapper">
         <div className="tenant-owner-leads-content">
+          {/* AI Assistant - positioned at the top of the content */}
+          <div className="mb-6">
+            <PageAIAssistant 
+              agentId="leads" 
+              pageTitle="Lead Management"
+              className="max-w-md ml-auto"
+            />
+          </div>
+
         {/* Enhanced Search and Controls */}
         <div className="tenant-owner-leads-controls">
           <div className="tenant-owner-leads-search-row">

@@ -12,6 +12,7 @@ import { Search, Plus, Eye, Edit, Trash2, TrendingUp, DollarSign, Target, BarCha
 import EmptyStateComponent from "@/components/feedback/EmptyStateComponent";
 import { useI18n } from "@/components/utils/I18nProvider";
 import { useToast } from "@/hooks/use-toast";
+import PageAIAssistant from "@/components/ai/PageAIAssistant";
 import "./page.css";
 
 export default function TenantOwnerDealsPage() {
@@ -250,6 +251,19 @@ export default function TenantOwnerDealsPage() {
           </Card>
         </div>
       </div>
+
+      {/* AI Assistant */}
+      <PageAIAssistant 
+        agentId="deals"
+        pageTitle="Deals Management"
+        entityData={{
+          totalDeals: deals.length,
+          totalValue: analytics.totalValue,
+          winRate: analytics.winRate,
+          averageDealSize: analytics.avgDealSize
+        }}
+        className="mb-6"
+      />
 
       {/* Main Content Area */}
       <div className="deals-content">

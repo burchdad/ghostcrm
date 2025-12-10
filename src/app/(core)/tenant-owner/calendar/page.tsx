@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import PageAIAssistant from "@/components/ai/PageAIAssistant";
 import "./page.css";
 
 interface CalendarEvent {
@@ -668,6 +669,24 @@ export default function TenantOwnerCalendarPage() {
 
   return (
     <div className="tenant-owner-calendar-container">
+      {/* AI Assistant */}
+      <PageAIAssistant 
+        agentId="calendar"
+        pageTitle="Calendar Management"
+        entityData={{
+          totalEvents: events.length,
+          todayEvents: events.filter(event => {
+            const today = new Date();
+            return event.date === today.getDate() && 
+                   event.month === today.getMonth() && 
+                   event.year === today.getFullYear();
+          }).length,
+          currentMonth: `${currentMonth + 1}/${currentYear}`,
+          eventTypes: Array.from(new Set(events.map(e => e.type)))
+        }}
+        className="mb-6"
+      />
+
       {/* Quick Stats */}
       <div className="calendar-stats">
         <Card className="stat-card">
