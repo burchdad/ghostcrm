@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Save, User, Building, Mail, Phone, MapPin, DollarSign, Calendar, Star } from "lucide-react";
+import { X, Save, User, Building, Mail, Phone, MapPin, DollarSign, Calendar, Star, Tag, Plus } from "lucide-react";
 
 interface LeadDetailModalProps {
   isOpen: boolean;
@@ -62,6 +62,8 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [leadData, setLeadData] = useState<LeadData | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [newTag, setNewTag] = useState("");
 
   useEffect(() => {
     if (isOpen && leadId) {
@@ -104,6 +106,7 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
       };
       
       setLeadData(mergedData);
+      setIsDirty(false);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -115,7 +118,25 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
     }
   };
 
-  const handleSave = async () => {
+  const updateField = (field: keyof LeadData, value: any) => {
+    setLeadData(prev => prev ? { ...prev, [field]: value } : null);
+    setIsDirty(true);
+  };
+
+  const handleAddTag = () => {
+    if (newTag.trim() && leadData && !leadData.tags?.includes(newTag.trim())) {
+      const updatedTags = [...(leadData.tags || []), newTag.trim()];
+      updateField('tags', updatedTags);
+      setNewTag("");
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    if (leadData) {
+      const updatedTags = (leadData.tags || []).filter(tag => tag !== tagToRemove);
+      updateField('tags', updatedTags);
+    }
+  };
     if (!leadData) return;
     
     console.log('Saving lead data:', leadData);
@@ -143,6 +164,7 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
         description: "Lead updated successfully",
       });
       
+      setIsDirty(false);
       onLeadUpdated?.();
       onClose();
     } catch (error: any) {
@@ -155,10 +177,6 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
     } finally {
       setSaving(false);
     }
-  };
-
-  const updateField = (field: keyof LeadData, value: any) => {
-    setLeadData(prev => prev ? { ...prev, [field]: value } : null);
   };
 
   if (loading) {
@@ -431,6 +449,53 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
               />
             </div>
           </div>
+          
+          {/* Tags Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-lg font-semibold border-b pb-2">
+              <Tag className="h-5 w-5" />
+              Tags
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  placeholder="Add a tag..."
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                />
+                <Button type="button" onClick={handleAddTag} size="sm" variant="outline">
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              {leadData.tags && leadData.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {leadData.tags.map((tag: string, index: number) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full border"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tag)}
+                        className="hover:text-blue-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         
         {/* Footer */}
@@ -445,9 +510,13 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
               <X className="h-4 w-4 mr-1" />
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button 
+              onClick={handleSave} 
+              disabled={saving}
+              variant={isDirty ? "default" : "outline"}
+            >
               <Save className="h-4 w-4 mr-1" />
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'Saving...' : isDirty ? 'Save Changes' : 'No Changes'}
             </Button>
           </div>
         </div>
