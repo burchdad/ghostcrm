@@ -94,9 +94,12 @@ export class CodeIntelligenceAgent extends BaseAgent {
       '1.0.0'
     );
     
-    this.openai = new OpenAI({ 
-      apiKey: process.env.OPENAI_API_KEY 
-    });
+    // Only initialize OpenAI if API key is available (server-side)
+    if (typeof window === 'undefined' && process.env.OPENAI_API_KEY) {
+      this.openai = new OpenAI({ 
+        apiKey: process.env.OPENAI_API_KEY 
+      });
+    }
     this.projectRoot = projectRoot;
   }
 

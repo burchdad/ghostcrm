@@ -47,9 +47,13 @@ export class SecurityComplianceAgent extends BaseAgent {
   ) {
     super(id, name, description, version, config);
     this.securityConfig = config;
-    this.openai = new OpenAI({ 
-      apiKey: process.env.OPENAI_API_KEY 
-    });
+    
+    // Only initialize OpenAI if API key is available (server-side)
+    if (typeof window === 'undefined' && process.env.OPENAI_API_KEY) {
+      this.openai = new OpenAI({ 
+        apiKey: process.env.OPENAI_API_KEY 
+      });
+    }
   }
 
   async onInitialize(): Promise<void> {
@@ -212,6 +216,11 @@ export class SecurityComplianceAgent extends BaseAgent {
   }
 
   private async analyzeLoginEvent(loginEvent: any): Promise<void> {
+    if (!this.openai) {
+      console.warn('🛡️ [SECURITY_AGENT] OpenAI not available for login event analysis');
+      return;
+    }
+
     const analysis = await this.openai.chat.completions.create({
       model: "gpt-4",
       messages: [
@@ -269,6 +278,11 @@ export class SecurityComplianceAgent extends BaseAgent {
 
       if (error) throw error;
 
+      if (!this.openai) {
+        console.warn('🛡️ [SECURITY_AGENT] OpenAI not available for audit log analysis');
+        return;
+      }
+
       const analysis = await this.openai.chat.completions.create({
         model: "gpt-4",
         messages: [
@@ -325,6 +339,18 @@ export class SecurityComplianceAgent extends BaseAgent {
 
       if (error && error.code !== 'PGRST116') throw error;
 
+      if (!this.openai) {
+        console.warn('🛡️ [SECURITY_AGENT] OpenAI not available for compliance check');
+        return {
+          gdpr: 'warning',
+          ccpa: 'warning', 
+          soc2: 'warning',
+          lastChecked: new Date().toISOString(),
+          issues: ['AI-powered compliance analysis unavailable'],
+          recommendations: ['Configure OpenAI integration for advanced compliance monitoring']
+        };
+      }
+
       const compliance = await this.openai.chat.completions.create({
         model: "gpt-4",
         messages: [
@@ -373,6 +399,17 @@ export class SecurityComplianceAgent extends BaseAgent {
     const userEvents = userId ? 
       recentEvents.filter(event => event.userId === userId) : 
       recentEvents;
+
+    if (!this.openai) {
+      console.warn('🛡️ [SECURITY_AGENT] OpenAI not available for threat analysis');
+      return {
+        riskScore: 3,
+        threatLevel: 'medium',
+        patterns: ['Basic pattern analysis unavailable'],
+        recommendations: ['Configure OpenAI integration for advanced threat analysis'],
+        immediateActions: []
+      };
+    }
 
     const analysis = await this.openai.chat.completions.create({
       model: "gpt-4",
@@ -458,6 +495,15 @@ export class SecurityComplianceAgent extends BaseAgent {
 
   private async generateSecurityReport(timeRange: string): Promise<any> {
     const events = this.getEventsInTimeRange(timeRange);
+    
+    if (!this.openai) {
+      console.warn('🛡️ [SECURITY_AGENT] OpenAI not available for security report generation');
+      return {
+        summary: 'Basic security report (AI analysis unavailable)',
+        events: events.length,
+        recommendations: ['Configure OpenAI integration for detailed security reports']
+      };
+    }
     
     const report = await this.openai.chat.completions.create({
       model: "gpt-4",
@@ -587,6 +633,15 @@ export class SecurityComplianceAgent extends BaseAgent {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
+
+    if (!this.openai) {
+      console.warn('🛡️ [SECURITY_AGENT] OpenAI not available for audit log analysis');
+      return {
+        summary: 'Basic audit log summary (AI analysis unavailable)',
+        totalEvents: auditLogs?.length || 0,
+        recommendations: ['Configure OpenAI integration for detailed audit analysis']
+      };
+    }
 
     const analysis = await this.openai.chat.completions.create({
       model: "gpt-4",

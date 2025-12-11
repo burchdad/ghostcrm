@@ -52,9 +52,13 @@ export class IntegrationHealthAgent extends BaseAgent {
       'Monitors integration health, webhook deliveries, API sync status, and provides automated troubleshooting',
       '1.0.0'
     );
-    this.openai = new OpenAI({ 
-      apiKey: process.env.OPENAI_API_KEY 
-    });
+    
+    // Only initialize OpenAI if API key is available (server-side)
+    if (typeof window === 'undefined' && process.env.OPENAI_API_KEY) {
+      this.openai = new OpenAI({ 
+        apiKey: process.env.OPENAI_API_KEY 
+      });
+    }
   }
 
   // Abstract method implementations required by BaseAgent
@@ -375,6 +379,11 @@ export class IntegrationHealthAgent extends BaseAgent {
     );
 
     if (recentIssues.length > 5) {
+      if (!this.openai) {
+        console.warn('🔗 [INTEGRATION_AGENT] OpenAI not available for analysis');
+        return;
+      }
+
       const analysis = await this.openai.chat.completions.create({
         model: "gpt-4",
         messages: [

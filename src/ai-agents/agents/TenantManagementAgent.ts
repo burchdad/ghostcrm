@@ -69,9 +69,12 @@ export class TenantManagementAgent extends BaseAgent {
       '1.0.0'
     );
     
-    this.openai = new OpenAI({ 
-      apiKey: process.env.OPENAI_API_KEY 
-    });
+    // Only initialize OpenAI if API key is available (server-side)
+    if (typeof window === 'undefined' && process.env.OPENAI_API_KEY) {
+      this.openai = new OpenAI({ 
+        apiKey: process.env.OPENAI_API_KEY 
+      });
+    }
   }
 
   // Abstract method implementations required by BaseAgent
@@ -546,6 +549,16 @@ export class TenantManagementAgent extends BaseAgent {
   }
 
   private async detailedTenantHealthCheck(metrics: TenantMetrics, performance?: TenantPerformance): Promise<any> {
+    // Return mock data if OpenAI is not available (client-side)
+    if (!this.openai) {
+      return {
+        overallHealth: 7,
+        issues: ['Limited health check available'],
+        recommendations: ['Configure OpenAI API key for detailed analysis'],
+        resourceOptimization: { status: 'limited' }
+      };
+    }
+
     const healthCheck = await this.openai.chat.completions.create({
       model: "gpt-4",
       messages: [
@@ -604,6 +617,17 @@ export class TenantManagementAgent extends BaseAgent {
   }
 
   private async analyzeSpecificResource(metrics: TenantMetrics, resourceType: string): Promise<any> {
+    // Return mock data if OpenAI is not available (client-side)
+    if (!this.openai) {
+      return {
+        currentUsage: 'unknown',
+        trend: 'stable',
+        efficiency: 'moderate',
+        recommendations: ['Configure OpenAI API key for detailed analysis'],
+        costOptimization: { status: 'limited' }
+      };
+    }
+
     const analysis = await this.openai.chat.completions.create({
       model: "gpt-4",
       messages: [

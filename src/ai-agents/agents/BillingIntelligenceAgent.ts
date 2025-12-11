@@ -66,9 +66,13 @@ export class BillingIntelligenceAgent extends BaseAgent {
       'Monitors billing metrics, predicts churn, detects payment anomalies, and optimizes revenue operations', // description
       '1.0.0' // version
     );
-    this.openai = new OpenAI({ 
-      apiKey: process.env.OPENAI_API_KEY 
-    });
+    
+    // Only initialize OpenAI if API key is available (server-side)
+    if (typeof window === 'undefined' && process.env.OPENAI_API_KEY) {
+      this.openai = new OpenAI({ 
+        apiKey: process.env.OPENAI_API_KEY 
+      });
+    }
   }
 
   // Implement abstract methods from BaseAgent
