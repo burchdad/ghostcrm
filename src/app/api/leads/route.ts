@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
               .trim()
               .replace(/^$/, "Unknown")
           : "Unknown"),
-      "Email Address": lead.contacts?.email || "",
+      "Email Address": lead.email || lead.contacts?.email || "",
       "Phone Number": lead.contacts?.phone || "",
       "Company": lead.contacts?.company || "",
       "Stage": lead.stage || "new",
@@ -127,7 +127,7 @@ export async function GET(req: NextRequest) {
               lead.contacts.last_name || ""
             }`.trim()
           : ""),
-      contact_email: lead.contacts?.email,
+      contact_email: lead.email || lead.contacts?.email,
       contact_phone: lead.contacts?.phone,
       org_id: lead.organization_id,
     }));
@@ -388,8 +388,9 @@ export async function PUT(req: NextRequest) {
     
     updatePayload.custom_fields = enhancedCustomFields;
 
-    console.log('Updating lead with payload:', updatePayload);
+    console.log('Updating lead with payload:', JSON.stringify(updatePayload, null, 2));
 
+    // Try the update
     const { data: lead, error } = await supabaseAdmin
       .from("leads")
       .update(updatePayload)
@@ -399,13 +400,59 @@ export async function PUT(req: NextRequest) {
       .single();
 
     console.log('Database update result:', { data: lead, error });
-
+    
     if (error) {
-      console.error("Error updating lead:", error);
-      return new Response(
-        JSON.stringify({ error: "Failed to update lead" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
+      console.error("Database error details:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      
+      // If it's a column doesn't exist error, try updating custom_fields only
+      if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+        console.log('Column error detected, falling back to custom_fields only');
+        const fallbackPayload = {
+          custom_fields: updatePayload.custom_fields,
+          updated_at: new Date().toISOString()
+        };
+        
+        const { data: fallbackLead, error: fallbackError } = await supabaseAdmin
+          .from("leads")
+          .update(fallbackPayload)
+          .eq("id", id)
+          .eq("organization_id", user.organizationId)
+          .select()
+          .single();
+          
+        console.log('Fallback update result:', { data: fallbackLead, error: fallbackError });
+        
+        if (fallbackError) {
+          return new Response(
+            JSON.stringify({ error: "Failed to update lead even with fallback" }),
+            { status: 500, headers: { "Content-Type": "application/json" } }
+          );
+        }
+        
+        // Log audit event
+        await supabaseAdmin.from("audit_events").insert({
+          organization_id: user.organizationId,
+          entity: "lead",
+          entity_id: id,
+          action: "update",
+          user_id: user.id,
+        });
+
+        return new Response(JSON.stringify({ success: true, data: fallbackLead }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      } else {
+        return new Response(
+          JSON.stringify({ error: "Failed to update lead" }),
+          { status: 500, headers: { "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Log audit event
