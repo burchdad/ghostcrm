@@ -65,10 +65,16 @@ export async function POST(request: NextRequest, { params }: AgentParams) {
     const body = await request.json();
     const { operation, data: operationData } = body;
 
+    console.log(`🔍 [AI-AGENT-API] POST request for agentId: ${agentId}, operation: ${operation}`);
+
     const registry = getPageAgentRegistry();
+    console.log(`🔍 [AI-AGENT-API] Registry available agents:`, registry.getRegisteredAgents());
+    
     const agentInfo = registry.getAgent(agentId);
+    console.log(`🔍 [AI-AGENT-API] Agent info for ${agentId}:`, agentInfo ? 'Found' : 'Not Found');
 
     if (!agentInfo) {
+      console.error(`❌ [AI-AGENT-API] Agent ${agentId} not found in registry`);
       return NextResponse.json(
         { success: false, error: `Agent ${agentId} not found` },
         { status: 404 }

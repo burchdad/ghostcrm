@@ -252,6 +252,10 @@ export class PageAgentRegistry {
     return Array.from(this.agents.values()).filter(agent => agent.status === 'active');
   }
 
+  getRegisteredAgents(): string[] {
+    return Array.from(this.agents.keys());
+  }
+
   async updateAgentConfig(agentId: string, newConfig: Partial<AgentConfig>): Promise<void> {
     const agentInfo = this.agents.get(agentId);
     if (!agentInfo) {
