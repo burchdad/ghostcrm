@@ -1,8 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabaseAdmin } from '../supabaseAdmin';
 
 export interface AgentDataConnector {
   getLeadsData(): Promise<any>;
@@ -17,7 +13,7 @@ export class SupabaseAgentDataConnector implements AgentDataConnector {
   
   async getLeadsData() {
     try {
-      const { data: leads, error } = await supabase
+      const { data: leads, error } = await supabaseAdmin
         .from('leads')
         .select(`
           id,
@@ -83,7 +79,7 @@ export class SupabaseAgentDataConnector implements AgentDataConnector {
 
   async getDealsData() {
     try {
-      const { data: deals, error } = await supabase
+      const { data: deals, error } = await supabaseAdmin
         .from('deals')
         .select(`
           id,
@@ -155,7 +151,7 @@ export class SupabaseAgentDataConnector implements AgentDataConnector {
 
   async getInventoryData() {
     try {
-      const { data: inventory, error } = await supabase
+      const { data: inventory, error } = await supabaseAdmin
         .from('inventory')
         .select(`
           id,
@@ -219,7 +215,7 @@ export class SupabaseAgentDataConnector implements AgentDataConnector {
 
   async getCalendarData() {
     try {
-      const { data: appointments, error } = await supabase
+      const { data: appointments, error } = await supabaseAdmin
         .from('appointments')
         .select(`
           id,
@@ -351,7 +347,7 @@ export class SupabaseAgentDataConnector implements AgentDataConnector {
 
   async getWorkflowData() {
     try {
-      const { data: workflows, error } = await supabase
+      const { data: workflows, error } = await supabaseAdmin
         .from('workflows')
         .select(`
           id,
