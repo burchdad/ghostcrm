@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Bot, Lightbulb, TrendingUp, AlertCircle, RefreshCw, X } from 'lucide-react';
 import { authenticatedFetch } from '@/lib/auth/client';
 
@@ -248,3 +248,6 @@ export default function PageAIAssistant({
     </div>
   );
 }
+
+// Export with memo to prevent unnecessary re-renders
+export default memo(PageAIAssistant);

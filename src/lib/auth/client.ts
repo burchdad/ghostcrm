@@ -8,6 +8,10 @@ let cachedAuthData: { token?: string; source: 'jwt' | 'supabase' | 'none' } = { 
 let authCacheTime = 0;
 const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 
+// Rate limiting for authentication calls
+let lastAuthCall = 0;
+const MIN_AUTH_INTERVAL = 1000; // 1 second minimum between auth calls
+
 // Singleton Supabase client to avoid "Multiple GoTrueClient instances" warning
 let supabaseClient: any = null;
 
@@ -69,10 +73,18 @@ function isJwtValid(token: string): boolean {
 async function getCachedAuthData() {
   const now = Date.now();
   
+  // Rate limiting - prevent excessive auth calls
+  if (now - lastAuthCall < MIN_AUTH_INTERVAL) {
+    console.debug('Rate limited: returning cached auth data');
+    return cachedAuthData;
+  }
+  
   // Return cached auth data if it's still fresh
   if (cachedAuthData.source !== 'none' && (now - authCacheTime) < CACHE_DURATION) {
     return cachedAuthData;
   }
+  
+  lastAuthCall = now;
   
   try {
     // First, try JWT cookie authentication (primary method)
@@ -84,25 +96,30 @@ async function getCachedAuthData() {
       return cachedAuthData;
     }
     
-    // Fallback to Supabase session
-    console.debug('JWT cookie not found or invalid, trying Supabase session...');
-    const supabase = getSupabaseClient();
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (!error && session?.access_token) {
-      console.debug('Authentication via Supabase session successful');
-      cachedAuthData = { token: session.access_token, source: 'supabase' };
-      authCacheTime = now;
-      return cachedAuthData;
+    // Only try Supabase session if JWT is not available
+    // and we don't have fresh cache data
+    if (cachedAuthData.source === 'none' || (now - authCacheTime) > CACHE_DURATION) {
+      console.debug('JWT cookie not found or invalid, trying Supabase session...');
+      const supabase = getSupabaseClient();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (!error && session?.access_token) {
+        console.debug('Authentication via Supabase session successful');
+        cachedAuthData = { token: session.access_token, source: 'supabase' };
+        authCacheTime = now;
+        return cachedAuthData;
+      }
     }
     
     console.debug('No valid authentication found');
     cachedAuthData = { source: 'none' };
+    authCacheTime = now;
     return cachedAuthData;
     
   } catch (error) {
     console.error('Error fetching authentication data:', error);
     cachedAuthData = { source: 'none' };
+    authCacheTime = now;
     return cachedAuthData;
   }
 }
