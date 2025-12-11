@@ -309,9 +309,12 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
+    console.log('PUT request received with body:', body);
+    
     const { id, ...updateData } = body;
 
     if (!id) {
+      console.log('No ID provided in request');
       return new Response(JSON.stringify({ error: "Lead ID required" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -335,10 +338,39 @@ export async function PUT(req: NextRequest) {
       });
     }
 
-    // Update lead - use existing fields and store enhanced data in custom_fields
+    // Update lead - try to update actual columns first, fallback to custom_fields
+    const updatePayload: any = {
+      title: updateData.title,
+      description: updateData.description,
+      value: updateData.value || updateData.budget, // Use budget as fallback for value
+      stage: updateData.stage,
+      priority: updateData.priority,
+      source: updateData.source,
+      assigned_to: updateData.assigned_to,
+      expected_close_date: updateData.expected_close_date,
+      probability: updateData.probability || updateData.lead_score, // Use lead_score as fallback
+      tags: updateData.tags,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Add enhanced fields if they exist in the schema
+    if (updateData.email !== undefined) updatePayload.email = updateData.email;
+    if (updateData.address !== undefined) updatePayload.address = updateData.address;
+    if (updateData.city !== undefined) updatePayload.city = updateData.city;
+    if (updateData.state !== undefined) updatePayload.state = updateData.state;
+    if (updateData.zip_code !== undefined) updatePayload.zip_code = updateData.zip_code;
+    if (updateData.country !== undefined) updatePayload.country = updateData.country;
+    if (updateData.budget !== undefined) updatePayload.budget = updateData.budget;
+    if (updateData.budget_range !== undefined) updatePayload.budget_range = updateData.budget_range;
+    if (updateData.timeframe !== undefined) updatePayload.timeframe = updateData.timeframe;
+    if (updateData.vehicle_interest !== undefined) updatePayload.vehicle_interest = updateData.vehicle_interest;
+    if (updateData.lead_score !== undefined) updatePayload.lead_score = updateData.lead_score;
+    if (updateData.referred_by !== undefined) updatePayload.referred_by = updateData.referred_by;
+    if (updateData.campaign_source !== undefined) updatePayload.campaign_source = updateData.campaign_source;
+
+    // Always store in custom_fields as backup
     const enhancedCustomFields = {
       ...updateData.custom_fields,
-      // Store enhanced fields in custom_fields if they don't exist as columns
       email: updateData.email,
       address: updateData.address,
       city: updateData.city,
@@ -353,27 +385,20 @@ export async function PUT(req: NextRequest) {
       referred_by: updateData.referred_by,
       campaign_source: updateData.campaign_source,
     };
+    
+    updatePayload.custom_fields = enhancedCustomFields;
+
+    console.log('Updating lead with payload:', updatePayload);
 
     const { data: lead, error } = await supabaseAdmin
       .from("leads")
-      .update({
-        title: updateData.title,
-        description: updateData.description,
-        value: updateData.value || updateData.budget, // Use budget as fallback for value
-        stage: updateData.stage,
-        priority: updateData.priority,
-        source: updateData.source,
-        assigned_to: updateData.assigned_to,
-        expected_close_date: updateData.expected_close_date,
-        probability: updateData.probability || updateData.lead_score, // Use lead_score as fallback
-        tags: updateData.tags,
-        custom_fields: enhancedCustomFields,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", id)
       .eq("organization_id", user.organizationId)
       .select()
       .single();
+
+    console.log('Database update result:', { data: lead, error });
 
     if (error) {
       console.error("Error updating lead:", error);
