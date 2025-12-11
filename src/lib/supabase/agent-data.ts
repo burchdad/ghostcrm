@@ -282,7 +282,7 @@ export class SupabaseAgentDataConnector implements AgentDataConnector {
   async getTeamData() {
     try {
       const [membersResult, activityResult] = await Promise.all([
-        supabase
+        supabaseAdmin
           .from('team_members')
           .select(`
             id,
@@ -296,7 +296,7 @@ export class SupabaseAgentDataConnector implements AgentDataConnector {
             assigned_leads,
             assigned_deals
           `),
-        supabase
+        supabaseAdmin
           .from('team_activities')
           .select(`
             id,
