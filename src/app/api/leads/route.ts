@@ -227,7 +227,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Create lead data
+    // Create lead data with enhanced fields
     const leadData = {
       organization_id: user.organizationId,
       contact_id: contactId,
@@ -239,6 +239,8 @@ export async function POST(req: NextRequest) {
         "New Lead",
       description: body.description || body.Description || "",
       value: body.value || body.Value || body.est_value || 0,
+      budget: body.budget || body.Budget || parseFloat(body.budget_amount) || null,
+      budget_range: body.budget_range || body.budget || "",
       currency: body.currency || "USD",
       stage: body.stage || body.Stage || "new",
       priority: body.priority || body.Priority || "medium",
@@ -247,6 +249,20 @@ export async function POST(req: NextRequest) {
       expected_close_date:
         body.expected_close_date || body["Expected Close"] || null,
       probability: body.probability || body.Probability || 0,
+      
+      // New enhanced fields
+      email: body.email || body["Email Address"] || null,
+      address: body.address || body.Address || null,
+      city: body.city || body.City || null,
+      state: body.state || body.State || null,
+      zip_code: body.zip_code || body.zipCode || body.ZipCode || null,
+      country: body.country || body.Country || "USA",
+      timeframe: body.timeframe || body.Timeframe || null,
+      vehicle_interest: body.vehicle_interest || body.vehicleInterest || null,
+      lead_score: body.lead_score || parseInt(body.leadScore) || 50,
+      referred_by: body.referred_by || body.referredBy || null,
+      campaign_source: body.campaign_source || body.campaignSource || null,
+      
       tags: body.tags || body.Tags || [],
       custom_fields: body.custom_fields || {},
     };

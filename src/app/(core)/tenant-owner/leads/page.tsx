@@ -21,6 +21,8 @@ import { AICallScriptModal } from "@/components/modals/AICallScriptModal";
 import { AISMSModal } from "@/components/modals/AISMSModal";
 import { AIEmailModal } from "@/components/modals/AIEmailModal";
 import NewLeadModal from "@/components/modals/NewLeadModal";
+import LeadDetailModal from "@/components/modals/LeadDetailModal";
+import LeadDetailModal from "@/components/modals/LeadDetailModal";
 import PageAIAssistant from "@/components/ai/PageAIAssistant";
 import "./page.css";
 
@@ -64,6 +66,8 @@ export default function TenantOwnerLeads() {
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showIntegrationModal, setShowIntegrationModal] = useState(false);
+  const [showLeadDetailModal, setShowLeadDetailModal] = useState(false);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [emailLead, setEmailLead] = useState<any>(null);
   const [callLead, setCallLead] = useState<any>(null);
   const [smsLead, setSmsLead] = useState<any>(null);
@@ -611,7 +615,14 @@ export default function TenantOwnerLeads() {
               </TableHeader>
               <TableBody className="tenant-owner-leads-table-body">
                 {filteredLeads.map((lead, idx) => (
-                  <TableRow key={lead.id || idx}>
+                  <TableRow 
+                    key={lead.id || idx}
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => {
+                      setSelectedLeadId(lead.id);
+                      setShowLeadDetailModal(true);
+                    }}
+                  >
                     {bulkMode && (
                       <TableCell>
                         <input
@@ -641,7 +652,10 @@ export default function TenantOwnerLeads() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleAction(lead, "call")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAction(lead, "call");
+                          }}
                           className="tenant-owner-leads-action-btn view"
                         >
                           <Phone />
@@ -649,7 +663,10 @@ export default function TenantOwnerLeads() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleAction(lead, "message")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAction(lead, "message");
+                          }}
                           className="tenant-owner-leads-action-btn edit"
                         >
                           <MessageSquare />
@@ -657,7 +674,10 @@ export default function TenantOwnerLeads() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleAction(lead, "email")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAction(lead, "email");
+                          }}
                           className="tenant-owner-leads-action-btn delete"
                         >
                           <Mail />
@@ -841,6 +861,20 @@ export default function TenantOwnerLeads() {
           smsLead={smsLead}
           smsSending={smsSending}
           handleSmsAction={handleSmsAction}
+        />
+
+        {/* Lead Detail Modal */}
+        <LeadDetailModal
+          isOpen={showLeadDetailModal}
+          onClose={() => {
+            setShowLeadDetailModal(false);
+            setSelectedLeadId(null);
+          }}
+          leadId={selectedLeadId}
+          onLeadUpdated={() => {
+            // Refresh leads data
+            loadLeads();
+          }}
         />
     </div>
   );

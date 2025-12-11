@@ -239,7 +239,9 @@ export default function NewLeadModal({ isOpen, onClose, onLeadCreated }: NewLead
           // Lead information that maps directly to database fields
           title: formData.fullName || `${firstName} ${lastName}`.trim() || "New Lead",
           description: formData.notes || "", // Map notes to description field
-          value: parseInt(formData.budget.replace(/\D/g, '')) || 0, // Map budget to value field
+          value: parseInt(formData.budget.replace(/\D/g, '')) || 0, // Keep original value mapping
+          budget: parseFloat(formData.budget.replace(/\D/g, '')) || null, // New budget field
+          budget_range: formData.budget, // Keep original budget string in budget_range
           currency: "USD",
           stage: formData.status.toLowerCase().replace(/\s+/g, '_'),
           priority: formData.priority.toLowerCase(),
@@ -247,23 +249,26 @@ export default function NewLeadModal({ isOpen, onClose, onLeadCreated }: NewLead
           assigned_to: "", // Could map to a field if needed
           expected_close_date: null, // Could map timeframe to a date
           probability: parseInt(formData.leadScore) || 50, // Map leadScore to probability
+          
+          // Enhanced fields - direct mapping
+          address: formData.address || null,
+          city: formData.city || null, 
+          state: formData.state || null,
+          zip_code: formData.zipCode || null,
+          country: "USA",
+          timeframe: formData.timeframe || null,
+          vehicle_interest: formData.vehicleInterest || null,
+          lead_score: parseInt(formData.leadScore) || 50,
+          referred_by: formData.referredBy || null,
+          campaign_source: formData.campaignSource || null,
+          
           tags: formData.tags || [],
           
-          // Custom fields for additional data
+          // Custom fields for additional data not in main schema
           custom_fields: {
             position: formData.position,
-            vehicleInterest: formData.vehicleInterest,
-            budget: formData.budget, // Keep original budget string
-            timeframe: formData.timeframe,
-            address: formData.address,
-            city: formData.city,
-            state: formData.state,
-            zipCode: formData.zipCode,
             website: formData.website,
-            socialMedia: formData.socialMedia,
-            referredBy: formData.referredBy,
-            campaignSource: formData.campaignSource,
-            leadScore: formData.leadScore
+            socialMedia: formData.socialMedia
           }
         };
         
