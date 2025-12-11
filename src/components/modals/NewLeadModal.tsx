@@ -229,23 +229,32 @@ export default function NewLeadModal({ isOpen, onClose, onLeadCreated }: NewLead
         const lastName = lastNameParts.join(' ');
         
         const apiPayload = {
+          // Contact information
           first_name: firstName,
           last_name: lastName,
           email: formData.email || undefined,
           phone: formData.phone || undefined,
-          stage: formData.status.toLowerCase().replace(/\s+/g, '_') as any,
-          source: formData.source.toLowerCase().replace(/\s+/g, '_') as any,
-          priority: formData.priority.toLowerCase() as any,
-          vehicle_interest: formData.vehicleInterest ? {
-            type: undefined,
-            budget_min: parseInt(formData.budget.split('-')[0]?.replace(/\D/g, '')) || undefined,
-            budget_max: parseInt(formData.budget.split('-')[1]?.replace(/\D/g, '')) || undefined,
-          } : undefined,
-          lead_score: parseInt(formData.leadScore) || undefined,
-          campaign: formData.campaignSource || undefined,
-          meta: {
-            company: formData.company,
+          company: formData.company || undefined,
+          
+          // Lead information that maps directly to database fields
+          title: formData.fullName || `${firstName} ${lastName}`.trim() || "New Lead",
+          description: formData.notes || "", // Map notes to description field
+          value: parseInt(formData.budget.replace(/\D/g, '')) || 0, // Map budget to value field
+          currency: "USD",
+          stage: formData.status.toLowerCase().replace(/\s+/g, '_'),
+          priority: formData.priority.toLowerCase(),
+          source: formData.source.toLowerCase().replace(/\s+/g, '_'),
+          assigned_to: "", // Could map to a field if needed
+          expected_close_date: null, // Could map timeframe to a date
+          probability: parseInt(formData.leadScore) || 50, // Map leadScore to probability
+          tags: formData.tags || [],
+          
+          // Custom fields for additional data
+          custom_fields: {
             position: formData.position,
+            vehicleInterest: formData.vehicleInterest,
+            budget: formData.budget, // Keep original budget string
+            timeframe: formData.timeframe,
             address: formData.address,
             city: formData.city,
             state: formData.state,
@@ -253,11 +262,9 @@ export default function NewLeadModal({ isOpen, onClose, onLeadCreated }: NewLead
             website: formData.website,
             socialMedia: formData.socialMedia,
             referredBy: formData.referredBy,
-            timeframe: formData.timeframe,
-            notes: formData.notes,
-            tags: formData.tags
-          },
-          est_value: parseInt(formData.budget.replace(/\D/g, '')) || undefined,
+            campaignSource: formData.campaignSource,
+            leadScore: formData.leadScore
+          }
         };
         
         const response = await authenticatedFetch('/api/leads', {

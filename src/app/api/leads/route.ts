@@ -184,34 +184,46 @@ export async function POST(req: NextRequest) {
     // Create / upsert contact first if provided
     let contactId: string | null = null;
     if (body.email || body.phone || body["Email Address"] || body["Phone Number"]) {
-      const { data: contact, error: contactError } = await supabaseAdmin
-        .from("contacts")
-        .upsert(
-          {
-            organization_id: user.organizationId,
-            first_name:
-              body.first_name ||
-              body.Full_Name?.split(" ")[0] ||
-              body["Full Name"]?.split(" ")[0] ||
-              "",
-            last_name:
-              body.last_name ||
-              body.Full_Name?.split(" ").slice(1).join(" ") ||
-              body["Full Name"]?.split(" ").slice(1).join(" ") ||
-              "",
-            email: body.email || body["Email Address"] || null,
-            phone: body.phone || body["Phone Number"] || null,
-            company: body.company || body.Company || null,
-          },
-          { onConflict: "organization_id,email" } // optional depending on your schema
-        )
-        .select("id")
-        .single();
+      const contactData = {
+        organization_id: user.organizationId,
+        first_name:
+          body.first_name ||
+          body.Full_Name?.split(" ")[0] ||
+          body["Full Name"]?.split(" ")[0] ||
+          "",
+        last_name:
+          body.last_name ||
+          body.Full_Name?.split(" ").slice(1).join(" ") ||
+          body["Full Name"]?.split(" ").slice(1).join(" ") ||
+          "",
+        email: body.email || body["Email Address"] || null,
+        phone: body.phone || body["Phone Number"] || null,
+        company: body.company || body.Company || null,
+      };
 
-      if (contactError) {
-        console.error("Contact creation failed:", contactError);
+      // Try to find existing contact first
+      const { data: existingContact } = await supabaseAdmin
+        .from("contacts")
+        .select("id")
+        .eq("organization_id", user.organizationId)
+        .eq("email", contactData.email)
+        .maybeSingle();
+
+      if (existingContact) {
+        contactId = existingContact.id;
       } else {
-        contactId = contact?.id ?? null;
+        // Create new contact
+        const { data: contact, error: contactError } = await supabaseAdmin
+          .from("contacts")
+          .insert(contactData)
+          .select("id")
+          .single();
+
+        if (contactError) {
+          console.error("Contact creation failed:", contactError);
+        } else {
+          contactId = contact?.id ?? null;
+        }
       }
     }
 
