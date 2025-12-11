@@ -81,7 +81,29 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
       }
       
       const data = await response.json();
-      setLeadData(data.data);
+      console.log('Loaded lead data:', data.data);
+      
+      // Merge custom_fields data with main data for enhanced fields
+      const leadData = data.data;
+      const mergedData = {
+        ...leadData,
+        // Use custom_fields as fallback for enhanced fields
+        email: leadData.email || leadData.custom_fields?.email || "",
+        address: leadData.address || leadData.custom_fields?.address || "",
+        city: leadData.city || leadData.custom_fields?.city || "",
+        state: leadData.state || leadData.custom_fields?.state || "",
+        zip_code: leadData.zip_code || leadData.custom_fields?.zip_code || "",
+        country: leadData.country || leadData.custom_fields?.country || "USA",
+        budget: leadData.budget || leadData.custom_fields?.budget || leadData.value || 0,
+        budget_range: leadData.budget_range || leadData.custom_fields?.budget_range || "",
+        timeframe: leadData.timeframe || leadData.custom_fields?.timeframe || "",
+        vehicle_interest: leadData.vehicle_interest || leadData.custom_fields?.vehicle_interest || "",
+        lead_score: leadData.lead_score || leadData.custom_fields?.lead_score || leadData.probability || 0,
+        referred_by: leadData.referred_by || leadData.custom_fields?.referred_by || "",
+        campaign_source: leadData.campaign_source || leadData.custom_fields?.campaign_source || "",
+      };
+      
+      setLeadData(mergedData);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -96,6 +118,8 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
   const handleSave = async () => {
     if (!leadData) return;
     
+    console.log('Saving lead data:', leadData);
+    
     setSaving(true);
     try {
       const response = await authenticatedFetch('/api/leads', {
@@ -103,10 +127,16 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
         body: JSON.stringify(leadData)
       });
       
+      console.log('Save response status:', response.status);
+      
       if (!response.ok) {
         const error = await response.json();
+        console.error('Save failed with error:', error);
         throw new Error(error.message || 'Failed to update lead');
       }
+      
+      const result = await response.json();
+      console.log('Save successful:', result);
       
       toast({
         title: "Success!",
@@ -116,6 +146,7 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
       onLeadUpdated?.();
       onClose();
     } catch (error: any) {
+      console.error('Save error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to update lead",

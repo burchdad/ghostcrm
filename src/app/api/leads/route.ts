@@ -335,21 +335,39 @@ export async function PUT(req: NextRequest) {
       });
     }
 
-    // Update lead
+    // Update lead - use existing fields and store enhanced data in custom_fields
+    const enhancedCustomFields = {
+      ...updateData.custom_fields,
+      // Store enhanced fields in custom_fields if they don't exist as columns
+      email: updateData.email,
+      address: updateData.address,
+      city: updateData.city,
+      state: updateData.state,
+      zip_code: updateData.zip_code,
+      country: updateData.country,
+      budget: updateData.budget,
+      budget_range: updateData.budget_range,
+      timeframe: updateData.timeframe,
+      vehicle_interest: updateData.vehicle_interest,
+      lead_score: updateData.lead_score,
+      referred_by: updateData.referred_by,
+      campaign_source: updateData.campaign_source,
+    };
+
     const { data: lead, error } = await supabaseAdmin
       .from("leads")
       .update({
         title: updateData.title,
         description: updateData.description,
-        value: updateData.value,
+        value: updateData.value || updateData.budget, // Use budget as fallback for value
         stage: updateData.stage,
         priority: updateData.priority,
         source: updateData.source,
         assigned_to: updateData.assigned_to,
         expected_close_date: updateData.expected_close_date,
-        probability: updateData.probability,
+        probability: updateData.probability || updateData.lead_score, // Use lead_score as fallback
         tags: updateData.tags,
-        custom_fields: updateData.custom_fields,
+        custom_fields: enhancedCustomFields,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
