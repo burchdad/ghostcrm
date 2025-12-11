@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
 export const runtime = "nodejs";
@@ -19,38 +20,19 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
 
   try {
-    // Get authenticated user from Authorization header
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    // Check authentication using our new utility
+    if (!isAuthenticated(req)) {
       return new Response(
-        JSON.stringify({ error: "Authorization header required" }),
+        JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "").trim();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseAdmin.auth.getUser(token);
-
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return new Response(JSON.stringify({ error: "User organization not found" }), {
         status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from("user_organizations")
-      .select("organization_id, role")
-      .eq("user_id", user.id)
-      .single();
-
-    if (orgError || !userOrg) {
-      return new Response(JSON.stringify({ error: "No organization found" }), {
-        status: 403,
         headers: { "Content-Type": "application/json" },
       });
     }
@@ -71,7 +53,7 @@ export async function GET(req: NextRequest) {
       `,
         { count: "exact" }
       )
-      .eq("organization_id", userOrg.organization_id);
+      .eq("organization_id", user.organizationId);
 
     // Apply filters
     if (stage) {

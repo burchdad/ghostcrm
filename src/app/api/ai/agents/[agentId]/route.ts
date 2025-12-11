@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPageAgentRegistry } from '@/ai-agents/registry/PageAgentRegistry';
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,24 @@ interface AgentParams {
 export async function GET(request: NextRequest, { params }: AgentParams) {
   try {
     const { agentId } = params;
+    
+    console.log('🤖 [AI AGENTS API GET] Request received:', {
+      agentId,
+      method: request.method,
+      timestamp: new Date().toISOString()
+    });
+
+    // Check authentication
+    if (!isAuthenticated(request)) {
+      console.log('❌ [AI AGENTS API GET] Authentication failed');
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const user = getUserFromRequest(request);
+    console.log('✅ [AI AGENTS API GET] User authenticated:', user?.email);
     
     const registry = getPageAgentRegistry();
     const agent = registry.getAgent(agentId);
@@ -47,7 +66,7 @@ export async function GET(request: NextRequest, { params }: AgentParams) {
     });
 
   } catch (error: any) {
-    console.error(`Agent ${params.agentId} API Error:`, error);
+    console.error(`Agent ${params.agentId} GET API Error:`, error);
     return NextResponse.json(
       { 
         success: false,
@@ -67,17 +86,17 @@ export async function POST(request: NextRequest, { params }: AgentParams) {
 
     console.log(`🔍 [AI-AGENT-API] POST request for agentId: ${agentId}, operation: ${operation}`);
 
-    // Check for authentication
-    const authHeader = request.headers.get('Authorization');
-    console.log(`🔍 [AI-AGENT-API] Auth header present: ${!!authHeader}`);
-    
-    if (!authHeader) {
-      console.warn(`⚠️ [AI-AGENT-API] No authorization header for agent ${agentId}`);
+    // Authenticate user using new JWT system
+    if (!isAuthenticated(request)) {
+      console.warn(`⚠️ [AI-AGENT-API] Authentication failed for agent ${agentId}`);
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
         { status: 401 }
       );
     }
+
+    const user = getUserFromRequest(request);
+    console.log(`🔍 [AI-AGENT-API] Authenticated user:`, user ? `${user.email} (${user.id})` : 'Unable to extract user data');
 
     const registry = getPageAgentRegistry();
     console.log(`🔍 [AI-AGENT-API] Registry available agents:`, registry.getRegisteredAgents());
