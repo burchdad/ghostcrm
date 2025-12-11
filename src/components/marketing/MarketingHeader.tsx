@@ -41,19 +41,21 @@ export default function MarketingHeader() {
         <div style={{
           maxWidth: '80rem',
           margin: '0 auto',
-          padding: '0 1rem',
+          padding: '0 0.75rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: '4rem'
+          height: '4rem',
+          gap: '0.5rem'
         }}>
           {/* Logo/Brand */}
           <Link href="/" style={{
             display: 'flex',
             alignItems: 'center',
             textDecoration: 'none',
-            gap: '0.75rem',
-            transition: 'all 0.3s ease'
+            gap: '0.5rem',
+            transition: 'all 0.3s ease',
+            flexShrink: 0
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'scale(1.05)'
@@ -67,23 +69,24 @@ export default function MarketingHeader() {
               alignItems: 'center'
             }}>
               <Car style={{
-                width: '2rem',
-                height: '2rem',
+                width: '1.75rem',
+                height: '1.75rem',
                 color: isScrolled ? '#8b5cf6' : '#ffffff',
                 filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
                 transition: 'color 0.3s ease'
               }} />
               <Crown style={{
                 position: 'absolute',
-                top: '-6px',
-                right: '-8px',
-                width: '0.75rem',
-                height: '0.75rem',
+                top: '-4px',
+                right: '-6px',
+                width: '0.625rem',
+                height: '0.625rem',
                 color: '#fbbf24',
                 animation: 'pulse 2s infinite'
               }} />
             </div>
-            <span style={{
+            {/* Desktop: Full text, Mobile: Abbreviated */}
+            <span className="hidden sm:inline" style={{
               fontSize: '1.5rem',
               fontWeight: '800',
               color: isScrolled ? '#8b5cf6' : '#ffffff',
@@ -97,6 +100,22 @@ export default function MarketingHeader() {
               letterSpacing: '-0.5px'
             }}>
               Ghost Auto CRM
+            </span>
+            {/* Mobile: Abbreviated text */}
+            <span className="sm:hidden" style={{
+              fontSize: '1.25rem',
+              fontWeight: '800',
+              color: isScrolled ? '#8b5cf6' : '#ffffff',
+              background: isScrolled 
+                ? 'linear-gradient(135deg, #8b5cf6, #3b82f6)'
+                : 'linear-gradient(135deg, #ffffff, #e2e8f0)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              transition: 'all 0.3s ease',
+              letterSpacing: '-0.25px'
+            }}>
+              GhostCRM
             </span>
           </Link>
 
@@ -349,29 +368,47 @@ export default function MarketingHeader() {
           {/* Mobile menu button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2"
+            className="lg:hidden"
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '2.5rem',
+              height: '2.5rem',
               background: isScrolled 
                 ? 'rgba(139, 92, 246, 0.1)' 
                 : 'rgba(255, 255, 255, 0.1)',
               border: `1px solid ${isScrolled 
                 ? 'rgba(139, 92, 246, 0.2)' 
                 : 'rgba(255, 255, 255, 0.2)'}`,
-              borderRadius: '0.5rem',
+              borderRadius: '0.75rem',
               backdropFilter: 'blur(10px)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              flexShrink: 0
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = isScrolled 
+                ? 'rgba(139, 92, 246, 0.15)' 
+                : 'rgba(255, 255, 255, 0.15)'
+              e.currentTarget.style.transform = 'scale(1.05)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = isScrolled 
+                ? 'rgba(139, 92, 246, 0.1)' 
+                : 'rgba(255, 255, 255, 0.1)'
+              e.currentTarget.style.transform = 'scale(1)'
             }}
           >
             {isMenuOpen ? (
               <X style={{ 
-                width: '1.5rem', 
-                height: '1.5rem', 
+                width: '1.25rem', 
+                height: '1.25rem', 
                 color: isScrolled ? '#8b5cf6' : '#ffffff' 
               }} />
             ) : (
               <Menu style={{ 
-                width: '1.5rem', 
-                height: '1.5rem', 
+                width: '1.25rem', 
+                height: '1.25rem', 
                 color: isScrolled ? '#8b5cf6' : '#ffffff' 
               }} />
             )}

@@ -993,4 +993,29 @@
 .tenant-owner-leads-table-container {
   animation: fadeInUp 0.6s ease 0.6s forwards;
   opacity: 0;
+}/* Enhanced AI Assistant sizing to match metrics grid */
+.tenant-owner-leads-ai-container {
+  min-height: 240px !important;
+}
+
+.tenant-owner-leads-ai-assistant > div {
+  min-height: 240px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Ensure AI Assistant content stretches properly on larger screens */
+@media (min-width: 1201px) {
+  .tenant-owner-leads-ai-assistant .bg-white {
+    min-height: 240px !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .tenant-owner-leads-ai-assistant .p-4:last-child {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+  }
 }

@@ -7,6 +7,28 @@
   );
 }
 
+/* Mobile Marketing Header Improvements */
+@media (max-width: 640px) {
+  .marketing-page nav {
+    padding: 0 0.5rem !important;
+  }
+  
+  .marketing-page nav > div {
+    padding: 0 0.5rem !important;
+    gap: 0.25rem !important;
+  }
+  
+  /* Prevent header overflow on small screens */
+  .marketing-page nav {
+    overflow: hidden;
+  }
+  
+  /* Ensure mobile menu doesn't cause layout shifts */
+  .marketing-page nav button {
+    flex-shrink: 0 !important;
+  }
+}
+
 /* Section Transitions */
 .section-transition {
   height: 100px;
