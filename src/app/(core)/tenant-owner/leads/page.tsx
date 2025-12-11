@@ -22,7 +22,6 @@ import { AISMSModal } from "@/components/modals/AISMSModal";
 import { AIEmailModal } from "@/components/modals/AIEmailModal";
 import NewLeadModal from "@/components/modals/NewLeadModal";
 import LeadDetailModal from "@/components/modals/LeadDetailModal";
-import LeadDetailModal from "@/components/modals/LeadDetailModal";
 import PageAIAssistant from "@/components/ai/PageAIAssistant";
 import "./page.css";
 
