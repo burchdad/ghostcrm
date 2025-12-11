@@ -100,10 +100,7 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
     try {
       const response = await authenticatedFetch('/api/leads', {
         method: 'PUT',
-        body: JSON.stringify({
-          id: leadData.id,
-          ...leadData
-        })
+        body: JSON.stringify(leadData)
       });
       
       if (!response.ok) {
@@ -135,7 +132,7 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
 
   if (loading) {
     return (
-      <Modal isOpen={isOpen} onClose={onClose} title="Lead Details">
+      <Modal open={isOpen} onClose={onClose} title="Lead Details">
         <div className="flex items-center justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <span className="ml-2">Loading lead data...</span>
@@ -146,7 +143,7 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
 
   if (!leadData) {
     return (
-      <Modal isOpen={isOpen} onClose={onClose} title="Lead Details">
+      <Modal open={isOpen} onClose={onClose} title="Lead Details">
         <div className="p-8 text-center text-gray-500">
           Lead not found or failed to load.
         </div>
@@ -155,7 +152,7 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Lead Details" size="large">
+    <Modal open={isOpen} onClose={onClose} title="Lead Details" size="xl">
       <div className="max-h-[80vh] overflow-y-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
           
