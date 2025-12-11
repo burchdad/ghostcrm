@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Bot, Lightbulb, TrendingUp, AlertCircle, RefreshCw, X } from 'lucide-react';
+import { authenticatedFetch } from '@/lib/auth/client';
 
 interface AIInsight {
   id: string;
@@ -64,9 +65,8 @@ export default function PageAIAssistant({
   const loadInsights = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/ai/agents/${agentId}`, {
+      const response = await authenticatedFetch(`/api/ai/agents/${agentId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           operation: 'get-insights',
           data: entityId ? { 
@@ -97,9 +97,8 @@ export default function PageAIAssistant({
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/ai/agents/${agentId}`, {
+      const response = await authenticatedFetch(`/api/ai/agents/${agentId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           operation: 'analyze',
           data: {

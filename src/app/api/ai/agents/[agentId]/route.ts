@@ -67,6 +67,18 @@ export async function POST(request: NextRequest, { params }: AgentParams) {
 
     console.log(`🔍 [AI-AGENT-API] POST request for agentId: ${agentId}, operation: ${operation}`);
 
+    // Check for authentication
+    const authHeader = request.headers.get('Authorization');
+    console.log(`🔍 [AI-AGENT-API] Auth header present: ${!!authHeader}`);
+    
+    if (!authHeader) {
+      console.warn(`⚠️ [AI-AGENT-API] No authorization header for agent ${agentId}`);
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const registry = getPageAgentRegistry();
     console.log(`🔍 [AI-AGENT-API] Registry available agents:`, registry.getRegisteredAgents());
     

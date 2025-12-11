@@ -2,6 +2,7 @@
 import React, { useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { authenticatedFetch } from '@/lib/auth/client';
 import { Modal } from "@/components/modals/Modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -203,9 +204,8 @@ export default function NewLeadModal({ isOpen, onClose, onLeadCreated }: NewLead
     try {
       if (isBulkMode && bulkLeads.length > 0) {
         // Handle bulk import
-        const response = await fetch('/api/leads/bulk', {
+        const response = await authenticatedFetch('/api/leads/bulk', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             leads: bulkLeads,
             organizationId: user?.tenantId || tenant?.id,
@@ -260,9 +260,8 @@ export default function NewLeadModal({ isOpen, onClose, onLeadCreated }: NewLead
           est_value: parseInt(formData.budget.replace(/\D/g, '')) || undefined,
         };
         
-        const response = await fetch('/api/leads', {
+        const response = await authenticatedFetch('/api/leads', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(apiPayload)
         });
         
