@@ -164,38 +164,19 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Get authenticated user and organization
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    // Check authentication using our server utility (same as GET)
+    if (!isAuthenticated(req)) {
       return new Response(
-        JSON.stringify({ error: "Authorization header required" }),
+        JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "").trim();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseAdmin.auth.getUser(token);
-
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return new Response(JSON.stringify({ error: "User organization not found" }), {
         status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from("user_organizations")
-      .select("organization_id")
-      .eq("user_id", user.id)
-      .single();
-
-    if (orgError || !userOrg) {
-      return new Response(JSON.stringify({ error: "No organization found" }), {
-        status: 403,
         headers: { "Content-Type": "application/json" },
       });
     }
@@ -207,7 +188,7 @@ export async function POST(req: NextRequest) {
         .from("contacts")
         .upsert(
           {
-            organization_id: userOrg.organization_id,
+            organization_id: user.organizationId,
             first_name:
               body.first_name ||
               body.Full_Name?.split(" ")[0] ||
@@ -236,7 +217,7 @@ export async function POST(req: NextRequest) {
 
     // Create lead data
     const leadData = {
-      organization_id: userOrg.organization_id,
+      organization_id: user.organizationId,
       contact_id: contactId,
       title:
         body.title ||
@@ -274,7 +255,7 @@ export async function POST(req: NextRequest) {
 
     // Log audit event
     await supabaseAdmin.from("audit_events").insert({
-      organization_id: userOrg.organization_id,
+      organization_id: user.organizationId,
       entity: "lead",
       entity_id: lead.id,
       action: "create",
@@ -309,38 +290,19 @@ export async function PUT(req: NextRequest) {
       });
     }
 
-    // Get authenticated user and organization
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    // Check authentication using our server utility (same as GET)
+    if (!isAuthenticated(req)) {
       return new Response(
-        JSON.stringify({ error: "Authorization header required" }),
+        JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "").trim();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseAdmin.auth.getUser(token);
-
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return new Response(JSON.stringify({ error: "User organization not found" }), {
         status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from("user_organizations")
-      .select("organization_id")
-      .eq("user_id", user.id)
-      .single();
-
-    if (orgError || !userOrg) {
-      return new Response(JSON.stringify({ error: "No organization found" }), {
-        status: 403,
         headers: { "Content-Type": "application/json" },
       });
     }
@@ -363,7 +325,7 @@ export async function PUT(req: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
-      .eq("organization_id", userOrg.organization_id)
+      .eq("organization_id", user.organizationId)
       .select()
       .single();
 
@@ -377,7 +339,7 @@ export async function PUT(req: NextRequest) {
 
     // Log audit event
     await supabaseAdmin.from("audit_events").insert({
-      organization_id: userOrg.organization_id,
+      organization_id: user.organizationId,
       entity: "lead",
       entity_id: id,
       action: "update",
@@ -412,38 +374,19 @@ export async function DELETE(req: NextRequest) {
       });
     }
 
-    // Get authenticated user and organization
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    // Check authentication using our server utility (same as GET)
+    if (!isAuthenticated(req)) {
       return new Response(
-        JSON.stringify({ error: "Authorization header required" }),
+        JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "").trim();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseAdmin.auth.getUser(token);
-
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return new Response(JSON.stringify({ error: "User organization not found" }), {
         status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from("user_organizations")
-      .select("organization_id")
-      .eq("user_id", user.id)
-      .single();
-
-    if (orgError || !userOrg) {
-      return new Response(JSON.stringify({ error: "No organization found" }), {
-        status: 403,
         headers: { "Content-Type": "application/json" },
       });
     }
@@ -453,7 +396,7 @@ export async function DELETE(req: NextRequest) {
       .from("leads")
       .delete()
       .eq("id", id)
-      .eq("organization_id", userOrg.organization_id);
+      .eq("organization_id", user.organizationId);
 
     if (error) {
       console.error("Error deleting lead:", error);
@@ -465,7 +408,7 @@ export async function DELETE(req: NextRequest) {
 
     // Log audit event
     await supabaseAdmin.from("audit_events").insert({
-      organization_id: userOrg.organization_id,
+      organization_id: user.organizationId,
       entity: "lead",
       entity_id: id,
       action: "delete",

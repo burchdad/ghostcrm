@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Bot, Lightbulb, TrendingUp, AlertCircle, RefreshCw, X } from 'lucide-react';
 import { authenticatedFetch } from '@/lib/auth/client';
 
@@ -58,11 +58,7 @@ export default function PageAIAssistant({
   const [collapsed, setCollapsed] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
-  useEffect(() => {
-    loadInsights();
-  }, [agentId, entityId]);
-
-  const loadInsights = async () => {
+  const loadInsights = useCallback(async () => {
     setLoading(true);
     try {
       const response = await authenticatedFetch(`/api/ai/agents/${agentId}`, {
@@ -87,9 +83,13 @@ export default function PageAIAssistant({
     } finally {
       setLoading(false);
     }
-  };
+  }, [agentId, entityId, entityData]);
 
-  const analyzeEntity = async () => {
+  useEffect(() => {
+    loadInsights();
+  }, [loadInsights]);
+
+  const analyzeEntity = useCallback(async () => {
     if (!entityId || !entityData) {
       await loadInsights();
       return;
@@ -119,7 +119,7 @@ export default function PageAIAssistant({
     } finally {
       setLoading(false);
     }
-  };
+  }, [agentId, entityId, entityData, loadInsights]);
 
   if (collapsed) {
     return (
