@@ -39,7 +39,13 @@ export async function GET(request: NextRequest, { params }: AgentParams) {
     const user = getUserFromRequest(request);
     console.log('✅ [AI AGENTS API GET] User authenticated:', user?.email);
     
+    // Get registry and auto-initialize if needed
     const registry = getPageAgentRegistry();
+    if (!registry.isInitialized()) {
+      console.log('🔄 [AI AGENTS API] Initializing registry...');
+      await registry.initialize();
+    }
+    
     const agent = registry.getAgent(agentId);
 
     if (!agent) {
@@ -98,7 +104,13 @@ export async function POST(request: NextRequest, { params }: AgentParams) {
     const user = getUserFromRequest(request);
     console.log(`🔍 [AI-AGENT-API] Authenticated user:`, user ? `${user.email} (${user.id})` : 'Unable to extract user data');
 
+    // Get registry and auto-initialize if needed
     const registry = getPageAgentRegistry();
+    if (!registry.isInitialized()) {
+      console.log('🔄 [AI-AGENT-API] Initializing registry...');
+      await registry.initialize();
+    }
+    
     console.log(`🔍 [AI-AGENT-API] Registry available agents:`, registry.getRegisteredAgents());
     
     const agentInfo = registry.getAgent(agentId);

@@ -7,6 +7,9 @@ import { useEffect } from 'react';
  * 
  * Initializes the page agent registry when the app starts.
  * This ensures all AI agents are available for use across the application.
+ * 
+ * Note: AI agents that require server-side resources (like database access)
+ * should be initialized on the server side through API routes.
  */
 export default function AIAgentInitializer() {
   useEffect(() => {
@@ -14,12 +17,9 @@ export default function AIAgentInitializer() {
       try {
         console.log('Initializing AI Agent System...');
         
-        // Import the registry dynamically to avoid SSR issues
-        const { getPageAgentRegistry } = await import('@/ai-agents/registry/PageAgentRegistry');
-        
-        // Initialize the registry
-        const registry = getPageAgentRegistry();
-        await registry.initialize();
+        // Skip server-side agent initialization on client
+        // AI agents that require database access should be initialized via API routes
+        console.log('Client-side AI agent initialization skipped - agents run server-side');
         
         console.log('AI Agent System initialized successfully');
       } catch (error) {

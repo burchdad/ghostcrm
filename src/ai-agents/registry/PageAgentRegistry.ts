@@ -256,6 +256,10 @@ export class PageAgentRegistry {
     return Array.from(this.agents.keys());
   }
 
+  isInitialized(): boolean {
+    return this.initialized;
+  }
+
   async updateAgentConfig(agentId: string, newConfig: Partial<AgentConfig>): Promise<void> {
     const agentInfo = this.agents.get(agentId);
     if (!agentInfo) {

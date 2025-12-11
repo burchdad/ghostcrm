@@ -8,6 +8,16 @@ let cachedAuthData: { token?: string; source: 'jwt' | 'supabase' | 'none' } = { 
 let authCacheTime = 0;
 const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 
+// Singleton Supabase client to avoid "Multiple GoTrueClient instances" warning
+let supabaseClient: any = null;
+
+function getSupabaseClient() {
+  if (!supabaseClient) {
+    supabaseClient = createClient();
+  }
+  return supabaseClient;
+}
+
 /**
  * Get JWT token from cookies
  */
@@ -76,7 +86,7 @@ async function getCachedAuthData() {
     
     // Fallback to Supabase session
     console.debug('JWT cookie not found or invalid, trying Supabase session...');
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (!error && session?.access_token) {
