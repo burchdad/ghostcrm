@@ -24,6 +24,7 @@
 @import "./base/variables.css";
 @import "./base/reset.css"; 
 @import "./base/animations.css";
+@import "./mobile-responsive.css";
 
 /* 
   ===========================================

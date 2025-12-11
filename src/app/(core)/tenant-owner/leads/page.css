@@ -18,6 +18,14 @@
   margin-top: 20px;
 }
 
+/* Mobile optimizations */
+@media (max-width: 639px) {
+  .tenant-owner-leads-page {
+    margin-top: 10px;
+    padding: 0 var(--mobile-spacing-sm);
+  }
+}
+
 .tenant-owner-leads-page::before {
   content: '';
   position: fixed;
@@ -209,24 +217,43 @@
 @media (max-width: 768px) {
   .tenant-owner-leads-analytics-grid-2x2 {
     grid-template-columns: repeat(1, 1fr);
-    gap: 1rem;
+    gap: var(--mobile-spacing-md);
   }
   
   .tenant-owner-leads-ai-container {
     flex: none;
+    margin: 0 var(--mobile-spacing-sm);
   }
-}
-
-@media (max-width: 1200px) {
-  .tenant-owner-leads-analytics-grid {
-    grid-template-columns: repeat(2, 1fr);
+  
+  .tenant-owner-leads-analytics-card {
+    padding: var(--mobile-spacing-md) !important;
+    min-height: 100px !important;
   }
 }
 
 @media (max-width: 640px) {
   .tenant-owner-leads-analytics-grid {
     grid-template-columns: repeat(1, 1fr);
-    gap: 1rem;
+    gap: var(--mobile-spacing-md);
+  }
+  
+  .tenant-owner-leads-analytics-grid-2x2 {
+    grid-template-columns: repeat(1, 1fr);
+    gap: var(--mobile-spacing-md);
+    margin: 0 var(--mobile-spacing-sm);
+  }
+  
+  .tenant-owner-leads-top-section {
+    padding: 0 var(--mobile-spacing-sm);
+    gap: var(--mobile-spacing-lg);
+  }
+  
+  .tenant-owner-leads-header {
+    padding: var(--mobile-spacing-md) !important;
+  }
+  
+  .tenant-owner-leads-title {
+    font-size: var(--mobile-text-2xl) !important;
   }
 }
 
