@@ -1,8 +1,12 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Only initialize OpenAI if API key is available (server-side)
+let openai: OpenAI | null = null;
+if (typeof window === 'undefined' && process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+}
 
 export interface AIAnalysisRequest {
   type: 'lead_analysis' | 'deal_forecast' | 'inventory_optimization' | 'schedule_optimization' | 'team_productivity' | 'workflow_suggestions';
@@ -25,6 +29,11 @@ export class AIAnalysisService {
   
   async generateInsights(request: AIAnalysisRequest): Promise<AIInsight[]> {
     try {
+      if (!openai) {
+        console.warn('🤖 [AI_ANALYSIS] OpenAI not available, returning mock insights');
+        return this.getMockInsights(request);
+      }
+
       const prompt = this.buildPrompt(request);
       
       const completion = await openai.chat.completions.create({
@@ -298,6 +307,11 @@ export class AIAnalysisService {
 
   async generateLeadScore(leadData: any): Promise<number> {
     try {
+      if (!openai) {
+        console.warn('🤖 [AI_ANALYSIS] OpenAI not available, using basic lead scoring');
+        return this.calculateFallbackLeadScore(leadData);
+      }
+
       const prompt = `
         Calculate a lead score (0-100) based on the following lead data:
         ${JSON.stringify(leadData, null, 2)}
@@ -378,6 +392,79 @@ export class AIAnalysisService {
     }
     
     return Math.max(0, Math.min(100, score));
+  }
+
+  private getMockInsights(request: AIAnalysisRequest): AIInsight[] {
+    const mockInsights: { [key: string]: AIInsight[] } = {
+      'lead_analysis': [
+        {
+          id: 'mock-lead-1',
+          type: 'qualification',
+          title: 'High-Priority Leads Identified',
+          description: 'Several leads show strong buying signals and should be prioritized for immediate follow-up.',
+          recommendation: 'Configure OpenAI integration for detailed lead analysis and personalized insights.',
+          confidence: 0.8,
+          impact: 'high',
+        }
+      ],
+      'deal_forecast': [
+        {
+          id: 'mock-deal-1',
+          type: 'forecast',
+          title: 'Pipeline Analysis Available',
+          description: 'AI-powered deal forecasting can help predict closure probability and optimize pipeline.',
+          recommendation: 'Enable OpenAI integration for advanced deal forecasting and pipeline insights.',
+          confidence: 0.7,
+          impact: 'medium',
+        }
+      ],
+      'inventory_optimization': [
+        {
+          id: 'mock-inventory-1',
+          type: 'optimization',
+          title: 'Inventory Optimization Ready',
+          description: 'AI can help optimize inventory levels and identify pricing opportunities.',
+          recommendation: 'Configure OpenAI integration for intelligent inventory management insights.',
+          confidence: 0.8,
+          impact: 'medium',
+        }
+      ],
+      'schedule_optimization': [
+        {
+          id: 'mock-schedule-1',
+          type: 'scheduling',
+          title: 'Schedule Optimization Available',
+          description: 'AI can help optimize calendars and suggest better meeting scheduling.',
+          recommendation: 'Enable OpenAI integration for smart calendar management and scheduling insights.',
+          confidence: 0.7,
+          impact: 'medium',
+        }
+      ],
+      'team_productivity': [
+        {
+          id: 'mock-team-1',
+          type: 'productivity',
+          title: 'Team Performance Insights',
+          description: 'AI analysis can provide insights into team productivity and collaboration patterns.',
+          recommendation: 'Configure OpenAI integration for detailed team performance analytics.',
+          confidence: 0.8,
+          impact: 'high',
+        }
+      ],
+      'workflow_suggestions': [
+        {
+          id: 'mock-workflow-1',
+          type: 'automation',
+          title: 'Automation Opportunities',
+          description: 'AI can identify workflow automation opportunities to improve efficiency.',
+          recommendation: 'Enable OpenAI integration for intelligent workflow optimization suggestions.',
+          confidence: 0.7,
+          impact: 'medium',
+        }
+      ]
+    };
+
+    return mockInsights[request.type] || [];
   }
 }
 
