@@ -46,7 +46,7 @@ const getTypeIcon = (type: string) => {
   }
 };
 
-export default function PageAIAssistant({ 
+function PageAIAssistant({ 
   agentId, 
   pageTitle, 
   entityId, 
