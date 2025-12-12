@@ -190,80 +190,84 @@ export default function TenantOwnerDealsPage() {
   return (
     <div className="tenant-owner-deals-container">
       <div className="page-header">
-        {/* Analytics Cards in Header */}
-        <div className="analytics-grid">
-          <Card className="analytics-card revenue">
-            <div className="card-content">
-              <div className="metric-info">
-                <h3>Total Pipeline Value</h3>
-                <p className="metric-value">{formatCurrency(analytics.totalValue)}</p>
-                <p className={`metric-change ${analytics.valueChange >= 0 ? 'positive' : 'negative'}`}>
-                  {analytics.valueChange >= 0 ? '+' : ''}{analytics.valueChange.toFixed(1)}% this month
-                </p>
+        {/* Analytics Cards and AI Assistant Layout */}
+        <div className="analytics-section">
+          <div className="analytics-grid">
+            <Card className="analytics-card revenue">
+              <div className="card-content">
+                <div className="metric-info">
+                  <h3>Total Pipeline Value</h3>
+                  <p className="metric-value">{formatCurrency(analytics.totalValue)}</p>
+                  <p className={`metric-change ${analytics.valueChange >= 0 ? 'positive' : 'negative'}`}>
+                    {analytics.valueChange >= 0 ? '+' : ''}{analytics.valueChange.toFixed(1)}% this month
+                  </p>
+                </div>
+                <div className="metric-icon">
+                  <DollarSign />
+                </div>
               </div>
-              <div className="metric-icon">
-                <DollarSign />
-              </div>
-            </div>
-          </Card>
+            </Card>
 
-          <Card className="analytics-card performance">
-            <div className="card-content">
-              <div className="metric-info">
-                <h3>Win Rate</h3>
-                <p className="metric-value">{analytics.winRate.toFixed(1)}%</p>
-                <p className={`metric-change ${analytics.winRate >= 60 ? 'positive' : analytics.winRate >= 40 ? 'neutral' : 'negative'}`}>
-                  {analytics.performanceStatus}
-                </p>
+            <Card className="analytics-card performance">
+              <div className="card-content">
+                <div className="metric-info">
+                  <h3>Win Rate</h3>
+                  <p className="metric-value">{analytics.winRate.toFixed(1)}%</p>
+                  <p className={`metric-change ${analytics.winRate >= 60 ? 'positive' : analytics.winRate >= 40 ? 'neutral' : 'negative'}`}>
+                    {analytics.performanceStatus}
+                  </p>
+                </div>
+                <div className="metric-icon">
+                  <Target />
+                </div>
               </div>
-              <div className="metric-icon">
-                <Target />
-              </div>
-            </div>
-          </Card>
+            </Card>
 
-          <Card className="analytics-card deals">
-            <div className="card-content">
-              <div className="metric-info">
-                <h3>Active Deals</h3>
-                <p className="metric-value">{analytics.pipelineStage}</p>
-                <p className="metric-change neutral">{analytics.totalDeals} total deals</p>
+            <Card className="analytics-card deals">
+              <div className="card-content">
+                <div className="metric-info">
+                  <h3>Active Deals</h3>
+                  <p className="metric-value">{analytics.pipelineStage}</p>
+                  <p className="metric-change neutral">{analytics.totalDeals} total deals</p>
+                </div>
+                <div className="metric-icon">
+                  <BarChart3 />
+                </div>
               </div>
-              <div className="metric-icon">
-                <BarChart3 />
-              </div>
-            </div>
-          </Card>
+            </Card>
 
-          <Card className="analytics-card average">
-            <div className="card-content">
-              <div className="metric-info">
-                <h3>Avg Deal Size</h3>
-                <p className="metric-value">{formatCurrency(analytics.avgDealSize)}</p>
-                <p className={`metric-change ${analytics.valueChange >= 0 ? 'positive' : analytics.valueChange === 0 ? 'neutral' : 'negative'}`}>
-                  {analytics.dealTrend}
-                </p>
+            <Card className="analytics-card average">
+              <div className="card-content">
+                <div className="metric-info">
+                  <h3>Avg Deal Size</h3>
+                  <p className="metric-value">{formatCurrency(analytics.avgDealSize)}</p>
+                  <p className={`metric-change ${analytics.valueChange >= 0 ? 'positive' : analytics.valueChange === 0 ? 'neutral' : 'negative'}`}>
+                    {analytics.dealTrend}
+                  </p>
+                </div>
+                <div className="metric-icon">
+                  <TrendingUp />
+                </div>
               </div>
-              <div className="metric-icon">
-                <TrendingUp />
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
+
+          {/* AI Assistant aligned to the right */}
+          <div className="ai-assistant-container">
+            <PageAIAssistant 
+              agentId="deals"
+              pageTitle="Deals Management"
+              entityData={{
+                totalDeals: deals.length,
+                totalValue: analytics.totalValue,
+                winRate: analytics.winRate,
+                averageDealSize: analytics.avgDealSize
+              }}
+              className="ai-assistant"
+            />
+          </div>
         </div>
       </div>
-
-      {/* AI Assistant */}
-      <PageAIAssistant 
-        agentId="deals"
-        pageTitle="Deals Management"
-        entityData={{
-          totalDeals: deals.length,
-          totalValue: analytics.totalValue,
-          winRate: analytics.winRate,
-          averageDealSize: analytics.avgDealSize
-        }}
-        className="mb-6"
-      />
 
       {/* Main Content Area */}
       <div className="deals-content">
