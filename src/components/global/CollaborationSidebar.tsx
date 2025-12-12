@@ -251,18 +251,20 @@ export default function CollaborationSidebar({ onExpandMode }: CollaborationSide
   const ChatTab = (
     <div className="flex flex-col h-full">
       {/* Search and Filters */}
-      <div className="p-3 border-b border-gray-200 space-y-2">
+      <div className="p-4 space-y-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
-            className="w-full pl-9 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-200"
             placeholder="Search chats…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded ${showFilters ? 'text-blue-600' : 'text-gray-400'}`}
+            className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded transition-colors duration-200 ${
+              showFilters ? 'text-blue-600 bg-blue-100' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+            }`}
           >
             <Filter className="w-4 h-4" />
           </button>
@@ -270,13 +272,15 @@ export default function CollaborationSidebar({ onExpandMode }: CollaborationSide
 
         {/* Filter Options */}
         {showFilters && (
-          <div className="grid grid-cols-2 gap-1 text-xs">
+          <div className="grid grid-cols-2 gap-2 text-xs">
             {Object.entries(activeFilters).map(([key, value]) => (
               <button
                 key={key}
                 onClick={() => setActiveFilters(prev => ({ ...prev, [key]: !value }))}
-                className={`p-2 rounded text-left capitalize ${
-                  value ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                className={`p-2.5 rounded-lg text-left capitalize font-medium transition-all duration-200 ${
+                  value 
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-sm' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 {key === 'unread' && '🔴'} {key === 'pinned' && '📌'} {key === 'online' && '🟢'}
@@ -289,28 +293,34 @@ export default function CollaborationSidebar({ onExpandMode }: CollaborationSide
       </div>
 
       {/* Chats */}
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
         {isLoadingData ? (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center gap-3 p-3 animate-pulse">
-                <div className="w-8 h-8 rounded-full bg-gray-200"></div>
+                <div className="w-10 h-10 rounded-full bg-gray-200"></div>
                 <div className="flex-1">
-                  <div className="h-4 bg-gray-200 rounded mb-1"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
                   <div className="h-3 bg-gray-200 rounded w-2/3"></div>
                 </div>
               </div>
             ))}
           </div>
         ) : filteredChats.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <div className="text-4xl mb-2">💬</div>
-            <p className="text-sm">
+          <div className="text-center py-12 px-4">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+              <MessageSquare className="w-8 h-8 text-blue-500" />
+            </div>
+            <h3 className="font-medium text-gray-900 mb-2">
               {searchQuery || Object.values(activeFilters).some(v => v && activeFilters.unread) 
                 ? 'No chats match your filters' 
                 : 'No chats yet'}
-            </p>
-            <p className="text-xs mt-1">Start a conversation with your team</p>
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">Start a conversation with your team</p>
+            <button className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-sm">
+              <Plus className="w-4 h-4" />
+              New Chat
+            </button>
           </div>
         ) : (
           filteredChats.map((chat) => {
@@ -320,18 +330,20 @@ export default function CollaborationSidebar({ onExpandMode }: CollaborationSide
               <button
                 key={chat.id}
                 onClick={() => setSelectedChat(chat.id)}
-                className={`group w-full text-left p-3 rounded-lg flex items-center gap-3 transition-colors ${
-                  isSel ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50"
+                className={`group w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all duration-200 mb-2 ${ 
+                  isSel 
+                    ? "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm" 
+                    : "hover:bg-gray-50 hover:shadow-sm border border-transparent"
                 }`}
               >
                 <div className="relative">
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium shadow-sm ${
                       chat.type === "channel"
-                        ? "bg-purple-100 text-purple-700"
+                        ? "bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700"
                         : chat.type === "group"
-                        ? "bg-orange-100 text-orange-700"
-                        : "bg-blue-100 text-blue-700"
+                        ? "bg-gradient-to-br from-orange-100 to-orange-200 text-orange-700"
+                        : "bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700"
                     }`}
                   >
                     {chat.avatar}
@@ -515,11 +527,16 @@ export default function CollaborationSidebar({ onExpandMode }: CollaborationSide
   return (
     <>
       {/* RIGHT SIDEBAR (uses parent positioning from CollapseLayout) */}
-      <aside className="h-full w-full bg-white border-l border-gray-200 flex flex-col">
+      <aside className="h-full w-full bg-gradient-to-b from-slate-50 to-white border-l border-gray-200 flex flex-col shadow-sm">
         {/* Header */}
-        <div className="p-3 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">Collaboration</h2>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                <MessageSquare className="w-4 h-4 text-white" />
+              </div>
+              <h2 className="font-semibold text-gray-900">Collaboration</h2>
+            </div>
 
             <div className="relative">
               <div className="flex items-center gap-1">
@@ -566,8 +583,8 @@ export default function CollaborationSidebar({ onExpandMode }: CollaborationSide
         </div>
 
         {/* Enhanced Tabs: Chat / Calls / Activity */}
-        <div className="border-b border-gray-200">
-          <div className="flex">
+        <div className="bg-gray-50 p-2">
+          <div className="flex bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             {[
               { id: "chat", label: "Chat", icon: MessageSquare },
               { id: "calls", label: "Calls", icon: Phone },
@@ -576,10 +593,10 @@ export default function CollaborationSidebar({ onExpandMode }: CollaborationSide
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as "chat" | "calls" | "activity")}
-                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-3 text-xs font-medium border-b-2 transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-all duration-200 ${
                   activeTab === tab.id
-                    ? "border-blue-500 text-blue-600 bg-blue-50"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                    ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-sm"
+                    : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
