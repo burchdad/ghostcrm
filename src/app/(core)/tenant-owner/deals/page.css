@@ -196,11 +196,21 @@
 .ai-assistant-container {
   flex-shrink: 0;
   width: 320px;
+  height: 480px; /* Match 2x2 grid total height (220px * 2 + gap) */
 }
 
 .ai-assistant {
   border-radius: 1rem;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure AI assistant content expands */
+.ai-assistant > div:last-child {
+  flex: 1;
+  overflow-y: auto;
 }
 
 @media (max-width: 1200px) {
@@ -211,6 +221,7 @@
   
   .ai-assistant-container {
     width: 100%;
+    height: auto;
   }
   
   .analytics-grid {
@@ -248,7 +259,7 @@
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  min-height: 160px;
+  min-height: 220px;
 }
 
 .analytics-card::before {
