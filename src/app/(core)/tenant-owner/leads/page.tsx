@@ -607,7 +607,7 @@ export default function TenantOwnerLeads() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
-                  <TableHead>Organization</TableHead>
+                  <TableHead>Address</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -638,9 +638,9 @@ export default function TenantOwnerLeads() {
                       </TableCell>
                     )}
                     <TableCell style={{ fontWeight: '500' }}>{lead["Full Name"]}</TableCell>
-                    <TableCell>{lead["Email"]}</TableCell>
+                    <TableCell>{lead["Email Address"]}</TableCell>
                     <TableCell>{lead["Phone Number"]}</TableCell>
-                    <TableCell>{lead["Organization"]}</TableCell>
+                    <TableCell>{lead.address || lead.city ? `${lead.address || ''} ${lead.city || ''}`.trim() : 'Not provided'}</TableCell>
                     <TableCell>
                       <span className="tenant-owner-leads-status-badge new">
                         Active
