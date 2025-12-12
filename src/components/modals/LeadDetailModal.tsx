@@ -137,6 +137,8 @@ export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId
       updateField('tags', updatedTags);
     }
   };
+
+  const handleSave = async () => {
     if (!leadData) return;
     
     console.log('Saving lead data:', leadData);
