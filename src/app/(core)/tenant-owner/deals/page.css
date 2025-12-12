@@ -179,7 +179,7 @@
   display: flex;
   gap: 2rem;
   margin: 2rem auto;
-  max-width: 1280px;
+  max-width: 1400px;
   padding: 0 1.5rem;
   align-items: flex-start;
 }
@@ -190,12 +190,11 @@
   grid-template-rows: repeat(2, 1fr);
   gap: 1.5rem;
   flex: 1;
-  max-width: 600px;
 }
 
 .ai-assistant-container {
   flex-shrink: 0;
-  width: 320px;
+  width: 420px;
   height: 480px; /* Match 2x2 grid total height (220px * 2 + gap) */
 }
 
@@ -213,7 +212,7 @@
   overflow-y: auto;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1300px) {
   .analytics-section {
     flex-direction: column;
     gap: 1.5rem;
