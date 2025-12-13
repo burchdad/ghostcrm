@@ -28,9 +28,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth();
   }, []);
 
+  // Prevent state loss during navigation
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (user) {
+        console.log('🔒 [AUTH] Preserving user state during navigation');
+        sessionStorage.setItem('ghost_auth_state', JSON.stringify({ user, tenant }));
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !user) {
+        console.log('🔄 [AUTH] Page visible, checking for preserved state');
+        const preserved = sessionStorage.getItem('ghost_auth_state');
+        if (preserved) {
+          try {
+            const { user: preservedUser, tenant: preservedTenant } = JSON.parse(preserved);
+            console.log('♻️ [AUTH] Restoring preserved state:', { userEmail: preservedUser?.email });
+            setUser(preservedUser);
+            setTenant(preservedTenant);
+            sessionStorage.removeItem('ghost_auth_state');
+          } catch (error) {
+            console.error('❌ [AUTH] Error restoring preserved state:', error);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user, tenant]);
+
   async function initializeAuth(skipLoadingState = false) {
     try {
       console.log('🔧 [AUTH] initializeAuth called:', { skipLoadingState });
+      
+      // Check for preserved state first (for navigation scenarios)
+      if (typeof window !== 'undefined') {
+        const preserved = sessionStorage.getItem('ghost_auth_state');
+        if (preserved && !user) {
+          try {
+            const { user: preservedUser, tenant: preservedTenant } = JSON.parse(preserved);
+            console.log('🔄 [AUTH] Found preserved state, restoring:', { userEmail: preservedUser?.email });
+            setUser(preservedUser);
+            setTenant(preservedTenant);
+            setAuthReady(true);
+            if (!skipLoadingState) setIsLoading(false);
+            sessionStorage.removeItem('ghost_auth_state');
+            return; // Skip API call if we restored from session
+          } catch (error) {
+            console.error('❌ [AUTH] Error parsing preserved state:', error);
+            sessionStorage.removeItem('ghost_auth_state');
+          }
+        }
+      }
       
       if (!skipLoadingState) {
         console.log('🔧 [AUTH] Setting loading state to true');

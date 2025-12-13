@@ -64,7 +64,11 @@ export default function LoginPage() {
         isSubdomain
       });
       
-      router.push(redirectPath);
+      // Small delay to ensure state propagation before navigation
+      setTimeout(() => {
+        console.log('🚀 [LOGIN] Executing navigation to:', redirectPath);
+        router.push(redirectPath);
+      }, 100);
     }
   }, [user, isLoading, router]);
 

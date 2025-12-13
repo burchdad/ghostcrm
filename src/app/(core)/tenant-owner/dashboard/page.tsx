@@ -89,7 +89,7 @@ interface InstalledChart {
 }
 
 function TenantOwnerDashboard() {
-  const { user, tenant } = useAuth();
+  const { user, tenant, authReady } = useAuth();
   const router = useRouter();
   
   console.log('🏢 [TENANT-DASHBOARD] Component rendered:', {
@@ -167,13 +167,14 @@ function TenantOwnerDashboard() {
 
   // Redirect non-owners to regular dashboard
   useEffect(() => {
-    console.log('🔧 [TENANT-DASHBOARD] Redirect check useEffect:', { loading, user, userRole: user?.role });
+    console.log('🔧 [TENANT-DASHBOARD] Redirect check useEffect:', { loading, user, userRole: user?.role, authReady });
     
-    if (!loading && user && user.role !== 'owner') {
+    // Only redirect if auth is ready and we have a user who is not an owner
+    if (!loading && authReady && user && user.role !== 'owner') {
       console.log('🔄 [TENANT-DASHBOARD] Redirecting non-owner to dashboard');
       router.push('/dashboard');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, authReady]);
 
   // Navigation handlers for metric cards
   const handleRevenueClick = () => {
@@ -490,10 +491,12 @@ function TenantOwnerDashboard() {
     );
   }
 
-  if (!user || user.role !== 'owner') {
+  // Show access denied only if auth is ready and confirmed no owner
+  if (authReady && (!user || user.role !== 'owner')) {
     console.log('❌ [TENANT-DASHBOARD] Access denied:', { 
       hasUser: !!user, 
-      userRole: user?.role 
+      userRole: user?.role,
+      authReady
     });
     return null; // Will redirect via useEffect
   }
