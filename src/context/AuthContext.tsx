@@ -120,25 +120,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             userRole: authUser.role,
             tenantId: authUser.tenantId 
           });
+        } else {
+          // No valid JWT cookie found
+          console.log('❌ [AUTH] No valid auth found, clearing user state');
+          setUser(null);
+          setTenant(null);
         }
       } else {
-        // No valid JWT cookie found
-        console.log('❌ [AUTH] No valid auth found, clearing user state');
+        // Response not ok
+        console.log('❌ [AUTH] Auth response not ok, clearing user state');
         setUser(null);
         setTenant(null);
       }
     } catch (error) {
-      console.error('❌ [AUTH] Error initializing auth:', error);
-      localStorage.removeItem('auth_token');
-    } finally {
-      if (!skipLoadingState) {
-        console.log('🔧 [AUTH] Setting loading state to false');
-        setIsLoading(false);
+        console.error('❌ [AUTH] Error initializing auth:', error);
+        localStorage.removeItem('auth_token');
+        setUser(null);
+        setTenant(null);
+      } finally {
+        if (!skipLoadingState) {
+          console.log('🔧 [AUTH] Setting loading state to false');
+          setIsLoading(false);
+        }
+        console.log('🔧 [AUTH] Setting authReady to true');
+        setAuthReady(true); // Auth initialization complete
+        
+        // Force a small delay to ensure state propagation
+        if (skipLoadingState) {
+          console.log('🔧 [AUTH] Forcing state update after login');
+          setTimeout(() => {
+            setIsLoading(false);
+          }, 10);
+        }
       }
-      console.log('🔧 [AUTH] Setting authReady to true');
-      setAuthReady(true); // Auth initialization complete
     }
-  }
 
   async function login(email: string, password: string): Promise<{ success: boolean; message?: string }> {
     try {
@@ -161,7 +176,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // If login successful, refresh auth state without triggering loading state
+      console.log('🔧 [LOGIN] About to call initializeAuth after successful login');
       await initializeAuth(true);
+      
+      console.log('🔧 [LOGIN] Login complete, auth state should be updated');
       
       return { success: true };
       
@@ -247,7 +265,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+  
+  // Debug logging
+  React.useEffect(() => {
+    console.log('🔍 [useAuth] Context update:', {
+      hasContext: !!context,
+      user: context?.user ? { email: context.user.email, role: context.user.role } : null,
+      isLoading: context?.isLoading,
+      authReady: context?.authReady
+    });
+  }, [context?.user, context?.isLoading, context?.authReady]);
+  
   if (context === undefined) {
+    console.log('🔍 [useAuth] No context available, returning defaults');
     // Return default values for public pages where AuthProvider isn't available
     return {
       user: null,
