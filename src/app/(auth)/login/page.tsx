@@ -8,7 +8,7 @@ import AuthForm from "@/components/auth/AuthForm";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { user, tenant, isLoading } = useAuth();
 
   // Redirect if already authenticated based on role and context
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function LoginPage() {
       
       // Immediately preserve state before navigation
       console.log('🔒 [LOGIN] Preserving auth state before navigation');
-      sessionStorage.setItem('ghost_auth_state', JSON.stringify({ user, isLoading: false }));
+      sessionStorage.setItem('ghost_auth_state', JSON.stringify({ user, tenant, isLoading: false }));
       
       // Small delay to ensure state propagation before navigation
       setTimeout(() => {
