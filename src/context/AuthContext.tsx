@@ -30,7 +30,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function initializeAuth(skipLoadingState = false) {
     try {
+      console.log('🔧 [AUTH] initializeAuth called:', { skipLoadingState });
+      
       if (!skipLoadingState) {
+        console.log('🔧 [AUTH] Setting loading state to true');
         setIsLoading(true);
       }
       
@@ -38,6 +41,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await fetch('/api/auth/me', {
         method: 'GET',
         credentials: 'include' // Include cookies
+      });
+      
+      console.log('🔧 [AUTH] Auth check response:', { 
+        ok: response.ok, 
+        status: response.status 
       });
       
       if (response.ok) {
@@ -107,19 +115,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           setUser(authUser);
           setTenant(authTenant);
+          console.log('✅ [AUTH] User and tenant set:', { 
+            userEmail: authUser.email, 
+            userRole: authUser.role,
+            tenantId: authUser.tenantId 
+          });
         }
       } else {
         // No valid JWT cookie found
+        console.log('❌ [AUTH] No valid auth found, clearing user state');
         setUser(null);
         setTenant(null);
       }
     } catch (error) {
-      console.error('Error initializing auth:', error);
+      console.error('❌ [AUTH] Error initializing auth:', error);
       localStorage.removeItem('auth_token');
     } finally {
       if (!skipLoadingState) {
+        console.log('🔧 [AUTH] Setting loading state to false');
         setIsLoading(false);
       }
+      console.log('🔧 [AUTH] Setting authReady to true');
       setAuthReady(true); // Auth initialization complete
     }
   }

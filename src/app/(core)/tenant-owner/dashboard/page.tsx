@@ -92,6 +92,13 @@ function TenantOwnerDashboard() {
   const { user, tenant } = useAuth();
   const router = useRouter();
   
+  console.log('🏢 [TENANT-DASHBOARD] Component rendered:', {
+    hasUser: !!user,
+    userRole: user?.role,
+    userEmail: user?.email,
+    hasTenant: !!tenant
+  });
+  
   // Force deployment refresh - Dashboard page updated Dec 8, 2025
   const [analytics, setAnalytics] = useState<TenantOwnerAnalytics>({
     totalRevenue: 0,
@@ -134,8 +141,11 @@ function TenantOwnerDashboard() {
 
   // Onboarding guard for tenant owners
   useEffect(() => {
+    console.log('🔧 [TENANT-DASHBOARD] Onboarding check useEffect:', { user, router });
+    
     async function checkOnboardingStatus() {
       if (!user) {
+        console.log('🔧 [TENANT-DASHBOARD] No user, setting onboardingLoading to false');
         setOnboardingLoading(false);
         return;
       }
@@ -157,7 +167,10 @@ function TenantOwnerDashboard() {
 
   // Redirect non-owners to regular dashboard
   useEffect(() => {
+    console.log('🔧 [TENANT-DASHBOARD] Redirect check useEffect:', { loading, user, userRole: user?.role });
+    
     if (!loading && user && user.role !== 'owner') {
+      console.log('🔄 [TENANT-DASHBOARD] Redirecting non-owner to dashboard');
       router.push('/dashboard');
     }
   }, [user, loading, router]);
@@ -212,8 +225,11 @@ function TenantOwnerDashboard() {
 
   // Fetch owner-specific analytics
   useEffect(() => {
+    console.log('🔧 [TENANT-DASHBOARD] Analytics fetch useEffect:', { user });
+    
     async function fetchOwnerAnalytics() {
       try {
+        console.log('📊 [TENANT-DASHBOARD] Starting analytics fetch...');
         setLoading(true);
         
         // Check for success message from chart generation
@@ -459,6 +475,7 @@ function TenantOwnerDashboard() {
   };
 
   if (loading || onboardingLoading) {
+    console.log('🔄 [TENANT-DASHBOARD] Showing loading state:', { loading, onboardingLoading });
     return (
       <div className="tenant-dashboard-loading">
         <div className="tenant-dashboard-loading-spinner">
@@ -474,6 +491,10 @@ function TenantOwnerDashboard() {
   }
 
   if (!user || user.role !== 'owner') {
+    console.log('❌ [TENANT-DASHBOARD] Access denied:', { 
+      hasUser: !!user, 
+      userRole: user?.role 
+    });
     return null; // Will redirect via useEffect
   }
 
