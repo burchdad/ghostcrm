@@ -282,31 +282,63 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
   const authCheckInProgress = useRef(false);
+  const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Helper function to set authorization and reset check flag
   const setAuthorizationResult = (authorized: boolean) => {
     authCheckInProgress.current = false;
     setIsCheckingRedirect(false);
     setIsAuthorized(authorized);
+    
+    // Clear any pending timeout
+    if (checkTimeoutRef.current) {
+      clearTimeout(checkTimeoutRef.current);
+      checkTimeoutRef.current = null;
+    }
   };
 
   // Helper function for path matching
   const startsWithSeg = (path: string, base: string) =>
     path === base || path.startsWith(base + '/');
 
+  // Cleanup timeout on unmount
   useEffect(() => {
-    // If already authorized and not checking redirects, don't re-run
-    if (isAuthorized === true && !isCheckingRedirect) {
+    return () => {
+      if (checkTimeoutRef.current) {
+        clearTimeout(checkTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    // Reset authorization state when auth context changes
+    if (!authReady) {
+      setIsAuthorized(null);
+      setIsCheckingRedirect(true);
+      authCheckInProgress.current = false;
+      return;
+    }
+
+    // If already authorized and not checking redirects, don't re-run unless user/path changes
+    if (isAuthorized === true && !isCheckingRedirect && authCheckInProgress.current === false) {
       return;
     }
     
-    if (!authReady || authCheckInProgress.current) {
-      setIsCheckingRedirect(true);
-      return; // Critical: don't decide before auth is ready or if check is in progress
+    if (authCheckInProgress.current) {
+      console.log('🔄 [ROUTE_GUARD] Auth check already in progress, skipping...');
+      return; // Critical: don't decide if check is already in progress
     }
 
     authCheckInProgress.current = true;
     setIsCheckingRedirect(true); // Start checking for redirects
+
+    // Set a timeout as a safety net to prevent infinite loading
+    checkTimeoutRef.current = setTimeout(() => {
+      console.log('⚠️ [ROUTE_GUARD] Auth check timeout, forcing authorization');
+      if (authCheckInProgress.current) {
+        setAuthorizationResult(true);
+      }
+    }, 5000); // 5 second timeout
 
     console.log('🔍 [ROUTE_GUARD] Starting authorization check:', {
       pathname,
@@ -340,7 +372,21 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
 
     // If it's a public path, allow access without authentication
     if (isPublicPath) {
+      console.log('✅ [ROUTE_GUARD] Public path access granted:', pathname);
       setAuthorizationResult(true);
+      return;
+    }
+
+    // If not logged in and not on public path, redirect to login
+    if (!user) {
+      console.log('❌ [ROUTE_GUARD] No user found, redirecting to login:', {
+        pathname,
+        authReady,
+        isLoading
+      });
+      authCheckInProgress.current = false;
+      setIsCheckingRedirect(false);
+      router.push('/login');
       return;
     }
 
@@ -370,6 +416,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
       
       // No valid owner session for owner route
       console.log('❌ [ROUTE_GUARD] No valid owner session, redirecting to owner login');
+      authCheckInProgress.current = false;
       setIsCheckingRedirect(false);
       router.push('/owner/login');
       return;
@@ -382,6 +429,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
         authReady,
         isLoading
       });
+      authCheckInProgress.current = false;
       setIsCheckingRedirect(false);
       router.push('/login');
       return;
@@ -438,12 +486,14 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     const redirectTarget = tenantRouteRedirects[pathname]?.[user.role];
     if (redirectTarget) {
       console.log(`🔄 [ROUTE_GUARD] Redirecting ${user.role} from ${pathname} to ${redirectTarget}`);
+      authCheckInProgress.current = false;
       setIsCheckingRedirect(false); // Complete redirect check
       router.push(redirectTarget);
       return;
     }
 
     // No redirect needed, continue with authorization checks
+    authCheckInProgress.current = false;
     setIsCheckingRedirect(false);
 
     // Find matching route configuration (includes /billing rule above)
@@ -463,12 +513,8 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
       console.log('✅ [ROUTE_GUARD] No route config found, allowing access');
       console.log('🔧 [ROUTE_GUARD] Setting isCheckingRedirect=false, isAuthorized=true');
       
-      // Force immediate state update
-      authCheckInProgress.current = false;
-      setTimeout(() => {
-        setIsCheckingRedirect(false);
-        setIsAuthorized(true);
-      }, 0);
+      // Use the helper function for consistent state management
+      setAuthorizationResult(true);
       return;
     }
 
@@ -522,8 +568,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
         // If we're on a subdomain (not just localhost), allow owner access
         if (subdomain && subdomain !== 'localhost' && hostname.includes('localhost')) {
           console.log('🔓 [ROUTE_GUARD] Allowing owner access to tenant route on subdomain:', subdomain);
-          setIsCheckingRedirect(false);
-          setIsAuthorized(true);
+          setAuthorizationResult(true);
           return;
         }
       }
@@ -543,11 +588,16 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
 
   // Show loading state - including while checking for redirects
   if (!authReady || isAuthorized === null || isCheckingRedirect) {
+    const loadingReason = !authReady ? 'auth not ready' : 
+                         isAuthorized === null ? 'authorization not determined' : 
+                         'checking redirects';
+    
     console.log('🔄 [ROUTE_GUARD] Showing loading state:', {
       authReady,
       isAuthorized,
       isCheckingRedirect,
       pathname,
+      loadingReason,
       breakdown: {
         'authReady_false': !authReady,
         'isAuthorized_null': isAuthorized === null,

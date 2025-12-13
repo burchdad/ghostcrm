@@ -28,9 +28,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth();
   }, []);
 
-  async function initializeAuth() {
+  async function initializeAuth(skipLoadingState = false) {
     try {
-      setIsLoading(true);
+      if (!skipLoadingState) {
+        setIsLoading(true);
+      }
       
       // Check for JWT cookie instead of localStorage
       const response = await fetch('/api/auth/me', {
@@ -115,7 +117,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Error initializing auth:', error);
       localStorage.removeItem('auth_token');
     } finally {
-      setIsLoading(false);
+      if (!skipLoadingState) {
+        setIsLoading(false);
+      }
       setAuthReady(true); // Auth initialization complete
     }
   }
@@ -140,8 +144,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, message: data.error || 'Login failed' };
       }
 
-      // If login successful, refresh auth state
-      await initializeAuth();
+      // If login successful, refresh auth state without triggering loading state
+      await initializeAuth(true);
       
       return { success: true };
       
