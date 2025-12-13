@@ -28,62 +28,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth();
   }, []);
 
-  // Prevent state loss during navigation
+  // Simple state preservation - preserve when user changes
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (user) {
-        console.log('🔒 [AUTH] Preserving user state during navigation');
-        sessionStorage.setItem('ghost_auth_state', JSON.stringify({ user, tenant }));
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && !user) {
-        console.log('🔄 [AUTH] Page visible, checking for preserved state');
-        const preserved = sessionStorage.getItem('ghost_auth_state');
-        if (preserved) {
-          try {
-            const { user: preservedUser, tenant: preservedTenant } = JSON.parse(preserved);
-            console.log('♻️ [AUTH] Restoring preserved state:', { userEmail: preservedUser?.email });
-            setUser(preservedUser);
-            setTenant(preservedTenant);
-            sessionStorage.removeItem('ghost_auth_state');
-          } catch (error) {
-            console.error('❌ [AUTH] Error restoring preserved state:', error);
-          }
-        }
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    if (user && user.email) {
+      console.log('💾 [AUTH] User state updated, preserving for navigation');
+      sessionStorage.setItem('ghost_auth_backup', JSON.stringify({ user, tenant }));
+    }
   }, [user, tenant]);
 
   async function initializeAuth(skipLoadingState = false) {
     try {
       console.log('🔧 [AUTH] initializeAuth called:', { skipLoadingState });
       
-      // Check for preserved state first (for navigation scenarios)
+      // Always check for preserved state first (for navigation scenarios)
       if (typeof window !== 'undefined') {
         const preserved = sessionStorage.getItem('ghost_auth_state');
-        if (preserved && !user) {
+        const backup = sessionStorage.getItem('ghost_auth_backup');
+        const stateToRestore = preserved || backup;
+        
+        console.log('🔍 [AUTH] Checking for preserved state:', { 
+          hasPreserved: !!preserved, 
+          hasBackup: !!backup,
+          hasCurrentUser: !!user 
+        });
+        
+        if (stateToRestore) {
           try {
-            const { user: preservedUser, tenant: preservedTenant } = JSON.parse(preserved);
-            console.log('🔄 [AUTH] Found preserved state, restoring:', { userEmail: preservedUser?.email });
-            setUser(preservedUser);
-            setTenant(preservedTenant);
-            setAuthReady(true);
-            if (!skipLoadingState) setIsLoading(false);
-            sessionStorage.removeItem('ghost_auth_state');
-            return; // Skip API call if we restored from session
+            const parsedState = JSON.parse(stateToRestore);
+            const { user: preservedUser, tenant: preservedTenant } = parsedState;
+            
+            if (preservedUser && preservedUser.email) {
+              console.log('♻️ [AUTH] Restoring preserved state:', { userEmail: preservedUser.email, userRole: preservedUser.role });
+              
+              // Create tenant from preserved user if not provided
+              const tenantToSet = preservedTenant || {
+                id: preservedUser.tenantId,
+                name: preservedUser.organizationName || 'Ghost Auto CRM',
+                domain: 'localhost',
+                type: 'dealership',
+                isActive: true,
+                subscription: {
+                  plan: 'professional',
+                  status: 'active',
+                  expiresAt: '2025-12-31'
+                }
+              };
+              
+              setUser(preservedUser);
+              setTenant(tenantToSet);
+              setAuthReady(true);
+              if (!skipLoadingState) setIsLoading(false);
+              
+              // Clean up both storage items
+              sessionStorage.removeItem('ghost_auth_state');
+              sessionStorage.removeItem('ghost_auth_backup');
+              
+              console.log('✅ [AUTH] Successfully restored from preserved state');
+              return; // Skip API call if we restored from session
+            }
           } catch (error) {
             console.error('❌ [AUTH] Error parsing preserved state:', error);
             sessionStorage.removeItem('ghost_auth_state');
+            sessionStorage.removeItem('ghost_auth_backup');
           }
         }
       }

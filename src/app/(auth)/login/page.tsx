@@ -64,11 +64,15 @@ export default function LoginPage() {
         isSubdomain
       });
       
+      // Immediately preserve state before navigation
+      console.log('🔒 [LOGIN] Preserving auth state before navigation');
+      sessionStorage.setItem('ghost_auth_state', JSON.stringify({ user, isLoading: false }));
+      
       // Small delay to ensure state propagation before navigation
       setTimeout(() => {
         console.log('🚀 [LOGIN] Executing navigation to:', redirectPath);
         router.push(redirectPath);
-      }, 100);
+      }, 50);
     }
   }, [user, isLoading, router]);
 
