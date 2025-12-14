@@ -262,7 +262,7 @@ export default function TenantOwnerInventoryPage() {
           <div className="tenant-owner-inventory-top-section">
             {/* Metrics in 2x2 Grid */}
             <div className="tenant-owner-inventory-metrics-container">
-              <div className="tenant-owner-inventory-analytics-grid-2x2">
+              <div className="tenant-owner-inventory-analytics-grid">
                 <div className="tenant-owner-inventory-analytics-card total">
                   <div className="tenant-owner-inventory-card-header">
                     <span className="tenant-owner-inventory-card-label">TOTAL ITEMS</span>
@@ -291,10 +291,10 @@ export default function TenantOwnerInventoryPage() {
                   </div>
                 </div>
 
-                <div className="tenant-owner-inventory-analytics-card warning">
+                <div className="tenant-owner-inventory-analytics-card low-stock">
                   <div className="tenant-owner-inventory-card-header">
                     <span className="tenant-owner-inventory-card-label">LOW STOCK</span>
-                    <div className="tenant-owner-inventory-card-icon warning">
+                    <div className="tenant-owner-inventory-card-icon low-stock">
                       <AlertTriangle />
                     </div>
                   </div>
@@ -305,10 +305,10 @@ export default function TenantOwnerInventoryPage() {
                   </div>
                 </div>
 
-                <div className="tenant-owner-inventory-analytics-card critical">
+                <div className="tenant-owner-inventory-analytics-card out-stock">
                   <div className="tenant-owner-inventory-card-header">
                     <span className="tenant-owner-inventory-card-label">OUT OF STOCK</span>
-                    <div className="tenant-owner-inventory-card-icon critical">
+                    <div className="tenant-owner-inventory-card-icon out-stock">
                       <AlertTriangle />
                     </div>
                   </div>
