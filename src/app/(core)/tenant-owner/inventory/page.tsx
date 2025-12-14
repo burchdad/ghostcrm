@@ -255,174 +255,193 @@ export default function TenantOwnerInventoryPage() {
   }
 
   return (
-    <div className="tenant-owner-inventory-container">
-      {/* Analytics Cards */}
-      <div className="page-header">
-        <div className="analytics-grid">
-          <Card className="analytics-card inventory">
-            <div className="card-content">
-              <div className="metric-info">
-                <h3>Total Items</h3>
-                <p className="metric-value">{analytics.totalItems}</p>
-                <p className="metric-change neutral">{inventory.length} unique products</p>
+    <div className="tenant-owner-inventory-page">
+      {/* Analytics Cards Grid with AI Assistant */}
+      <div className="tenant-owner-inventory-header">
+        <div className="tenant-owner-inventory-header-content">
+          <div className="tenant-owner-inventory-top-section">
+            {/* Metrics in 2x2 Grid */}
+            <div className="tenant-owner-inventory-metrics-container">
+              <div className="tenant-owner-inventory-analytics-grid-2x2">
+                <div className="tenant-owner-inventory-analytics-card total">
+                  <div className="tenant-owner-inventory-card-header">
+                    <span className="tenant-owner-inventory-card-label">TOTAL ITEMS</span>
+                    <div className="tenant-owner-inventory-card-icon total">
+                      <Package />
+                    </div>
+                  </div>
+                  <div className="tenant-owner-inventory-card-value">{analytics.totalItems}</div>
+                  <div className="tenant-owner-inventory-card-trend">
+                    <TrendingUp />
+                    {inventory.length} unique products
+                  </div>
+                </div>
+
+                <div className="tenant-owner-inventory-analytics-card value">
+                  <div className="tenant-owner-inventory-card-header">
+                    <span className="tenant-owner-inventory-card-label">INVENTORY VALUE</span>
+                    <div className="tenant-owner-inventory-card-icon value">
+                      <TrendingUp />
+                    </div>
+                  </div>
+                  <div className="tenant-owner-inventory-card-value">{formatCurrency(analytics.totalValue)}</div>
+                  <div className="tenant-owner-inventory-card-trend">
+                    <TrendingUp />
+                    Total asset value
+                  </div>
+                </div>
+
+                <div className="tenant-owner-inventory-analytics-card warning">
+                  <div className="tenant-owner-inventory-card-header">
+                    <span className="tenant-owner-inventory-card-label">LOW STOCK</span>
+                    <div className="tenant-owner-inventory-card-icon warning">
+                      <AlertTriangle />
+                    </div>
+                  </div>
+                  <div className="tenant-owner-inventory-card-value">{analytics.lowStock}</div>
+                  <div className="tenant-owner-inventory-card-trend">
+                    <AlertTriangle />
+                    Needs attention
+                  </div>
+                </div>
+
+                <div className="tenant-owner-inventory-analytics-card critical">
+                  <div className="tenant-owner-inventory-card-header">
+                    <span className="tenant-owner-inventory-card-label">OUT OF STOCK</span>
+                    <div className="tenant-owner-inventory-card-icon critical">
+                      <AlertTriangle />
+                    </div>
+                  </div>
+                  <div className="tenant-owner-inventory-card-value">{analytics.outOfStock}</div>
+                  <div className="tenant-owner-inventory-card-trend">
+                    <AlertTriangle />
+                    Immediate action needed
+                  </div>
+                </div>
               </div>
-              <div className="metric-icon">
-                <Package />
-              </div>
             </div>
-          </Card>
 
-        <Card className="analytics-card value">
-          <div className="card-content">
-            <div className="metric-info">
-              <h3>Inventory Value</h3>
-              <p className="metric-value">{formatCurrency(analytics.totalValue)}</p>
-              <p className="metric-change positive">Total asset value</p>
-            </div>
-            <div className="metric-icon">
-              <TrendingUp />
+            {/* AI Assistant aligned to the right */}
+            <div className="tenant-owner-inventory-ai-container">
+              <PageAIAssistant 
+                agentId="inventory"
+                pageTitle="Inventory Management"
+                entityData={{
+                  totalVehicles: inventory.length,
+                  totalValue: inventory.reduce((sum, v) => sum + (v.price || 0), 0),
+                  avgDaysOnLot: Math.round(inventory.reduce((sum, v) => sum + (v.daysOnLot || 0), 0) / Math.max(inventory.length, 1)),
+                  slowMovers: inventory.filter(v => (v.daysOnLot || 0) > 60).length
+                }}
+                className="tenant-owner-inventory-ai-assistant"
+              />
             </div>
           </div>
-        </Card>
-
-        <Card className="analytics-card warning">
-          <div className="card-content">
-            <div className="metric-info">
-              <h3>Low Stock</h3>
-              <p className="metric-value">{analytics.lowStock}</p>
-              <p className="metric-change warning">Needs attention</p>
-            </div>
-            <div className="metric-icon">
-              <AlertTriangle />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="analytics-card critical">
-          <div className="card-content">
-            <div className="metric-info">
-              <h3>Out of Stock</h3>
-              <p className="metric-value">{analytics.outOfStock}</p>
-              <p className="metric-change critical">Immediate action needed</p>
-            </div>
-            <div className="metric-icon">
-              <AlertTriangle />
-            </div>
-          </div>
-        </Card>
         </div>
       </div>
 
-      {/* AI Assistant */}
-      <PageAIAssistant 
-        agentId="inventory"
-        pageTitle="Inventory Management"
-        entityData={{
-          totalVehicles: inventory.length,
-          totalValue: inventory.reduce((sum, v) => sum + (v.price || 0), 0),
-          avgDaysOnLot: Math.round(inventory.reduce((sum, v) => sum + (v.daysOnLot || 0), 0) / Math.max(inventory.length, 1)),
-          slowMovers: inventory.filter(v => (v.daysOnLot || 0) > 60).length
-        }}
-        className="mb-6"
-      />
+      {/* Scrollable Content Container */}
+      <div className="tenant-owner-inventory-content-wrapper">
+        <div className="tenant-owner-inventory-content">
 
-      {/* Main Content Area */}
-      <div className="inventory-content">
-        {/* Controls */}
-        <div className="controls-section">
-          <div className="search-container">
-            <Search className="search-icon" />
-            <Input
-              placeholder="Search inventory by name, SKU, or category..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          </div>
-          <div className="control-actions">
-            <Button
-              variant={bulkMode ? "default" : "outline"}
-              onClick={() => setBulkMode(!bulkMode)}
-              className="bulk-mode-btn"
-            >
-              Bulk Actions
-            </Button>
-            <Button 
-              className="btn-primary"
-              onClick={() => router.push('/tenant-owner/new-inventory')}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Item
-            </Button>
+        {/* Enhanced Search and Controls */}
+        <div className="tenant-owner-inventory-controls">
+          <div className="tenant-owner-inventory-search-row">
+            <div className="tenant-owner-inventory-search-container">
+              <Search className="tenant-owner-inventory-search-icon" />
+              <Input
+                placeholder="Search inventory by name, SKU, or category..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="tenant-owner-inventory-search-input"
+              />
+            </div>
+            
+            <div className="tenant-owner-inventory-filters">
+              <Button
+                variant={bulkMode ? "default" : "outline"}
+                onClick={() => setBulkMode(!bulkMode)}
+                className="tenant-owner-inventory-bulk-mode-btn"
+              >
+                Bulk Actions
+              </Button>
+              <Button 
+                onClick={() => router.push('/tenant-owner/new-inventory')}
+                className="tenant-owner-inventory-add-btn"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Item
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Inventory Table */}
-        <Card className="inventory-table-card">
-        {filteredInventory.length === 0 ? (
-          <EmptyStateComponent
-            type="general"
-            title="No inventory items found"
-            description="Get started by adding your first inventory item or adjust your search filters."
-            actionLabel="Add Item"
-            onAction={() => {
-              router.push('/tenant-owner/new-inventory');
-            }}
-          />
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {bulkMode && <TableHead className="w-12">Select</TableHead>}
-                <TableHead>Product Name</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Unit Price</TableHead>
-                <TableHead>Total Value</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredInventory.map((item, index) => {
-                const statusBadge = getStatusBadge(item.status);
-                return (
-                  <TableRow key={item.id || index} className="inventory-row">
-                    {bulkMode && (
+        <div className="tenant-owner-inventory-table-container">
+          <Card className="tenant-owner-inventory-table-card">
+          {filteredInventory.length === 0 ? (
+            <EmptyStateComponent
+              type="general"
+              title="No inventory items found"
+              description="Get started by adding your first inventory item or adjust your search filters."
+              actionLabel="Add Item"
+              onAction={() => {
+                router.push('/tenant-owner/new-inventory');
+              }}
+            />
+          ) : (
+            <Table className="tenant-owner-inventory-table">
+              <TableHeader>
+                <TableRow>
+                  {bulkMode && <TableHead>Select</TableHead>}
+                  <TableHead>Product Name</TableHead>
+                  <TableHead>SKU</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Unit Price</TableHead>
+                  <TableHead>Total Value</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInventory.map((item, index) => {
+                  const statusBadge = getStatusBadge(item.status);
+                  return (
+                    <TableRow key={item.id || index} className="tenant-owner-inventory-row">
+                      {bulkMode && (
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            checked={selectedIdxs.includes(index)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedIdxs([...selectedIdxs, index]);
+                              } else {
+                                setSelectedIdxs(selectedIdxs.filter(i => i !== index));
+                              }
+                            }}
+                          />
+                        </TableCell>
+                      )}
+                      <TableCell className="font-medium">{item.name}</TableCell>
+                      <TableCell className="text-mono">{item.sku}</TableCell>
+                      <TableCell>{item.category}</TableCell>
+                      <TableCell className="text-center">{item.quantity}</TableCell>
+                      <TableCell>{formatCurrency(item.price)}</TableCell>
+                      <TableCell>{formatCurrency(item.quantity * item.price)}</TableCell>
                       <TableCell>
-                        <input
-                          type="checkbox"
-                          checked={selectedIdxs.includes(index)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedIdxs([...selectedIdxs, index]);
-                            } else {
-                              setSelectedIdxs(selectedIdxs.filter(i => i !== index));
-                            }
-                          }}
-                        />
+                        <span className={`tenant-owner-inventory-status-badge ${statusBadge.class}`}>
+                          {statusBadge.text}
+                        </span>
                       </TableCell>
-                    )}
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell className="text-mono">{item.sku}</TableCell>
-                    <TableCell>{item.category}</TableCell>
-                    <TableCell className="text-center">{item.quantity}</TableCell>
-                    <TableCell>{formatCurrency(item.price)}</TableCell>
-                    <TableCell>{formatCurrency(item.quantity * item.price)}</TableCell>
-                    <TableCell>
-                      <span className={`status-badge ${statusBadge.class}`}>
-                        {statusBadge.text}
-                      </span>
-                    </TableCell>
                     <TableCell>{item.location}</TableCell>
                     <TableCell>
-                      <div className="action-buttons">
+                      <div className="tenant-owner-inventory-action-buttons">
                         <Button 
                           size="sm" 
                           variant="ghost"
-                          className="action-btn view"
+                          className="tenant-owner-inventory-action-btn view"
                           onClick={() => handleViewItem(item)}
                           title="View Details"
                         >
@@ -431,7 +450,7 @@ export default function TenantOwnerInventoryPage() {
                         <Button 
                           size="sm" 
                           variant="ghost"
-                          className="action-btn edit"
+                          className="tenant-owner-inventory-action-btn edit"
                           onClick={() => handleEditItem(item)}
                           title="Edit Item"
                         >
@@ -440,7 +459,7 @@ export default function TenantOwnerInventoryPage() {
                         <Button 
                           size="sm" 
                           variant="ghost"
-                          className="action-btn qr-code"
+                          className="tenant-owner-inventory-action-btn qr-code"
                           onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
@@ -453,7 +472,7 @@ export default function TenantOwnerInventoryPage() {
                         <Button 
                           size="sm" 
                           variant="ghost"
-                          className="action-btn delete"
+                          className="tenant-owner-inventory-action-btn delete"
                           onClick={() => handleDeleteItem(item)}
                           title="Delete Item"
                         >
@@ -467,7 +486,10 @@ export default function TenantOwnerInventoryPage() {
             </TableBody>
           </Table>
         )}
-      </Card>
+        </Card>
+        </div>
+
+        </div>
       </div>
       
       {/* QR Code Management Modal */}

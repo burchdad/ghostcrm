@@ -23,8 +23,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
 
+  // Enhanced logging for state changes
+  const setUserWithLogging = (newUser: User | null) => {
+    if (newUser !== user) {
+      console.log('🔄 [AUTH] User state changing:', { 
+        from: user?.email || 'null', 
+        to: newUser?.email || 'null',
+        stack: new Error().stack?.split('\n')[1]?.trim()
+      });
+      setUser(newUser);
+    }
+  };
+
   // Initialize auth state on mount
   useEffect(() => {
+    console.log('🔧 [AUTH] AuthProvider mounted, calling initializeAuth');
     initializeAuth();
   }, []);
 
@@ -49,7 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('🔍 [AUTH] Checking for preserved state:', { 
           hasPreserved: !!preserved, 
           hasBackup: !!backup,
-          hasCurrentUser: !!user 
+          hasCurrentUser: !!user,
+          preservedLength: preserved?.length || 0,
+          backupLength: backup?.length || 0,
+          isPrivateMode: !window.indexedDB // Simple private mode detection
         });
         
         if (stateToRestore) {

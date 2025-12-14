@@ -66,7 +66,14 @@ export default function LoginPage() {
       
       // Immediately preserve state before navigation
       console.log('🔒 [LOGIN] Preserving auth state before navigation');
-      sessionStorage.setItem('ghost_auth_state', JSON.stringify({ user, tenant, isLoading: false }));
+      const stateToSave = JSON.stringify({ user, tenant, isLoading: false });
+      sessionStorage.setItem('ghost_auth_state', stateToSave);
+      console.log('💾 [LOGIN] Saved state to session storage:', { 
+        length: stateToSave.length, 
+        hasUser: !!user, 
+        hasTenant: !!tenant,
+        isPrivateMode: !window.indexedDB 
+      });
       
       // Small delay to ensure state propagation before navigation
       setTimeout(() => {
