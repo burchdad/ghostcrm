@@ -5,6 +5,10 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('🎯 [TELNYX WEBHOOK] === INCOMING WEBHOOK REQUEST ===');
+    console.log('🌐 [TELNYX WEBHOOK] Request URL:', req.url);
+    console.log('🕒 [TELNYX WEBHOOK] Request time:', new Date().toISOString());
+    
     const body = await req.json();
     console.log('🎯 [TELNYX WEBHOOK] Received event:', {
       eventType: body.data?.event_type,
