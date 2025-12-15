@@ -73,39 +73,87 @@ export function Modal({ open, onClose, title, children, footer, stackIndex = 0, 
 
   if (!open) return null;
   return (
-    <div 
-      className="modal-overlay" 
-      role="dialog" 
-      aria-modal="true" 
-      style={{ zIndex: 50 + stackIndex }}
-      onClick={(e) => {
-        // Close modal when clicking on the overlay (background)
-        if (e.target === e.currentTarget) {
-          onClose();
+    <>
+      <style>{`
+        @keyframes modalFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
-      }}
-    >
-      <div
-        ref={modalRef}
-        tabIndex={-1}
-        className="modal-container"
+        @keyframes modalSlideIn {
+          from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
+      <div 
+        role="dialog" 
+        aria-modal="true" 
         style={{ 
-          maxWidth: sizeStyles.maxWidth,
-          width: sizeStyles.width,
-          maxHeight: '90vh',
-          margin: 'auto'
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          zIndex: 50 + stackIndex,
+          animation: 'modalFadeIn 0.2s ease-out',
+          padding: '2rem 1rem',
+          boxSizing: 'border-box',
+          paddingTop: '10vh'
         }}
-        aria-label="Modal Dialog"
         onClick={(e) => {
-          // Prevent closing when clicking inside the modal content
-          e.stopPropagation();
+          // Close modal when clicking on the overlay (background)
+          if (e.target === e.currentTarget) {
+            onClose();
+          }
         }}
       >
-        {title && <h3 className="font-bold text-lg mb-2">{title}</h3>}
-        <button className="modal-close-btn" onClick={onClose} aria-label="Close Modal">✕</button>
-        <div className="modal-body">{children}</div>
-        {footer && <div className="modal-footer">{footer}</div>}
+        <div
+          ref={modalRef}
+          tabIndex={-1}
+          style={{ 
+            background: 'white',
+            borderRadius: '1.5rem',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
+            maxWidth: sizeStyles.maxWidth,
+            width: sizeStyles.width,
+            maxHeight: '80vh',
+            overflow: 'auto',
+            animation: 'modalSlideIn 0.3s ease-out',
+            position: 'relative',
+            margin: '0 auto'
+          }}
+          aria-label="Modal Dialog"
+          onClick={(e) => {
+            // Prevent closing when clicking inside the modal content
+            e.stopPropagation();
+          }}
+        >
+          {title && <h3 style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '8px' }}>{title}</h3>}
+          <button 
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              background: 'none',
+              border: 'none',
+              fontSize: '24px',
+              cursor: 'pointer',
+              padding: '4px',
+              borderRadius: '4px',
+              color: '#666',
+              zIndex: 10
+            }}
+            onClick={onClose} 
+            aria-label="Close Modal"
+          >✕</button>
+          <div style={{ padding: '1rem' }}>{children}</div>
+          {footer && <div style={{ padding: '1rem', paddingTop: 0 }}>{footer}</div>}
+        </div>
       </div>
-    </div>
+    </>)
   );
 }
