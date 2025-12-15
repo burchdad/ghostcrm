@@ -162,6 +162,3 @@ export function Modal({ open, onClose, title, children, footer, stackIndex = 0, 
     </>
   );
 }
-
-export { Modal };
-export default Modal;
