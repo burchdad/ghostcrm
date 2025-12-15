@@ -396,7 +396,8 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                         condition: vehicle.condition || "",
                         description: vehicle.description || "",
                         features: vehicle.features || "",
-                        images: vehicle.images || []
+                        images: vehicle.images || [],
+                        videos: vehicle.videos || []
                       });
                     }}
                     disabled={isLoading}
