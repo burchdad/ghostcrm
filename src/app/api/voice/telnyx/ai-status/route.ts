@@ -210,9 +210,10 @@ async function handleMachineDetection(event: any) {
       result: result
     });
     
-    // If human detected, start AI conversation
-    if (result === 'human') {
-      console.log('🤖 [AI-STATUS] Human detected, forwarding to AI handler:', event.id);
+    // Forward to AI handler for human detection OR if result is undefined/unknown
+    // This handles cases where detection fails but we still want to attempt AI conversation
+    if (result === 'human' || result === undefined || result === 'unknown') {
+      console.log('🤖 [AI-STATUS] Triggering AI conversation (human detected or uncertain):', event.id);
       
       try {
         const aiHandlerUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/voice/telnyx/ai-answer`;
@@ -246,6 +247,8 @@ async function handleMachineDetection(event: any) {
       } catch (forwardError) {
         console.error('❌ [AI-STATUS] Error forwarding to AI handler:', forwardError);
       }
+    } else {
+      console.log('📞 [AI-STATUS] Machine detected, not starting AI conversation');
     }
     
     // TODO: Update call record with machine detection result
