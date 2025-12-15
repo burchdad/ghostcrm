@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Modal } from "@/components/modals/Modal";
@@ -190,7 +191,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
 
   if (!vehicle) return null;
 
-  return (
+  const modalContent = (
     <>
       <Modal 
         open={isOpen} 
@@ -847,6 +848,9 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
       />
     </>
   );
+
+  // Use createPortal to render outside the layout constraints
+  return typeof window !== 'undefined' ? createPortal(modalContent, document.body) : null;
 };
 
 export default VehicleDetailModal;
