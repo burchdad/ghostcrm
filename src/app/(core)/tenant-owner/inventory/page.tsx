@@ -66,85 +66,32 @@ export default function TenantOwnerInventoryPage() {
           }
         }
         
-        // For now, using mock data since no inventory API exists yet
-        const mockData = [
-          { 
-            id: 1, 
-            name: "2024 Honda Civic", 
-            sku: "HC2024001", 
-            category: "Sedan", 
-            quantity: 5, 
-            price: 28500, 
-            status: "in_stock", 
-            location: "Lot A",
-            year: "2024",
-            make: "Honda", 
-            model: "Civic",
-            trim: "LX",
-            vin: "1HGBH41JXMN109186"
-          },
-          { 
-            id: 2, 
-            name: "2024 Toyota Camry", 
-            sku: "TC2024001", 
-            category: "Sedan", 
-            quantity: 8, 
-            price: 32000, 
-            status: "in_stock", 
-            location: "Lot A",
-            year: "2024",
-            make: "Toyota", 
-            model: "Camry",
-            trim: "SE",
-            vin: "4T1BE46K59U123456"
-          },
-          { 
-            id: 3, 
-            name: "2024 Ford F-150", 
-            sku: "FF2024001", 
-            category: "Truck", 
-            quantity: 3, 
-            price: 45000, 
-            status: "low_stock", 
-            location: "Lot B",
-            year: "2024",
-            make: "Ford", 
-            model: "F-150",
-            trim: "XLT",
-            vin: "1FTEW1E51JFA12345"
-          },
-          { 
-            id: 4, 
-            name: "2024 Chevrolet Equinox", 
-            sku: "CE2024001", 
-            category: "SUV", 
-            quantity: 0, 
-            price: 35000, 
-            status: "out_of_stock", 
-            location: "Lot C",
-            year: "2024",
-            make: "Chevrolet", 
-            model: "Equinox",
-            trim: "LT",
-            vin: "2GNAXKEV1L6123456"
-          },
-          { 
-            id: 5, 
-            name: "2024 BMW X3", 
-            sku: "BX2024001", 
-            category: "SUV", 
-            quantity: 12, 
-            price: 55000, 
-            status: "in_stock", 
-            location: "Premium Lot",
-            year: "2024",
-            make: "BMW", 
-            model: "X3",
-            trim: "xDrive30i",
-            vin: "5UX23DU06N9123456"
+        // Fetch real inventory data from API
+        try {
+          const inventoryResponse = await fetch('/api/inventory', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include'
+          });
+          
+          if (inventoryResponse.ok) {
+            const inventoryData = await inventoryResponse.json();
+            setInventory(inventoryData || []);
+            console.log('✅ [INVENTORY] Successfully fetched inventory data:', inventoryData?.length || 0, 'items');
+          } else {
+            throw new Error(`HTTP error! status: ${inventoryResponse.status}`);
           }
-        ];
-        setInventory(mockData);
+        } catch (inventoryError) {
+          console.error('❌ [INVENTORY] Failed to fetch inventory:', inventoryError);
+          setInventory([]);
+          toast({
+            title: "Error Loading Inventory",
+            description: "Unable to load inventory data. Please refresh the page or contact support.",
+            variant: "destructive",
+          });
+        }
       } catch (error) {
         console.error('Failed to fetch inventory:', error);
         setInventory([]);
@@ -170,18 +117,55 @@ export default function TenantOwnerInventoryPage() {
     setVehicleDetailOpen(true);
   };
 
-  const handleVehicleUpdated = () => {
-    // Refresh inventory data
-    // TODO: Implement refresh logic
-    console.log("🔄 [INVENTORY] Vehicle updated, should refresh data");
+  const handleVehicleUpdated = async () => {
+    // Refresh inventory data after vehicle update
+    try {
+      const response = await fetch('/api/inventory', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setInventory(data || []);
+        console.log('🔄 [INVENTORY] Data refreshed after vehicle update');
+      }
+    } catch (error) {
+      console.error('❌ [INVENTORY] Failed to refresh data:', error);
+    }
   };
 
-  const handleVehicleDeleted = () => {
-    // Remove vehicle from inventory state
-    if (selectedVehicle) {
-      setInventory(prev => prev.filter(item => item.id !== selectedVehicle.id));
+  const handleVehicleDeleted = async () => {
+    // Refresh inventory data after vehicle deletion
+    try {
+      const response = await fetch('/api/inventory', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setInventory(data || []);
+        console.log('🗑️ [INVENTORY] Data refreshed after vehicle deletion');
+        
+        toast({
+          title: "Vehicle Deleted",
+          description: "The vehicle has been successfully removed from inventory.",
+        });
+      }
+    } catch (error) {
+      console.error('❌ [INVENTORY] Failed to refresh data after deletion:', error);
+      // Still remove from local state as fallback
+      if (selectedVehicle) {
+        setInventory(prev => prev.filter(item => item.id !== selectedVehicle.id));
+      }
     }
-    console.log("🗑️ [INVENTORY] Vehicle deleted, updated local state");
   };
 
   const handlePrintQRCode = (item: any) => {

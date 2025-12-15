@@ -104,178 +104,28 @@ export default function TenantSalesRepInventoryPage() {
     try {
       setLoading(true);
       
-      // Mock inventory data with customer interests
-      const mockVehicles: Vehicle[] = [
-        {
-          id: '1',
-          vin: '1HGCY1F30PA123456',
-          year: 2024,
-          make: 'Honda',
-          model: 'Accord',
-          trim: 'EX',
-          bodyType: 'Sedan',
-          transmission: 'CVT',
-          fuelType: 'Gasoline',
-          mileage: 0,
-          price: 32500,
-          msrp: 34500,
-          status: 'available',
-          color: 'Pearl White',
-          interiorColor: 'Black',
-          engine: '1.5L Turbo 4-Cylinder',
-          features: ['Apple CarPlay', 'Lane Keeping Assist', 'Adaptive Cruise Control', 'Sunroof'],
-          images: ['/images/honda-accord-1.jpg'],
-          location: 'Lot A-15',
-          dateAdded: '2024-01-15',
-          interests: [
-            {
-              customerName: 'Jennifer Martinez',
-              customerEmail: 'j.martinez@email.com',
-              customerPhone: '(555) 123-4567',
-              dateOfInterest: '2024-01-20',
-              notes: 'Looking for reliable family car. Very interested.',
-              priority: 'high'
-            }
-          ],
-          assignedTo: user ? `${user.firstName} ${user.lastName}`.trim() : 'Sales Rep',
-          testDriveScheduled: true
+      // Fetch real inventory data for sales rep
+      const response = await fetch('/api/inventory/salesrep', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          id: '2',
-          vin: '4T1C11AK8PU123457',
-          year: 2024,
-          make: 'Toyota',
-          model: 'Camry',
-          trim: 'LE',
-          bodyType: 'Sedan',
-          transmission: 'Automatic',
-          fuelType: 'Gasoline',
-          mileage: 0,
-          price: 29800,
-          msrp: 31200,
-          status: 'available',
-          color: 'Midnight Black',
-          interiorColor: 'Gray',
-          engine: '2.5L 4-Cylinder',
-          features: ['Toyota Safety Sense', 'Wireless Charging', 'LED Headlights'],
-          images: ['/images/toyota-camry-1.jpg'],
-          location: 'Lot B-08',
-          dateAdded: '2024-01-18',
-          interests: [
-            {
-              customerName: 'Robert Chen',
-              customerEmail: 'r.chen@email.com',
-              customerPhone: '(555) 987-6543',
-              dateOfInterest: '2024-01-21',
-              notes: 'Price shopping. Considering multiple options.',
-              priority: 'medium'
-            },
-            {
-              customerName: 'Mary Johnson',
-              customerEmail: 'm.johnson@email.com',
-              customerPhone: '(555) 456-7890',
-              dateOfInterest: '2024-01-22',
-              notes: 'First-time buyer. Needs financing help.',
-              priority: 'high'
-            }
-          ]
-        },
-        {
-          id: '3',
-          vin: '1N6AA1E57PN123458',
-          year: 2024,
-          make: 'Nissan',
-          model: 'Altima',
-          trim: 'SR',
-          bodyType: 'Sedan',
-          transmission: 'CVT',
-          fuelType: 'Gasoline',
-          mileage: 0,
-          price: 27200,
-          msrp: 28500,
-          status: 'available',
-          color: 'Gun Metallic',
-          interiorColor: 'Black',
-          engine: '2.5L 4-Cylinder',
-          features: ['ProPILOT Assist', 'Bose Audio', 'Remote Start'],
-          images: ['/images/nissan-altima-1.jpg'],
-          location: 'Lot C-12',
-          dateAdded: '2024-01-20',
-          interests: [
-            {
-              customerName: 'Sarah Williams',
-              customerEmail: 's.williams@email.com',
-              customerPhone: '(555) 234-5678',
-              dateOfInterest: '2024-01-21',
-              notes: 'Loves the sporty look. Test drive scheduled.',
-              priority: 'high'
-            }
-          ]
-        },
-        {
-          id: '4',
-          vin: '1FTFW1ET5PKA12345',
-          year: 2024,
-          make: 'Ford',
-          model: 'F-150',
-          trim: 'XLT',
-          bodyType: 'Crew Cab',
-          transmission: 'Automatic',
-          fuelType: 'Gasoline',
-          mileage: 0,
-          price: 45200,
-          msrp: 47800,
-          status: 'available',
-          color: 'Oxford White',
-          interiorColor: 'Black',
-          engine: '3.5L EcoBoost V6',
-          features: ['4WD', 'Towing Package', 'SYNC 4', 'Bed Liner'],
-          images: ['/images/ford-f150-1.jpg'],
-          location: 'Lot D-05',
-          dateAdded: '2024-01-21',
-          interests: [
-            {
-              customerName: 'Michael Johnson',
-              customerEmail: 'm.johnson@email.com',
-              customerPhone: '(555) 345-6789',
-              dateOfInterest: '2024-01-21',
-              notes: 'Needs truck for business. Very serious buyer.',
-              priority: 'high'
-            }
-          ],
-          assignedTo: user ? `${user.firstName} ${user.lastName}`.trim() : 'Sales Rep'
-        },
-        {
-          id: '5',
-          vin: '4S4BTAFC5P3123459',
-          year: 2024,
-          make: 'Subaru',
-          model: 'Outback',
-          trim: 'Limited',
-          bodyType: 'SUV',
-          transmission: 'CVT',
-          fuelType: 'Gasoline',
-          mileage: 0,
-          price: 36800,
-          msrp: 38200,
-          status: 'available',
-          color: 'Magnetite Gray',
-          interiorColor: 'Java Brown',
-          engine: '2.5L 4-Cylinder',
-          features: ['AWD', 'EyeSight Safety', 'Harman Kardon Audio', 'Panoramic Moonroof'],
-          images: ['/images/subaru-outback-1.jpg'],
-          location: 'Lot E-20',
-          dateAdded: '2024-01-19',
-          interests: []
-        }
-      ];
-
-      setVehicles(mockVehicles);
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setVehicles(data || []);
+        console.log('✅ [INVENTORY SALES REP] Successfully fetched vehicle data');
+      } else {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
     } catch (error) {
-      console.error('Failed to load inventory:', error);
+      console.error('❌ [INVENTORY SALES REP] Failed to fetch data:', error);
+      setVehicles([]);
       toast({
-        title: "Error",
-        description: "Failed to load inventory.",
+        title: "Error Loading Inventory",
+        description: "Unable to load vehicle inventory data.",
         variant: "destructive",
       });
     } finally {

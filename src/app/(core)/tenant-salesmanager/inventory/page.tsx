@@ -50,79 +50,34 @@ export default function TenantSalesManagerInventoryPage() {
   useEffect(() => {
     async function fetchInventory() {
       try {
-        // Sales manager sees available inventory plus team assignments
-        const mockData = [
-          { 
-            id: 1, 
-            name: "2024 Honda Civic", 
-            sku: "HC2024001", 
-            category: "Sedan", 
-            quantity: 5, 
-            price: 28500, 
-            status: "available", 
-            location: "Lot A",
-            assigned_rep: null,
-            leads_interested: 3
-          },
-          { 
-            id: 2, 
-            name: "2024 Toyota Camry", 
-            sku: "TC2024001", 
-            category: "Sedan", 
-            quantity: 8, 
-            price: 32000, 
-            status: "available", 
-            location: "Lot A",
-            assigned_rep: "Sarah Johnson",
-            leads_interested: 5
-          },
-          { 
-            id: 3, 
-            name: "2024 Ford F-150", 
-            sku: "FF2024001", 
-            category: "Truck", 
-            quantity: 3, 
-            price: 45000, 
-            status: "low_stock", 
-            location: "Lot B",
-            assigned_rep: "Mike Rodriguez",
-            leads_interested: 2
-          },
-          { 
-            id: 4, 
-            name: "2024 Chevrolet Equinox", 
-            sku: "CE2024001", 
-            category: "SUV", 
-            quantity: 0, 
-            price: 35000, 
-            status: "sold_out", 
-            location: "Lot C",
-            assigned_rep: "Emily Chen",
-            leads_interested: 7
-          },
-          { 
-            id: 5, 
-            name: "2024 BMW X3", 
-            sku: "BX2024001", 
-            category: "SUV", 
-            quantity: 12, 
-            price: 55000, 
-            status: "available", 
-            location: "Premium Lot",
-            assigned_rep: null,
-            leads_interested: 4
+        // Fetch real inventory data for sales manager
+        try {
+          const response = await fetch('/api/inventory/manager', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include'
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            setInventory(data?.inventory || []);
+            setTeamAssignments(data?.teamAssignments || []);
+            console.log('✅ [INVENTORY MANAGER] Successfully fetched data');
+          } else {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
-        ];
-        setInventory(mockData);
-
-        // Team assignment data
-        const mockAssignments = [
-          { rep: "Sarah Johnson", vehicles: 3, active_leads: 8, pending_deliveries: 2 },
-          { rep: "Mike Rodriguez", vehicles: 2, active_leads: 5, pending_deliveries: 1 },
-          { rep: "Emily Chen", vehicles: 4, active_leads: 12, pending_deliveries: 3 },
-          { rep: "David Thompson", vehicles: 1, active_leads: 3, pending_deliveries: 0 }
-        ];
-        setTeamAssignments(mockAssignments);
+        } catch (error) {
+          console.error('❌ [INVENTORY MANAGER] Failed to fetch data:', error);
+          setInventory([]);
+          setTeamAssignments([]);
+          toast({
+            title: "Error Loading Inventory",
+            description: "Unable to load inventory and assignment data.",
+            variant: "destructive",
+          });
+        }
       } catch (error) {
         console.error('Failed to fetch inventory:', error);
         setInventory([]);

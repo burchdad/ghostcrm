@@ -13,12 +13,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "missing fields" }, { status: 400 });
     }
 
-    // Get Telnyx configuration from environment
+    // Get Telnyx configuration from environment with detailed logging
     const apiKey = process.env.TELNYX_API_KEY;
     const connectionId = process.env.TELNYX_CONNECTION_ID;
     const from = process.env.TELNYX_PHONE_NUMBER || process.env.BUSINESS_PHONE_NUMBER;
 
+    console.log('🔧 [TELNYX CALL START] Environment check:', {
+      hasApiKey: !!apiKey,
+      hasConnectionId: !!connectionId,
+      hasFromNumber: !!from,
+      fromNumber: from,
+      nodeEnv: process.env.NODE_ENV,
+      availableEnvVars: Object.keys(process.env).filter(key => key.includes('TELNYX')).length
+    });
+
     if (!apiKey || !connectionId || !from) {
+      console.error('❌ [TELNYX CALL START] Missing configuration:', {
+        apiKey: !!apiKey,
+        connectionId: !!connectionId,
+        from: !!from,
+        allEnvKeys: Object.keys(process.env).filter(key => key.includes('TELNYX'))
+      });
       return NextResponse.json({ 
         error: "Failed to initiate call. Please check your telephony configuration." 
       }, { status: 500 });

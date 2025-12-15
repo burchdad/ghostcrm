@@ -4,6 +4,9 @@ import { getOrgProviderAccount } from '@/lib/telephony/store';
 import { telnyxVoice } from '@/lib/telephony/providers/telnyx';
 import jwt from 'jsonwebtoken';
 
+// Force dynamic rendering for production
+export const dynamic = 'force-dynamic';
+
 // Helper function to sanitize text for telephony APIs
 function sanitizeTextForTelephony(text: string): string {
   return text
@@ -107,32 +110,75 @@ export async function POST(request: NextRequest) {
 
     // Get organization's telephony configuration
     // For now, use environment variables directly since Telnyx is configured
+    const telnyxApiKey = process.env.TELNYX_API_KEY;
+    const telnyxConnectionId = process.env.TELNYX_CONNECTION_ID;
+    const telnyxPhoneNumber = process.env.TELNYX_PHONE_NUMBER || process.env.BUSINESS_PHONE_NUMBER;
+    
+    console.log('🔧 [TELNYX CONFIG] Checking environment variables:', {
+      apiKey: telnyxApiKey ? 'Present' : 'Missing',
+      connectionId: telnyxConnectionId ? 'Present' : 'Missing', 
+      phoneNumber: telnyxPhoneNumber ? telnyxPhoneNumber : 'Missing',
+      env: process.env.NODE_ENV || 'development'
+    });
+    
     const providerAccount = {
       slug: 'telnyx',
       type: 'telnyx',
       meta: {
-        apiKey: process.env.TELNYX_API_KEY,
-        connectionId: process.env.TELNYX_CONNECTION_ID,
-        defaultFrom: process.env.TELNYX_PHONE_NUMBER
+        apiKey: telnyxApiKey,
+        connectionId: telnyxConnectionId,
+        defaultFrom: telnyxPhoneNumber
       }
     };
 
-    if (!providerAccount.meta.apiKey) {
-      console.error('❌ Telnyx API key not configured');
+    if (!providerAccount.meta.apiKey || !providerAccount.meta.connectionId || !providerAccount.meta.defaultFrom) {
+      console.error('❌ [TELNYX CONFIG] Missing required configuration:', {
+        apiKey: !!providerAccount.meta.apiKey,
+        connectionId: !!providerAccount.meta.connectionId,
+        defaultFrom: !!providerAccount.meta.defaultFrom,
+        availableEnvVars: Object.keys(process.env).filter(key => key.includes('TELNYX'))
+      });
       return NextResponse.json(
-        { error: 'Telephony service not configured' },
-        { status: 404 }
+        { error: 'Failed to initiate call. Please check your telephony configuration.' },
+        { status: 500 }
       );
     }
 
     console.log('📞 Using Telnyx provider for organization:', orgId);
+    console.log('📞 [TELNYX CONFIG] Final configuration:', {
+      provider: providerAccount.slug,
+      hasApiKey: !!providerAccount.meta.apiKey,
+      hasConnectionId: !!providerAccount.meta.connectionId,
+      fromNumber: providerAccount.meta.defaultFrom
+    });
 
     // Use configured business phone number or environment fallback
-    const fromNumber = process.env.TELNYX_PHONE_NUMBER || process.env.BUSINESS_PHONE_NUMBER || '+1XXXXXXXXXX';
+    const fromNumber = providerAccount.meta.defaultFrom;
+    
+    if (!fromNumber) {
+      console.error('❌ [TELNYX CONFIG] No phone number configured');
+      return NextResponse.json(
+        { error: 'No business phone number configured for calls.' },
+        { status: 500 }
+      );
+    }
     
     // Format the destination phone number to E.164 format
     const formattedToNumber = formatPhoneNumber(to);
-    console.log('📞 Phone number formatting:', { original: to, formatted: formattedToNumber });
+    console.log('📞 [PHONE FORMAT] Phone number formatting:', { 
+      original: to, 
+      formatted: formattedToNumber,
+      fromNumber: fromNumber
+    });
+    
+    // Validate phone numbers
+    if (!formattedToNumber || formattedToNumber.length < 10) {
+      console.error('❌ [PHONE FORMAT] Invalid destination number:', formattedToNumber);
+      return NextResponse.json(
+        { error: 'Invalid phone number format. Please check the number and try again.' },
+        { status: 400 }
+      );
+    }
 
     // Initiate call based on provider type
     let callResult;

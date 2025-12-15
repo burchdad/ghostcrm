@@ -376,43 +376,89 @@ Le llamo sobre su interés en ${vehicle}. ${budget ? `Vi que está buscando en e
     const selectedVoiceConfig = voiceCatalog[selectedGender].find(voice => voice.id === selectedVoice) || voiceCatalog.female[0];
     
     try {
-      // Call your existing telephony API
-      const response = await fetch('/api/voice/initiate-ai-call', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies for authentication
-        body: JSON.stringify({
-          to: callLead["Phone Number"],
-          leadData: {
-            name: callLead["Full Name"],
-            vehicleInterest: callLead["Vehicle Interest"],
-            stage: callLead["Stage"],
-            budgetRange: callLead["Budget Range"]
+      console.log('🚀 [AI CALL] Attempting to initiate AI call...');
+      
+      let response: Response | undefined;
+      let primaryFailed = false;
+      
+      try {
+        // Try primary endpoint first
+        console.log('🎯 [AI CALL] Trying primary endpoint: /api/voice/initiate-ai-call');
+        response = await fetch('/api/voice/initiate-ai-call', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          aiConfig: {
-            script: callScript,
-            voice: {
-              id: selectedVoiceConfig.id,
-              name: selectedVoiceConfig.name,
-              elevenLabsId: selectedVoiceConfig.elevenLabsId,
-              gender: selectedGender,
-              language: preferredLanguage
+          credentials: 'include', // Include cookies for authentication
+          body: JSON.stringify({
+            to: callLead["Phone Number"],
+            leadData: {
+              name: callLead["Full Name"],
+              vehicleInterest: callLead["Vehicle Interest"],
+              stage: callLead["Stage"],
+              budgetRange: callLead["Budget Range"]
             },
-            personalityMode: 'adaptive',
-            multilingualEnabled: true,
-            supportedLanguages: ['en', 'es']
-          }
-        }),
-      });
+            aiConfig: {
+              script: callScript,
+              voice: {
+                id: selectedVoiceConfig.id,
+                name: selectedVoiceConfig.name,
+                elevenLabsId: selectedVoiceConfig.elevenLabsId,
+                gender: selectedGender,
+                language: preferredLanguage
+              },
+              personalityMode: 'adaptive',
+              multilingualEnabled: true,
+              supportedLanguages: ['en', 'es']
+            }
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error(`Call initiation failed: ${response.status}`);
+        if (response.status === 404) {
+          console.warn('❌ [AI CALL] Primary endpoint returned 404');
+          primaryFailed = true;
+        }
+      } catch (fetchError) {
+        console.warn('❌ [AI CALL] Primary endpoint fetch failed:', fetchError);
+        primaryFailed = true;
+      }
+
+      // If primary endpoint fails with 404 or other errors, try fallback endpoint
+      if (primaryFailed || !response || !response.ok) {
+        console.warn('⚠️ [AI CALL] Primary endpoint failed, trying fallback endpoint...');
+        try {
+          console.log('🔄 [AI CALL] Trying fallback endpoint: /api/voice/call/start');
+          response = await fetch('/api/voice/call/start', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              to: callLead["Phone Number"],
+              script: callScript,
+              leadId: callLead["ID"] || callLead["id"] || null
+            }),
+          });
+          console.log('📡 [AI CALL] Fallback endpoint response status:', response.status);
+        } catch (fallbackError) {
+          console.error('❌ [AI CALL] Fallback endpoint also failed:', fallbackError);
+          throw new Error('Both primary and fallback endpoints failed');
+        }
+      }
+
+      if (!response || !response.ok) {
+        const errorData = response ? await response.json().catch(() => ({})) : {};
+        console.error('❌ [AI CALL] Call initiation failed:', {
+          status: response?.status,
+          statusText: response?.statusText,
+          error: errorData
+        });
+        throw new Error(`Call initiation failed: ${response?.status || 'unknown'} - ${errorData.error || response?.statusText || 'unknown error'}`);
       }
 
       const result = await response.json();
-      console.log('AI call initiated:', result);
+      console.log('✅ [AI CALL] Call initiated successfully:', result);
       
       // Call the parent handler to update UI state
       handleCallAction();

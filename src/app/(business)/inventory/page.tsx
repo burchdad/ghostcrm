@@ -35,155 +35,6 @@ interface Vehicle {
   assignedSalesRep?: string; // For sales rep assignment
 }
 
-// Sample vehicle data with tenant isolation
-const sampleVehicles: Vehicle[] = [
-  {
-    id: 'VH001',
-    vin: '1HGBH41JXMN109186',
-    make: 'Honda',
-    model: 'Accord',
-    year: 2023,
-    trim: 'Sport',
-    color: 'Sonic Gray Pearl',
-    mileage: 15420,
-    price: 28500,
-    cost: 25200,
-    status: 'available',
-    location: 'Lot A-15',
-    dateAdded: '2024-09-15',
-    lastUpdated: '2024-10-20',
-    condition: 'used',
-    fuelType: 'Gasoline',
-    transmission: 'CVT',
-    bodyType: 'Sedan',
-    engine: '1.5L Turbo',
-    photos: ['/images/honda-accord-1.jpg'],
-    tenantId: 'honda-downtown',
-    assignedSalesRep: 'sarah.johnson@honda-downtown.com'
-  },
-  {
-    id: 'VH002',
-    vin: '1FTFW1ET5DFC12345',
-    make: 'Ford',
-    model: 'F-150',
-    year: 2024,
-    trim: 'Lariat',
-    color: 'Oxford White',
-    mileage: 0,
-    price: 52900,
-    cost: 48500,
-    status: 'available',
-    location: 'Showroom',
-    dateAdded: '2024-10-01',
-    lastUpdated: '2024-10-25',
-    condition: 'new',
-    fuelType: 'Gasoline',
-    transmission: 'Automatic',
-    bodyType: 'Truck',
-    engine: '3.5L V6 EcoBoost',
-    photos: ['/images/ford-f150-1.jpg'],
-    tenantId: 'ford-city',
-    assignedSalesRep: 'mike.chen@ford-city.com'
-  },
-  {
-    id: 'VH003',
-    vin: '1G1BE5SM3H7123456',
-    make: 'Chevrolet',
-    model: 'Malibu',
-    year: 2022,
-    trim: 'LT',
-    color: 'Summit White',
-    mileage: 28750,
-    price: 22900,
-    cost: 20100,
-    status: 'sold',
-    location: 'Lot B-08',
-    dateAdded: '2024-08-20',
-    lastUpdated: '2024-10-22',
-    condition: 'used',
-    fuelType: 'Gasoline',
-    transmission: 'CVT',
-    bodyType: 'Sedan',
-    engine: '1.5L Turbo',
-    photos: ['/images/chevy-malibu-1.jpg'],
-    tenantId: 'chevrolet-valley',
-    assignedSalesRep: 'alex.rodriguez@chevrolet-valley.com'
-  },
-  {
-    id: 'VH004',
-    vin: 'JTDKARFP0H3123789',
-    make: 'Toyota',
-    model: 'Prius',
-    year: 2023,
-    trim: 'LE',
-    color: 'Blueprint',
-    mileage: 12350,
-    price: 27400,
-    cost: 24800,
-    status: 'pending',
-    location: 'Lot A-22',
-    dateAdded: '2024-09-30',
-    lastUpdated: '2024-10-26',
-    condition: 'certified',
-    fuelType: 'Hybrid',
-    transmission: 'CVT',
-    bodyType: 'Hatchback',
-    engine: '1.8L Hybrid',
-    photos: ['/images/toyota-prius-1.jpg'],
-    tenantId: 'toyota-central',
-    assignedSalesRep: 'lisa.wang@toyota-central.com'
-  },
-  {
-    id: 'VH005',
-    vin: '1C4RJFBG8KC123456',
-    make: 'Jeep',
-    model: 'Grand Cherokee',
-    year: 2021,
-    trim: 'Limited',
-    color: 'Granite Crystal',
-    mileage: 45600,
-    price: 34900,
-    cost: 31200,
-    status: 'needs_attention',
-    location: 'Service Bay 2',
-    dateAdded: '2024-09-05',
-    lastUpdated: '2024-10-24',
-    condition: 'used',
-    fuelType: 'Gasoline',
-    transmission: 'Automatic',
-    bodyType: 'SUV',
-    engine: '3.6L V6',
-    photos: ['/images/jeep-cherokee-1.jpg'],
-    notes: 'Needs brake service and tire rotation',
-    tenantId: 'jeep-west',
-    assignedSalesRep: 'david.kim@jeep-west.com'
-  },
-  {
-    id: 'VH006',
-    vin: '5NPE34AF4KH123789',
-    make: 'Hyundai',
-    model: 'Sonata',
-    year: 2023,
-    trim: 'SEL',
-    color: 'Quartz White',
-    mileage: 8900,
-    price: 26800,
-    cost: 24200,
-    status: 'available',
-    location: 'Lot B-15',
-    dateAdded: '2024-10-10',
-    lastUpdated: '2024-10-26',
-    condition: 'used',
-    fuelType: 'Gasoline',
-    transmission: 'Automatic',
-    bodyType: 'Sedan',
-    engine: '2.5L',
-    photos: ['/images/hyundai-sonata-1.jpg'],
-    tenantId: 'hyundai-north',
-    assignedSalesRep: 'emma.brown@hyundai-north.com'
-  }
-];
-
 // Helper function to get tenant-aware route based on user role
 function getTenantRoute(user: any, basePath: string): string {
   if (!user || !user.role) return basePath;
@@ -482,21 +333,31 @@ function InventoryContent() {
   };
   
   useEffect(() => {
-    let filteredVehicles = sampleVehicles;
+    const loadInventory = async () => {
+      try {
+        const response = await fetch('/api/inventory/business', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setVehicles(data || []);
+          console.log('✅ [BUSINESS INVENTORY] Successfully fetched vehicle data');
+        } else {
+          console.error('❌ [BUSINESS INVENTORY] Failed to fetch data:', response.status);
+          setVehicles([]);
+        }
+      } catch (error) {
+        console.error('❌ [BUSINESS INVENTORY] Failed to fetch data:', error);
+        setVehicles([]);
+      }
+    };
     
-    // Apply tenant filtering - sales reps only see their company's vehicles
-    if (user?.tenantId) {
-      filteredVehicles = filterDataByTenant(sampleVehicles, user.tenantId);
-    }
-    
-    // For sales reps, additionally filter to only show vehicles assigned to them
-    if (isSalesRep && user?.email) {
-      filteredVehicles = filteredVehicles.filter(vehicle => 
-        vehicle.assignedSalesRep === user.email || !vehicle.assignedSalesRep
-      );
-    }
-    
-    setVehicles(filteredVehicles);
+    loadInventory();
   }, [user, isSalesRep]);
   
   // Real-time analytics (scaffolded) - generate only on client

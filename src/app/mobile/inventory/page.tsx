@@ -49,55 +49,26 @@ export default function MobileInventory() {
 
   const loadInventory = async () => {
     try {
-      // Simulate API call
-      const mockVehicles: Vehicle[] = [
-        {
-          id: '1',
-          make: 'Honda',
-          model: 'Civic',
-          year: 2024,
-          price: 28500,
-          mileage: 12000,
-          color: 'Silver',
-          vin: '1HGBH41JXMN109186',
-          status: 'available',
-          location: 'Lot A-1',
-          images: ['/api/placeholder/300/200'],
-          qrCode: 'QR001'
+      // Fetch real inventory data for mobile
+      const response = await fetch('/api/inventory/mobile', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          id: '2',
-          make: 'Toyota',
-          model: 'Camry',
-          year: 2023,
-          price: 32000,
-          mileage: 8500,
-          color: 'Blue',
-          vin: '4T1BF1FK5EU123456',
-          status: 'pending',
-          location: 'Lot B-3',
-          images: ['/api/placeholder/300/200'],
-          qrCode: 'QR002'
-        },
-        {
-          id: '3',
-          make: 'Ford',
-          model: 'F-150',
-          year: 2024,
-          price: 45000,
-          mileage: 5200,
-          color: 'Red',
-          vin: '1FTFW1ET5DFC12345',
-          status: 'available',
-          location: 'Lot C-5',
-          images: ['/api/placeholder/300/200'],
-          qrCode: 'QR003'
-        }
-      ];
+        credentials: 'include'
+      });
 
-      let filteredVehicles = mockVehicles;
+      let vehicleData: Vehicle[] = [];
+      if (response.ok) {
+        vehicleData = await response.json();
+        console.log('✅ [MOBILE INVENTORY] Successfully fetched vehicle data');
+      } else {
+        console.error('❌ [MOBILE INVENTORY] Failed to fetch data:', response.status);
+        vehicleData = [];
+      }
 
       // Apply status filter
+      let filteredVehicles = vehicleData;
       if (filter !== 'all') {
         filteredVehicles = filteredVehicles.filter(v => v.status === filter);
       }
