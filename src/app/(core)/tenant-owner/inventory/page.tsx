@@ -163,13 +163,26 @@ export default function TenantOwnerInventoryPage() {
 
   // Action handlers for inventory items
   const handleViewItem = (item: any) => {
-    // Navigate to detailed view
-    router.push(`/tenant-owner/inventory/${item.id || item.sku}`);
+    // Show detailed view in a toast/modal for now
+    // TODO: Create dedicated view page at /tenant-owner/inventory/[id]
+    toast({
+      title: `${item.name} Details`,
+      description: `SKU: ${item.sku} | Category: ${item.category} | Quantity: ${item.quantity} | Price: ${formatCurrency(item.price)} | Location: ${item.location}`,
+      duration: 5000,
+    });
   };
 
   const handleEditItem = (item: any) => {
-    // Navigate to edit page
-    router.push(`/tenant-owner/inventory/edit/${item.id || item.sku}`);
+    // Navigate to new-inventory page with edit query params
+    // TODO: Create dedicated edit page at /tenant-owner/inventory/edit/[id]
+    toast({
+      title: "Edit Feature",
+      description: `Editing ${item.name} - This will redirect to edit form (coming soon)`,
+      duration: 3000,
+    });
+    
+    // For now, you could redirect to new-inventory with query params
+    // router.push(`/tenant-owner/new-inventory?edit=${item.id}&sku=${item.sku}`);
   };
 
   const handleDeleteItem = async (item: any) => {
