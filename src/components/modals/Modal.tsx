@@ -159,7 +159,7 @@ export function Modal({ open, onClose, title, children, footer, stackIndex = 0, 
           {footer && <div style={{ padding: '1rem', paddingTop: 0 }}>{footer}</div>}
         </div>
       </div>
-    </>)
+    </>
   );
 }
 
