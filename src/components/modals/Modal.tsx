@@ -83,6 +83,10 @@ export function Modal({ open, onClose, title, children, footer, stackIndex = 0, 
           from { opacity: 0; transform: translateY(-20px) scale(0.95); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
+        .modal-container-wide {
+          max-width: 98vw !important;
+          width: 98% !important;
+        }
       `}</style>
       <div 
         role="dialog" 
@@ -114,12 +118,13 @@ export function Modal({ open, onClose, title, children, footer, stackIndex = 0, 
         <div
           ref={modalRef}
           tabIndex={-1}
+          className={size === 'max' ? 'modal-container-wide' : ''}
           style={{ 
             background: 'white',
             borderRadius: '1.5rem',
             boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
-            maxWidth: `${sizeStyles.maxWidth} !important`,
-            width: `${sizeStyles.width} !important`,
+            maxWidth: sizeStyles.maxWidth,
+            width: sizeStyles.width,
             maxHeight: '80vh',
             overflow: 'auto',
             animation: 'modalSlideIn 0.3s ease-out',
