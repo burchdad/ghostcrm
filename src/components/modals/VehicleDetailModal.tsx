@@ -278,25 +278,42 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
           </div>
 
           {/* Status and Pricing Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-xl shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-500">Status</span>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(formData.status).class}`}>
-                  {getStatusBadge(formData.status).text}
-                </span>
+                <div>
+                  <p className="text-sm font-medium text-blue-600 uppercase tracking-wide">Status</p>
+                  <div className="mt-2">
+                    <span className={`px-3 py-2 rounded-lg text-sm font-semibold ${getStatusBadge(formData.status).class} shadow-sm`}>
+                      {getStatusBadge(formData.status).text}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <Car className="h-6 w-6 text-blue-600" />
+                </div>
               </div>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 p-6 rounded-xl shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-500">Price</span>
-                <span className="text-lg font-semibold text-gray-900">{formatCurrency(formData.price)}</span>
+                <div>
+                  <p className="text-sm font-medium text-green-600 uppercase tracking-wide">Price</p>
+                  <p className="text-2xl font-bold text-green-900 mt-1">{formatCurrency(formData.price)}</p>
+                </div>
+                <div className="p-3 bg-green-100 rounded-lg">
+                  <DollarSign className="h-6 w-6 text-green-600" />
+                </div>
               </div>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 p-6 rounded-xl shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-500">Quantity</span>
-                <span className="text-lg font-semibold text-gray-900">{formData.quantity}</span>
+                <div>
+                  <p className="text-sm font-medium text-purple-600 uppercase tracking-wide">Quantity</p>
+                  <p className="text-2xl font-bold text-purple-900 mt-1">{formData.quantity}</p>
+                </div>
+                <div className="p-3 bg-purple-100 rounded-lg">
+                  <Package className="h-6 w-6 text-purple-600" />
+                </div>
               </div>
             </div>
           </div>
