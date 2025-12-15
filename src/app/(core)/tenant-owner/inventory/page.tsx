@@ -13,6 +13,7 @@ import EmptyStateComponent from "@/components/feedback/EmptyStateComponent";
 import { useI18n } from "@/components/utils/I18nProvider";
 import { useToast } from "@/hooks/use-toast";
 import QRCodeModal from "@/components/inventory/QRCodeModal";
+import VehicleDetailModal from "@/components/modals/VehicleDetailModal";
 import PageAIAssistant from "@/components/ai/PageAIAssistant";
 import "./page.css";
 
@@ -45,6 +46,7 @@ export default function TenantOwnerInventoryPage() {
   const [selectedIdxs, setSelectedIdxs] = useState<number[]>([]);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
+  const [vehicleDetailOpen, setVehicleDetailOpen] = useState(false);
 
   // Check if user is owner
   if (user && !['owner'].includes(user.role)) {
@@ -161,51 +163,25 @@ export default function TenantOwnerInventoryPage() {
     item.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Action handlers for inventory items
-  const handleViewItem = (item: any) => {
-    // Show detailed view in a toast/modal for now
-    // TODO: Create dedicated view page at /tenant-owner/inventory/[id]
-    toast({
-      title: `${item.name} Details`,
-      description: `SKU: ${item.sku} | Category: ${item.category} | Quantity: ${item.quantity} | Price: ${formatCurrency(item.price)} | Location: ${item.location}`,
-      duration: 5000,
-    });
+  // Handle row click to open vehicle details
+  const handleVehicleClick = (vehicle: any) => {
+    console.log("🚗 [VEHICLE] Opening vehicle details for:", vehicle);
+    setSelectedVehicle(vehicle);
+    setVehicleDetailOpen(true);
   };
 
-  const handleEditItem = (item: any) => {
-    // Navigate to new-inventory page with edit query params
-    // TODO: Create dedicated edit page at /tenant-owner/inventory/edit/[id]
-    toast({
-      title: "Edit Feature",
-      description: `Editing ${item.name} - This will redirect to edit form (coming soon)`,
-      duration: 3000,
-    });
-    
-    // For now, you could redirect to new-inventory with query params
-    // router.push(`/tenant-owner/new-inventory?edit=${item.id}&sku=${item.sku}`);
+  const handleVehicleUpdated = () => {
+    // Refresh inventory data
+    // TODO: Implement refresh logic
+    console.log("🔄 [INVENTORY] Vehicle updated, should refresh data");
   };
 
-  const handleDeleteItem = async (item: any) => {
-    if (window.confirm(`Are you sure you want to delete ${item.name}? This action cannot be undone.`)) {
-      try {
-        // Here you would call your delete API
-        // await fetch(`/api/inventory/${item.id}`, { method: 'DELETE' });
-        
-        // For now, remove from state (mock deletion)
-        setInventory(prev => prev.filter(inv => inv.id !== item.id));
-        
-        toast({
-          title: "Item Deleted",
-          description: `${item.name} has been removed from inventory.`,
-        });
-      } catch (error) {
-        toast({
-          title: "Delete Failed",
-          description: "Unable to delete item. Please try again.",
-          variant: "destructive"
-        });
-      }
+  const handleVehicleDeleted = () => {
+    // Remove vehicle from inventory state
+    if (selectedVehicle) {
+      setInventory(prev => prev.filter(item => item.id !== selectedVehicle.id));
     }
+    console.log("🗑️ [INVENTORY] Vehicle deleted, updated local state");
   };
 
   const handlePrintQRCode = (item: any) => {
@@ -414,16 +390,20 @@ export default function TenantOwnerInventoryPage() {
                   <TableHead>Total Value</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Location</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="text-center">QR Code</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredInventory.map((item, index) => {
                   const statusBadge = getStatusBadge(item.status);
                   return (
-                    <TableRow key={item.id || index} className="tenant-owner-inventory-row">
+                    <TableRow 
+                      key={item.id || index} 
+                      className="tenant-owner-inventory-row cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => handleVehicleClick(item)}
+                    >
                       {bulkMode && (
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             checked={selectedIdxs.includes(index)}
@@ -448,27 +428,8 @@ export default function TenantOwnerInventoryPage() {
                           {statusBadge.text}
                         </span>
                       </TableCell>
-                    <TableCell>{item.location}</TableCell>
-                    <TableCell>
-                      <div className="tenant-owner-inventory-action-buttons">
-                        <Button 
-                          size="sm" 
-                          variant="ghost"
-                          className="tenant-owner-inventory-action-btn view"
-                          onClick={() => handleViewItem(item)}
-                          title="View Details"
-                        >
-                          <Eye className="icon-sm" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost"
-                          className="tenant-owner-inventory-action-btn edit"
-                          onClick={() => handleEditItem(item)}
-                          title="Edit Item"
-                        >
-                          <Edit className="icon-sm" />
-                        </Button>
+                      <TableCell>{item.location}</TableCell>
+                      <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                         <Button 
                           size="sm" 
                           variant="ghost"
@@ -482,18 +443,8 @@ export default function TenantOwnerInventoryPage() {
                         >
                           <QrCode className="icon-sm" />
                         </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost"
-                          className="tenant-owner-inventory-action-btn delete"
-                          onClick={() => handleDeleteItem(item)}
-                          title="Delete Item"
-                        >
-                          <Trash2 className="icon-sm" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                    </TableRow>
                 );
               })}
             </TableBody>
@@ -513,6 +464,18 @@ export default function TenantOwnerInventoryPage() {
           setSelectedVehicle(null);
         }}
         vehicle={selectedVehicle}
+      />
+
+      {/* Vehicle Detail Modal */}
+      <VehicleDetailModal 
+        isOpen={vehicleDetailOpen}
+        onClose={() => {
+          setVehicleDetailOpen(false);
+          setSelectedVehicle(null);
+        }}
+        vehicle={selectedVehicle}
+        onVehicleUpdated={handleVehicleUpdated}
+        onVehicleDeleted={handleVehicleDeleted}
       />
     </div>
   );
