@@ -130,6 +130,13 @@ async function handleCallAnswered(event: any) {
         })
       });
       
+      const responseText = await response.text();
+      console.log('🔍 [AI-STATUS] AI handler response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseText
+      });
+      
       if (!response.ok) {
         console.error('❌ [AI-STATUS] Failed to forward to AI handler:', response.statusText);
       } else {
@@ -202,6 +209,44 @@ async function handleMachineDetection(event: any) {
       callId: event.id,
       result: result
     });
+    
+    // If human detected, start AI conversation
+    if (result === 'human') {
+      console.log('🤖 [AI-STATUS] Human detected, forwarding to AI handler:', event.id);
+      
+      try {
+        const aiHandlerUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/voice/telnyx/ai-answer`;
+        console.log('🔗 [AI-STATUS] Forwarding to:', aiHandlerUrl);
+        
+        const response = await fetch(aiHandlerUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            data: {
+              ...event,
+              event_type: 'call.answered' // Simulate answered event for AI handler
+            }
+          })
+        });
+        
+        const responseText = await response.text();
+        console.log('🔍 [AI-STATUS] AI handler response:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: responseText
+        });
+        
+        if (!response.ok) {
+          console.error('❌ [AI-STATUS] Failed to forward to AI handler:', response.statusText);
+        } else {
+          console.log('✅ [AI-STATUS] Successfully forwarded to AI handler');
+        }
+      } catch (forwardError) {
+        console.error('❌ [AI-STATUS] Error forwarding to AI handler:', forwardError);
+      }
+    }
     
     // TODO: Update call record with machine detection result
     /*
