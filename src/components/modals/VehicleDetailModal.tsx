@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Modal } from "@/components/modals/Modal";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -171,13 +170,22 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
   };
 
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      'in_stock': { class: 'bg-green-100 text-green-800', text: 'In Stock' },
-      'low_stock': { class: 'bg-yellow-100 text-yellow-800', text: 'Low Stock' },
-      'out_of_stock': { class: 'bg-red-100 text-red-800', text: 'Out of Stock' }
+  const getStatusText = (status: string) => {
+    const statusTexts = {
+      'in_stock': 'In Stock',
+      'low_stock': 'Low Stock',
+      'out_of_stock': 'Out of Stock'
     };
-    return badges[status] || { class: 'bg-gray-100 text-gray-800', text: status };
+    return statusTexts[status] || status;
+  };
+
+  const getStatusBadgeStyles = (status: string) => {
+    const styles = {
+      'in_stock': { backgroundColor: '#dcfce7', color: '#166534' },
+      'low_stock': { backgroundColor: '#fef3c7', color: '#92400e' },
+      'out_of_stock': { backgroundColor: '#fecaca', color: '#991b1b' }
+    };
+    return styles[status] || { backgroundColor: '#f3f4f6', color: '#374151' };
   };
 
   if (!vehicle) return null;
@@ -188,51 +196,106 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
         open={isOpen} 
         onClose={onClose} 
         title={isEditing ? `Edit ${vehicle.name}` : vehicle.name}
-        size="xl"
+        size="max"
       >
-        <div className="space-y-6 max-h-[80vh] overflow-y-auto">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxHeight: '80vh', overflowY: 'auto' }}>
           {/* Header Actions */}
-          <div className="flex items-center justify-between border-b pb-4">
-            <div className="flex items-center space-x-2">
-              <Car className="h-5 w-5 text-blue-600" />
-              <span className="text-sm font-medium text-gray-500">VIN: {vehicle.vin}</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb', paddingBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Car style={{ height: '20px', width: '20px', color: '#2563eb' }} />
+              <span style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>VIN: {vehicle.vin}</span>
             </div>
-            <div className="flex items-center space-x-2">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {!isEditing ? (
                 <>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
                     onClick={() => setShowQRModal(true)}
-                    className="flex items-center space-x-1"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '8px 12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#374151',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f9fafb';
+                      e.currentTarget.style.borderColor = '#9ca3af';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#ffffff';
+                      e.currentTarget.style.borderColor = '#d1d5db';
+                    }}
                   >
-                    <QrCode className="h-4 w-4" />
+                    <QrCode style={{ height: '16px', width: '16px' }} />
                     <span>QR Code</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  </button>
+                  <button
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center space-x-1"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '8px 12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#374151',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f9fafb';
+                      e.currentTarget.style.borderColor = '#9ca3af';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#ffffff';
+                      e.currentTarget.style.borderColor = '#d1d5db';
+                    }}
                   >
-                    <Edit3 className="h-4 w-4" />
+                    <Edit3 style={{ height: '16px', width: '16px' }} />
                     <span>Edit</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  </button>
+                  <button
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="flex items-center space-x-1 text-red-600 border-red-300 hover:bg-red-50"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '8px 12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#dc2626',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #fca5a5',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#fef2f2';
+                      e.currentTarget.style.borderColor = '#f87171';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#ffffff';
+                      e.currentTarget.style.borderColor = '#fca5a5';
+                    }}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 style={{ height: '16px', width: '16px' }} />
                     <span>Delete</span>
-                  </Button>
+                  </button>
                 </>
               ) : (
                 <>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
                     onClick={() => {
                       setIsEditing(false);
                       // Reset form data
@@ -260,74 +323,184 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                       });
                     }}
                     disabled={isLoading}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '8px 12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#374151',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      opacity: isLoading ? '0.5' : '1',
+                      transition: 'all 0.2s'
+                    }}
                   >
                     Cancel
-                  </Button>
-                  <Button
-                    size="sm"
+                  </button>
+                  <button
                     onClick={handleSave}
                     disabled={isLoading}
-                    className="flex items-center space-x-1"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '8px 16px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#ffffff',
+                      backgroundColor: '#2563eb',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      opacity: isLoading ? '0.5' : '1',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isLoading) {
+                        e.currentTarget.style.backgroundColor = '#1d4ed8';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isLoading) {
+                        e.currentTarget.style.backgroundColor = '#2563eb';
+                      }
+                    }}
                   >
-                    <Save className="h-4 w-4" />
+                    <Save style={{ height: '16px', width: '16px' }} />
                     <span>{isLoading ? "Saving..." : "Save"}</span>
-                  </Button>
+                  </button>
                 </>
               )}
             </div>
           </div>
 
           {/* Status and Pricing Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-xl shadow-sm">
-              <div className="flex items-center justify-between">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+              border: '1px solid #93c5fd',
+              padding: '24px',
+              borderRadius: '12px',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p className="text-sm font-medium text-blue-600 uppercase tracking-wide">Status</p>
-                  <div className="mt-2">
-                    <span className={`px-3 py-2 rounded-lg text-sm font-semibold ${getStatusBadge(formData.status).class} shadow-sm`}>
-                      {getStatusBadge(formData.status).text}
+                  <p style={{ 
+                    fontSize: '14px', 
+                    fontWeight: '500', 
+                    color: '#2563eb', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.05em' 
+                  }}>Status</p>
+                  <div style={{ marginTop: '8px' }}>
+                    <span style={{
+                      ...getStatusBadgeStyles(formData.status),
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+                    }}>
+                      {getStatusText(formData.status)}
                     </span>
                   </div>
                 </div>
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <Car className="h-6 w-6 text-blue-600" />
+                <div style={{
+                  padding: '12px',
+                  backgroundColor: '#dbeafe',
+                  borderRadius: '8px'
+                }}>
+                  <Car style={{ height: '24px', width: '24px', color: '#2563eb' }} />
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 p-6 rounded-xl shadow-sm">
-              <div className="flex items-center justify-between">
+            <div style={{
+              background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+              border: '1px solid #86efac',
+              padding: '24px',
+              borderRadius: '12px',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p className="text-sm font-medium text-green-600 uppercase tracking-wide">Price</p>
-                  <p className="text-2xl font-bold text-green-900 mt-1">{formatCurrency(formData.price)}</p>
+                  <p style={{ 
+                    fontSize: '14px', 
+                    fontWeight: '500', 
+                    color: '#16a34a', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.05em' 
+                  }}>Price</p>
+                  <p style={{ 
+                    fontSize: '24px', 
+                    fontWeight: '700', 
+                    color: '#14532d', 
+                    marginTop: '4px' 
+                  }}>{formatCurrency(formData.price)}</p>
                 </div>
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <DollarSign className="h-6 w-6 text-green-600" />
+                <div style={{
+                  padding: '12px',
+                  backgroundColor: '#dcfce7',
+                  borderRadius: '8px'
+                }}>
+                  <DollarSign style={{ height: '24px', width: '24px', color: '#16a34a' }} />
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 p-6 rounded-xl shadow-sm">
-              <div className="flex items-center justify-between">
+            <div style={{
+              background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
+              border: '1px solid #c084fc',
+              padding: '24px',
+              borderRadius: '12px',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p className="text-sm font-medium text-purple-600 uppercase tracking-wide">Quantity</p>
-                  <p className="text-2xl font-bold text-purple-900 mt-1">{formData.quantity}</p>
+                  <p style={{ 
+                    fontSize: '14px', 
+                    fontWeight: '500', 
+                    color: '#9333ea', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.05em' 
+                  }}>Quantity</p>
+                  <p style={{ 
+                    fontSize: '24px', 
+                    fontWeight: '700', 
+                    color: '#581c87', 
+                    marginTop: '4px' 
+                  }}>{formData.quantity}</p>
                 </div>
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <Package className="h-6 w-6 text-purple-600" />
+                <div style={{
+                  padding: '12px',
+                  backgroundColor: '#f3e8ff',
+                  borderRadius: '8px'
+                }}>
+                  <Package style={{ height: '24px', width: '24px', color: '#9333ea' }} />
                 </div>
               </div>
             </div>
           </div>
 
           {/* Vehicle Information Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
             {/* Basic Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Package className="h-5 w-5 mr-2 text-blue-600" />
+            <div style={{ marginBottom: '16px' }}>
+              <h3 style={{ 
+                fontSize: '18px', 
+                fontWeight: '600', 
+                color: '#111827', 
+                display: 'flex', 
+                alignItems: 'center',
+                marginBottom: '16px'
+              }}>
+                <Package style={{ height: '20px', width: '20px', marginRight: '8px', color: '#2563eb' }} />
                 Basic Information
               </h3>
               
-              <div className="space-y-3">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
                 <div>
                   <Label htmlFor="name">Product Name</Label>
                   {isEditing ? (
@@ -338,7 +511,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                       disabled={isLoading}
                     />
                   ) : (
-                    <div className="mt-1 text-sm text-gray-900">{formData.name}</div>
+                    <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.name}</div>
                   )}
                 </div>
 
@@ -352,7 +525,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                       disabled={isLoading}
                     />
                   ) : (
-                    <div className="mt-1 text-sm text-gray-900 font-mono">{formData.sku}</div>
+                    <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827', fontFamily: 'monospace' }}>{formData.sku}</div>
                   )}
                 </div>
 
@@ -373,7 +546,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                       </SelectContent>
                     </Select>
                   ) : (
-                    <div className="mt-1 text-sm text-gray-900">{formData.category}</div>
+                    <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.category}</div>
                   )}
                 </div>
 
@@ -387,21 +560,28 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                       disabled={isLoading}
                     />
                   ) : (
-                    <div className="mt-1 text-sm text-gray-900">{formData.location}</div>
+                    <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.location}</div>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Vehicle Details */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Car className="h-5 w-5 mr-2 text-blue-600" />
+            <div style={{ marginBottom: '16px' }}>
+              <h3 style={{ 
+                fontSize: '18px', 
+                fontWeight: '600', 
+                color: '#111827', 
+                display: 'flex', 
+                alignItems: 'center',
+                marginBottom: '16px'
+              }}>
+                <Car style={{ height: '20px', width: '20px', marginRight: '8px', color: '#2563eb' }} />
                 Vehicle Details
               </h3>
               
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <Label htmlFor="year">Year</Label>
                     {isEditing ? (
@@ -412,7 +592,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                         disabled={isLoading}
                       />
                     ) : (
-                      <div className="mt-1 text-sm text-gray-900">{formData.year}</div>
+                      <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.year}</div>
                     )}
                   </div>
                   <div>
@@ -425,12 +605,12 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                         disabled={isLoading}
                       />
                     ) : (
-                      <div className="mt-1 text-sm text-gray-900">{formData.make}</div>
+                      <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.make}</div>
                     )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <Label htmlFor="model">Model</Label>
                     {isEditing ? (
@@ -441,7 +621,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                         disabled={isLoading}
                       />
                     ) : (
-                      <div className="mt-1 text-sm text-gray-900">{formData.model}</div>
+                      <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.model}</div>
                     )}
                   </div>
                   <div>
@@ -454,7 +634,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                         disabled={isLoading}
                       />
                     ) : (
-                      <div className="mt-1 text-sm text-gray-900">{formData.trim}</div>
+                      <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.trim}</div>
                     )}
                   </div>
                 </div>
@@ -469,7 +649,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                       disabled={isLoading}
                     />
                   ) : (
-                    <div className="mt-1 text-sm text-gray-900 font-mono">{formData.vin}</div>
+                    <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827', fontFamily: 'monospace' }}>{formData.vin}</div>
                   )}
                 </div>
               </div>
@@ -477,13 +657,20 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
           </div>
 
           {/* Inventory Management */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <DollarSign className="h-5 w-5 mr-2 text-green-600" />
+          <div style={{ marginBottom: '16px' }}>
+            <h3 style={{ 
+              fontSize: '18px', 
+              fontWeight: '600', 
+              color: '#111827', 
+              display: 'flex', 
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <DollarSign style={{ height: '20px', width: '20px', marginRight: '8px', color: '#16a34a' }} />
               Inventory Management
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
               <div>
                 <Label htmlFor="quantity">Quantity</Label>
                 {isEditing ? (
@@ -495,7 +682,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     disabled={isLoading}
                   />
                 ) : (
-                  <div className="mt-1 text-sm text-gray-900">{formData.quantity}</div>
+                  <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.quantity}</div>
                 )}
               </div>
               <div>
@@ -510,7 +697,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     disabled={isLoading}
                   />
                 ) : (
-                  <div className="mt-1 text-sm text-gray-900">{formatCurrency(formData.price)}</div>
+                  <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formatCurrency(formData.price)}</div>
                 )}
               </div>
               <div>
@@ -527,9 +714,17 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     </SelectContent>
                   </Select>
                 ) : (
-                  <div className="mt-1">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(formData.status).class}`}>
-                      {getStatusBadge(formData.status).text}
+                  <div style={{ marginTop: '4px' }}>
+                    <span style={{
+                      ...getStatusBadgeStyles(formData.status),
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '4px 10px',
+                      borderRadius: '9999px',
+                      fontSize: '12px',
+                      fontWeight: '500'
+                    }}>
+                      {getStatusText(formData.status)}
                     </span>
                   </div>
                 )}
@@ -538,8 +733,13 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
           </div>
 
           {/* Description */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Description</h3>
+          <div style={{ marginBottom: '16px' }}>
+            <h3 style={{ 
+              fontSize: '18px', 
+              fontWeight: '600', 
+              color: '#111827',
+              marginBottom: '16px'
+            }}>Description</h3>
             {isEditing ? (
               <Textarea
                 value={formData.description}
@@ -549,7 +749,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                 disabled={isLoading}
               />
             ) : (
-              <div className="text-sm text-gray-700">
+              <div style={{ fontSize: '14px', color: '#374151' }}>
                 {formData.description || "No description available."}
               </div>
             )}
@@ -557,33 +757,82 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
 
           {/* Delete Confirmation */}
           {showDeleteConfirm && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-center">
-                <Trash2 className="h-5 w-5 text-red-500 mr-2" />
-                <h4 className="text-sm font-medium text-red-800">Confirm Deletion</h4>
+            <div style={{
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              padding: '16px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Trash2 style={{ height: '20px', width: '20px', color: '#ef4444', marginRight: '8px' }} />
+                <h4 style={{ fontSize: '14px', fontWeight: '500', color: '#991b1b' }}>Confirm Deletion</h4>
               </div>
-              <p className="mt-2 text-sm text-red-700">
+              <p style={{ marginTop: '8px', fontSize: '14px', color: '#b91c1c' }}>
                 Are you sure you want to delete <strong>{vehicle.name}</strong>? This action cannot be undone.
               </p>
-              <div className="mt-3 flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
+              <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                <button
                   onClick={() => setShowDeleteConfirm(false)}
                   disabled={isLoading}
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#374151',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    opacity: isLoading ? '0.5' : '1',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.backgroundColor = '#f9fafb';
+                      e.currentTarget.style.borderColor = '#9ca3af';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.backgroundColor = '#ffffff';
+                      e.currentTarget.style.borderColor = '#d1d5db';
+                    }
+                  }}
                 >
                   Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
+                </button>
+                <button
                   onClick={handleDelete}
                   disabled={isLoading}
-                  className="flex items-center space-x-1"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '6px 12px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#ffffff',
+                    backgroundColor: '#dc2626',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    opacity: isLoading ? '0.5' : '1',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.backgroundColor = '#b91c1c';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.backgroundColor = '#dc2626';
+                    }
+                  }}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 style={{ height: '16px', width: '16px' }} />
                   <span>{isLoading ? "Deleting..." : "Delete"}</span>
-                </Button>
+                </button>
               </div>
             </div>
           )}
