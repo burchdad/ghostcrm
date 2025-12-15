@@ -198,7 +198,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
         title={isEditing ? `Edit ${vehicle.name}` : vehicle.name}
         size="max"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxHeight: '80vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', height: '100%', overflowY: 'auto', padding: '16px' }}>
           {/* Header Actions */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb', paddingBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

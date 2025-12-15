@@ -118,8 +118,8 @@ export function Modal({ open, onClose, title, children, footer, stackIndex = 0, 
             background: 'white',
             borderRadius: '1.5rem',
             boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
-            maxWidth: sizeStyles.maxWidth,
-            width: sizeStyles.width,
+            maxWidth: `${sizeStyles.maxWidth} !important`,
+            width: `${sizeStyles.width} !important`,
             maxHeight: '80vh',
             overflow: 'auto',
             animation: 'modalSlideIn 0.3s ease-out',
@@ -150,10 +150,13 @@ export function Modal({ open, onClose, title, children, footer, stackIndex = 0, 
             onClick={onClose} 
             aria-label="Close Modal"
           >✕</button>
-          <div style={{ padding: '1rem' }}>{children}</div>
+          <div style={{ padding: '0' }}>{children}</div>
           {footer && <div style={{ padding: '1rem', paddingTop: 0 }}>{footer}</div>}
         </div>
       </div>
     </>)
   );
 }
+
+export { Modal };
+export default Modal;
