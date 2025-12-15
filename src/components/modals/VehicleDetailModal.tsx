@@ -55,8 +55,13 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
     condition: "",
     description: "",
     features: "",
-    images: [] as string[]
+    images: [] as string[],
+    videos: [] as string[]
   });
+
+  // Media management state
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [mediaPreview, setMediaPreview] = useState<{ photos: string[], videos: string[] }>({ photos: [], videos: [] });
 
   // Initialize form data when vehicle changes
   useEffect(() => {
@@ -81,7 +86,13 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
         condition: vehicle.condition || "",
         description: vehicle.description || "",
         features: vehicle.features || "",
-        images: vehicle.images || []
+        images: vehicle.images || [],
+        videos: vehicle.videos || []
+      });
+      
+      setMediaPreview({
+        photos: vehicle.images || [],
+        videos: vehicle.videos || []
       });
     }
   }, [vehicle]);
@@ -187,6 +198,71 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
       'out_of_stock': { backgroundColor: '#fecaca', color: '#991b1b' }
     };
     return styles[status] || { backgroundColor: '#f3f4f6', color: '#374151' };
+  };
+
+  // Media upload handlers
+  const handlePhotoUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    setUploadingMedia(true);
+    try {
+      // TODO: Implement Supabase storage upload
+      const newPhotos = Array.from(files).map(file => URL.createObjectURL(file));
+      setMediaPreview(prev => ({ ...prev, photos: [...prev.photos, ...newPhotos] }));
+      setFormData(prev => ({ ...prev, images: [...prev.images, ...newPhotos] }));
+      
+      toast({
+        title: "Photos Uploaded",
+        description: `${files.length} photo(s) added successfully.`,
+      });
+    } catch (error) {
+      console.error("Error uploading photos:", error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload photos. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setUploadingMedia(false);
+    }
+  };
+
+  const handleVideoUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    setUploadingMedia(true);
+    try {
+      // TODO: Implement Supabase storage upload
+      const newVideos = Array.from(files).map(file => URL.createObjectURL(file));
+      setMediaPreview(prev => ({ ...prev, videos: [...prev.videos, ...newVideos] }));
+      setFormData(prev => ({ ...prev, videos: [...prev.videos, ...newVideos] }));
+      
+      toast({
+        title: "Videos Uploaded",
+        description: `${files.length} video(s) added successfully.`,
+      });
+    } catch (error) {
+      console.error("Error uploading videos:", error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload videos. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setUploadingMedia(false);
+    }
+  };
+
+  const removeMedia = (index: number, type: 'photos' | 'videos') => {
+    if (type === 'photos') {
+      const newPhotos = mediaPreview.photos.filter((_, i) => i !== index);
+      setMediaPreview(prev => ({ ...prev, photos: newPhotos }));
+      setFormData(prev => ({ ...prev, images: newPhotos }));
+    } else {
+      const newVideos = mediaPreview.videos.filter((_, i) => i !== index);
+      setMediaPreview(prev => ({ ...prev, videos: newVideos }));
+      setFormData(prev => ({ ...prev, videos: newVideos }));
+    }
   };
 
   if (!vehicle) return null;
@@ -488,53 +564,97 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
           {/* Vehicle Information Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
             {/* Basic Information */}
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+              border: '1px solid #e2e8f0',
+              borderRadius: '16px',
+              padding: '24px',
+              marginBottom: '24px',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+            }}>
               <h3 style={{ 
-                fontSize: '18px', 
-                fontWeight: '600', 
-                color: '#111827', 
+                fontSize: '20px', 
+                fontWeight: '700', 
+                color: '#1e293b', 
                 display: 'flex', 
                 alignItems: 'center',
-                marginBottom: '16px'
+                marginBottom: '20px',
+                borderBottom: '2px solid #e2e8f0',
+                paddingBottom: '12px'
               }}>
-                <Package style={{ height: '20px', width: '20px', marginRight: '8px', color: '#2563eb' }} />
+                <Package style={{ height: '24px', width: '24px', marginRight: '12px', color: '#3b82f6' }} />
                 Basic Information
               </h3>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
-                <div>
-                  <Label htmlFor="name">Product Name</Label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                <div style={{
+                  background: 'white',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  border: '1px solid #e5e7eb',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <Label htmlFor="name" style={{ fontWeight: '600', color: '#374151', marginBottom: '8px', display: 'block' }}>Product Name</Label>
                   {isEditing ? (
                     <Input
                       id="name"
                       value={formData.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
                       disabled={isLoading}
+                      style={{ borderRadius: '8px', border: '1px solid #d1d5db' }}
                     />
                   ) : (
-                    <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.name}</div>
+                    <div style={{ 
+                      marginTop: '4px', 
+                      fontSize: '16px', 
+                      color: '#1f2937', 
+                      fontWeight: '500',
+                      padding: '8px 0'
+                    }}>{formData.name}</div>
                   )}
                 </div>
 
-                <div>
-                  <Label htmlFor="sku">SKU</Label>
+                <div style={{
+                  background: 'white',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  border: '1px solid #e5e7eb',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <Label htmlFor="sku" style={{ fontWeight: '600', color: '#374151', marginBottom: '8px', display: 'block' }}>SKU</Label>
                   {isEditing ? (
                     <Input
                       id="sku"
                       value={formData.sku}
                       onChange={(e) => handleInputChange('sku', e.target.value)}
                       disabled={isLoading}
+                      style={{ borderRadius: '8px', border: '1px solid #d1d5db' }}
                     />
                   ) : (
-                    <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827', fontFamily: 'monospace' }}>{formData.sku}</div>
+                    <div style={{ 
+                      marginTop: '4px', 
+                      fontSize: '16px', 
+                      color: '#1f2937', 
+                      fontFamily: 'Monaco, Consolas, monospace',
+                      backgroundColor: '#f9fafb',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid #e5e7eb'
+                    }}>{formData.sku}</div>
                   )}
                 </div>
 
-                <div>
-                  <Label htmlFor="category">Category</Label>
+                <div style={{
+                  background: 'white',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  border: '1px solid #e5e7eb',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <Label htmlFor="category" style={{ fontWeight: '600', color: '#374151', marginBottom: '8px', display: 'block' }}>Category</Label>
                   {isEditing ? (
                     <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                      <SelectTrigger>
+                      <SelectTrigger style={{ borderRadius: '8px', border: '1px solid #d1d5db' }}>
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -547,133 +667,249 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                       </SelectContent>
                     </Select>
                   ) : (
-                    <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.category}</div>
+                    <div style={{ 
+                      marginTop: '4px', 
+                      fontSize: '16px', 
+                      color: '#1f2937', 
+                      fontWeight: '500',
+                      padding: '8px 0'
+                    }}>{formData.category}</div>
                   )}
                 </div>
 
-                <div>
-                  <Label htmlFor="location">Location</Label>
+                <div style={{
+                  background: 'white',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  border: '1px solid #e5e7eb',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <Label htmlFor="location" style={{ fontWeight: '600', color: '#374151', marginBottom: '8px', display: 'block' }}>Location</Label>
                   {isEditing ? (
                     <Input
                       id="location"
                       value={formData.location}
                       onChange={(e) => handleInputChange('location', e.target.value)}
                       disabled={isLoading}
+                      style={{ borderRadius: '8px', border: '1px solid #d1d5db' }}
                     />
                   ) : (
-                    <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.location}</div>
+                    <div style={{ 
+                      marginTop: '4px', 
+                      fontSize: '16px', 
+                      color: '#1f2937', 
+                      fontWeight: '500',
+                      padding: '8px 0'
+                    }}>{formData.location}</div>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Vehicle Details */}
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #fef7e0 0%, #fed7aa 100%)',
+              border: '1px solid #f59e0b',
+              borderRadius: '16px',
+              padding: '24px',
+              marginBottom: '24px',
+              boxShadow: '0 1px 3px rgba(245, 158, 11, 0.2)'
+            }}>
               <h3 style={{ 
-                fontSize: '18px', 
-                fontWeight: '600', 
-                color: '#111827', 
+                fontSize: '20px', 
+                fontWeight: '700', 
+                color: '#92400e', 
                 display: 'flex', 
                 alignItems: 'center',
-                marginBottom: '16px'
+                marginBottom: '20px',
+                borderBottom: '2px solid #f59e0b',
+                paddingBottom: '12px'
               }}>
-                <Car style={{ height: '20px', width: '20px', marginRight: '8px', color: '#2563eb' }} />
+                <Car style={{ height: '24px', width: '24px', marginRight: '12px', color: '#d97706' }} />
                 Vehicle Details
               </h3>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <Label htmlFor="year">Year</Label>
-                    {isEditing ? (
-                      <Input
-                        id="year"
-                        value={formData.year}
-                        onChange={(e) => handleInputChange('year', e.target.value)}
-                        disabled={isLoading}
-                      />
-                    ) : (
-                      <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.year}</div>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="make">Make</Label>
-                    {isEditing ? (
-                      <Input
-                        id="make"
-                        value={formData.make}
-                        onChange={(e) => handleInputChange('make', e.target.value)}
-                        disabled={isLoading}
-                      />
-                    ) : (
-                      <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.make}</div>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <Label htmlFor="model">Model</Label>
-                    {isEditing ? (
-                      <Input
-                        id="model"
-                        value={formData.model}
-                        onChange={(e) => handleInputChange('model', e.target.value)}
-                        disabled={isLoading}
-                      />
-                    ) : (
-                      <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.model}</div>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="trim">Trim</Label>
-                    {isEditing ? (
-                      <Input
-                        id="trim"
-                        value={formData.trim}
-                        onChange={(e) => handleInputChange('trim', e.target.value)}
-                        disabled={isLoading}
-                      />
-                    ) : (
-                      <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.trim}</div>
-                    )}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                <div style={{
+                  background: 'white',
+                  padding: '20px',
+                  borderRadius: '12px',
+                  border: '1px solid #f59e0b',
+                  boxShadow: '0 1px 3px rgba(245, 158, 11, 0.1)'
+                }}>
+                  <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#92400e', marginBottom: '16px' }}>Basic Info</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div>
+                      <Label htmlFor="year" style={{ fontWeight: '600', color: '#374151', marginBottom: '8px', display: 'block' }}>Year</Label>
+                      {isEditing ? (
+                        <Input
+                          id="year"
+                          value={formData.year}
+                          onChange={(e) => handleInputChange('year', e.target.value)}
+                          disabled={isLoading}
+                          style={{ borderRadius: '8px', border: '1px solid #d1d5db' }}
+                        />
+                      ) : (
+                        <div style={{ fontSize: '16px', color: '#1f2937', fontWeight: '500', padding: '8px 0' }}>{formData.year}</div>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="make" style={{ fontWeight: '600', color: '#374151', marginBottom: '8px', display: 'block' }}>Make</Label>
+                      {isEditing ? (
+                        <Input
+                          id="make"
+                          value={formData.make}
+                          onChange={(e) => handleInputChange('make', e.target.value)}
+                          disabled={isLoading}
+                          style={{ borderRadius: '8px', border: '1px solid #d1d5db' }}
+                        />
+                      ) : (
+                        <div style={{ fontSize: '16px', color: '#1f2937', fontWeight: '500', padding: '8px 0' }}>{formData.make}</div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="vin">VIN</Label>
-                  {isEditing ? (
-                    <Input
-                      id="vin"
-                      value={formData.vin}
-                      onChange={(e) => handleInputChange('vin', e.target.value)}
-                      disabled={isLoading}
-                    />
-                  ) : (
-                    <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827', fontFamily: 'monospace' }}>{formData.vin}</div>
-                  )}
+                <div style={{
+                  background: 'white',
+                  padding: '20px',
+                  borderRadius: '12px',
+                  border: '1px solid #f59e0b',
+                  boxShadow: '0 1px 3px rgba(245, 158, 11, 0.1)'
+                }}>
+                  <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#92400e', marginBottom: '16px' }}>Model Info</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div>
+                      <Label htmlFor="model" style={{ fontWeight: '600', color: '#374151', marginBottom: '8px', display: 'block' }}>Model</Label>
+                      {isEditing ? (
+                        <Input
+                          id="model"
+                          value={formData.model}
+                          onChange={(e) => handleInputChange('model', e.target.value)}
+                          disabled={isLoading}
+                          style={{ borderRadius: '8px', border: '1px solid #d1d5db' }}
+                        />
+                      ) : (
+                        <div style={{ fontSize: '16px', color: '#1f2937', fontWeight: '500', padding: '8px 0' }}>{formData.model}</div>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="trim" style={{ fontWeight: '600', color: '#374151', marginBottom: '8px', display: 'block' }}>Trim</Label>
+                      {isEditing ? (
+                        <Input
+                          id="trim"
+                          value={formData.trim}
+                          onChange={(e) => handleInputChange('trim', e.target.value)}
+                          disabled={isLoading}
+                          style={{ borderRadius: '8px', border: '1px solid #d1d5db' }}
+                        />
+                      ) : (
+                        <div style={{ fontSize: '16px', color: '#1f2937', fontWeight: '500', padding: '8px 0' }}>{formData.trim}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  background: 'white',
+                  padding: '20px',
+                  borderRadius: '12px',
+                  border: '1px solid #f59e0b',
+                  boxShadow: '0 1px 3px rgba(245, 158, 11, 0.1)',
+                  gridColumn: 'span 2'
+                }}>
+                  <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#92400e', marginBottom: '16px' }}>Vehicle Identification</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                    <div>
+                      <Label htmlFor="vin" style={{ fontWeight: '600', color: '#374151', marginBottom: '8px', display: 'block' }}>VIN</Label>
+                      {isEditing ? (
+                        <Input
+                          id="vin"
+                          value={formData.vin}
+                          onChange={(e) => handleInputChange('vin', e.target.value)}
+                          disabled={isLoading}
+                          style={{ borderRadius: '8px', border: '1px solid #d1d5db' }}
+                        />
+                      ) : (
+                        <div style={{ 
+                          fontSize: '14px', 
+                          color: '#1f2937', 
+                          fontFamily: 'Monaco, Consolas, monospace',
+                          backgroundColor: '#f9fafb',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          border: '1px solid #e5e7eb',
+                          letterSpacing: '1px'
+                        }}>{formData.vin}</div>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="color" style={{ fontWeight: '600', color: '#374151', marginBottom: '8px', display: 'block' }}>Color</Label>
+                      {isEditing ? (
+                        <Input
+                          id="color"
+                          value={formData.color}
+                          onChange={(e) => handleInputChange('color', e.target.value)}
+                          disabled={isLoading}
+                          style={{ borderRadius: '8px', border: '1px solid #d1d5db' }}
+                        />
+                      ) : (
+                        <div style={{ fontSize: '16px', color: '#1f2937', fontWeight: '500', padding: '8px 0' }}>{formData.color || 'Not specified'}</div>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="mileage" style={{ fontWeight: '600', color: '#374151', marginBottom: '8px', display: 'block' }}>Mileage</Label>
+                      {isEditing ? (
+                        <Input
+                          id="mileage"
+                          value={formData.mileage}
+                          onChange={(e) => handleInputChange('mileage', e.target.value)}
+                          disabled={isLoading}
+                          style={{ borderRadius: '8px', border: '1px solid #d1d5db' }}
+                          placeholder="e.g. 25,000 miles"
+                        />
+                      ) : (
+                        <div style={{ fontSize: '16px', color: '#1f2937', fontWeight: '500', padding: '8px 0' }}>{formData.mileage || 'Not specified'}</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Inventory Management */}
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%)',
+            border: '1px solid #3b82f6',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '24px',
+            boxShadow: '0 1px 3px rgba(59, 130, 246, 0.2)'
+          }}>
             <h3 style={{ 
-              fontSize: '18px', 
-              fontWeight: '600', 
-              color: '#111827', 
+              fontSize: '20px', 
+              fontWeight: '700', 
+              color: '#1e40af', 
               display: 'flex', 
               alignItems: 'center',
-              marginBottom: '16px'
+              marginBottom: '20px',
+              borderBottom: '2px solid #3b82f6',
+              paddingBottom: '12px'
             }}>
-              <DollarSign style={{ height: '20px', width: '20px', marginRight: '8px', color: '#16a34a' }} />
+              <DollarSign style={{ height: '24px', width: '24px', marginRight: '12px', color: '#2563eb' }} />
               Inventory Management
             </h3>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-              <div>
-                <Label htmlFor="quantity">Quantity</Label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+              <div style={{
+                background: 'white',
+                padding: '20px',
+                borderRadius: '12px',
+                border: '1px solid #3b82f6',
+                boxShadow: '0 1px 3px rgba(59, 130, 246, 0.1)'
+              }}>
+                <Label htmlFor="quantity" style={{ fontWeight: '600', color: '#374151', marginBottom: '12px', display: 'block', fontSize: '16px' }}>Quantity in Stock</Label>
                 {isEditing ? (
                   <Input
                     id="quantity"
@@ -681,13 +917,30 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     value={formData.quantity}
                     onChange={(e) => handleInputChange('quantity', parseInt(e.target.value) || 0)}
                     disabled={isLoading}
+                    style={{ borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '16px' }}
                   />
                 ) : (
-                  <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formData.quantity}</div>
+                  <div style={{ 
+                    fontSize: '24px', 
+                    fontWeight: '700', 
+                    color: '#1f2937',
+                    padding: '12px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    border: '2px solid #e5e7eb'
+                  }}>{formData.quantity}</div>
                 )}
               </div>
-              <div>
-                <Label htmlFor="price">Price</Label>
+              
+              <div style={{
+                background: 'white',
+                padding: '20px',
+                borderRadius: '12px',
+                border: '1px solid #3b82f6',
+                boxShadow: '0 1px 3px rgba(59, 130, 246, 0.1)'
+              }}>
+                <Label htmlFor="price" style={{ fontWeight: '600', color: '#374151', marginBottom: '12px', display: 'block', fontSize: '16px' }}>Price (USD)</Label>
                 {isEditing ? (
                   <Input
                     id="price"
@@ -696,16 +949,33 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     value={formData.price}
                     onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
                     disabled={isLoading}
+                    style={{ borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '16px' }}
                   />
                 ) : (
-                  <div style={{ marginTop: '4px', fontSize: '14px', color: '#111827' }}>{formatCurrency(formData.price)}</div>
+                  <div style={{ 
+                    fontSize: '24px', 
+                    fontWeight: '700', 
+                    color: '#059669',
+                    padding: '12px',
+                    backgroundColor: '#ecfdf5',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    border: '2px solid #a7f3d0'
+                  }}>{formatCurrency(formData.price)}</div>
                 )}
               </div>
-              <div>
-                <Label htmlFor="status">Status</Label>
+              
+              <div style={{
+                background: 'white',
+                padding: '20px',
+                borderRadius: '12px',
+                border: '1px solid #3b82f6',
+                boxShadow: '0 1px 3px rgba(59, 130, 246, 0.1)'
+              }}>
+                <Label htmlFor="status" style={{ fontWeight: '600', color: '#374151', marginBottom: '12px', display: 'block', fontSize: '16px' }}>Stock Status</Label>
                 {isEditing ? (
                   <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
-                    <SelectTrigger>
+                    <SelectTrigger style={{ borderRadius: '8px', border: '1px solid #d1d5db' }}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -715,15 +985,17 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     </SelectContent>
                   </Select>
                 ) : (
-                  <div style={{ marginTop: '4px' }}>
+                  <div style={{ marginTop: '4px', textAlign: 'center' }}>
                     <span style={{
                       ...getStatusBadgeStyles(formData.status),
                       display: 'inline-flex',
                       alignItems: 'center',
-                      padding: '4px 10px',
-                      borderRadius: '9999px',
-                      fontSize: '12px',
-                      fontWeight: '500'
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
                     }}>
                       {getStatusText(formData.status)}
                     </span>
@@ -734,26 +1006,280 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
           </div>
 
           {/* Description */}
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+            border: '1px solid #22c55e',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '24px',
+            boxShadow: '0 1px 3px rgba(34, 197, 94, 0.2)'
+          }}>
             <h3 style={{ 
-              fontSize: '18px', 
-              fontWeight: '600', 
-              color: '#111827',
-              marginBottom: '16px'
-            }}>Description</h3>
+              fontSize: '20px', 
+              fontWeight: '700', 
+              color: '#15803d',
+              marginBottom: '20px',
+              borderBottom: '2px solid #22c55e',
+              paddingBottom: '12px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              📝 Description & Notes
+            </h3>
             {isEditing ? (
               <Textarea
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Enter vehicle description..."
-                rows={3}
+                placeholder="Enter detailed vehicle description, features, condition notes, and any other relevant information..."
+                rows={4}
                 disabled={isLoading}
+                style={{
+                  borderRadius: '12px',
+                  border: '1px solid #d1d5db',
+                  padding: '16px',
+                  fontSize: '16px',
+                  lineHeight: '1.5',
+                  resize: 'vertical',
+                  minHeight: '120px'
+                }}
               />
             ) : (
-              <div style={{ fontSize: '14px', color: '#374151' }}>
-                {formData.description || "No description available."}
+              <div style={{ 
+                fontSize: '16px', 
+                color: '#374151',
+                lineHeight: '1.6',
+                padding: '16px',
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                border: '1px solid #e5e7eb',
+                minHeight: '60px',
+                whiteSpace: 'pre-wrap'
+              }}>
+                {formData.description || (
+                  <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>
+                    No description available. Add detailed information about this vehicle's features, condition, and specifications.
+                  </span>
+                )}
               </div>
             )}
+          </div>
+
+          {/* Vehicle Photos */}
+          <div style={{
+            background: 'linear-gradient(135deg, #fdf4ff 0%, #f3e8ff 100%)',
+            border: '1px solid #a855f7',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '24px',
+            boxShadow: '0 1px 3px rgba(168, 85, 247, 0.2)'
+          }}>
+            <h3 style={{ 
+              fontSize: '20px', 
+              fontWeight: '700', 
+              color: '#7c3aed', 
+              display: 'flex', 
+              alignItems: 'center',
+              marginBottom: '20px',
+              borderBottom: '2px solid #a855f7',
+              paddingBottom: '12px'
+            }}>
+              <Package style={{ height: '24px', width: '24px', marginRight: '12px', color: '#8b5cf6' }} />
+              Vehicle Photos
+            </h3>
+            
+            {isEditing && (
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '16px',
+                  border: '2px dashed #a855f7',
+                  borderRadius: '12px',
+                  background: 'white',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  color: '#7c3aed',
+                  fontWeight: '600'
+                }}>
+                  <span>📸 Upload Photos</span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => handlePhotoUpload(e.target.files)}
+                    style={{ display: 'none' }}
+                    disabled={uploadingMedia}
+                  />
+                </label>
+              </div>
+            )}
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+              {mediaPreview.photos.length === 0 ? (
+                <div style={{
+                  padding: '40px',
+                  textAlign: 'center',
+                  color: '#6b7280',
+                  background: 'white',
+                  borderRadius: '12px',
+                  border: '1px solid #e5e7eb',
+                  gridColumn: '1 / -1'
+                }}>
+                  📷 No photos uploaded yet
+                </div>
+              ) : (
+                mediaPreview.photos.map((photo, index) => (
+                  <div key={index} style={{
+                    position: 'relative',
+                    background: 'white',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+                  }}>
+                    <img 
+                      src={photo} 
+                      alt={`Vehicle photo ${index + 1}`}
+                      style={{
+                        width: '100%',
+                        height: '150px',
+                        objectFit: 'cover'
+                      }}
+                    />
+                    {isEditing && (
+                      <button
+                        onClick={() => removeMedia(index, 'photos')}
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          background: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '24px',
+                          height: '24px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Vehicle Videos */}
+          <div style={{
+            background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+            border: '1px solid #ef4444',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '24px',
+            boxShadow: '0 1px 3px rgba(239, 68, 68, 0.2)'
+          }}>
+            <h3 style={{ 
+              fontSize: '20px', 
+              fontWeight: '700', 
+              color: '#dc2626', 
+              display: 'flex', 
+              alignItems: 'center',
+              marginBottom: '20px',
+              borderBottom: '2px solid #ef4444',
+              paddingBottom: '12px'
+            }}>
+              <Package style={{ height: '24px', width: '24px', marginRight: '12px', color: '#f87171' }} />
+              Vehicle Videos
+            </h3>
+            
+            {isEditing && (
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '16px',
+                  border: '2px dashed #ef4444',
+                  borderRadius: '12px',
+                  background: 'white',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  color: '#dc2626',
+                  fontWeight: '600'
+                }}>
+                  <span>🎥 Upload Videos</span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="video/*"
+                    onChange={(e) => handleVideoUpload(e.target.files)}
+                    style={{ display: 'none' }}
+                    disabled={uploadingMedia}
+                  />
+                </label>
+              </div>
+            )}
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+              {mediaPreview.videos.length === 0 ? (
+                <div style={{
+                  padding: '40px',
+                  textAlign: 'center',
+                  color: '#6b7280',
+                  background: 'white',
+                  borderRadius: '12px',
+                  border: '1px solid #e5e7eb',
+                  gridColumn: '1 / -1'
+                }}>
+                  🎬 No videos uploaded yet
+                </div>
+              ) : (
+                mediaPreview.videos.map((video, index) => (
+                  <div key={index} style={{
+                    position: 'relative',
+                    background: 'white',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+                  }}>
+                    <video 
+                      src={video}
+                      controls
+                      style={{
+                        width: '100%',
+                        height: '200px',
+                        objectFit: 'cover'
+                      }}
+                    />
+                    {isEditing && (
+                      <button
+                        onClick={() => removeMedia(index, 'videos')}
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          background: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '24px',
+                          height: '24px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           {/* Delete Confirmation */}
