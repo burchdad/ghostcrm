@@ -37,10 +37,11 @@ export async function POST(req: NextRequest) {
       case 'call.machine.detection.ended':
         console.log(`AI call ${callId} machine detection: ${event.machine_detection_result}`);
         const machineResponse = await handleMachineDetection(event);
-        if (machineResponse && machineResponse.commands) {
+        if (machineResponse && 'commands' in machineResponse && machineResponse.commands) {
           console.log('🎮 [AI-STATUS] Returning AI commands from machine detection');
           return NextResponse.json(machineResponse);
         }
+        console.log('🚫 [AI-STATUS] No commands returned from machine detection');
         break;
         
       default:
@@ -223,17 +224,17 @@ async function handleMachineDetection(event: any) {
   try {
     const result = event.machine_detection_result; // 'human', 'machine', or 'unknown'
     
-    console.log('Machine detection result:', {
+    console.log('🤖 [MACHINE-DETECTION] Processing result:', {
       callId: event.id,
-      result: result
+      result: result,
+      eventData: JSON.stringify(event, null, 2)
     });
     
     // If human detected, return AI commands immediately
     if (result === 'human' || result === undefined || result === 'unknown') {
-      console.log('🤖 [AI-STATUS] Human detected - starting AI conversation immediately:', event.id);
+      console.log('🗣️ [MACHINE-DETECTION] Human detected - generating AI commands:', event.id);
       
-      // Return AI conversation commands directly to Telnyx
-      return {
+      const aiCommands = {
         success: true,
         commands: [
           {
@@ -250,8 +251,11 @@ async function handleMachineDetection(event: any) {
           }
         ]
       };
+      
+      console.log('🎮 [MACHINE-DETECTION] Generated AI commands:', JSON.stringify(aiCommands, null, 2));
+      return aiCommands;
     } else {
-      console.log('📞 [AI-STATUS] Machine detected, not starting AI conversation');
+      console.log('🤖 [MACHINE-DETECTION] Machine detected, not starting AI conversation');
       return { success: true, message: 'Machine detected' };
     }
     
@@ -266,7 +270,9 @@ async function handleMachineDetection(event: any) {
     */
     
   } catch (error) {
-    console.error('Error handling machine detection:', error);
+    console.error('❌ [MACHINE-DETECTION] Error handling machine detection:', error);
+    // Return error but allow fallback
+    return { success: false, error: error.message };
   }
 }
 
