@@ -117,16 +117,23 @@ async function handleCallAnswered(event: any) {
     console.log('🤖 [AI-STATUS] Forwarding answered call to AI handler:', event.id);
     
     try {
-      const aiHandlerUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/voice/telnyx/ai-answer`;
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ghostcrm.vercel.app';
+      const aiHandlerUrl = `${baseUrl}/api/voice/telnyx/ai-answer`;
       console.log('🔗 [AI-STATUS] Forwarding to:', aiHandlerUrl);
       
       const response = await fetch(aiHandlerUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'User-Agent': 'GhostCRM-Webhook-Forwarder/1.0',
         },
         body: JSON.stringify({
-          data: event
+          data: event,
+          meta: {
+            forwarded_from: 'ai-status',
+            original_event_type: event.event_type,
+            forward_timestamp: new Date().toISOString()
+          }
         })
       });
       
@@ -134,16 +141,22 @@ async function handleCallAnswered(event: any) {
       console.log('🔍 [AI-STATUS] AI handler response:', {
         status: response.status,
         statusText: response.statusText,
-        body: responseText
+        body: responseText.substring(0, 500) // Truncate long responses
       });
       
       if (!response.ok) {
-        console.error('❌ [AI-STATUS] Failed to forward to AI handler:', response.statusText);
+        console.error('❌ [AI-STATUS] Failed to forward to AI handler:', response.statusText, responseText);
+        // Try alternative approach - direct AI conversation start
+        console.log('🔄 [AI-STATUS] Attempting direct AI conversation initiation...');
+        await initiateDirectAIConversation(event);
       } else {
         console.log('✅ [AI-STATUS] Successfully forwarded to AI handler');
       }
     } catch (forwardError) {
       console.error('❌ [AI-STATUS] Error forwarding to AI handler:', forwardError);
+      // Fallback to direct AI conversation
+      console.log('🔄 [AI-STATUS] Attempting fallback AI conversation...');
+      await initiateDirectAIConversation(event);
     }
     
     // TODO: Update call status and start tracking conversation
@@ -216,18 +229,25 @@ async function handleMachineDetection(event: any) {
       console.log('🤖 [AI-STATUS] Triggering AI conversation (human detected or uncertain):', event.id);
       
       try {
-        const aiHandlerUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/voice/telnyx/ai-answer`;
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ghostcrm.vercel.app';
+        const aiHandlerUrl = `${baseUrl}/api/voice/telnyx/ai-answer`;
         console.log('🔗 [AI-STATUS] Forwarding to:', aiHandlerUrl);
         
         const response = await fetch(aiHandlerUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'User-Agent': 'GhostCRM-Webhook-Forwarder/1.0',
           },
           body: JSON.stringify({
             data: {
               ...event,
               event_type: 'call.answered' // Simulate answered event for AI handler
+            },
+            meta: {
+              forwarded_from: 'ai-status-machine-detection',
+              machine_detection_result: result,
+              forward_timestamp: new Date().toISOString()
             }
           })
         });
@@ -236,16 +256,22 @@ async function handleMachineDetection(event: any) {
         console.log('🔍 [AI-STATUS] AI handler response:', {
           status: response.status,
           statusText: response.statusText,
-          body: responseText
+          body: responseText.substring(0, 500) // Truncate long responses
         });
         
         if (!response.ok) {
-          console.error('❌ [AI-STATUS] Failed to forward to AI handler:', response.statusText);
+          console.error('❌ [AI-STATUS] Failed to forward to AI handler:', response.statusText, responseText);
+          // Try direct AI conversation
+          console.log('🔄 [AI-STATUS] Attempting direct AI conversation initiation...');
+          await initiateDirectAIConversation(event);
         } else {
           console.log('✅ [AI-STATUS] Successfully forwarded to AI handler');
         }
       } catch (forwardError) {
         console.error('❌ [AI-STATUS] Error forwarding to AI handler:', forwardError);
+        // Fallback to direct AI conversation
+        console.log('🔄 [AI-STATUS] Attempting fallback AI conversation...');
+        await initiateDirectAIConversation(event);
       }
     } else {
       console.log('📞 [AI-STATUS] Machine detected, not starting AI conversation');
@@ -323,6 +349,37 @@ async function handleCallOutcome(event: any, outcome: string) {
     
   } catch (error) {
     console.error('Error handling call outcome:', error);
+  }
+}
+
+// Direct AI conversation initiation fallback
+async function initiateDirectAIConversation(event: any) {
+  try {
+    console.log('🤖 [AI-STATUS] Direct AI conversation initiation for call:', event.id);
+    
+    // Use Telnyx API to start AI conversation directly
+    const response = await fetch('https://api.telnyx.com/v2/ai/chat', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.TELNYX_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        call_id: event.id,
+        message: "Hello! Thank you for answering. I'm an AI assistant calling on behalf of our team. How are you doing today?",
+        voice: 'female',
+        language: 'en'
+      })
+    });
+    
+    if (response.ok) {
+      console.log('✅ [AI-STATUS] Direct AI conversation initiated successfully');
+    } else {
+      const errorText = await response.text();
+      console.error('❌ [AI-STATUS] Failed to initiate direct AI conversation:', response.status, errorText);
+    }
+  } catch (error) {
+    console.error('❌ [AI-STATUS] Error in direct AI conversation initiation:', error);
   }
 }
 
