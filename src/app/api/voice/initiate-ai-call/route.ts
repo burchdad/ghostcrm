@@ -324,7 +324,7 @@ async function initiateTelnyxAICall(
 
     // Prepare webhook and client state for AI conversation
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-    const webhookUrl = `${baseUrl}/api/voice/telnyx/ai-answer`;
+    const webhookUrl = `${baseUrl}/api/voice/telnyx/ai-status`;
     
     console.log('🔗 [WEBHOOK CONFIG] Base URL from env:', baseUrl);
     console.log('🔗 [WEBHOOK CONFIG] Full webhook URL:', webhookUrl);
