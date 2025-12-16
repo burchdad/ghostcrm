@@ -43,8 +43,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Handle different call events
-    if (event.event_type === 'call.answered') {
-      console.log(`🎉 [TELNYX WEBHOOK] AI call ${callId} answered - starting conversation`);
+    if (event.event_type === 'call.answered' || event.event_type === 'call.initiated') {
+      console.log(`🎉 [TELNYX WEBHOOK] AI call ${callId} ${event.event_type} - starting conversation`);
       
       // Generate adaptive AI greeting
       const aiGreeting = await generateAIGreeting(leadPhone, voiceConfig);
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
           speech_timeout: 10000,
           speech_end_timeout: 2000,
           language: voiceConfig.language || 'en-US',
-          webhook_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/voice/telnyx/ai-response`
+          webhook_url: `https://ghostcrm.ai/api/voice/telnyx/ai-response`
         }
       ];
 
@@ -97,11 +97,18 @@ export async function POST(req: NextRequest) {
 
     // Handle any other call events (for debugging)
     console.log(`🤔 [TELNYX WEBHOOK] Unhandled event type: ${event.event_type}`);
+    console.log(`🔍 [TELNYX WEBHOOK] Full event data:`, JSON.stringify(event, null, 2));
 
-    // Default response for other events
+    // Default response for other events - but with basic AI command for testing
     return NextResponse.json({ 
       message: 'Event received',
-      commands: []
+      commands: [
+        {
+          command: 'speak',
+          text: "Hello! I'm an AI assistant. Can you hear me?",
+          voice: 'female'
+        }
+      ]
     });
 
   } catch (error) {

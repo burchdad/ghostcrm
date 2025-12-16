@@ -36,7 +36,11 @@ export async function POST(req: NextRequest) {
         
       case 'call.machine.detection.ended':
         console.log(`AI call ${callId} machine detection: ${event.machine_detection_result}`);
-        await handleMachineDetection(event);
+        const machineResponse = await handleMachineDetection(event);
+        if (machineResponse && machineResponse.commands) {
+          console.log('🎮 [AI-STATUS] Returning AI commands from machine detection');
+          return NextResponse.json(machineResponse);
+        }
         break;
         
       default:
@@ -117,7 +121,8 @@ async function handleCallAnswered(event: any) {
     console.log('🤖 [AI-STATUS] Forwarding answered call to AI handler:', event.id);
     
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ghostcrm.ai';
+      // TEMPORARY FIX: Hardcode correct domain until Vercel env var is set
+      const baseUrl = 'https://ghostcrm.ai';
       const aiHandlerUrl = `${baseUrl}/api/voice/telnyx/ai-answer`;
       console.log('🔗 [AI-STATUS] Forwarding to:', aiHandlerUrl);
       
@@ -223,58 +228,31 @@ async function handleMachineDetection(event: any) {
       result: result
     });
     
-    // Forward to AI handler for human detection OR if result is undefined/unknown
-    // This handles cases where detection fails but we still want to attempt AI conversation
+    // If human detected, return AI commands immediately
     if (result === 'human' || result === undefined || result === 'unknown') {
-      console.log('🤖 [AI-STATUS] Triggering AI conversation (human detected or uncertain):', event.id);
+      console.log('🤖 [AI-STATUS] Human detected - starting AI conversation immediately:', event.id);
       
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ghostcrm.ai';
-        const aiHandlerUrl = `${baseUrl}/api/voice/telnyx/ai-answer`;
-        console.log('🔗 [AI-STATUS] Forwarding to:', aiHandlerUrl);
-        
-        const response = await fetch(aiHandlerUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'GhostCRM-Webhook-Forwarder/1.0',
+      // Return AI conversation commands directly to Telnyx
+      return {
+        success: true,
+        commands: [
+          {
+            command: 'speak',
+            text: "Hello! Thank you for answering. I'm Sarah, an AI assistant calling about your interest in our services. How are you doing today?",
+            voice: 'female'
           },
-          body: JSON.stringify({
-            data: {
-              ...event,
-              event_type: 'call.answered' // Simulate answered event for AI handler
-            },
-            meta: {
-              forwarded_from: 'ai-status-machine-detection',
-              machine_detection_result: result,
-              forward_timestamp: new Date().toISOString()
-            }
-          })
-        });
-        
-        const responseText = await response.text();
-        console.log('🔍 [AI-STATUS] AI handler response:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: responseText.substring(0, 500) // Truncate long responses
-        });
-        
-        if (!response.ok) {
-          console.error('❌ [AI-STATUS] Failed to forward to AI handler:', response.statusText, responseText);
-          // Try direct AI conversation
-          console.log('🔄 [AI-STATUS] Attempting direct AI conversation initiation...');
-          await initiateDirectAIConversation(event);
-        } else {
-          console.log('✅ [AI-STATUS] Successfully forwarded to AI handler');
-        }
-      } catch (forwardError) {
-        console.error('❌ [AI-STATUS] Error forwarding to AI handler:', forwardError);
-        // Fallback to direct AI conversation
-        console.log('🔄 [AI-STATUS] Attempting fallback AI conversation...');
-        await initiateDirectAIConversation(event);
-      }
+          {
+            command: 'gather_using_speech',
+            speech_timeout: 10000,
+            speech_end_timeout: 2000,
+            language: 'en-US',
+            webhook_url: 'https://ghostcrm.ai/api/voice/telnyx/ai-response'
+          }
+        ]
+      };
     } else {
       console.log('📞 [AI-STATUS] Machine detected, not starting AI conversation');
+      return { success: true, message: 'Machine detected' };
     }
     
     // TODO: Update call record with machine detection result
