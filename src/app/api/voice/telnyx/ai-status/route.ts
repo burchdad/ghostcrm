@@ -117,7 +117,7 @@ async function handleCallAnswered(event: any) {
     console.log('🤖 [AI-STATUS] Forwarding answered call to AI handler:', event.id);
     
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ghostcrm.vercel.app';
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ghostcrm.ai';
       const aiHandlerUrl = `${baseUrl}/api/voice/telnyx/ai-answer`;
       console.log('🔗 [AI-STATUS] Forwarding to:', aiHandlerUrl);
       
@@ -229,7 +229,7 @@ async function handleMachineDetection(event: any) {
       console.log('🤖 [AI-STATUS] Triggering AI conversation (human detected or uncertain):', event.id);
       
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ghostcrm.vercel.app';
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ghostcrm.ai';
         const aiHandlerUrl = `${baseUrl}/api/voice/telnyx/ai-answer`;
         console.log('🔗 [AI-STATUS] Forwarding to:', aiHandlerUrl);
         
