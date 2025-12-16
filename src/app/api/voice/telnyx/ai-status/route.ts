@@ -234,20 +234,41 @@ async function handleMachineDetection(event: any) {
     if (result === 'human' || result === undefined || result === 'unknown') {
       console.log('🗣️ [MACHINE-DETECTION] Human detected - generating AI commands:', event.id);
       
+      // Extract voice configuration from client_state if available
+      let voiceConfig: any = { voice: 'female' };
+      let language = 'en-US';
+      
+      try {
+        if (event.client_state) {
+          const clientState = JSON.parse(Buffer.from(event.client_state, 'base64').toString());
+          if (clientState.voiceConfig && clientState.voiceConfig.voice) {
+            voiceConfig = {
+              voice: clientState.voiceConfig.voice.elevenLabsId || 'female'
+            };
+            language = clientState.voiceConfig.voice.language || 'en-US';
+          }
+        }
+      } catch (parseError) {
+        console.log('⚠️ [MACHINE-DETECTION] Could not parse client_state, using defaults');
+      }
+      
       const aiCommands = {
         success: true,
         commands: [
           {
             command: 'speak',
-            text: "Hello! Thank you for answering. I'm Sarah, an AI assistant calling about your interest in our services. How are you doing today?",
-            voice: 'female'
+            text: "Hello! Thank you for answering. I'm Sarah calling about your interest in our services. Can you hear me okay? Please say yes or press 1 if you can hear me.",
+            ...voiceConfig,
+            service_level: "basic"
           },
           {
             command: 'gather_using_speech',
-            speech_timeout: 10000,
-            speech_end_timeout: 2000,
-            language: 'en-US',
-            webhook_url: 'https://ghostcrm.ai/api/voice/telnyx/ai-response'
+            speech_timeout: 8000,
+            speech_end_timeout: 1500,
+            language: language,
+            webhook_url: 'https://ghostcrm.ai/api/voice/telnyx/ai-response',
+            inter_digit_timeout: 5000,
+            valid_digits: "1234567890*#"
           }
         ]
       };

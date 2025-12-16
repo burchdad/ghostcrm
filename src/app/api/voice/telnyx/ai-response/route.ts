@@ -6,32 +6,94 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    console.log('Telnyx AI Response Webhook:', body);
+    console.log('🎤 [AI-RESPONSE] Telnyx AI Response Webhook received:', JSON.stringify(body, null, 2));
     
     const event = body.data;
-    const callId = event.id;
+    const callId = event.call_control_id || event.id;
+    
+    // Check if this is a speech result or another event type
+    if (!event.speech_result && event.event_type !== 'call.gather.ended') {
+      console.log('⚠️ [AI-RESPONSE] No speech result in event, event type:', event.event_type);
+      
+      // Handle different event types that might come to this endpoint
+      if (event.event_type === 'call.speak.ended') {
+        console.log('🔊 [AI-RESPONSE] Speak command completed, waiting for customer response...');
+        return NextResponse.json({ success: true, message: 'Speak ended, awaiting response' });
+      }
+      
+      // For other events without speech results, return a simple acknowledgment
+      return NextResponse.json({ success: true, message: 'Event received' });
+    }
+    
+    // Handle gather timeout (customer didn't respond)
+    if (event.event_type === 'call.gather.ended' && !event.speech_result) {
+      console.log('⏰ [AI-RESPONSE] Gather timeout - customer did not respond');
+      return NextResponse.json({
+        commands: [
+          {
+            command: 'speak',
+            text: "Hello? Are you still there? I'm calling about your interest in our services. Please let me know if you can hear me.",
+            voice: 'female'
+          },
+          {
+            command: 'gather_using_speech',
+            speech_timeout: 8000,
+            speech_end_timeout: 1500,
+            language: 'en-US',
+            webhook_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ghostcrm.ai'}/api/voice/telnyx/ai-response`,
+            inter_digit_timeout: 3000
+          }
+        ]
+      });
+    }
+    
     const speechResult = event.speech_result;
     
     // Extract customer speech
     const customerSpeech = speechResult?.transcript || '';
     const confidence = speechResult?.confidence || 0;
     
-    console.log(`Customer speech (${confidence}): "${customerSpeech}"`);
+    console.log(`🗣️ [AI-RESPONSE] Customer speech detected - Call ID: ${callId}`);
+    console.log(`📝 [AI-RESPONSE] Transcript: "${customerSpeech}"`);
+    console.log(`📊 [AI-RESPONSE] Confidence: ${confidence}`);
     
-    // Low confidence - ask for clarification
-    if (confidence < 0.6) {
+    // Handle empty or very low confidence responses
+    if (!customerSpeech || customerSpeech.trim().length === 0) {
+      console.log('🤷 [AI-RESPONSE] Empty speech detected, prompting again...');
       return NextResponse.json({
         commands: [
           {
             command: 'speak',
-            text: "I'm sorry, I didn't catch that. Could you repeat that please?",
+            text: "I didn't catch that. Are you still there? Please say something so I know you can hear me.",
             voice: 'female'
           },
           {
             command: 'gather_using_speech',
-            speech_timeout: 10000,
+            speech_timeout: 12000,
             speech_end_timeout: 2000,
-            webhook_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/voice/telnyx/ai-response`
+            language: 'en-US',
+            webhook_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ghostcrm.ai'}/api/voice/telnyx/ai-response`
+          }
+        ]
+      });
+    }
+    
+    // Low confidence - ask for clarification
+    if (confidence < 0.5) {
+      console.log('⚠️ [AI-RESPONSE] Low confidence speech, asking for clarification...');
+      return NextResponse.json({
+        commands: [
+          {
+            command: 'speak',
+            text: "I'm sorry, I didn't catch that clearly. Could you repeat that please?",
+            voice: 'female'
+          },
+          {
+            command: 'gather_using_speech',
+            speech_timeout: 12000,
+            speech_end_timeout: 2000,
+            language: 'en-US',
+            webhook_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ghostcrm.ai'}/api/voice/telnyx/ai-response`
           }
         ]
       });
