@@ -183,6 +183,13 @@ const ROLE_LOGIN_PATHS = [
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  
+  // 🎯 CRITICAL: Always bypass auth/marketing logic for Telnyx webhooks
+  if (pathname.startsWith("/api/voice/telnyx/")) {
+    console.log(`🎯 [TELNYX-BYPASS] Allowing direct access to: ${pathname}`);
+    return NextResponse.next();
+  }
+  
   const hostname = req.headers.get('host') || '';
   
   console.log(`🚀 [MIDDLEWARE START] ${hostname}${pathname}`);

@@ -3,24 +3,35 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
 
+function extractEvent(body: any) {
+  // ✅ Standard Telnyx: { event_type, payload }
+  const eventType = body?.event_type ?? body?.data?.event_type;
+  const payload = body?.payload ?? body?.data?.payload ?? body?.data;
+
+  // ✅ If your forwarder stripped wrapper and only sent payload under data:
+  const payloadFallback = body?.data?.call_control_id ? body.data : undefined;
+
+  return {
+    eventType,
+    payload: payload ?? payloadFallback ?? body,
+    raw: body,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    console.log('Telnyx AI Status Webhook:', JSON.stringify(body, null, 2));
+    console.log('🎯 [AI-STATUS] Raw Telnyx webhook:', JSON.stringify(body, null, 2));
     
-    // Handle both direct event format and nested format
-    const event = body.data ? body.data : body;
-    const payload = event.payload || event;
-    const eventType = event.event_type || body.event_type;
-    const callId = payload.call_control_id || payload.id || event.id;
+    // Use improved event extraction
+    const { eventType, payload } = extractEvent(body);
+    const callId = payload?.call_control_id || payload?.id;
     
-    console.log('🔍 [AI-STATUS] Processed event:', {
+    console.log('🔍 [AI-STATUS] Extracted event:', {
       eventType,
       callId,
-      hasPayload: !!event.payload,
-      bodyKeys: Object.keys(body),
-      eventKeys: Object.keys(event),
-      payloadKeys: Object.keys(payload)
+      hasPayload: !!payload,
+      payloadKeys: Object.keys(payload || {})
     });
     
     // Handle different Telnyx call events
@@ -46,7 +57,7 @@ export async function POST(req: NextRequest) {
         break;
         
       case 'call.machine.detection.ended':
-        console.log(`AI call ${callId} machine detection: ${payload.result}`);
+        console.log(`AI call ${callId} machine detection: ${payload.result || payload.machine_detection_result}`);
         const machineResponse = await handleMachineDetection(payload);
         console.log('🔍 [AI-STATUS] Machine detection response:', JSON.stringify(machineResponse, null, 2));
         

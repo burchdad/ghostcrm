@@ -1,157 +1,101 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const TELNYX_API_KEY = process.env.TELNYX_API_KEY!;
+
+type TelnyxEvent =
+  | { event_type?: string; payload?: any }
+  | { data?: any; meta?: any };
+
+function extractEvent(body: any) {
+  // ✅ Standard Telnyx: { event_type, payload }
+  const eventType = body?.event_type ?? body?.data?.event_type;
+  const payload = body?.payload ?? body?.data?.payload ?? body?.payload;
+
+  // ✅ If your forwarder stripped wrapper and only sent payload under data:
+  const payloadFallback = body?.data?.call_control_id ? body.data : undefined;
+
+  return {
+    eventType,
+    payload: payload ?? payloadFallback,
+    raw: body,
+  };
+}
+
+async function telnyxSpeak(callControlId: string, text: string) {
+  const res = await fetch(
+    `https://api.telnyx.com/v2/calls/${encodeURIComponent(
+      callControlId
+    )}/actions/speak`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${TELNYX_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        payload: {
+          voice: "female",
+          language: "en-US",
+          text,
+        },
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Telnyx speak failed: ${res.status} ${errText}`);
+  }
+}
 
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { data } = body;
-    
-    if (!data || !data.event_type) {
-      return NextResponse.json({ message: "Invalid webhook payload" }, { status: 400 });
-    }
+  const body = await req.json().catch(() => ({}));
+  const { eventType, payload } = extractEvent(body);
 
-    const { event_type, payload } = data;
-    console.log(`📞 [TELNYX_WEBHOOK] Received event: ${event_type}`, payload);
+  const callControlId = payload?.call_control_id;
 
-    switch (event_type) {
-      case 'call.initiated':
-        await handleCallInitiated(payload);
-        break;
-        
-      case 'call.answered':
-        await handleCallAnswered(payload);
-        break;
-        
-      case 'call.ended':
-        await handleCallEnded(payload);
-        break;
-        
-      case 'call.recording.saved':
-        await handleRecordingSaved(payload);
-        break;
-        
-      default:
-        console.log(`🔍 [TELNYX_WEBHOOK] Unhandled event type: ${event_type}`);
-        break;
-    }
+  console.log("🎯 [TELNYX-WEBHOOK] eventType:", eventType);
+  console.log("🎯 [TELNYX-WEBHOOK] call_control_id:", callControlId);
+  console.log("🎯 [TELNYX-WEBHOOK] raw body:", JSON.stringify(body, null, 2));
 
-    return NextResponse.json({ message: "Webhook processed successfully" });
-
-  } catch (error: any) {
-    console.error('❌ [TELNYX_WEBHOOK] Error processing webhook:', error);
-    return NextResponse.json({ 
-      error: "Failed to process webhook" 
-    }, { status: 500 });
+  // If we still can't find it, just ACK so Telnyx stops retrying
+  if (!callControlId) {
+    console.log("⚠️ [TELNYX-WEBHOOK] Missing call_control_id, ACK");
+    return NextResponse.json({ ok: true });
   }
-}
 
-async function handleCallInitiated(payload: any) {
-  const { call_control_id, call_session_id, client_state } = payload;
-  
   try {
-    // Decode client state to get script and lead info
-    const state = client_state ? JSON.parse(atob(client_state)) : {};
-    
-    console.log('📞 [TELNYX] Call initiated:', { call_control_id, state });
-    
-    // Update call log with control ID
-    if (state.leadId) {
-      await supabaseAdmin
-        .from('call_logs')
-        .update({ 
-          call_control_id,
-          call_session_id,
-          status: 'ringing' 
-        })
-        .eq('lead_id', state.leadId)
-        .eq('status', 'initiated');
-    }
-  } catch (error) {
-    console.error('❌ [TELNYX] Error handling call initiated:', error);
-  }
-}
-
-async function handleCallAnswered(payload: any) {
-  const { call_control_id, client_state } = payload;
-  
-  try {
-    // Decode client state to get the script
-    const state = client_state ? JSON.parse(atob(client_state)) : {};
-    const script = state.script || "Hello, this is GhostCRM calling to follow up on your inquiry.";
-    
-    console.log('📞 [TELNYX] Call answered, playing script:', script);
-    
-    // Use Telnyx Call Control API to speak the script
-    const speakCommand = {
-      call_control_id,
-      payload: script,
-      voice: 'female',
-      language: 'en-US'
-    };
-    
-    // Send speak command (this would require Telnyx Call Control API)
-    // For now, we'll just log and update the status
-    
-    // Update call log
-    if (state.leadId) {
-      await supabaseAdmin
-        .from('call_logs')
-        .update({ 
-          status: 'answered',
-          answered_at: new Date().toISOString()
-        })
-        .eq('call_control_id', call_control_id);
-    }
-    
-  } catch (error) {
-    console.error('❌ [TELNYX] Error handling call answered:', error);
-  }
-}
-
-async function handleCallEnded(payload: any) {
-  const { call_control_id, hangup_cause, call_duration_secs } = payload;
-  
-  try {
-    console.log('📞 [TELNYX] Call ended:', { 
-      call_control_id, 
-      hangup_cause, 
-      duration: call_duration_secs 
-    });
-    
-    // Update call log with final status
-    await supabaseAdmin
-      .from('call_logs')
-      .update({ 
-        status: 'ended',
-        hangup_cause,
-        duration_seconds: call_duration_secs,
-        ended_at: new Date().toISOString()
-      })
-      .eq('call_control_id', call_control_id);
+    // ✅ simplest: speak when human answers
+    if (eventType === "call.answered") {
+      console.log("🎯 [TELNYX-WEBHOOK] Call answered, triggering speak command");
+      await telnyxSpeak(
+        callControlId,
+        "Hello. This is Ghost AI. I'm connected and can hear you. Please say something to test the connection."
+      );
+      console.log("✅ [TELNYX-WEBHOOK] Speak command sent successfully");
+    } else if (eventType === "call.machine.detection.ended") {
+      const machineDetectionResult = payload?.result || payload?.machine_detection_result;
+      console.log("🤖 [MACHINE-DETECTION]", machineDetectionResult);
       
-  } catch (error) {
-    console.error('❌ [TELNYX] Error handling call ended:', error);
-  }
-}
+      if (machineDetectionResult === "human") {
+        console.log("🎯 [TELNYX-WEBHOOK] Human detected, triggering AI greeting");
+        await telnyxSpeak(
+          callControlId,
+          "Hello! This is Sarah from Ghost AI. I'm calling to see if you're interested in learning about our CRM solutions. Can you hear me clearly?"
+        );
+        console.log("✅ [TELNYX-WEBHOOK] AI greeting sent successfully");
+      }
+    } else {
+      console.log("ℹ️ [TELNYX-WEBHOOK] Event type not handled:", eventType);
+    }
 
-async function handleRecordingSaved(payload: any) {
-  const { call_control_id, recording_urls } = payload;
-  
-  try {
-    console.log('🎙️ [TELNYX] Recording saved:', recording_urls);
-    
-    // Update call log with recording URL
-    await supabaseAdmin
-      .from('call_logs')
-      .update({ 
-        recording_url: recording_urls?.mp3 || recording_urls?.[0],
-        has_recording: true
-      })
-      .eq('call_control_id', call_control_id);
-      
-  } catch (error) {
-    console.error('❌ [TELNYX] Error handling recording saved:', error);
+    return NextResponse.json({ ok: true });
+  } catch (e: any) {
+    console.error("❌ [TELNYX-WEBHOOK] handler error:", e?.message || e);
+    // Still ACK to avoid Telnyx retry storms
+    return NextResponse.json({ ok: true });
   }
 }
