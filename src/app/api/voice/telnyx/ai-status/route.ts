@@ -6,42 +6,56 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    console.log('Telnyx AI Status Webhook:', body);
+    console.log('Telnyx AI Status Webhook:', JSON.stringify(body, null, 2));
     
-    const event = body.data;
-    const eventType = event.event_type;
-    const callId = event.id;
+    // Handle both direct event format and nested format
+    const event = body.data ? body.data : body;
+    const payload = event.payload || event;
+    const eventType = event.event_type || body.event_type;
+    const callId = payload.call_control_id || payload.id || event.id;
+    
+    console.log('🔍 [AI-STATUS] Processed event:', {
+      eventType,
+      callId,
+      hasPayload: !!event.payload,
+      bodyKeys: Object.keys(body),
+      eventKeys: Object.keys(event),
+      payloadKeys: Object.keys(payload)
+    });
     
     // Handle different Telnyx call events
     switch (eventType) {
       case 'call.initiated':
-        console.log(`AI call ${callId} initiated to ${event.to}`);
-        await handleCallInitiated(event);
+        console.log(`AI call ${callId} initiated to ${payload.to}`);
+        await handleCallInitiated(payload);
         break;
         
       case 'call.ringing':
         console.log(`AI call ${callId} is ringing...`);
-        await handleCallRinging(event);
+        await handleCallRinging(payload);
         break;
         
       case 'call.answered':
         console.log(`AI call ${callId} answered - conversation will begin`);
-        await handleCallAnswered(event);
+        await handleCallAnswered(payload);
         break;
         
       case 'call.hangup':
-        console.log(`AI call ${callId} ended - duration: ${event.call_duration_secs}s`);
-        await handleCallEnded(event);
+        console.log(`AI call ${callId} ended - duration: ${payload.call_duration_secs}s`);
+        await handleCallEnded(payload);
         break;
         
       case 'call.machine.detection.ended':
-        console.log(`AI call ${callId} machine detection: ${event.machine_detection_result}`);
-        const machineResponse = await handleMachineDetection(event);
-        if (machineResponse && 'commands' in machineResponse && machineResponse.commands) {
+        console.log(`AI call ${callId} machine detection: ${payload.result}`);
+        const machineResponse = await handleMachineDetection(payload);
+        console.log('🔍 [AI-STATUS] Machine detection response:', JSON.stringify(machineResponse, null, 2));
+        
+        if (machineResponse && machineResponse.commands && Array.isArray(machineResponse.commands) && machineResponse.commands.length > 0) {
           console.log('🎮 [AI-STATUS] Returning AI commands from machine detection');
+          console.log('📤 [AI-STATUS] Command payload:', JSON.stringify(machineResponse, null, 2));
           return NextResponse.json(machineResponse);
         }
-        console.log('🚫 [AI-STATUS] No commands returned from machine detection');
+        console.log('🚫 [AI-STATUS] No valid commands returned from machine detection, response was:', machineResponse);
         break;
         
       default:
@@ -222,34 +236,52 @@ async function handleCallEnded(event: any) {
 // Handle machine detection results
 async function handleMachineDetection(event: any) {
   try {
-    const result = event.machine_detection_result; // 'human', 'machine', or 'unknown'
+    const result = event.result || event.machine_detection_result; // Support both possible field names
     
     console.log('🤖 [MACHINE-DETECTION] Processing result:', {
-      callId: event.id,
+      callId: event.call_control_id || event.id,
       result: result,
-      eventData: JSON.stringify(event, null, 2)
+      rawEvent: {
+        result: event.result,
+        machine_detection_result: event.machine_detection_result,
+        eventType: event.event_type,
+        allKeys: Object.keys(event)
+      }
     });
     
     // If human detected, return AI commands immediately
     if (result === 'human' || result === undefined || result === 'unknown') {
-      console.log('🗣️ [MACHINE-DETECTION] Human detected - generating AI commands:', event.id);
+      console.log('🗣️ [MACHINE-DETECTION] Human detected - generating AI commands');
       
       // Extract voice configuration from client_state if available
-      let voiceConfig: any = { voice: 'female' };
+      let voiceConfig: any = {};
       let language = 'en-US';
+      let leadData: any = {};
       
       try {
         if (event.client_state) {
           const clientState = JSON.parse(Buffer.from(event.client_state, 'base64').toString());
+          console.log('📋 [MACHINE-DETECTION] Parsed client state:', JSON.stringify(clientState, null, 2));
+          
           if (clientState.voiceConfig && clientState.voiceConfig.voice) {
             voiceConfig = {
               voice: clientState.voiceConfig.voice.elevenLabsId || 'female'
             };
             language = clientState.voiceConfig.voice.language || 'en-US';
           }
+          
+          if (clientState.leadData) {
+            leadData = clientState.leadData;
+          }
         }
       } catch (parseError) {
-        console.log('⚠️ [MACHINE-DETECTION] Could not parse client_state, using defaults');
+        console.log('⚠️ [MACHINE-DETECTION] Could not parse client_state, using defaults:', parseError);
+      }
+      
+      // Generate personalized greeting if we have lead data
+      let greeting = "Hello! Thank you for answering. I'm Sarah calling about your interest in our services. Can you hear me okay? Please say yes or press 1 if you can hear me.";
+      if (leadData.name) {
+        greeting = `Hi ${leadData.name}! Thank you for answering. I'm Sarah calling about your interest in our services. Can you hear me okay? Please say yes or press 1 if you can hear me.`;
       }
       
       const aiCommands = {
@@ -257,8 +289,8 @@ async function handleMachineDetection(event: any) {
         commands: [
           {
             command: 'speak',
-            text: "Hello! Thank you for answering. I'm Sarah calling about your interest in our services. Can you hear me okay? Please say yes or press 1 if you can hear me.",
-            ...voiceConfig,
+            text: greeting,
+            voice: voiceConfig.voice || 'female',
             service_level: "basic"
           },
           {
@@ -275,25 +307,45 @@ async function handleMachineDetection(event: any) {
       
       console.log('🎮 [MACHINE-DETECTION] Generated AI commands:', JSON.stringify(aiCommands, null, 2));
       return aiCommands;
-    } else {
-      console.log('🤖 [MACHINE-DETECTION] Machine detected, not starting AI conversation');
-      return { success: true, message: 'Machine detected' };
-    }
+    } 
     
-    // TODO: Update call record with machine detection result
-    /*
-    await supabaseAdmin.from('ai_call_logs')
-      .update({ 
-        answered_by: result,
-        updated_at: new Date().toISOString()
-      })
-      .eq('call_id', event.id);
-    */
+    // Machine or voicemail detected
+    console.log('🤖 [MACHINE-DETECTION] Machine/voicemail detected, ending call');
+    return {
+      success: true,
+      commands: [
+        {
+          command: 'hangup'
+        }
+      ],
+      message: 'Machine detected'
+    };
     
   } catch (error) {
     console.error('❌ [MACHINE-DETECTION] Error handling machine detection:', error);
-    // Return error but allow fallback
-    return { success: false, error: error.message };
+    
+    // Return fallback AI commands on error - better to try than fail silently
+    console.log('🔄 [MACHINE-DETECTION] Returning fallback AI commands due to error');
+    return {
+      success: true,
+      commands: [
+        {
+          command: 'speak',
+          text: "Hello! Thank you for answering. I'm Sarah, an AI assistant. Can you hear me okay? Please say yes or press 1.",
+          voice: 'female',
+          service_level: "basic"
+        },
+        {
+          command: 'gather_using_speech',
+          speech_timeout: 8000,
+          speech_end_timeout: 1500,
+          language: 'en-US',
+          webhook_url: 'https://ghostcrm.ai/api/voice/telnyx/ai-response',
+          inter_digit_timeout: 5000,
+          valid_digits: "1234567890*#"
+        }
+      ]
+    };
   }
 }
 
