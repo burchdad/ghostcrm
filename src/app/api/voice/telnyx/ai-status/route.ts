@@ -55,7 +55,17 @@ export async function POST(req: NextRequest) {
         if (machineResponse) {
           console.log('🎮 [AI-STATUS] Returning machine detection response to Telnyx');
           console.log('📤 [AI-STATUS] Response payload:', JSON.stringify(machineResponse, null, 2));
-          return NextResponse.json(machineResponse);
+          
+          // Create response and log headers for debugging
+          const response = NextResponse.json(machineResponse);
+          console.log('📤 [AI-STATUS] Response headers:', JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2));
+          console.log('📤 [AI-STATUS] Full response object being returned to Telnyx:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: machineResponse
+          });
+          
+          return response;
         } else {
           console.log('🚫 [AI-STATUS] No response from machine detection handler - this should not happen');
           // Return fallback response to ensure something is sent to Telnyx
