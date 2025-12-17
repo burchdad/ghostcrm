@@ -56,20 +56,18 @@ export async function POST(req: NextRequest) {
           console.log('🎮 [AI-STATUS] Returning machine detection response to Telnyx');
           console.log('📤 [AI-STATUS] Response payload:', JSON.stringify(machineResponse, null, 2));
           
-          // Create response and log headers for debugging
-          const response = NextResponse.json(machineResponse);
-          console.log('📤 [AI-STATUS] Response headers:', JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2));
-          console.log('📤 [AI-STATUS] Full response object being returned to Telnyx:', {
-            status: response.status,
-            statusText: response.statusText,
-            body: machineResponse
+          // CRITICAL FIX: Return raw JSON response, not NextResponse wrapper
+          console.log('🔧 [AI-STATUS] Returning raw JSON to avoid NextResponse wrapper');
+          return new Response(JSON.stringify(machineResponse), {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+            },
           });
-          
-          return response;
         } else {
           console.log('🚫 [AI-STATUS] No response from machine detection handler - this should not happen');
           // Return fallback response to ensure something is sent to Telnyx
-          return NextResponse.json({
+          const fallbackResponse = {
             success: true,
             commands: [
               {
@@ -77,6 +75,12 @@ export async function POST(req: NextRequest) {
               }
             ],
             message: 'No machine detection response'
+          };
+          return new Response(JSON.stringify(fallbackResponse), {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+            },
           });
         }
         
