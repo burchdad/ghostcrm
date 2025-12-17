@@ -59,8 +59,17 @@ export function telnyxVoice(provider: { meta: any }): VoiceAdapter {
           ...meta?.telnyxOptions
         });
         
-        console.log('✅ Telnyx API call successful:', call?.data?.id);
-        return { ok: true, providerId: call?.data?.id };
+        // CRITICAL: Log the full Telnyx response to debug call_control_id extraction
+        console.log('🔍 [TELNYX] Full call response:', JSON.stringify(call, null, 2));
+        console.log('🔍 [TELNYX] Call data:', JSON.stringify(call?.data, null, 2));
+        console.log('🔍 [TELNYX] Call control ID:', call?.data?.call_control_id);
+        console.log('🔍 [TELNYX] Call ID (legacy):', call?.data?.id);
+        
+        // Use call_control_id (the correct field) instead of id
+        const callControlId = call?.data?.call_control_id || call?.data?.id;
+        
+        console.log('✅ Telnyx API call successful, call_control_id:', callControlId);
+        return { ok: true, providerId: callControlId };
       } catch (e: any) {
         console.error('❌ Telnyx API detailed error:', {
           message: e?.message,

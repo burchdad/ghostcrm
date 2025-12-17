@@ -51,6 +51,10 @@ async function telnyxSpeak(callControlId: string, text: string) {
   }
 }
 
+export async function GET() {
+  return NextResponse.json({ ok: true, message: "Telnyx webhook endpoint is active" });
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const { eventType, payload } = extractEvent(body);

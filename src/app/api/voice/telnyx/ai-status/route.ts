@@ -1,7 +1,33 @@
 // Telnyx AI Call Status Handler - Tracks call events and outcomes
 import { NextRequest, NextResponse } from "next/server";
 
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const TELNYX_API_KEY = process.env.TELNYX_API_KEY!;
+
+async function telnyxSpeak(callControlId: string, text: string) {
+  const r = await fetch(
+    `https://api.telnyx.com/v2/calls/${encodeURIComponent(callControlId)}/actions/speak`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${TELNYX_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        payload: { voice: "female", language: "en-US", text },
+      }),
+    }
+  );
+
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`Telnyx speak failed: ${r.status} ${t}`);
+  }
+  
+  console.log(`✅ [TELNYX-SPEAK] Successfully sent speak command: "${text}"`);
+}
 
 function extractEvent(body: any) {
   // ✅ Standard Telnyx: { event_type, payload }
@@ -18,6 +44,10 @@ function extractEvent(body: any) {
   };
 }
 
+export async function GET() {
+  return NextResponse.json({ ok: true, message: "Telnyx AI status webhook endpoint is active" });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -25,40 +55,53 @@ export async function POST(req: NextRequest) {
     
     // Use improved event extraction
     const { eventType, payload } = extractEvent(body);
-    const callId = payload?.call_control_id || payload?.id;
+    const callControlId = payload?.call_control_id;
     
-    console.log('🔍 [AI-STATUS] Extracted event:', {
-      eventType,
-      callId,
-      hasPayload: !!payload,
-      payloadKeys: Object.keys(payload || {})
-    });
+    console.log("📞 [AI-STATUS] event:", eventType, "call:", callControlId);
+
+    // Always ACK if missing to stop retries
+    if (!eventType || !callControlId) {
+      console.log("⚠️ [AI-STATUS] Missing event_type or call_control_id");
+      return NextResponse.json({ ok: true });
+    }
+
+    try {
+      // ✅ Speak when the callee answers
+      if (eventType === "call.answered") {
+        console.log("🎯 [AI-STATUS] Call answered, sending speak command");
+        await telnyxSpeak(
+          callControlId,
+          "Hello. This is Ghost AI. I'm connected. Can you hear me?"
+        );
+        console.log("✅ [AI-STATUS] Speak command sent successfully");
+      }
+
+      // ✅ Wait for AMD result == human then speak
+      if (eventType === "call.machine.detection.ended") {
+        const result = payload?.result || payload?.machine_detection_result;
+        console.log(`🤖 [AI-STATUS] Machine detection result: ${result}`);
+        
+        if (result === "human") {
+          console.log("🎯 [AI-STATUS] Human detected, sending AI greeting");
+          await telnyxSpeak(
+            callControlId,
+            "Perfect. Thanks for picking up. This is Sarah from Ghost AI calling about your CRM inquiry."
+          );
+          console.log("✅ [AI-STATUS] AI greeting sent successfully");
+        }
+      }
+
+      return NextResponse.json({ ok: true });
+    } catch (e: any) {
+      console.error("❌ [AI-STATUS] error:", e?.message || e);
+      return NextResponse.json({ ok: true });
+    }
     
-    // Handle different Telnyx call events
-    switch (eventType) {
-      case 'call.initiated':
-        console.log(`AI call ${callId} initiated to ${payload.to}`);
-        await handleCallInitiated(payload);
-        break;
-        
-      case 'call.ringing':
-        console.log(`AI call ${callId} is ringing...`);
-        await handleCallRinging(payload);
-        break;
-        
-      case 'call.answered':
-        console.log(`AI call ${callId} answered - conversation will begin`);
-        await handleCallAnswered(payload);
-        break;
-        
-      case 'call.hangup':
-        console.log(`AI call ${callId} ended - duration: ${payload.call_duration_secs}s`);
-        await handleCallEnded(payload);
-        break;
-        
-      case 'call.machine.detection.ended':
-        console.log(`AI call ${callId} machine detection: ${payload.result || payload.machine_detection_result}`);
-        const machineResponse = await handleMachineDetection(payload);
+  } catch (error: any) {
+    console.error('❌ [AI-STATUS] Error processing webhook:', error);
+    return NextResponse.json({ ok: true });
+  }
+}
         console.log('🔍 [AI-STATUS] Machine detection response:', JSON.stringify(machineResponse, null, 2));
         
         // CRITICAL: Always return the machine detection response immediately
