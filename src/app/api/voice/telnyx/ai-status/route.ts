@@ -50,13 +50,25 @@ export async function POST(req: NextRequest) {
         const machineResponse = await handleMachineDetection(payload);
         console.log('🔍 [AI-STATUS] Machine detection response:', JSON.stringify(machineResponse, null, 2));
         
-        if (machineResponse && machineResponse.commands && Array.isArray(machineResponse.commands) && machineResponse.commands.length > 0) {
-          console.log('🎮 [AI-STATUS] Returning AI commands from machine detection');
-          console.log('📤 [AI-STATUS] Command payload:', JSON.stringify(machineResponse, null, 2));
+        // CRITICAL: Always return the machine detection response immediately
+        // This ensures AI commands are delivered to Telnyx to start the conversation
+        if (machineResponse) {
+          console.log('🎮 [AI-STATUS] Returning machine detection response to Telnyx');
+          console.log('📤 [AI-STATUS] Response payload:', JSON.stringify(machineResponse, null, 2));
           return NextResponse.json(machineResponse);
+        } else {
+          console.log('🚫 [AI-STATUS] No response from machine detection handler - this should not happen');
+          // Return fallback response to ensure something is sent to Telnyx
+          return NextResponse.json({
+            success: true,
+            commands: [
+              {
+                command: 'hangup'
+              }
+            ],
+            message: 'No machine detection response'
+          });
         }
-        console.log('🚫 [AI-STATUS] No valid commands returned from machine detection, response was:', machineResponse);
-        break;
         
       default:
         console.log(`Unhandled Telnyx event: ${eventType}`);
@@ -305,7 +317,14 @@ async function handleMachineDetection(event: any) {
         ]
       };
       
+      // Validate command structure before returning
+      if (!aiCommands.commands || !Array.isArray(aiCommands.commands) || aiCommands.commands.length === 0) {
+        console.error('❌ [MACHINE-DETECTION] Invalid AI commands structure!');
+        throw new Error('Invalid AI commands structure');
+      }
+      
       console.log('🎮 [MACHINE-DETECTION] Generated AI commands:', JSON.stringify(aiCommands, null, 2));
+      console.log('✨ [MACHINE-DETECTION] SUCCESS: Returning AI commands to start conversation');
       return aiCommands;
     } 
     
