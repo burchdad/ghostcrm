@@ -46,18 +46,32 @@ export async function POST(req: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const webhookUrl = `${baseUrl}/api/voice/telnyx/webhook`;
 
-    // Prepare call options
+    // Prepare call options with safe client_state encoding
+    let clientStateEncoded: string | undefined;
+    try {
+      // Create a safe copy of the data to avoid circular references
+      const clientStateData = {
+        script: typeof script === 'string' ? script : JSON.stringify(script),
+        leadId,
+        timestamp: Date.now()
+      };
+      clientStateEncoded = btoa(JSON.stringify(clientStateData));
+    } catch (encodeError) {
+      console.error('⚠️ [TELNYX] Failed to encode client_state:', encodeError);
+      // Use minimal state as fallback
+      clientStateEncoded = btoa(JSON.stringify({
+        leadId,
+        timestamp: Date.now()
+      }));
+    }
+
     const callOptions = {
       to,
       from,
       connection_id: connectionId,
       webhook_url: webhookUrl,
       webhook_url_method: 'POST',
-      client_state: btoa(JSON.stringify({ 
-        script, 
-        leadId,
-        timestamp: Date.now() 
-      })),
+      client_state: clientStateEncoded,
       // Enable recording if needed
       record: 'record-on-answer',
       record_channels: 'dual',

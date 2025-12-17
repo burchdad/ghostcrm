@@ -16,7 +16,9 @@ async function telnyxSpeak(callControlId: string, text: string) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        payload: { voice: "female", language: "en-US", text },
+        voice: "female",
+        language: "en-US", 
+        text: text
       }),
     }
   );

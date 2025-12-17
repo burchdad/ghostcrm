@@ -606,7 +606,7 @@ export class LeadsAgent extends BaseAgent {
       // Filter leads by hot criteria (high score and recent activity)
       return leadData.leads.filter(lead => 
         lead.score >= 80 && 
-        lead.conversion_probability >= 0.7
+        (lead.conversion_probability ?? 0) >= 0.7
       ).length;
     } catch (error) {
       this.log('error', 'Failed to get hot leads count', { error });

@@ -49,13 +49,23 @@ export function telnyxVoice(provider: { meta: any }): VoiceAdapter {
           additionalOptions: meta?.telnyxOptions
         });
 
+        let clientStateEncoded: string | undefined;
+        if (meta?.clientState) {
+          try {
+            clientStateEncoded = btoa(JSON.stringify(meta.clientState));
+          } catch (e) {
+            console.error('❌ [TELNYX] Failed to encode client_state:', e);
+            clientStateEncoded = undefined;
+          }
+        }
+
         const call = await client.calls.create({
           to,
           from: from ?? defaultFrom,
           connection_id: connectionId,
           webhook_url: meta?.webhookUrl,
           webhook_url_method: 'POST',
-          client_state: meta?.clientState ? btoa(JSON.stringify(meta.clientState)) : undefined,
+          client_state: clientStateEncoded,
           ...meta?.telnyxOptions
         });
         

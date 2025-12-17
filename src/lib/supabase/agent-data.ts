@@ -1,7 +1,51 @@
 import { supabaseAdmin } from '../supabaseAdmin';
 
+interface LeadActivity {
+  id: string;
+  type: string;
+  description: string;
+  created_at: string;
+  lead_id: string;
+}
+
+interface Lead {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: string;
+  score: number;
+  source: string;
+  created_at: string;
+  last_contacted?: string;
+  notes?: string;
+  assigned_to?: string;
+  conversion_probability?: number;
+  estimated_value?: number;
+  stage?: string;
+  activities?: LeadActivity[];
+}
+
+interface LeadsDataResult {
+  leads: Lead[];
+  analytics: {
+    total: number;
+    qualified: number;
+    active: number;
+    avgScore: number;
+    leadsBySource: Record<string, number>;
+    conversionFunnel: {
+      new: number;
+      contacted: number;
+      qualified: number;
+      converted: number;
+    };
+    conversionRate: number;
+  };
+}
+
 export interface AgentDataConnector {
-  getLeadsData(): Promise<any>;
+  getLeadsData(): Promise<LeadsDataResult>;
   getDealsData(): Promise<any>;
   getInventoryData(): Promise<any>;
   getCalendarData(): Promise<any>;
@@ -11,7 +55,7 @@ export interface AgentDataConnector {
 
 export class SupabaseAgentDataConnector implements AgentDataConnector {
   
-  async getLeadsData() {
+  async getLeadsData(): Promise<LeadsDataResult> {
     try {
       const { data: leads, error } = await supabaseAdmin
         .from('leads')
@@ -30,37 +74,45 @@ export class SupabaseAgentDataConnector implements AgentDataConnector {
           conversion_probability,
           estimated_value,
           stage,
-          activities:lead_activities(
-            id,
-            type,
-            description,
-            created_at
-          )
         `)
         .order('created_at', { ascending: false });
 
+      // Get activities separately to avoid relationship issues
+      const { data: activitiesData } = await supabaseAdmin
+        .from('activities')
+        .select('id, type, description, created_at, lead_id')
+        .not('lead_id', 'is', null);
+
+      // Combine leads with their activities  
+      const leadsArray = (leads || []) as unknown as Lead[];
+      const leadsWithActivities: Lead[] = leadsArray.map(lead => {
+        const leadActivities = activitiesData?.filter(activity => activity.lead_id === lead.id) || [];
+        return Object.assign({}, lead, { activities: leadActivities });
+      });
+
       if (error) throw error;
 
-      // Calculate analytics
-      const totalLeads = leads?.length || 0;
-      const qualifiedLeads = leads?.filter(l => l.score >= 70).length || 0;
-      const activeLeads = leads?.filter(l => l.status === 'active').length || 0;
-      const avgScore = leads?.reduce((sum, l) => sum + (l.score || 0), 0) / totalLeads || 0;
+      // Calculate analytics using the original leads data
+      const leadsForAnalytics = (leads || []) as unknown as Lead[];
+      const totalLeads = leadsForAnalytics.length;
+      const qualifiedLeads = leadsForAnalytics.filter(l => l.score >= 70).length;
+      const activeLeads = leadsForAnalytics.filter(l => l.status === 'active').length;
+      const avgScore = leadsForAnalytics.reduce((sum, l) => sum + (l.score || 0), 0) / totalLeads || 0;
 
-      const leadsBySource = leads?.reduce((acc, lead) => {
+      const leadsBySource = leadsForAnalytics.reduce((acc, lead) => {
         acc[lead.source] = (acc[lead.source] || 0) + 1;
         return acc;
-      }, {} as Record<string, number>) || {};
+      }, {} as Record<string, number>);
 
       const conversionFunnel = {
-        new: leads?.filter(l => l.stage === 'new').length || 0,
-        contacted: leads?.filter(l => l.stage === 'contacted').length || 0,
-        qualified: leads?.filter(l => l.stage === 'qualified').length || 0,
-        converted: leads?.filter(l => l.stage === 'converted').length || 0,
+        new: leadsForAnalytics.filter(l => l.stage === 'new').length,
+        contacted: leadsForAnalytics.filter(l => l.stage === 'contacted').length,
+        qualified: leadsForAnalytics.filter(l => l.stage === 'qualified').length,
+        converted: leadsForAnalytics.filter(l => l.stage === 'converted').length,
       };
 
       return {
-        leads: leads || [],
+        leads: leadsWithActivities,
         analytics: {
           total: totalLeads,
           qualified: qualifiedLeads,
