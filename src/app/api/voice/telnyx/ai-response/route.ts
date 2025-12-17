@@ -172,13 +172,18 @@ export async function POST(req: NextRequest) {
       ];
     }
     
-    return NextResponse.json({ commands });
+    return new Response(JSON.stringify({ commands }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
   } catch (error) {
     console.error('Error processing Telnyx AI response:', error);
     
     // Fallback graceful ending
-    return NextResponse.json({
+    const fallbackCommands = {
       commands: [
         {
           command: 'speak',
@@ -189,6 +194,12 @@ export async function POST(req: NextRequest) {
           command: 'hangup'
         }
       ]
+    };
+    return new Response(JSON.stringify(fallbackCommands), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
   }
 }

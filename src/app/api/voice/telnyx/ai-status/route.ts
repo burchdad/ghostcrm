@@ -88,17 +88,26 @@ export async function POST(req: NextRequest) {
         console.log(`Unhandled Telnyx event: ${eventType}`);
     }
 
-    return NextResponse.json({ 
+    return new Response(JSON.stringify({ 
       success: true, 
       message: 'Status update processed' 
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
   } catch (error) {
     console.error('Error processing Telnyx call status:', error);
-    return NextResponse.json(
-      { error: 'Failed to process status update' }, 
-      { status: 500 }
-    );
+    return new Response(JSON.stringify(
+      { error: 'Failed to process status update' }
+    ), { 
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   }
 }
 
