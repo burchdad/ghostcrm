@@ -502,6 +502,7 @@ function TenantOwnerDashboard() {
     return null;
   }
 
+  // Main dashboard render
   return (
     <div className="tenant-dashboard-container">
       {/* Enhanced Header with Glass Effect */}
