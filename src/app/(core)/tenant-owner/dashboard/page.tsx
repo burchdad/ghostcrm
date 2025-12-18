@@ -504,7 +504,8 @@ function TenantOwnerDashboard() {
 
   // Main dashboard render
   return (
-    <div className=\"tenant-dashboard-container\">{/* Enhanced Header with Glass Effect */}
+    <div className="tenant-dashboard-container">
+      {/* Enhanced Header with Glass Effect */}
       <div className="tenant-dashboard-header">
         <div className="tenant-dashboard-header-content">
           <div className="tenant-dashboard-title-section">
@@ -515,7 +516,9 @@ function TenantOwnerDashboard() {
               <h1 className="tenant-dashboard-title">
                 {organizationName} - Owner Dashboard
               </h1>
-              <p className="tenant-dashboard-subtitle">Comprehensive business overview and management</p>
+              <p className="tenant-dashboard-subtitle">
+                Comprehensive business overview and management
+              </p>
             </div>
           </div>
           <div className="tenant-dashboard-status-badge">
@@ -532,116 +535,131 @@ function TenantOwnerDashboard() {
             {/* Metrics in 2x2 Grid */}
             <div className="tenant-dashboard-metrics-container">
               <div className="tenant-dashboard-metrics-grid">
-          {/* Total Revenue Card */}
-          <div 
-            className="tenant-dashboard-metric-card revenue clickable" 
-            onClick={handleRevenueClick}
-            role="button"
-            tabIndex={0}
-            onKeyPress={(e) => e.key === 'Enter' && handleRevenueClick()}
-          >
-            <div className="tenant-dashboard-metric-header">
-              <div>
-                <div className="tenant-dashboard-metric-label revenue">Total Revenue</div>
-                <div className="tenant-dashboard-metric-value">
-                  ${analytics.totalRevenue.toLocaleString()}
+                {/* Total Revenue Card */}
+                <div
+                  className="tenant-dashboard-metric-card revenue clickable"
+                  onClick={handleRevenueClick}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && handleRevenueClick()}
+                >
+                  <div className="tenant-dashboard-metric-header">
+                    <div>
+                      <div className="tenant-dashboard-metric-label revenue">
+                        Total Revenue
+                      </div>
+                      <div className="tenant-dashboard-metric-value">
+                        ${analytics.totalRevenue.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="tenant-dashboard-metric-icon revenue">
+                      <DollarSign />
+                    </div>
+                  </div>
+                  <div className="tenant-dashboard-metric-trend positive">
+                    <TrendingUp />
+                    +{analytics.monthlyGrowth}% this month
+                  </div>
+                </div>
+
+                {/* Team Performance Card */}
+                <div
+                  className="tenant-dashboard-metric-card performance clickable"
+                  onClick={handleTeamClick}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && handleTeamClick()}
+                >
+                  <div className="tenant-dashboard-metric-header">
+                    <div>
+                      <div className="tenant-dashboard-metric-label performance">
+                        Team Performance
+                      </div>
+                      <div className="tenant-dashboard-metric-value">
+                        {analytics.teamPerformance}%
+                      </div>
+                    </div>
+                    <div className="tenant-dashboard-metric-icon performance">
+                      <Users />
+                    </div>
+                  </div>
+                  <div className="tenant-dashboard-progress-bar">
+                    <div
+                      className="tenant-dashboard-progress-fill"
+                      style={{ width: `${analytics.teamPerformance}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Active Deals Card */}
+                <div
+                  className="tenant-dashboard-metric-card deals clickable"
+                  onClick={handleDealsClick}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && handleDealsClick()}
+                >
+                  <div className="tenant-dashboard-metric-header">
+                    <div>
+                      <div className="tenant-dashboard-metric-label deals">
+                        Active Deals
+                      </div>
+                      <div className="tenant-dashboard-metric-value">
+                        {analytics.activeDeals}
+                      </div>
+                    </div>
+                    <div className="tenant-dashboard-metric-icon deals">
+                      <Target />
+                    </div>
+                  </div>
+                  <div className="tenant-dashboard-metric-trend positive">
+                    {analytics.totalCustomers} total customers
+                  </div>
+                </div>
+
+                {/* Customer Satisfaction Card */}
+                <div
+                  className="tenant-dashboard-metric-card satisfaction clickable"
+                  onClick={handleSatisfactionClick}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && handleSatisfactionClick()
+                  }
+                >
+                  <div className="tenant-dashboard-metric-header">
+                    <div>
+                      <div className="tenant-dashboard-metric-label satisfaction">
+                        Customer Satisfaction
+                      </div>
+                      <div className="tenant-dashboard-metric-value">
+                        {analytics.customerSatisfaction}%
+                      </div>
+                    </div>
+                    <div className="tenant-dashboard-metric-icon satisfaction">
+                      <BarChart3 />
+                    </div>
+                  </div>
+                  <div className="tenant-dashboard-metric-trend positive">
+                    Excellent rating
+                  </div>
                 </div>
               </div>
-              <div className="tenant-dashboard-metric-icon revenue">
-                <DollarSign />
-              </div>
             </div>
-            <div className="tenant-dashboard-metric-trend positive">
-              <TrendingUp />
-              +{analytics.monthlyGrowth}% this month
-            </div>
-          </div>
 
-          {/* Team Performance Card */}
-          <div 
-            className="tenant-dashboard-metric-card performance clickable" 
-            onClick={handleTeamClick}
-            role="button"
-            tabIndex={0}
-            onKeyPress={(e) => e.key === 'Enter' && handleTeamClick()}
-          >
-            <div className="tenant-dashboard-metric-header">
-              <div>
-                <div className="tenant-dashboard-metric-label performance">Team Performance</div>
-                <div className="tenant-dashboard-metric-value">{analytics.teamPerformance}%</div>
-              </div>
-              <div className="tenant-dashboard-metric-icon performance">
-                <Users />
-              </div>
-            </div>
-            <div className="tenant-dashboard-progress-bar">
-              <div 
-                className="tenant-dashboard-progress-fill" 
-                style={{ width: `${analytics.teamPerformance}%` }}
-              ></div>
-            </div>
-          </div>
-
-          {/* Active Deals Card */}
-          <div 
-            className="tenant-dashboard-metric-card deals clickable" 
-            onClick={handleDealsClick}
-            role="button"
-            tabIndex={0}
-            onKeyPress={(e) => e.key === 'Enter' && handleDealsClick()}
-          >
-            <div className="tenant-dashboard-metric-header">
-              <div>
-                <div className="tenant-dashboard-metric-label deals">Active Deals</div>
-                <div className="tenant-dashboard-metric-value">{analytics.activeDeals}</div>
-              </div>
-              <div className="tenant-dashboard-metric-icon deals">
-                <Target />
-              </div>
-            </div>
-            <div className="tenant-dashboard-metric-trend positive">
-              {analytics.totalCustomers} total customers
-            </div>
-          </div>
-
-          {/* Customer Satisfaction Card */}
-          <div 
-            className="tenant-dashboard-metric-card satisfaction clickable" 
-            onClick={handleSatisfactionClick}
-            role="button"
-            tabIndex={0}
-            onKeyPress={(e) => e.key === 'Enter' && handleSatisfactionClick()}
-          >
-            <div className="tenant-dashboard-metric-header">
-              <div>
-                <div className="tenant-dashboard-metric-label satisfaction">Customer Satisfaction</div>
-                <div className="tenant-dashboard-metric-value">{analytics.customerSatisfaction}%</div>
-              </div>
-              <div className="tenant-dashboard-metric-icon satisfaction">
-                <BarChart3 />
-              </div>
-            </div>
-            <div className="tenant-dashboard-metric-trend positive">
-            <div className="tenant-dashboard-metric-trend positive">
-              Excellent rating
+            {/* AI Assistant aligned to the right */}
+            <div className="tenant-dashboard-ai-container">
+              <PageAIAssistant
+                agentId="dashboard"
+                pageTitle="Business Dashboard"
+                className="tenant-dashboard-ai-assistant"
+              />
             </div>
           </div>
         </div>
-      </div>
 
-      {/* AI Assistant aligned to the right */}
-      <div className="tenant-dashboard-ai-container">
-        <PageAIAssistant 
-          agentId="dashboard" 
-          pageTitle="Business Dashboard"
-          className="tenant-dashboard-ai-assistant"
-        />
-      </div>
-    </div>
-  </div>
-
-  {/* Enhanced Quick Actions for Owners */}
-  <div className="tenant-dashboard-actions-grid">
+        {/* Enhanced Quick Actions for Owners */}
+        <div className="tenant-dashboard-actions-grid">
           {/* Business Management Section */}
           <div className="tenant-dashboard-section">
             <h3 className="tenant-dashboard-section-title">
@@ -650,9 +668,10 @@ function TenantOwnerDashboard() {
               </div>
               Business Management
             </h3>
+
             <div>
-              <button 
-                onClick={() => router.push('/tenant-owner/team')}
+              <button
+                onClick={() => router.push("/tenant-owner/team")}
                 className="tenant-dashboard-action-button"
               >
                 <div className="tenant-dashboard-action-content">
@@ -665,9 +684,9 @@ function TenantOwnerDashboard() {
                   </div>
                 </div>
               </button>
-              
-              <button 
-                onClick={() => router.push('/tenant-owner/settings')}
+
+              <button
+                onClick={() => router.push("/tenant-owner/settings")}
                 className="tenant-dashboard-action-button"
               >
                 <div className="tenant-dashboard-action-content">
@@ -680,9 +699,9 @@ function TenantOwnerDashboard() {
                   </div>
                 </div>
               </button>
-              
-              <button 
-                onClick={() => router.push('/tenant-owner/finance')}
+
+              <button
+                onClick={() => router.push("/tenant-owner/finance")}
                 className="tenant-dashboard-action-button"
               >
                 <div className="tenant-dashboard-action-content">
@@ -701,32 +720,49 @@ function TenantOwnerDashboard() {
           {/* Recent Activity Section */}
           <div className="tenant-dashboard-section">
             <h3 className="tenant-dashboard-section-title">Recent Activity</h3>
+
             <div>
               {recentActivities.length > 0 ? (
                 recentActivities.map((activity: any) => (
-                  <div 
-                    key={activity.id} 
+                  <div
+                    key={activity.id}
                     className={`tenant-dashboard-activity-item ${activity.status} clickable`}
                     onClick={() => handleActivityClick(activity)}
                     role="button"
                     tabIndex={0}
-                    onKeyPress={(e) => e.key === 'Enter' && handleActivityClick(activity)}
-                    title={activity.drilldown?.action || 'Click for details'}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleActivityClick(activity)
+                    }
+                    title={activity.drilldown?.action || "Click for details"}
                   >
-                    <div className={`tenant-dashboard-activity-dot ${activity.status}`}></div>
+                    <div
+                      className={`tenant-dashboard-activity-dot ${activity.status}`}
+                    />
                     <div className="tenant-dashboard-activity-content">
-                      <div className="tenant-dashboard-activity-title">{activity.title}</div>
-                      <div className={`tenant-dashboard-activity-description ${activity.status}`}>{activity.description}</div>
-                      <div className="tenant-dashboard-activity-time">{formatRelativeTime(activity.timestamp)}</div>
+                      <div className="tenant-dashboard-activity-title">
+                        {activity.title}
+                      </div>
+                      <div
+                        className={`tenant-dashboard-activity-description ${activity.status}`}
+                      >
+                        {activity.description}
+                      </div>
+                      <div className="tenant-dashboard-activity-time">
+                        {formatRelativeTime(activity.timestamp)}
+                      </div>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="tenant-dashboard-activity-item info">
-                  <div className="tenant-dashboard-activity-dot info"></div>
+                  <div className="tenant-dashboard-activity-dot info" />
                   <div className="tenant-dashboard-activity-content">
-                    <div className="tenant-dashboard-activity-title">No recent activity</div>
-                    <div className="tenant-dashboard-activity-description info">Activities will appear here as they occur</div>
+                    <div className="tenant-dashboard-activity-title">
+                      No recent activity
+                    </div>
+                    <div className="tenant-dashboard-activity-description info">
+                      Activities will appear here as they occur
+                    </div>
                     <div className="tenant-dashboard-activity-time">-</div>
                   </div>
                 </div>
@@ -737,63 +773,78 @@ function TenantOwnerDashboard() {
           {/* Alerts & Tasks Section */}
           <div className="tenant-dashboard-section">
             <h3 className="tenant-dashboard-section-title">Alerts & Tasks</h3>
+
             <div>
-              {/* Render Tasks */}
               {tasksAndAlerts.tasks.map((task: any) => (
-                <div 
-                  key={task.id} 
-                  className={`tenant-dashboard-alert ${task.priority === 'high' ? 'warning' : 'info'} clickable`}
+                <div
+                  key={task.id}
+                  className={`tenant-dashboard-alert ${
+                    task.priority === "high" ? "warning" : "info"
+                  } clickable`}
                   onClick={() => handleTaskClick(task)}
                   role="button"
                   tabIndex={0}
-                  onKeyPress={(e) => e.key === 'Enter' && handleTaskClick(task)}
-                  title={task.drilldown?.action || 'Click for details'}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && handleTaskClick(task)
+                  }
+                  title={task.drilldown?.action || "Click for details"}
                 >
-                  <div className={`tenant-dashboard-alert-icon ${task.priority === 'high' ? 'warning' : 'info'}`}>
+                  <div
+                    className={`tenant-dashboard-alert-icon ${
+                      task.priority === "high" ? "warning" : "info"
+                    }`}
+                  >
                     <AlertTriangle />
                   </div>
-                  <div className={`tenant-dashboard-alert-content ${task.priority === 'high' ? 'warning' : 'info'}`}>
+                  <div
+                    className={`tenant-dashboard-alert-content ${
+                      task.priority === "high" ? "warning" : "info"
+                    }`}
+                  >
                     <h4>{task.title}</h4>
                     <p>{task.description}</p>
                   </div>
                 </div>
               ))}
-              
-              {/* Render Alerts */}
+
               {tasksAndAlerts.alerts.map((alert: any) => (
-                <div 
-                  key={alert.id} 
+                <div
+                  key={alert.id}
                   className={`tenant-dashboard-alert ${alert.status} clickable`}
                   onClick={() => handleTaskClick(alert)}
                   role="button"
                   tabIndex={0}
-                  onKeyPress={(e) => e.key === 'Enter' && handleTaskClick(alert)}
-                  title={alert.drilldown?.action || 'Click for details'}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && handleTaskClick(alert)
+                  }
+                  title={alert.drilldown?.action || "Click for details"}
                 >
                   <div className={`tenant-dashboard-alert-icon ${alert.status}`}>
-                    {alert.status === 'success' && <CheckCircle />}
-                    {alert.status === 'info' && <Calendar />}
-                    {alert.status === 'warning' && <AlertTriangle />}
+                    {alert.status === "success" && <CheckCircle />}
+                    {alert.status === "info" && <Calendar />}
+                    {alert.status === "warning" && <AlertTriangle />}
                   </div>
-                  <div className={`tenant-dashboard-alert-content ${alert.status}`}>
+                  <div
+                    className={`tenant-dashboard-alert-content ${alert.status}`}
+                  >
                     <h4>{alert.title}</h4>
                     <p>{alert.description}</p>
                   </div>
                 </div>
               ))}
-              
-              {/* Fallback if no tasks or alerts */}
-              {tasksAndAlerts.tasks.length === 0 && tasksAndAlerts.alerts.length === 0 && (
-                <div className="tenant-dashboard-alert success">
-                  <div className="tenant-dashboard-alert-icon success">
-                    <CheckCircle />
+
+              {tasksAndAlerts.tasks.length === 0 &&
+                tasksAndAlerts.alerts.length === 0 && (
+                  <div className="tenant-dashboard-alert success">
+                    <div className="tenant-dashboard-alert-icon success">
+                      <CheckCircle />
+                    </div>
+                    <div className="tenant-dashboard-alert-content success">
+                      <h4>All caught up!</h4>
+                      <p>No pending tasks or alerts</p>
+                    </div>
                   </div>
-                  <div className="tenant-dashboard-alert-content success">
-                    <h4>All caught up!</h4>
-                    <p>No pending tasks or alerts</p>
-                  </div>
-                </div>
-              )}
+                )}
             </div>
           </div>
         </div>
