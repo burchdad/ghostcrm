@@ -70,6 +70,7 @@ export function UserProfileDropdown() {
       router.push('/login');
     }
   };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button 
