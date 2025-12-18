@@ -650,7 +650,7 @@ function TenantOwnerDashboard() {
             {/* AI Assistant aligned to the right */}
             <div className="tenant-dashboard-ai-container">
               <PageAIAssistant
-                agentId="dashboard"
+                agentId="leads"
                 pageTitle="Business Dashboard"
                 className="tenant-dashboard-ai-assistant"
               />
