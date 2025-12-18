@@ -261,14 +261,14 @@ function TenantOwnerDashboard() {
         const organizationData = organizationRes && organizationRes.ok ? await organizationRes.json() : null;
 
         setAnalytics({
-          totalRevenue: analyticsData?.revenue?.total || 485000,
-          monthlyGrowth: analyticsData?.revenue?.growth || 12.5,
-          teamPerformance: teamData?.overview?.avgPerformance || 87,
-          customerSatisfaction: analyticsData?.customers?.satisfaction ? (analyticsData.customers.satisfaction * 20) : 92, // Convert 5-star to percentage
-          totalCustomers: analyticsData?.customers?.total || 245,
-          activeDeals: dashboardData?.todayDeals || analyticsData?.performance?.leadsGenerated || 18,
-          pendingTasks: tasksData?.summary?.totalTasks || 7,
-          systemHealth: dashboardData?.metrics?.customerSatisfaction || 98
+          totalRevenue: analyticsData?.revenue?.total || 0,
+          monthlyGrowth: analyticsData?.revenue?.growth || 0,
+          teamPerformance: teamData?.overview?.avgPerformance || 0,
+          customerSatisfaction: analyticsData?.customers?.satisfaction ? (analyticsData.customers.satisfaction * 20) : 0,
+          totalCustomers: analyticsData?.customers?.total || 0,
+          activeDeals: dashboardData?.todayDeals || analyticsData?.performance?.leadsGenerated || 0,
+          pendingTasks: tasksData?.summary?.totalTasks || 0,
+          systemHealth: dashboardData?.metrics?.customerSatisfaction || 0
         });
         
         setRecentActivities(activityData.activities || []);
@@ -291,59 +291,7 @@ function TenantOwnerDashboard() {
           alerts: tasksData.alerts || []
         });
 
-        // Install a default demo chart if none exist
-        if (installedCharts.length === 0) {
-          const demoChart: InstalledChart = {
-            id: 'demo_revenue_chart',
-            name: 'Monthly Revenue',
-            type: 'bar',
-            data: {
-              labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-              datasets: [{
-                label: 'Revenue ($)',
-                data: [15000, 22000, 18000, 26000, 23000, 29000],
-                backgroundColor: 'rgba(34, 197, 94, 0.5)',
-                borderColor: 'rgb(34, 197, 94)',
-                borderWidth: 2
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                title: {
-                  display: true,
-                  text: 'Monthly Revenue Trends',
-                  font: { size: 16, weight: 'bold' },
-                  padding: { bottom: 20 }
-                },
-                legend: {
-                  position: 'bottom' as const,
-                  labels: { padding: 20, usePointStyle: true }
-                }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  grid: { color: 'rgba(0, 0, 0, 0.1)' }
-                },
-                x: {
-                  grid: { display: false }
-                }
-              }
-            },
-            position: 0
-          };
-
-          setInstalledCharts([demoChart]);
-          setChartSettings({
-            [demoChart.id]: {
-              title: demoChart.name,
-              type: demoChart.type,
-              visible: true
-            }
-          });
-        }
+        // Charts will be empty until user installs from marketplace
       } catch (error) {
         console.error('Error fetching owner analytics:', error);
       } finally {
