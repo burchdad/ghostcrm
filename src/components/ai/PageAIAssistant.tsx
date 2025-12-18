@@ -16,7 +16,7 @@ interface AIInsight {
 }
 
 interface PageAIAssistantProps {
-  agentId: 'leads' | 'deals' | 'inventory' | 'calendar' | 'collaboration' | 'workflow';
+  agentId: 'leads' | 'deals' | 'inventory' | 'calendar' | 'collaboration' | 'workflow' | 'dashboard';
   pageTitle: string;
   entityId?: string;
   entityData?: any;
