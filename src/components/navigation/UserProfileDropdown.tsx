@@ -86,7 +86,10 @@ export function UserProfileDropdown() {
       </button>
       
       {open && (
-        <div className="absolute top-14 right-0 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-sm" role="menu" aria-label={t("user_menu", "accessibility")}>
+        <div className="absolute top-14 right-0 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-sm transform -translate-x-4" role="menu" aria-label={t("user_menu", "accessibility")} style={{
+          right: '0',
+          transform: 'translateX(calc(-100% + 2.5rem))'
+        }}>
           {/* Profile Header */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-100">
             <div className="flex items-center gap-4">
