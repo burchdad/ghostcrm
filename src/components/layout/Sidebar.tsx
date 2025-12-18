@@ -68,8 +68,8 @@ const DEFAULT_ITEMS: SidebarItem[] = [
   
   // Tenant Owner Features
   { 
-    name: "Business Dashboard", 
-    path: "/tenant-owner/dashboard", 
+    name: "Business", 
+    path: "#", 
     icon: LucideHome, 
     role: ["owner"], 
     enabled: true, 
@@ -77,6 +77,7 @@ const DEFAULT_ITEMS: SidebarItem[] = [
     tenantOwnerOnly: true,
     expandable: true,
     subItems: [
+      { name: "Dashboard", path: "/tenant-owner/dashboard", icon: LucideBarChart2, role: ["owner"], enabled: true, tenantOwnerOnly: true },
       { name: "Leads", path: "/tenant-owner/leads", icon: LucideUser, role: ["owner"], enabled: true, countKey: "leads", tenantOwnerOnly: true },
       { name: "Deals", path: "/tenant-owner/deals", icon: LucideBarChart2, role: ["owner"], enabled: true, countKey: "deals", tenantOwnerOnly: true },
       { name: "Inventory", path: "/tenant-owner/inventory", icon: LucideCar, role: ["owner"], enabled: true, countKey: "inventory", tenantOwnerOnly: true },
