@@ -504,8 +504,7 @@ function TenantOwnerDashboard() {
 
   // Main dashboard render
   return (
-    <div className="tenant-dashboard-container">
-      {/* Enhanced Header with Glass Effect */}
+    <div className=\"tenant-dashboard-container\">{/* Enhanced Header with Glass Effect */}
       <div className="tenant-dashboard-header">
         <div className="tenant-dashboard-header-content">
           <div className="tenant-dashboard-title-section">
