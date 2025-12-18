@@ -104,42 +104,38 @@ export function UserProfileDropdown() {
                   📷
                 </div>
               </button>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
-            <div>
-              <div className="font-bold text-sm text-gray-900">{role}</div>
-              <div className="text-xs text-gray-500">{org}</div>
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
+              <div>
+                <div className="font-bold text-lg text-gray-900">{role}</div>
+                <div className="text-sm text-gray-500">{org}</div>
+              </div>
             </div>
           </div>
-          
-          <ul className="space-y-1">
-            <li>
-              <button
-                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer transition-colors flex items-center gap-2"
-                onClick={handleSettingsClick}
-              >
-                <span>⚙️</span>
-                {t("settings", "navigation")}
-              </button>
-            </li>
-            <li>
-              <button
-                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer transition-colors flex items-center gap-2"
-                onClick={handleProfileClick}
-              >
-                <span>👤</span>
-                {t("profile", "common")}
-              </button>
-            </li>
-            <li>
-              <button
-                className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition-colors flex items-center gap-2"
-                onClick={handleLogout}
-              >
-                <span>🚪</span>
-                {t("logout", "common")}
-              </button>
-            </li>
-          </ul>
+          {/* Menu Items */}
+          <div className="p-4 space-y-1">
+            <button
+              className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-3 group"
+              onClick={handleSettingsClick}
+            >
+              <span className="text-base group-hover:scale-110 transition-transform duration-200">⚙️</span>
+              <span className="font-medium">{t("settings", "navigation")}</span>
+            </button>
+            <button
+              className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-3 group"
+              onClick={handleProfileClick}
+            >
+              <span className="text-base group-hover:scale-110 transition-transform duration-200">👤</span>
+              <span className="font-medium">{t("profile", "common")}</span>
+            </button>
+            <div className="h-px bg-gray-200 my-2"></div>
+            <button
+              className="w-full text-left px-4 py-3 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-3 group"
+              onClick={handleLogout}
+            >
+              <span className="text-base group-hover:scale-110 transition-transform duration-200">🚪</span>
+              <span className="font-medium">{t("logout", "common")}</span>
+            </button>
+          </div>
         </div>
       )}
       
