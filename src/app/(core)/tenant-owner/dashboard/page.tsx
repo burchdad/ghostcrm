@@ -622,23 +622,26 @@ function TenantOwnerDashboard() {
               </div>
             </div>
             <div className="tenant-dashboard-metric-trend positive">
+            <div className="tenant-dashboard-metric-trend positive">
               Excellent rating
-              </div>
-            </div>
-
-            {/* AI Assistant aligned to the right */}
-            <div className="tenant-dashboard-ai-container">
-              <PageAIAssistant 
-                agentId="dashboard" 
-                pageTitle="Business Dashboard"
-                className="tenant-dashboard-ai-assistant"
-              />
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Enhanced Quick Actions for Owners */
-        <div className="tenant-dashboard-actions-grid">
+      {/* AI Assistant aligned to the right */}
+      <div className="tenant-dashboard-ai-container">
+        <PageAIAssistant 
+          agentId="dashboard" 
+          pageTitle="Business Dashboard"
+          className="tenant-dashboard-ai-assistant"
+        />
+      </div>
+    </div>
+  </div>
+
+  {/* Enhanced Quick Actions for Owners */}
+  <div className="tenant-dashboard-actions-grid">
           {/* Business Management Section */}
           <div className="tenant-dashboard-section">
             <h3 className="tenant-dashboard-section-title">
