@@ -59,13 +59,13 @@ export function NotificationsDropdown() {
   return (
     <div className="relative">
       <button 
-        className="relative p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+        className="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 transform hover:scale-105 group"
         onClick={() => setOpen(!open)}
         aria-label={t("notifications", "accessibility")}
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs text-white flex items-center justify-center font-medium">
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-red-500 to-red-600 rounded-full text-xs text-white flex items-center justify-center font-medium shadow-lg animate-pulse">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -78,17 +78,21 @@ export function NotificationsDropdown() {
             className="fixed inset-0 z-40" 
             onClick={() => setOpen(false)}
           />
-          <div className="fixed top-16 right-8 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-hidden">
+          <div className="fixed top-16 right-8 w-96 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 max-h-96 overflow-hidden backdrop-blur-sm">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <div className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-gray-600" />
-                <h3 className="font-semibold text-gray-900">{t("notifications", "features")}</h3>
-                {unreadCount > 0 && (
-                  <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
-                    {unreadCount} {t("new", "common")}
-                  </span>
-                )}
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Bell className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-lg">{t("notifications", "features")}</h3>
+                  {unreadCount > 0 && (
+                    <span className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-red-100 to-red-200 text-red-700 rounded-full text-xs font-medium mt-1 shadow-sm">
+                      {unreadCount} {t("new", "common")}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
@@ -98,7 +102,7 @@ export function NotificationsDropdown() {
                       e.stopPropagation();
                       markAllAsRead();
                     }}
-                    className="text-xs text-blue-600 hover:text-blue-800"
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium hover:bg-blue-100 px-3 py-1 rounded-lg transition-colors duration-200"
                   >
                     {t("mark_all_read", "actions")}
                   </button>
@@ -110,7 +114,7 @@ export function NotificationsDropdown() {
                     setOpen(false);
                     router.push('/settings/notifications');
                   }}
-                  className="p-1 hover:bg-gray-100 rounded"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
                   title={t("notification_settings", "accessibility")}
                 >
                   <Settings className="w-4 h-4 text-gray-500" />

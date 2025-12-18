@@ -359,11 +359,11 @@ export default function UnifiedToolbar({
         <button
           key={`${control.id}-${index}`}
           onClick={control.onClick}
-          className="flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-colors text-xs text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+          className="group flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl transition-all duration-200 text-xs text-gray-700 hover:text-blue-600 hover:bg-blue-50 hover:shadow-sm transform hover:-translate-y-0.5 border border-transparent hover:border-blue-100"
           title={control.label}
         >
-          <span className="text-sm">{icon}</span>
-          <span className="truncate max-w-[50px]">{control.label}</span>
+          <span className="text-base group-hover:scale-110 transition-transform duration-200">{icon}</span>
+          <span className="truncate max-w-[60px] font-medium">{control.label}</span>
         </button>
       );
     }
@@ -377,15 +377,19 @@ export default function UnifiedToolbar({
           onClick={control.action}
           disabled={control.disabled}
           className={[
-            "flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-colors text-xs",
+            "group flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl transition-all duration-200 text-xs transform hover:-translate-y-0.5 border",
             control.disabled
-              ? "text-gray-400 cursor-not-allowed"
-              : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
+              ? "text-gray-400 cursor-not-allowed border-gray-200"
+              : "text-gray-700 hover:text-blue-600 hover:bg-blue-50 hover:shadow-sm border-transparent hover:border-blue-100",
           ].join(" ")}
           title={control.tooltip}
         >
-          {Icon ? <Icon className="w-3 h-3" /> : <span>•</span>}
-          <span className="truncate max-w-[50px]">{control.label}</span>
+          {Icon ? (
+            <Icon className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+          ) : (
+            <span className="text-base group-hover:scale-110 transition-transform duration-200">•</span>
+          )}
+          <span className="truncate max-w-[60px] font-medium">{control.label}</span>
         </button>
       );
     }
@@ -394,12 +398,18 @@ export default function UnifiedToolbar({
       return (
         <div key={`${control.id}-${index}`} className="relative">
           <button
-            className="flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-colors text-xs text-gray-700 hover:bg-gray-100"
+            className="group flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl transition-all duration-200 text-xs text-gray-700 hover:text-blue-600 hover:bg-blue-50 hover:shadow-sm transform hover:-translate-y-0.5 border border-transparent hover:border-blue-100"
             title={control.tooltip}
           >
-            {Icon ? <Icon className="w-3 h-3" /> : <span>•</span>}
-            <span className="truncate max-w-[50px]">{control.label}</span>
-            <ChevronDown className="w-3 h-3" />
+            {Icon ? (
+              <Icon className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+            ) : (
+              <span className="text-base group-hover:scale-110 transition-transform duration-200">•</span>
+            )}
+            <div className="flex items-center gap-1">
+              <span className="truncate max-w-[50px] font-medium">{control.label}</span>
+              <ChevronDown className="w-3 h-3 group-hover:scale-110 transition-transform duration-200" />
+            </div>
           </button>
           {/* TODO: add dropdown panel if needed */}
         </div>
@@ -410,119 +420,125 @@ export default function UnifiedToolbar({
   };
 
   return (
-    <header className="unified-toolbar">
-      <div className="toolbar-container">
+    <header className="unified-toolbar bg-white border-b border-gray-200 shadow-sm">
+      <div className="toolbar-container flex items-center h-16">
         {/* Logo Section */}
-        <div className="flex items-center gap-3 px-4 border-r border-gray-200 bg-gray-50">
-          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white text-xl">
+        <div className="flex items-center gap-3 px-6 border-r border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 h-full">
+          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-xl shadow-lg transform transition-transform hover:scale-105">
             🚗
           </div>
-          <span className="font-bold text-lg text-blue-700 whitespace-nowrap">GHOST AUTO CRM</span>
+          <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent whitespace-nowrap">
+            GHOST AUTO CRM
+          </span>
         </div>
 
         {/* Ribbon Tabs */}
-        <div className="flex border-r border-gray-200">
+        <div className="flex border-r border-gray-200 h-full">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={[
-                "px-4 py-2 text-sm font-medium border-b-2 transition-colors h-16 flex items-center",
+                "px-6 py-3 text-sm font-semibold border-b-3 transition-all duration-200 h-full flex items-center relative overflow-hidden group",
                 activeTab === tab.id
-                  ? "border-blue-500 text-blue-600 bg-blue-50"
-                  : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                  ? "border-blue-500 text-blue-600 bg-blue-50 shadow-inner"
+                  : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300"
               ].join(" ")}
             >
-              {tab.label}
+              <span className="relative z-10">{tab.label}</span>
+              {activeTab === tab.id && (
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 opacity-50" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-indigo-100 opacity-0 group-hover:opacity-30 transition-opacity duration-200" />
             </button>
           ))}
         </div>
 
         {/* Active Controls */}
-        <div className="flex-1 flex items-center gap-2 px-4 overflow-x-auto">
+        <div className="flex-1 flex items-center gap-3 px-6 overflow-x-auto min-h-0">
           {activeControls.map((control: any, i: number) => renderControl(control, i))}
 
           {/* Dashboard extras */}
           {isDashboardPage && (
             <>
-              <div className="w-px h-8 bg-gray-300 mx-2" />
+              <div className="w-px h-10 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-3" />
               {onAddChart && (
                 <button
                   onClick={onAddChart}
-                  className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-xs text-white bg-blue-500 hover:bg-blue-600"
+                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
-                  <span>📊</span>
-                  <span>Add Chart</span>
+                  <span className="text-base group-hover:scale-110 transition-transform duration-200">📊</span>
+                  <span className="font-medium">Add Chart</span>
                 </button>
               )}
               {onAddTable && (
                 <button
                   onClick={onAddTable}
-                  className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-xs text-white bg-green-500 hover:bg-green-600"
+                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
-                  <span>📋</span>
-                  <span>Add Table</span>
+                  <span className="text-base group-hover:scale-110 transition-transform duration-200">📋</span>
+                  <span className="font-medium">Add Table</span>
                 </button>
               )}
               {onShowTemplates && (
                 <button
                   onClick={onShowTemplates}
-                  className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-xs text-white bg-purple-500 hover:bg-purple-600"
+                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
-                  <span>📄</span>
-                  <span>Templates</span>
+                  <span className="text-base group-hover:scale-110 transition-transform duration-200">📄</span>
+                  <span className="font-medium">Templates</span>
                 </button>
               )}
               {onSaveLayout && (
                 <button
                   onClick={onSaveLayout}
-                  className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-xs text-white bg-gray-800 hover:bg-gray-900"
+                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
-                  <span>💾</span>
-                  <span>Save Layout</span>
+                  <span className="text-base group-hover:scale-110 transition-transform duration-200">💾</span>
+                  <span className="font-medium">Save Layout</span>
                 </button>
               )}
               {onShare && (
                 <button
                   onClick={onShare}
-                  className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-xs text-white bg-indigo-500 hover:bg-indigo-600"
+                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
-                  <span>🔗</span>
-                  <span>Share</span>
+                  <span className="text-base group-hover:scale-110 transition-transform duration-200">🔗</span>
+                  <span className="font-medium">Share</span>
                 </button>
               )}
-              <div className="w-px h-8 bg-gray-300 mx-2" />
+              <div className="w-px h-10 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-3" />
               {onUndo && (
                 <button
                   onClick={onUndo}
-                  className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-xs text-white bg-yellow-500 hover:bg-yellow-600"
+                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
-                  <span>↶</span>
-                  <span>{t("undo", "actions")}</span>
+                  <span className="text-base group-hover:scale-110 transition-transform duration-200">↶</span>
+                  <span className="font-medium">{t("undo", "actions")}</span>
                 </button>
               )}
               {onRedo && (
                 <button
                   onClick={onRedo}
-                  className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-xs text-white bg-yellow-600 hover:bg-yellow-700"
+                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
-                  <span>↷</span>
-                  <span>{t("redo", "actions")}</span>
+                  <span className="text-base group-hover:scale-110 transition-transform duration-200">↷</span>
+                  <span className="font-medium">{t("redo", "actions")}</span>
                 </button>
               )}
-              <div className="w-px h-8 bg-gray-300 mx-2" />
+              <div className="w-px h-10 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-3" />
               {setBulkMode && (
                 <button
                   onClick={() => setBulkMode(!bulkMode)}
                   className={[
-                    "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors text-xs",
+                    "group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs shadow-lg hover:shadow-xl transform hover:-translate-y-0.5",
                     bulkMode
-                      ? "text-white bg-red-500 hover:bg-red-600"
-                      : "text-white bg-purple-500 hover:bg-purple-600",
+                      ? "text-white bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+                      : "text-white bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700",
                   ].join(" ")}
                 >
-                  <span>{bulkMode ? "❌" : "☑️"}</span>
-                  <span>{bulkMode ? t("cancel", "common") + " " + t("bulk", "common") : t("bulk", "common") + " " + t("operations", "common")}</span>
+                  <span className="text-base group-hover:scale-110 transition-transform duration-200">{bulkMode ? "❌" : "☑️"}</span>
+                  <span className="font-medium">{bulkMode ? t("cancel", "common") + " " + t("bulk", "common") : t("bulk", "common") + " " + t("operations", "common")}</span>
                 </button>
               )}
             </>
@@ -530,22 +546,31 @@ export default function UnifiedToolbar({
         </div>
 
         {/* Search */}
-        <div className="relative mx-4">
-          <input
-            type="text"
-            placeholder={t("search", "placeholders")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-4 py-2 w-64 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            aria-label={t("search_placeholder", "accessibility")}
-          />
+        <div className="relative mx-6 flex-shrink-0">
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors duration-200" />
+            <input
+              type="text"
+              placeholder={t("search", "placeholders")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-3 w-80 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 hover:bg-white transition-all duration-200 shadow-sm"
+              aria-label={t("search_placeholder", "accessibility")}
+            />
+          </div>
         </div>
 
         {/* Right Controls */}
-        <div className="flex items-center gap-4 px-4 border-l border-gray-200">
+        <div className="flex items-center gap-6 px-6 border-l border-gray-200 h-full bg-gradient-to-r from-white to-gray-50">
+          {/* Online Users */}
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <div className="w-2 h-2 bg-green-500 rounded-full" />
-            <span>{onlineUsers.length} {t("online", "common")}</span>
+            <div className="relative">
+              <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full shadow-sm" />
+              <div className="absolute inset-0 w-3 h-3 bg-green-400 rounded-full animate-ping opacity-75" />
+            </div>
+            <span className="font-medium">
+              {onlineUsers.length} {t("online", "common")}
+            </span>
           </div>
 
           {/* Bulk mode quick toggle (mirror) */}
@@ -553,21 +578,30 @@ export default function UnifiedToolbar({
             <button
               onClick={() => setBulkMode(!bulkMode)}
               className={[
-                "px-3 py-1 rounded text-xs font-medium transition-colors",
+                "px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm",
                 bulkMode
-                  ? "bg-red-100 text-red-700 hover:bg-red-200"
-                  : "bg-purple-100 text-purple-700 hover:bg-purple-200",
+                  ? "bg-red-100 text-red-700 hover:bg-red-200 border border-red-200"
+                  : "bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-200",
               ].join(" ")}
             >
               {bulkMode ? t("cancel", "common") + " " + t("bulk", "common") : t("bulk", "common") + " " + t("mode", "common")}
             </button>
           )}
 
-          <NotificationsDropdown />
+          {/* Enhanced Notifications */}
+          <div className="relative">
+            <NotificationsDropdown />
+          </div>
 
-          <QuickLanguageSelector />
+          {/* Enhanced Language Selector */}
+          <div className="relative">
+            <QuickLanguageSelector />
+          </div>
 
-          <UserProfileDropdown />
+          {/* Enhanced Profile */}
+          <div className="relative">
+            <UserProfileDropdown />
+          </div>
         </div>
       </div>
     </header>

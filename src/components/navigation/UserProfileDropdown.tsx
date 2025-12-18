@@ -73,31 +73,36 @@ export function UserProfileDropdown() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button 
-        className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center focus:ring-2 focus:ring-blue-500" 
+        className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center focus:ring-2 focus:ring-blue-500 hover:shadow-lg transition-all duration-200 transform hover:scale-105 group border border-blue-200" 
         aria-label={t("user_profile", "accessibility")} 
         onClick={() => setOpen(!open)}
       >
         {avatar ? (
-          <img src={avatar} alt={t("avatar", "accessibility")} className="w-8 h-8 rounded-full object-cover" />
+          <img src={avatar} alt={t("avatar", "accessibility")} className="w-10 h-10 rounded-xl object-cover" />
         ) : (
-          <span className="text-lg">👤</span>
+          <span className="text-xl group-hover:scale-110 transition-transform duration-200">👤</span>
         )}
       </button>
       
       {open && (
-        <div className="absolute top-12 right-0 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4" role="menu" aria-label={t("user_menu", "accessibility")}>
-          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-100">
-            <button 
-              className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors" 
-              onClick={() => fileInputRef.current?.click()} 
-              aria-label={t("upload_avatar", "accessibility")}
-            >
-              {avatar ? (
-                <img src={avatar} alt={t("avatar", "accessibility")} className="w-10 h-10 rounded-full object-cover" />
-              ) : (
-                <span className="text-2xl">👤</span>
-              )}
-            </button>
+        <div className="absolute top-14 right-0 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-sm" role="menu" aria-label={t("user_menu", "accessibility")}>
+          {/* Profile Header */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-100">
+            <div className="flex items-center gap-4">
+              <button 
+                className="relative w-16 h-16 bg-gradient-to-br from-blue-200 to-indigo-200 rounded-2xl flex items-center justify-center hover:from-blue-300 hover:to-indigo-300 transition-all duration-200 shadow-lg group" 
+                onClick={() => fileInputRef.current?.click()} 
+                aria-label={t("upload_avatar", "accessibility")}
+              >
+                {avatar ? (
+                  <img src={avatar} alt={t("avatar", "accessibility")} className="w-16 h-16 rounded-2xl object-cover" />
+                ) : (
+                  <span className="text-3xl group-hover:scale-110 transition-transform duration-200">👤</span>
+                )}
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center text-white text-xs shadow-lg">
+                  📷
+                </div>
+              </button>
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
             <div>
               <div className="font-bold text-sm text-gray-900">{role}</div>
