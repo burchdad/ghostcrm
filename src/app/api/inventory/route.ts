@@ -25,22 +25,22 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
 
   try {
-    // Get authenticated user and organization
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    // Get authenticated user from JWT cookie (consistent with other APIs)
+    const token = req.cookies.get("ghostcrm_jwt")?.value;
+    if (!token) {
       return new Response(
-        JSON.stringify({ error: "Authorization header required" }),
+        JSON.stringify({ error: "Authentication token required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "").trim();
     const {
       data: { user },
       error: authError,
     } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user) {
+      console.error('❌ [INVENTORY] Auth error:', authError);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
@@ -194,22 +194,22 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Get authenticated user and organization
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    // Get authenticated user from JWT cookie (consistent with other APIs)
+    const token = req.cookies.get("ghostcrm_jwt")?.value;
+    if (!token) {
       return new Response(
-        JSON.stringify({ error: "Authorization header required" }),
+        JSON.stringify({ error: "Authentication token required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "").trim();
     const {
       data: { user },
       error: authError,
     } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user) {
+      console.error('❌ [INVENTORY] Auth error in POST:', authError);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
@@ -319,22 +319,22 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // Get authenticated user and organization
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    // Get authenticated user from JWT cookie (consistent with other APIs)
+    const token = req.cookies.get("ghostcrm_jwt")?.value;
+    if (!token) {
       return new Response(
-        JSON.stringify({ error: "Authorization header required" }),
+        JSON.stringify({ error: "Authentication token required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "").trim();
     const {
       data: { user },
       error: authError,
     } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user) {
+      console.error('❌ [INVENTORY] Auth error in PUT:', authError);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
@@ -444,22 +444,22 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Get authenticated user and organization
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    // Get authenticated user from JWT cookie (consistent with other APIs)
+    const token = req.cookies.get("ghostcrm_jwt")?.value;
+    if (!token) {
       return new Response(
-        JSON.stringify({ error: "Authorization header required" }),
+        JSON.stringify({ error: "Authentication token required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "").trim();
     const {
       data: { user },
       error: authError,
     } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user) {
+      console.error('❌ [INVENTORY] Auth error in DELETE:', authError);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
