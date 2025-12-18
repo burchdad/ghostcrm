@@ -279,7 +279,7 @@
 /* Enhanced Metrics Grid */
 .tenant-dashboard-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
   margin-bottom: 3rem;
 }
@@ -292,7 +292,7 @@
 
 @media (min-width: 1024px) {
   .tenant-dashboard-metrics-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

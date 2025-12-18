@@ -11,7 +11,6 @@ import { ToastProvider } from "@/components/utils/ToastProvider";
 import { I18nProvider, useI18n } from "@/components/utils/I18nProvider";
 import "./page.css";
 import { 
-  Crown, 
   Users, 
   TrendingUp, 
   DollarSign, 
@@ -505,29 +504,6 @@ function TenantOwnerDashboard() {
   // Main dashboard render
   return (
     <div className="tenant-dashboard-container">
-      {/* Enhanced Header with Glass Effect */}
-      <div className="tenant-dashboard-header">
-        <div className="tenant-dashboard-header-content">
-          <div className="tenant-dashboard-title-section">
-            <div className="tenant-dashboard-crown">
-              <Crown />
-            </div>
-            <div>
-              <h1 className="tenant-dashboard-title">
-                {organizationName} - Owner Dashboard
-              </h1>
-              <p className="tenant-dashboard-subtitle">
-                Comprehensive business overview and management
-              </p>
-            </div>
-          </div>
-          <div className="tenant-dashboard-status-badge">
-            <CheckCircle className="tenant-dashboard-status-icon" />
-            <span>System Healthy</span>
-          </div>
-        </div>
-      </div>
-
       <div className="tenant-dashboard-content">
         {/* Analytics Cards Grid with AI Assistant */}
         <div className="tenant-dashboard-header-section">
