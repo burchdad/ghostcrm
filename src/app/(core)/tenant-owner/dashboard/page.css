@@ -90,6 +90,48 @@
   z-index: 40; /* Below global navigation (z-50) but above content */
 }
 
+/* Header Section with Metrics and AI Assistant */
+.tenant-dashboard-header-section {
+  margin-bottom: 2rem;
+}
+
+.tenant-dashboard-top-section {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.tenant-dashboard-metrics-container {
+  flex: 1;
+}
+
+.tenant-dashboard-ai-container {
+  flex-shrink: 0;
+  width: 350px;
+}
+
+.tenant-dashboard-ai-assistant {
+  height: 100%;
+  min-height: 400px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .tenant-dashboard-top-section {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .tenant-dashboard-ai-container {
+    width: 100%;
+  }
+  
+  .tenant-dashboard-ai-assistant {
+    min-height: 300px;
+  }
+}
+
 .tenant-dashboard-header-content {
   max-width: 1280px;
   margin: 0 auto;

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
+import PageAIAssistant from "@/components/ai/PageAIAssistant";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { ToastProvider } from "@/components/utils/ToastProvider";
@@ -525,8 +526,12 @@ function TenantOwnerDashboard() {
       </div>
 
       <div className="tenant-dashboard-content">
-        {/* Enhanced Key Metrics Grid with Animations */}
-        <div className="tenant-dashboard-metrics-grid">
+        {/* Analytics Cards Grid with AI Assistant */}
+        <div className="tenant-dashboard-header-section">
+          <div className="tenant-dashboard-top-section">
+            {/* Metrics in 2x2 Grid */}
+            <div className="tenant-dashboard-metrics-container">
+              <div className="tenant-dashboard-metrics-grid">
           {/* Total Revenue Card */}
           <div 
             className="tenant-dashboard-metric-card revenue clickable" 
@@ -618,11 +623,21 @@ function TenantOwnerDashboard() {
             </div>
             <div className="tenant-dashboard-metric-trend positive">
               Excellent rating
+              </div>
+            </div>
+
+            {/* AI Assistant aligned to the right */}
+            <div className="tenant-dashboard-ai-container">
+              <PageAIAssistant 
+                agentId="dashboard" 
+                pageTitle="Business Dashboard"
+                className="tenant-dashboard-ai-assistant"
+              />
             </div>
           </div>
         </div>
 
-        {/* Enhanced Quick Actions for Owners */}
+        {/* Enhanced Quick Actions for Owners */
         <div className="tenant-dashboard-actions-grid">
           {/* Business Management Section */}
           <div className="tenant-dashboard-section">
