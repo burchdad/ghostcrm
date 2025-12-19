@@ -480,8 +480,8 @@ export default function UnifiedToolbar({
                 className={[
                   "px-6 py-3 text-sm font-semibold border-b-3 transition-all duration-200 h-full flex items-center relative overflow-hidden group",
                   activeTab === tab.id
-                    ? "border-blue-500 text-blue-600 bg-blue-50 shadow-inner"
-                    : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300"
+                    ? "border-blue-500 text-blue-600 bg-white shadow-sm"
+                    : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-white hover:border-gray-200"
                 ].join(" ")}
               >
                 <span className="relative z-10 flex items-center gap-2">
@@ -491,9 +491,9 @@ export default function UnifiedToolbar({
                   )}
                 </span>
                 {activeTab === tab.id && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 opacity-50" />
+                  <div className="absolute inset-0 bg-white opacity-90" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-indigo-100 opacity-0 group-hover:opacity-30 transition-opacity duration-200" />
+                <div className="absolute inset-0 bg-gray-50 opacity-0 group-hover:opacity-50 transition-opacity duration-200" />
               </button>
               
               {/* AI Dropdown Menu */}
@@ -532,18 +532,6 @@ export default function UnifiedToolbar({
                     >
                       <span className="text-base">🧹</span>
                       {t("data_cleanup", "ai")}
-                    </button>
-                    <div className="border-t border-gray-100 my-2"></div>
-                    <button
-                      onClick={() => {
-                        const aiButton = document.querySelector(".ai-assistant-fab") as HTMLButtonElement | null;
-                        aiButton?.click();
-                        setShowAIDropdown(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3"
-                    >
-                      <span className="text-base">🤖</span>
-                      AI Chat Assistant
                     </button>
                   </div>
                 </div>
