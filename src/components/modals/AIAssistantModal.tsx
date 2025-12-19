@@ -154,16 +154,16 @@ ${t('ai_assistant.guest_help', 'features')}`;
   if (!isOpen) return null;
 
   return (
-    <div className="ai-modal-overlay">
-      <div className="ai-modal-content">
+    <div className="modal-overlay">
+      <div className="modal-container ai-modal-container">
         {/* Header */}
         <div className="ai-modal-header">
-          <div className="ai-modal-header-content">
-            <div className="ai-modal-avatar">
-              <Bot className="w-6 h-6 text-white" />
+          <div className="ai-modal-title">
+            <div className="ai-modal-icon">
+              <Bot className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold">
                 {t('ai_assistant.title', 'features')}
               </h2>
               <p className="text-sm text-gray-500">
@@ -176,14 +176,14 @@ ${t('ai_assistant.guest_help', 'features')}`;
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="modal-close"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Messages */}
-        <div className="ai-modal-messages">
+        <div className="ai-chat-messages">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -216,8 +216,8 @@ ${t('ai_assistant.guest_help', 'features')}`;
         </div>
 
         {/* Input */}
-        <div className="ai-modal-input-area">
-          <div className="ai-modal-input-form">
+        <div className="ai-chat-input-container">
+          <div className="ai-chat-input-form">
             <input
               ref={inputRef}
               type="text"
@@ -229,13 +229,13 @@ ${t('ai_assistant.guest_help', 'features')}`;
                   ? t('ai_assistant.placeholder_authenticated', 'features')
                   : t('ai_assistant.placeholder_guest', 'features')
               }
-              className="ai-modal-input"
+              className="ai-chat-input"
               disabled={isLoading}
             />
             <button
               onClick={sendMessage}
               disabled={!inputMessage.trim() || isLoading}
-              className="ai-modal-send-btn"
+              className="ai-chat-send-btn"
             >
               <Send className="w-4 h-4" />
             </button>

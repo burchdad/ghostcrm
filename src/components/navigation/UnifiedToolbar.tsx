@@ -484,7 +484,7 @@ export default function UnifiedToolbar({
                 {activeTab === tab.id && (
                   <div className="absolute inset-0 bg-white opacity-90" />
                 )}
-                <div className="absolute inset-0 bg-gray-50 opacity-0 group-hover:opacity-50 transition-opacity duration-200" />
+                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-50 transition-opacity duration-200" />
               </button>
               
               {/* AI Dropdown Menu */}
