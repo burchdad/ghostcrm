@@ -146,7 +146,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Send email invitation
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai'}/invite/${inviteToken}`;
+    // Use the correct base URL for the tenant's subdomain
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai';
+    if (organization.subdomain) {
+      baseUrl = `https://${organization.subdomain}.ghostcrm.ai`;
+    }
+    const inviteUrl = `${baseUrl}/invite/${inviteToken}`;
     const emailService = EmailService.getInstance();
     
     const emailSent = await emailService.sendTeamInvitation(email, {
