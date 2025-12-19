@@ -1,0 +1,169 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import jwt from 'jsonwebtoken';
+import { randomBytes } from 'crypto';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+export async function POST(request: NextRequest) {
+  try {
+    // Get user info from JWT cookie
+    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    
+    if (!jwtCookie) {
+      console.error('❌ No ghostcrm_jwt cookie found');
+      return NextResponse.json({ error: 'Unauthorized - No JWT token' }, { status: 401 });
+    }
+
+    let jwtUser;
+    try {
+      jwtUser = jwt.verify(jwtCookie.value, process.env.JWT_SECRET!) as any;
+    } catch (jwtError) {
+      console.error('❌ JWT decode failed:', jwtError);
+      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
+    }
+
+    // Verify user is owner
+    if (!jwtUser || jwtUser.role !== 'owner') {
+      return NextResponse.json({ error: 'Forbidden - Only owners can invite team members' }, { status: 403 });
+    }
+
+    // Use organizationId from JWT
+    const jwtOrganizationId = jwtUser.organizationId;
+    if (!jwtOrganizationId) {
+      return NextResponse.json({ error: 'Unauthorized - No organization' }, { status: 401 });
+    }
+
+    // Check if organizationId is a UUID or subdomain
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jwtOrganizationId);
+    
+    let actualOrganizationId = jwtOrganizationId;
+    
+    if (!isUUID) {
+      // If it's a subdomain, look up the actual UUID
+      const { data: org, error: orgLookupError } = await supabase
+        .from('organizations')
+        .select('id, subdomain')
+        .eq('subdomain', jwtOrganizationId)
+        .single();
+
+      if (orgLookupError || !org) {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      }
+      
+      actualOrganizationId = org.id;
+    }
+
+    const body = await request.json();
+    const { name, email, role, department } = body;
+
+    // Validate required fields
+    if (!name || !email || !role) {
+      return NextResponse.json({ error: 'Name, email, and role are required' }, { status: 400 });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+    }
+
+    // Check if email is already in use in this organization
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('email', email.toLowerCase())
+      .eq('organization_id', actualOrganizationId)
+      .single();
+
+    if (existingUser) {
+      return NextResponse.json({ error: 'User with this email already exists in your organization' }, { status: 409 });
+    }
+
+    // Generate a secure invite token
+    const inviteToken = randomBytes(32).toString('hex');
+    const inviteExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+
+    // Create the user with pending status
+    const { data: newUser, error: createError } = await supabase
+      .from('users')
+      .insert([{
+        first_name: name.split(' ')[0] || name,
+        last_name: name.split(' ').slice(1).join(' ') || '',
+        email: email.toLowerCase(),
+        role: role.toLowerCase().replace(/\s+/g, '_'),
+        organization_id: actualOrganizationId,
+        is_active: false,
+        password_hash: 'PENDING_INVITE', // Will be set when they accept
+        invite_token: inviteToken,
+        invite_expires_at: inviteExpires.toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (createError) {
+      console.error('Failed to create user:', createError);
+      if (createError.code === '23505') { // Unique constraint violation
+        return NextResponse.json({ error: 'User with this email already exists' }, { status: 409 });
+      }
+      return NextResponse.json({ error: 'Failed to create user invitation' }, { status: 500 });
+    }
+
+    // Also add to team_members table for additional team management data
+    const { error: teamMemberError } = await supabase
+      .from('team_members')
+      .insert([{
+        organization_id: actualOrganizationId,
+        name: name,
+        email: email.toLowerCase(),
+        role: role,
+        status: 'pending',
+        hire_date: new Date().toISOString().split('T')[0], // Today's date
+        performance_metrics: {
+          department: department || 'General',
+          joinDate: new Date().toISOString(),
+          inviteStatus: 'sent'
+        }
+      }]);
+
+    if (teamMemberError) {
+      console.error('Failed to create team member record:', teamMemberError);
+      // Don't fail the whole operation, just log it
+    }
+
+    // Here you would normally send an email invitation
+    // For now, we'll just return the invite information
+    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${inviteToken}`;
+
+    console.log('🎯 [INVITE] Created invitation for:', {
+      email: email,
+      role: role,
+      inviteUrl: inviteUrl,
+      expiresAt: inviteExpires
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Team member invitation created successfully',
+      member: {
+        id: newUser.id,
+        name: name,
+        email: email.toLowerCase(),
+        role: role,
+        department: department || 'General',
+        status: 'pending',
+        inviteToken: inviteToken,
+        inviteUrl: inviteUrl,
+        expiresAt: inviteExpires.toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Team member invite error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

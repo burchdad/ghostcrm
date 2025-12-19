@@ -65,6 +65,13 @@ function TeamManagementPage() {
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showMoreActions, setShowMoreActions] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newMember, setNewMember] = useState({
+    name: '',
+    email: '',
+    role: 'sales_representative',
+    department: 'Sales'
+  });
 
   useRibbonPage({
     context: "dashboard",
@@ -183,33 +190,148 @@ function TeamManagementPage() {
     setShowMoreActions(showMoreActions === memberId ? null : memberId);
   };
 
-  const handleDeactivateMember = (member: TeamMember) => {
-    // TODO: Implement deactivate member API call
-    console.log('Deactivating member:', member.name);
-    setShowMoreActions(null);
-    // For now, just show an alert
-    alert(`Deactivate member functionality coming soon for ${member.name}`);
-  };
-
-  const handleDeleteMember = (member: TeamMember) => {
-    if (confirm(`Are you sure you want to remove ${member.name} from the team? This action cannot be undone.`)) {
-      // TODO: Implement delete member API call
-      console.log('Deleting member:', member.name);
-      setShowMoreActions(null);
-      // For now, just show an alert
-      alert(`Remove member functionality coming soon for ${member.name}`);
-    }
-  };
-
   const saveEditedMember = async () => {
     if (!selectedMember) return;
     
-    // TODO: Implement save member changes API call
-    console.log('Saving member changes:', selectedMember);
-    setShowEditModal(false);
-    setSelectedMember(null);
-    // For now, just show an alert
-    alert(`Save changes functionality coming soon for ${selectedMember.name}`);
+    try {
+      setIsSubmitting(true);
+      const response = await fetch(`/api/team/members/${selectedMember.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: selectedMember.name,
+          email: selectedMember.email,
+          role: selectedMember.role,
+          department: selectedMember.department,
+          status: selectedMember.status
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Member updated successfully:', result);
+        
+        // Update local state
+        setTeamMembers(prev => prev.map(member => 
+          member.id === selectedMember.id ? selectedMember : member
+        ));
+        
+        setShowEditModal(false);
+        setSelectedMember(null);
+        
+        // Refresh data
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Failed to update member:', errorData);
+        alert(`Failed to update member: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('❌ Error updating member:', error);
+      alert('Error updating member. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeactivateMember = async (member: TeamMember) => {
+    try {
+      const newStatus = member.status === 'active' ? 'inactive' : 'active';
+      const response = await fetch(`/api/team/members/${member.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...member,
+          status: newStatus
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh data
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to ${newStatus === 'active' ? 'activate' : 'deactivate'} member: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error('Error updating member status:', error);
+      alert('Error updating member status. Please try again.');
+    }
+    setShowMoreActions(null);
+  };
+
+  const handleDeleteMember = async (member: TeamMember) => {
+    if (confirm(`Are you sure you want to remove ${member.name} from the team? This action cannot be undone.`)) {
+      try {
+        const response = await fetch(`/api/team/members/${member.id}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          // Refresh data
+          window.location.reload();
+        } else {
+          const errorData = await response.json();
+          alert(`Failed to remove member: ${errorData.error}`);
+        }
+      } catch (error) {
+        console.error('Error deleting member:', error);
+        alert('Error removing member. Please try again.');
+      }
+    }
+    setShowMoreActions(null);
+  };
+
+  const handleAddMember = async () => {
+    if (!newMember.name.trim() || !newMember.email.trim()) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const response = await fetch('/api/team/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newMember),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Member invited successfully:', result);
+        
+        // Reset form
+        setNewMember({
+          name: '',
+          email: '',
+          role: 'sales_representative',
+          department: 'Sales'
+        });
+        
+        setShowAddMember(false);
+        
+        // Show success message with invite details
+        alert(`✅ Invitation sent successfully!\n\nInvite URL: ${result.member.inviteUrl}\n\nNote: In a production environment, this would be sent via email.`);
+        
+        // Refresh data
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Failed to invite member:', errorData);
+        alert(`Failed to send invitation: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('❌ Error inviting member:', error);
+      alert('Error sending invitation. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -522,7 +644,7 @@ function TeamManagementPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 100 /* Above all content including navigation */
+            zIndex: 100
           }}>
             <div style={{
               background: 'rgba(255, 255, 255, 0.1)',
@@ -530,28 +652,164 @@ function TeamManagementPage() {
               border: '1px solid rgba(255, 255, 255, 0.2)',
               borderRadius: '16px',
               padding: '32px',
-              width: '400px',
+              width: '500px',
               color: 'white'
             }}>
               <h3 style={{
                 fontSize: '20px',
                 fontWeight: '600',
-                marginBottom: '16px',
+                marginBottom: '24px',
                 color: 'white'
-              }}>Add Team Member</h3>
-              <p style={{
-                fontSize: '14px',
-                color: '#d1d5db',
-                marginBottom: '24px'
+              }}>Invite Team Member</h3>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#f3f4f6', fontSize: '14px', fontWeight: '500' }}>
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter full name"
+                    value={newMember.name}
+                    onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '8px',
+                      color: 'white',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#f3f4f6', fontSize: '14px', fontWeight: '500' }}>
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="Enter email address"
+                    value={newMember.email}
+                    onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '8px',
+                      color: 'white',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#f3f4f6', fontSize: '14px', fontWeight: '500' }}>
+                    Role
+                  </label>
+                  <select
+                    value={newMember.role}
+                    onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '8px',
+                      color: 'white',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <option value="sales_representative" style={{ background: '#1f2937', color: 'white' }}>Sales Representative</option>
+                    <option value="sales_manager" style={{ background: '#1f2937', color: 'white' }}>Sales Manager</option>
+                    <option value="finance_manager" style={{ background: '#1f2937', color: 'white' }}>Finance Manager</option>
+                    <option value="service_advisor" style={{ background: '#1f2937', color: 'white' }}>Service Advisor</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#f3f4f6', fontSize: '14px', fontWeight: '500' }}>
+                    Department
+                  </label>
+                  <select
+                    value={newMember.department}
+                    onChange={(e) => setNewMember({ ...newMember, department: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '8px',
+                      color: 'white',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <option value="Sales" style={{ background: '#1f2937', color: 'white' }}>Sales</option>
+                    <option value="Finance" style={{ background: '#1f2937', color: 'white' }}>Finance</option>
+                    <option value="Service" style={{ background: '#1f2937', color: 'white' }}>Service</option>
+                    <option value="Management" style={{ background: '#1f2937', color: 'white' }}>Management</option>
+                    <option value="General" style={{ background: '#1f2937', color: 'white' }}>General</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div style={{
+                background: 'rgba(255, 193, 7, 0.1)',
+                border: '1px solid rgba(255, 193, 7, 0.3)',
+                borderRadius: '8px',
+                padding: '12px',
+                marginTop: '20px',
+                marginBottom: '20px'
               }}>
-                Team member invitation system coming soon. Contact system admin to add new members.
-              </p>
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <p style={{ color: '#fbbf24', fontSize: '13px', margin: '0' }}>
+                  💡 <strong>Note:</strong> An invitation will be sent to the email address above. In production, this would be sent automatically. For now, you'll see the invite link to share manually.
+                </p>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <button
-                  onClick={() => setShowAddMember(false)}
-                  className="btn-secondary"
+                  onClick={() => {
+                    setShowAddMember(false);
+                    setNewMember({
+                      name: '',
+                      email: '',
+                      role: 'sales_representative',
+                      department: 'Sales'
+                    });
+                  }}
+                  disabled={isSubmitting}
+                  style={{
+                    padding: '10px 20px',
+                    background: 'transparent',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    borderRadius: '8px',
+                    color: '#f3f4f6',
+                    fontSize: '14px',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    opacity: isSubmitting ? 0.6 : 1
+                  }}
                 >
-                  Close
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddMember}
+                  disabled={isSubmitting || !newMember.name.trim() || !newMember.email.trim()}
+                  style={{
+                    padding: '10px 20px',
+                    background: isSubmitting || !newMember.name.trim() || !newMember.email.trim() ? 
+                      'rgba(96, 165, 250, 0.4)' : 'rgba(96, 165, 250, 0.8)',
+                    border: '1px solid rgba(96, 165, 250, 0.9)',
+                    borderRadius: '8px',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: isSubmitting || !newMember.name.trim() || !newMember.email.trim() ? 
+                      'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isSubmitting ? 'Sending Invitation...' : 'Send Invitation'}
                 </button>
               </div>
             </div>
@@ -680,6 +938,7 @@ function TeamManagementPage() {
                     setShowEditModal(false);
                     setSelectedMember(null);
                   }}
+                  disabled={isSubmitting}
                   style={{
                     padding: '10px 20px',
                     background: 'transparent',
@@ -687,25 +946,27 @@ function TeamManagementPage() {
                     borderRadius: '8px',
                     color: '#f3f4f6',
                     fontSize: '14px',
-                    cursor: 'pointer'
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    opacity: isSubmitting ? 0.6 : 1
                   }}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={saveEditedMember}
+                  disabled={isSubmitting}
                   style={{
                     padding: '10px 20px',
-                    background: 'rgba(96, 165, 250, 0.8)',
+                    background: isSubmitting ? 'rgba(96, 165, 250, 0.4)' : 'rgba(96, 165, 250, 0.8)',
                     border: '1px solid rgba(96, 165, 250, 0.9)',
                     borderRadius: '8px',
                     color: 'white',
                     fontSize: '14px',
                     fontWeight: '600',
-                    cursor: 'pointer'
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  Save Changes
+                  {isSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>
