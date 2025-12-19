@@ -233,20 +233,11 @@ export default function UnifiedToolbar({
       { id: "Edit", label: t("edit", "navigation"), controls: CONTROLS_EDIT },
     ];
 
-    // Always include AI tab with dropdown functionality
+    // Always include AI tab with dropdown functionality (no controls, just dropdown)
     tabs.push({ 
       id: "AI", 
       label: "AI", 
-      controls: [{
-        id: "aiAssistant" as ControlId,
-        group: "AI",
-        label: "AI Assistant",
-        onClick: () => {
-          // Open AI assistant
-          const aiButton = document.querySelector(".ai-assistant-fab") as HTMLButtonElement | null;
-          aiButton?.click();
-        },
-      }] 
+      controls: [] 
     });
 
     // Add Leads-specific tab when on leads page
