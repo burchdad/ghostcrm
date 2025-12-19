@@ -320,7 +320,15 @@ function TeamManagementPage() {
         if (result.member && result.member.emailSent) {
           alert(`✅ Invitation sent successfully!\n\nEmail sent to: ${newMember.email}\nRole: ${newMember.role}\n\n${result.member.name} will receive an email with instructions to join the team.`);
         } else if (result.member && result.member.inviteUrl) {
-          alert(`✅ Team member added successfully!\n\nEmail: ${newMember.email}\nRole: ${newMember.role}\n\nInvite URL: ${result.member.inviteUrl}\n\nNote: Email sending failed - please share this invite link manually.`);
+          // Show a better formatted message for failed email
+          const inviteLink = result.member.inviteUrl;
+          const message = `✅ Team member added successfully!\n\n` +
+                         `Email: ${newMember.email}\n` +
+                         `Role: ${newMember.role}\n\n` +
+                         `📧 Email delivery failed - Please share this invite link manually:\n\n` +
+                         `${inviteLink}\n\n` +
+                         `💡 You can copy this link and send it via your preferred method (email, SMS, Slack, etc.)`;
+          alert(message);
         } else {
           alert(`✅ Team member added successfully!\n\nEmail: ${newMember.email}\nRole: ${newMember.role}\n\nNote: User has been added to the system with pending status.`);
         }

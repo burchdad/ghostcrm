@@ -39,6 +39,11 @@ export class EmailService {
   async sendTeamInvitation(email: string, data: TeamInviteEmailData): Promise<boolean> {
     if (!this.isConfigured) {
       console.warn('⚠️ [EMAIL] SendGrid not configured, skipping email send');
+      console.info('💡 [EMAIL] To enable email invitations:');
+      console.info('   1. Sign up for SendGrid at https://sendgrid.com');
+      console.info('   2. Create an API key in your SendGrid dashboard');
+      console.info('   3. Add SENDGRID_API_KEY=your_api_key to your .env.local file');
+      console.info('   4. Restart your development server');
       return false;
     }
 

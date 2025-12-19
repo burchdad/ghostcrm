@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: emailSent ? 
         'Team member invitation sent successfully! They will receive an email with instructions to join.' :
-        'Team member added successfully. Email sending failed - please share the invite link manually.',
+        `Team member added successfully. Email sending failed - please share this invite link manually: ${inviteUrl}`,
       member: {
         id: newUser.id,
         name: name,
