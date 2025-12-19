@@ -10,26 +10,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Mock live dashboard data - realistic automotive dealership metrics
+    // Live dashboard data with no mock values
     const liveData = {
-      activeUsers: Math.floor(Math.random() * 50) + 10,
-      todayLeads: Math.floor(Math.random() * 20) + 5,
-      todayDeals: Math.floor(Math.random() * 10) + 8, // More realistic for active deals
+      activeUsers: 0,
+      todayLeads: 0,
+      todayDeals: 0,
       systemHealth: 'healthy',
-      notifications: [
-        {
-          id: 1,
-          type: 'info',
-          message: 'New lead assigned to your team',
-          timestamp: new Date().toISOString()
-        },
-        {
-          id: 2,
-          type: 'success',
-          message: 'Deal closed successfully',
-          timestamp: new Date().toISOString()
-        }
-      ],
+      notifications: [],
       metrics: {
         conversionRate: 0,
         avgResponseTime: '0 hours',
