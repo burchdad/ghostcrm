@@ -58,6 +58,10 @@ export default function UnifiedToolbar({
   const [activeTab, setActiveTab] = useState<string>("AI");
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAIDropdown, setShowAIDropdown] = useState(false);
+  
+  // Check if user is software owner (only they should see Developer button)
+  const isSoftwareOwner = user?.email === 'burchdad@gmail.com';
 
   // Helper function to get tenant-aware route based on user role
   const getTenantRoute = (basePath: string): string => {
@@ -80,6 +84,18 @@ export default function UnifiedToolbar({
       .then((result) => (Array.isArray(result) ? setOnlineUsers(result) : setOnlineUsers([])))
       .catch(() => setOnlineUsers([]));
   }, []);
+  
+  // Close AI dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showAIDropdown && !(event.target as Element)?.closest('.relative')) {
+        setShowAIDropdown(false);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showAIDropdown]);
 
   // Auto-select appropriate tab based on current page
   useEffect(() => {
@@ -217,10 +233,21 @@ export default function UnifiedToolbar({
       { id: "Edit", label: t("edit", "navigation"), controls: CONTROLS_EDIT },
     ];
 
-    const aiControls = getDynamicAIControls();
-    if (aiControls.length) {
-      tabs.push({ id: "AI", label: "AI", controls: aiControls });
-    }
+    // Always include AI tab with dropdown functionality
+    tabs.push({ 
+      id: "AI", 
+      label: "AI", 
+      controls: [{
+        id: "aiAssistant" as ControlId,
+        group: "AI",
+        label: "AI Assistant",
+        onClick: () => {
+          // Open AI assistant
+          const aiButton = document.querySelector(".ai-assistant-fab") as HTMLButtonElement | null;
+          aiButton?.click();
+        },
+      }] 
+    });
 
     // Add Leads-specific tab when on leads page
     if (pathname.includes("/leads")) {
@@ -293,9 +320,13 @@ export default function UnifiedToolbar({
     }
 
     tabs.push(
-      { id: "Settings", label: t("settings", "navigation"), controls: CONTROLS_SETTINGS },
-      { id: "Developer", label: t("developer", "navigation"), controls: CONTROLS_DEVELOPER }
+      { id: "Settings", label: t("settings", "navigation"), controls: CONTROLS_SETTINGS }
     );
+    
+    // Only show Developer tab for software owner
+    if (isSoftwareOwner) {
+      tabs.push({ id: "Developer", label: t("developer", "navigation"), controls: CONTROLS_DEVELOPER });
+    }
 
     return tabs;
   };
@@ -359,7 +390,7 @@ export default function UnifiedToolbar({
         <button
           key={`${control.id}-${index}`}
           onClick={control.onClick}
-          className="group flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl transition-all duration-200 text-xs text-gray-700 hover:text-blue-600 hover:bg-blue-50 hover:shadow-sm transform hover:-translate-y-0.5 border border-transparent hover:border-blue-100"
+          className="group flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl transition-all duration-200 text-xs text-gray-700 hover:text-blue-600 hover:bg-white hover:shadow-md transform hover:-translate-y-0.5 border border-gray-100 hover:border-blue-200 bg-white"
           title={control.label}
         >
           <span className="text-base group-hover:scale-110 transition-transform duration-200">{icon}</span>
@@ -376,11 +407,11 @@ export default function UnifiedToolbar({
           key={`${control.id}-${index}`}
           onClick={control.action}
           disabled={control.disabled}
-          className={[
+            className={[
             "group flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl transition-all duration-200 text-xs transform hover:-translate-y-0.5 border",
             control.disabled
-              ? "text-gray-400 cursor-not-allowed border-gray-200"
-              : "text-gray-700 hover:text-blue-600 hover:bg-blue-50 hover:shadow-sm border-transparent hover:border-blue-100",
+              ? "text-gray-400 cursor-not-allowed border-gray-200 bg-gray-50"
+              : "text-gray-700 hover:text-blue-600 hover:bg-white hover:shadow-md bg-white border-gray-100 hover:border-blue-200",
           ].join(" ")}
           title={control.tooltip}
         >
@@ -398,7 +429,7 @@ export default function UnifiedToolbar({
       return (
         <div key={`${control.id}-${index}`} className="relative">
           <button
-            className="group flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl transition-all duration-200 text-xs text-gray-700 hover:text-blue-600 hover:bg-blue-50 hover:shadow-sm transform hover:-translate-y-0.5 border border-transparent hover:border-blue-100"
+            className="group flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl transition-all duration-200 text-xs text-gray-700 hover:text-blue-600 hover:bg-white hover:shadow-md transform hover:-translate-y-0.5 border border-gray-100 hover:border-blue-200 bg-white"
             title={control.tooltip}
           >
             {Icon ? (
@@ -435,22 +466,89 @@ export default function UnifiedToolbar({
         {/* Ribbon Tabs */}
         <div className="flex border-r border-gray-200 h-full">
           {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={[
-                "px-6 py-3 text-sm font-semibold border-b-3 transition-all duration-200 h-full flex items-center relative overflow-hidden group",
-                activeTab === tab.id
-                  ? "border-blue-500 text-blue-600 bg-blue-50 shadow-inner"
-                  : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300"
-              ].join(" ")}
-            >
-              <span className="relative z-10">{tab.label}</span>
-              {activeTab === tab.id && (
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 opacity-50" />
+            <div key={tab.id} className="relative">
+              <button
+                onClick={() => {
+                  if (tab.id === 'AI') {
+                    setShowAIDropdown(!showAIDropdown);
+                    setActiveTab(tab.id);
+                  } else {
+                    setShowAIDropdown(false);
+                    setActiveTab(tab.id);
+                  }
+                }}
+                className={[
+                  "px-6 py-3 text-sm font-semibold border-b-3 transition-all duration-200 h-full flex items-center relative overflow-hidden group",
+                  activeTab === tab.id
+                    ? "border-blue-500 text-blue-600 bg-blue-50 shadow-inner"
+                    : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300"
+                ].join(" ")}
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  {tab.label}
+                  {tab.id === 'AI' && (
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showAIDropdown ? 'rotate-180' : ''}`} />
+                  )}
+                </span>
+                {activeTab === tab.id && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 opacity-50" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-indigo-100 opacity-0 group-hover:opacity-30 transition-opacity duration-200" />
+              </button>
+              
+              {/* AI Dropdown Menu */}
+              {tab.id === 'AI' && showAIDropdown && (
+                <div className="absolute top-full left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[200px]">
+                  <div className="py-2">
+                    <button
+                      onClick={() => {
+                        openAssistantWithPrompt(
+                          t("Give me smart suggestions to improve my CRM workflow and productivity on this page.", "ai")
+                        );
+                        setShowAIDropdown(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3"
+                    >
+                      <span className="text-base">💡</span>
+                      {t("smart_suggestions", "actions")}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const currentPage = pathname.includes("/leads")
+                          ? "leads"
+                          : pathname.includes("/deals")
+                          ? "deals"
+                          : pathname.includes("/contacts")
+                          ? "contacts"
+                          : pathname.includes("/dashboard")
+                          ? "dashboard"
+                          : "data";
+                        openAssistantWithPrompt(
+                          t(`Help me clean up and optimize my ${currentPage} data. Identify duplicates, incomplete records, and suggest improvements.`, "ai")
+                        );
+                        setShowAIDropdown(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3"
+                    >
+                      <span className="text-base">🧹</span>
+                      {t("data_cleanup", "ai")}
+                    </button>
+                    <div className="border-t border-gray-100 my-2"></div>
+                    <button
+                      onClick={() => {
+                        const aiButton = document.querySelector(".ai-assistant-fab") as HTMLButtonElement | null;
+                        aiButton?.click();
+                        setShowAIDropdown(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3"
+                    >
+                      <span className="text-base">🤖</span>
+                      AI Chat Assistant
+                    </button>
+                  </div>
+                </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-indigo-100 opacity-0 group-hover:opacity-30 transition-opacity duration-200" />
-            </button>
+            </div>
           ))}
         </div>
 
