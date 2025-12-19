@@ -317,8 +317,10 @@ function TeamManagementPage() {
         setShowAddMember(false);
         
         // Show success message with invite details
-        if (result.member && result.member.inviteUrl) {
-          alert(`✅ Invitation sent successfully!\n\nInvite URL: ${result.member.inviteUrl}\n\nNote: In a production environment, this would be sent via email.`);
+        if (result.member && result.member.emailSent) {
+          alert(`✅ Invitation sent successfully!\n\nEmail sent to: ${newMember.email}\nRole: ${newMember.role}\n\n${result.member.name} will receive an email with instructions to join the team.`);
+        } else if (result.member && result.member.inviteUrl) {
+          alert(`✅ Team member added successfully!\n\nEmail: ${newMember.email}\nRole: ${newMember.role}\n\nInvite URL: ${result.member.inviteUrl}\n\nNote: Email sending failed - please share this invite link manually.`);
         } else {
           alert(`✅ Team member added successfully!\n\nEmail: ${newMember.email}\nRole: ${newMember.role}\n\nNote: User has been added to the system with pending status.`);
         }
@@ -760,15 +762,15 @@ function TeamManagementPage() {
               </div>
               
               <div style={{
-                background: 'rgba(255, 193, 7, 0.1)',
-                border: '1px solid rgba(255, 193, 7, 0.3)',
+                background: 'rgba(34, 197, 94, 0.1)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: '8px',
                 padding: '12px',
                 marginTop: '20px',
                 marginBottom: '20px'
               }}>
-                <p style={{ color: '#fbbf24', fontSize: '13px', margin: '0' }}>
-                  💡 <strong>Note:</strong> An invitation will be sent to the email address above. In production, this would be sent automatically. For now, you'll see the invite link to share manually.
+                <p style={{ color: '#16a34a', fontSize: '13px', margin: '0' }}>
+                  ✅ <strong>Email Invitation:</strong> An invitation email will be automatically sent to the address above with instructions to join your team and set up their account.
                 </p>
               </div>
               

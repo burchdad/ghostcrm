@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
+import { EmailService } from '@/lib/email-service';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
     
     let actualOrganizationId = jwtOrganizationId;
     
-    if (!isUUID) {
+      if (!isUUID) {
       // If it's a subdomain, look up the actual UUID
       const { data: org, error: orgLookupError } = await supabase
         .from('organizations')
@@ -56,7 +57,16 @@ export async function POST(request: NextRequest) {
       actualOrganizationId = org.id;
     }
 
-    const body = await request.json();
+    // Get organization details for email
+    const { data: organization, error: orgError } = await supabase
+      .from('organizations')
+      .select('id, name, subdomain')
+      .eq('id', actualOrganizationId)
+      .single();
+
+    if (orgError || !organization) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }    const body = await request.json();
     const { name, email, role, department } = body;
 
     // Validate required fields
@@ -135,20 +145,33 @@ export async function POST(request: NextRequest) {
       // Don't fail the whole operation, just log it
     }
 
-    // Here you would normally send an email invitation
-    // For now, we'll just return the invite information
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${inviteToken}`;
+    // Send email invitation
+    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai'}/invite/${inviteToken}`;
+    const emailService = EmailService.getInstance();
+    
+    const emailSent = await emailService.sendTeamInvitation(email, {
+      inviteeName: name,
+      inviterName: jwtUser.email || 'Team Owner',
+      inviterEmail: jwtUser.email || 'owner@company.com',
+      organizationName: organization.name || organization.subdomain || 'Your Organization',
+      role: role,
+      inviteUrl: inviteUrl,
+      expiresAt: inviteExpires.toISOString()
+    });
 
     console.log('🎯 [INVITE] Created invitation for:', {
       email: email,
       role: role,
       inviteUrl: inviteUrl,
-      expiresAt: inviteExpires
+      expiresAt: inviteExpires,
+      emailSent: emailSent
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Team member invitation created successfully',
+      message: emailSent ? 
+        'Team member invitation sent successfully! They will receive an email with instructions to join.' :
+        'Team member added successfully. Email sending failed - please share the invite link manually.',
       member: {
         id: newUser.id,
         name: name,
@@ -158,7 +181,8 @@ export async function POST(request: NextRequest) {
         status: 'pending',
         inviteToken: inviteToken,
         inviteUrl: inviteUrl,
-        expiresAt: inviteExpires.toISOString()
+        expiresAt: inviteExpires.toISOString(),
+        emailSent: emailSent
       }
     });
 
