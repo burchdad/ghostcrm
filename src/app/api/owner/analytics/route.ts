@@ -10,36 +10,36 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Mock owner analytics data
+    // Return empty analytics data - will be populated with real business data
     const analyticsData = {
       revenue: {
-        total: 485000,
-        monthly: 45000,
-        growth: 12.5,
-        target: 500000
+        total: 0,
+        monthly: 0,
+        growth: 0,
+        target: 0
       },
       customers: {
-        total: 245,
-        new: 18,
-        retention: 94.2,
-        satisfaction: 4.6
+        total: 0,
+        new: 0,
+        retention: 0,
+        satisfaction: 0
       },
       performance: {
-        leadsGenerated: 156,
-        conversionRate: 24.8,
-        avgDealSize: 3200,
-        salesCycle: 18
+        leadsGenerated: 0,
+        conversionRate: 0,
+        avgDealSize: 0,
+        salesCycle: 0
       },
       team: {
-        totalMembers: 12,
-        activeMembers: 11,
-        productivity: 87,
-        topPerformer: 'Sarah Johnson'
+        totalMembers: 0,
+        activeMembers: 0,
+        productivity: 0,
+        topPerformer: null
       },
       trends: {
-        dailyRevenue: [3200, 4100, 2800, 5500, 4200, 3800, 4600],
-        weeklyLeads: [45, 52, 38, 61, 49, 44, 56],
-        monthlyGrowth: [8.2, 12.1, 9.8, 15.3, 11.7, 13.2, 12.5]
+        dailyRevenue: [],
+        weeklyLeads: [],
+        monthlyGrowth: []
       }
     };
 

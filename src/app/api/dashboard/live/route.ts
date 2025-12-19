@@ -31,13 +31,13 @@ export async function GET(request: NextRequest) {
         }
       ],
       metrics: {
-        conversionRate: 12.5,
-        avgResponseTime: '2.3 hours',
-        teamPerformance: 87,
-        customerSatisfaction: 94,
-        totalCustomers: 245,
-        activeDeals: 18,
-        pendingTasks: 7
+        conversionRate: 0,
+        avgResponseTime: '0 hours',
+        teamPerformance: 0,
+        customerSatisfaction: 0,
+        totalCustomers: 0,
+        activeDeals: 0,
+        pendingTasks: 0
       }
     };
 

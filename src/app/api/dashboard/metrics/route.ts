@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
       activeDeals: dealsCount || 0,
       monthlyRevenue,
       conversionRate,
-      teamPerformance: 85, // Mock data
+      teamPerformance: 0, // Will be calculated from real performance data
       upcomingAppointments: 0,
       recentActivity: (recentActivity || []).map(activity => ({
         id: activity.id,
