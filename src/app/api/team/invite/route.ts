@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     const inviteToken = randomBytes(32).toString('hex');
     const inviteExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
 
-    // Create the user with pending status
+    // Create the user with pending status (without invite columns for now)
     const { data: newUser, error: createError } = await supabase
       .from('users')
       .insert([{
@@ -97,8 +97,6 @@ export async function POST(request: NextRequest) {
         organization_id: actualOrganizationId,
         is_active: false,
         password_hash: 'PENDING_INVITE', // Will be set when they accept
-        invite_token: inviteToken,
-        invite_expires_at: inviteExpires.toISOString(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }])
@@ -126,7 +124,9 @@ export async function POST(request: NextRequest) {
         performance_metrics: {
           department: department || 'General',
           joinDate: new Date().toISOString(),
-          inviteStatus: 'sent'
+          inviteStatus: 'sent',
+          inviteToken: inviteToken,
+          inviteExpires: inviteExpires.toISOString()
         }
       }]);
 

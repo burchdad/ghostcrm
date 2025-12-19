@@ -317,7 +317,11 @@ function TeamManagementPage() {
         setShowAddMember(false);
         
         // Show success message with invite details
-        alert(`✅ Invitation sent successfully!\n\nInvite URL: ${result.member.inviteUrl}\n\nNote: In a production environment, this would be sent via email.`);
+        if (result.member && result.member.inviteUrl) {
+          alert(`✅ Invitation sent successfully!\n\nInvite URL: ${result.member.inviteUrl}\n\nNote: In a production environment, this would be sent via email.`);
+        } else {
+          alert(`✅ Team member added successfully!\n\nEmail: ${newMember.email}\nRole: ${newMember.role}\n\nNote: User has been added to the system with pending status.`);
+        }
         
         // Refresh data
         window.location.reload();
