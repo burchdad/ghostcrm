@@ -49,7 +49,9 @@ export class EmailService {
 
     if (!process.env.SENDGRID_FROM) {
       console.error('❌ [EMAIL] SENDGRID_FROM not configured');
-      console.info('💡 [EMAIL] Add SENDGRID_FROM=noreply@yourdomain.com to your environment variables');
+      console.info('💡 [EMAIL] Add SENDGRID_FROM environment variable with a verified sender email');
+      console.info('   Example: SENDGRID_FROM=noreply@yourdomain.com');
+      console.info('   Note: The sender email must be verified in your SendGrid account');
       return false;
     }
 
@@ -59,7 +61,7 @@ export class EmailService {
     try {
       await sgMail.send({
         to: email,
-        from: process.env.SENDGRID_FROM || 'noreply@ghostcrm.ai',
+        from: process.env.SENDGRID_FROM,
         subject: `You're invited to join ${data.organizationName} on GhostCRM`,
         html: emailHtml,
         text: emailText,
