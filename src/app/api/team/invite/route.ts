@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
+import bcrypt from 'bcryptjs';
 import { EmailService } from '@/lib/email-service';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -92,11 +93,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User with this email already exists in your organization' }, { status: 409 });
     }
 
-    // Generate a secure invite token
+    // Generate a secure invite token and temporary password
     const inviteToken = randomBytes(32).toString('hex');
+    const tempPassword = randomBytes(8).toString('hex').toUpperCase(); // 16-char temp password
     const inviteExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
 
-    // Create the user with pending status (without invite columns for now)
+    // Hash the temporary password for storage
+    const tempPasswordHash = await bcrypt.hash(tempPassword, 10);
+
+    // Create the user with temporary password and pending status
     const { data: newUser, error: createError } = await supabase
       .from('users')
       .insert([{
@@ -106,7 +111,8 @@ export async function POST(request: NextRequest) {
         role: role.toLowerCase().replace(/\s+/g, '_'),
         organization_id: actualOrganizationId,
         is_active: false,
-        password_hash: 'PENDING_INVITE', // Will be set when they accept
+        password_hash: tempPasswordHash, // Use temporary password hash
+        requires_password_reset: true, // Flag to require password change on first login
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }])
@@ -145,22 +151,25 @@ export async function POST(request: NextRequest) {
       // Don't fail the whole operation, just log it
     }
 
-    // Send email invitation
+    // Send email invitation  
     // Use the correct base URL for the tenant's subdomain
     let baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai';
     if (organization.subdomain) {
       baseUrl = `https://${organization.subdomain}.ghostcrm.ai`;
     }
-    const inviteUrl = `${baseUrl}/invite/${inviteToken}`;
+    // Redirect to tenant login page with invite token as parameter
+    const inviteUrl = `${baseUrl}/tenant-login?subdomain=${organization.subdomain}&invite=${inviteToken}`;
     const emailService = EmailService.getInstance();
     
     const emailSent = await emailService.sendTeamInvitation(email, {
       inviteeName: name,
       inviterName: jwtUser.email || 'Team Owner',
       inviterEmail: jwtUser.email || 'owner@company.com',
+      inviteeEmail: email.toLowerCase(),
       organizationName: organization.name || organization.subdomain || 'Your Organization',
       role: role,
       inviteUrl: inviteUrl,
+      tempPassword: tempPassword,
       expiresAt: inviteExpires.toISOString()
     });
 

@@ -4,9 +4,11 @@ interface TeamInviteEmailData {
   inviteeName: string;
   inviterName: string;
   inviterEmail: string;
+  inviteeEmail: string;
   organizationName: string;
   role: string;
   inviteUrl: string;
+  tempPassword: string;
   expiresAt: string;
 }
 
@@ -132,6 +134,13 @@ export class EmailService {
                 <p><strong>Invited by:</strong> ${data.inviterName} (${data.inviterEmail})</p>
                 <p><strong>Expires:</strong> ${expiresDate}</p>
             </div>
+
+            <div style="background-color: #e6fffa; border: 2px solid #319795; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                <h3 style="color: #2c7a7b; margin-top: 0;">🔑 Your Temporary Login Credentials</h3>
+                <p style="color: #2c7a7b; margin: 8px 0;"><strong>Email:</strong> ${data.inviteeEmail}</p>
+                <p style="color: #2c7a7b; margin: 8px 0;"><strong>Temporary Password:</strong> <code style="background: #fff; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 16px; font-weight: bold;">${data.tempPassword}</code></p>
+                <p style="color: #2c7a7b; font-size: 14px; margin-top: 12px;"><em>You'll be asked to create your own password after logging in</em></p>
+            </div>
             
             <div class="expiry-notice">
                 <p><strong>⏰ Important:</strong> This invitation expires on ${expiresDate}. Please accept it before then to join the team.</p>
@@ -139,8 +148,9 @@ export class EmailService {
             
             <h3>🚀 What's Next?</h3>
             <p>1. Click the "Accept Invitation" button above</p>
-            <p>2. Complete your account setup</p>
-            <p>3. Start collaborating with your team!</p>
+            <p>2. Log in using your email and temporary password</p>
+            <p>3. Complete your profile and create a new password</p>
+            <p>4. Start collaborating with your team!</p>
             
             <p>If you have any questions, feel free to reach out to ${data.inviterName} at ${data.inviterEmail}.</p>
             
@@ -173,6 +183,11 @@ INVITATION DETAILS:
 - Invited by: ${data.inviterName} (${data.inviterEmail})
 - Expires: ${expiresDate}
 
+YOUR TEMPORARY LOGIN CREDENTIALS:
+- Email: ${data.inviteeEmail}
+- Temporary Password: ${data.tempPassword}
+(You'll create your own password after logging in)
+
 ACCEPT YOUR INVITATION:
 ${data.inviteUrl}
 
@@ -180,8 +195,9 @@ IMPORTANT: This invitation expires on ${expiresDate}. Please accept it before th
 
 What's Next?
 1. Click the invitation link above
-2. Complete your account setup
-3. Start collaborating with your team!
+2. Log in using your email and temporary password
+3. Complete your profile and create a new password
+4. Start collaborating with your team!
 
 If you have any questions, feel free to reach out to ${data.inviterName} at ${data.inviterEmail}.
 

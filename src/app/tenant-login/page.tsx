@@ -20,6 +20,8 @@ export default function TenantLogin() {
 
   useEffect(() => {
     const subdomainParam = searchParams.get('subdomain');
+    const inviteParam = searchParams.get('invite');
+    
     if (!subdomainParam) {
       setError('No subdomain specified');
       setLoading(false);
@@ -27,7 +29,13 @@ export default function TenantLogin() {
     }
 
     setSubdomain(subdomainParam);
-    verifySubdomain(subdomainParam);
+    
+    // If this is an invite flow, handle it specially
+    if (inviteParam) {
+      handleInviteFlow(subdomainParam, inviteParam);
+    } else {
+      verifySubdomain(subdomainParam);
+    }
   }, [searchParams]);
 
   const verifySubdomain = async (subdomainName: string) => {
@@ -57,6 +65,50 @@ export default function TenantLogin() {
     } catch (error) {
       console.error('❌ [TENANT-LOGIN] Error verifying subdomain:', error);
       setError('Failed to verify subdomain');
+    }
+    
+    setLoading(false);
+  };
+
+  const handleInviteFlow = async (subdomainName: string, inviteToken: string) => {
+    try {
+      console.log('🎫 [TENANT-LOGIN] Processing invite token:', inviteToken);
+      
+      // First verify the invite token and get user role
+      const inviteResponse = await fetch(`/api/invites/resolve?token=${inviteToken}`);
+      const inviteData = await inviteResponse.json();
+      
+      if (inviteResponse.ok && inviteData.invite) {
+        const userRole = inviteData.invite.role;
+        console.log('✅ [TENANT-LOGIN] Valid invite for role:', userRole);
+        
+        // Redirect to appropriate role-based login page with invite context
+        let loginUrl;
+        switch (userRole) {
+          case 'owner':
+            loginUrl = `/login-owner?tenant=${subdomainName}&invite=${inviteToken}`;
+            break;
+          case 'sales_manager':
+          case 'manager':
+            loginUrl = `/login-salesmanager?tenant=${subdomainName}&invite=${inviteToken}`;
+            break;
+          case 'sales_representative':
+          case 'sales_rep':
+            loginUrl = `/login-salesrep?tenant=${subdomainName}&invite=${inviteToken}`;
+            break;
+          default:
+            // Default to sales rep for unrecognized roles
+            loginUrl = `/login-salesrep?tenant=${subdomainName}&invite=${inviteToken}`;
+        }
+        
+        console.log('🔄 [TENANT-LOGIN] Redirecting to role-based login:', loginUrl);
+        router.push(loginUrl);
+      } else {
+        setError('Invalid or expired invitation token');
+      }
+    } catch (error) {
+      console.error('❌ [TENANT-LOGIN] Error processing invite:', error);
+      setError('Failed to process invitation');
     }
     
     setLoading(false);

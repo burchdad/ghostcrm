@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Mail, Phone } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import ContactSalesModal from "@/components/modals/ContactSalesModal";
 import { loginSchema, LoginFormData } from "./schemas";
@@ -18,19 +19,80 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
   const [showPassword, setShowPassword] = useState(false);
   const [showContactSales, setShowContactSales] = useState(false);
   const { login, isLoading } = useAuth();
-
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
+  // Check if this is an invite flow
+  const inviteToken = searchParams.get('invite');
+  const isInviteFlow = Boolean(inviteToken);
+  
   // Login form setup
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     mode: "onBlur",
   });
 
+  // Auto-populate email from invite if available
+  useEffect(() => {
+    const fetchInviteData = async () => {
+      if (inviteToken) {
+        try {
+          const response = await fetch(`/api/team/invite/verify?token=${inviteToken}`);
+          const data = await response.json();
+          
+          if (data.success && data.invite) {
+            loginForm.setValue('email', data.invite.email);
+          }
+        } catch (error) {
+          console.error('Failed to fetch invite data:', error);
+        }
+      }
+    };
+
+    fetchInviteData();
+  }, [inviteToken, loginForm]);
+
   const onLoginSubmit = async (data: LoginFormData) => {
     console.log('🚀 [LOGIN] Form submitted! Data:', data);
     console.log('🚀 [LOGIN] Form validation passed, proceeding with login...');
     
     try {
-      console.log('🔐 [LOGIN] Attempting login with:', { email: data.email });
+      console.log('🔐 [LOGIN] Attempting login with:', { email: data.email, isInviteFlow });
+      
+      // Handle invite flow with temporary password
+      if (isInviteFlow && inviteToken) {
+        console.log('👥 [INVITE] Processing invite login with temporary password');
+        
+        const response = await fetch('/api/team/invite/accept', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            token: inviteToken,
+            email: data.email,
+            tempPassword: data.password,
+          }),
+        });
+
+        const result = await response.json();
+        
+        if (!result.success) {
+          console.error('❌ [INVITE] Invite login failed:', result.message);
+          loginForm.setError("root", {
+            type: "manual",
+            message: result.message || "Invalid email or temporary password.",
+          });
+          return;
+        }
+
+        console.log('✅ [INVITE] Temporary password accepted, redirecting to profile setup');
+        // Redirect to profile setup with user data
+        router.push(`/profile-setup?token=${inviteToken}&userId=${result.userId}`);
+        return;
+      }
+      
+      // Regular login flow
       const result = await login(data.email, data.password);
       
       if (!result.success) {
@@ -141,6 +203,7 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
           setShowPassword={setShowPassword}
           isLoading={isLoading}
           showOwnerAccess={showOwnerAccess}
+          isInviteFlow={isInviteFlow}
         />
 
         {/* Sign Up Link */}
@@ -259,9 +322,10 @@ interface LoginFormProps {
   setShowPassword: (show: boolean) => void;
   isLoading: boolean;
   showOwnerAccess: boolean;
+  isInviteFlow?: boolean;
 }
 
-function LoginForm({ form, onSubmit, showPassword, setShowPassword, isLoading, showOwnerAccess }: LoginFormProps) {
+function LoginForm({ form, onSubmit, showPassword, setShowPassword, isLoading, showOwnerAccess, isInviteFlow = false }: LoginFormProps) {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
 
   return (
@@ -282,8 +346,9 @@ function LoginForm({ form, onSubmit, showPassword, setShowPassword, isLoading, s
             type="email"
             {...register("email")}
             className={`auth-input ${errors.email ? "border-red-300" : ""}`}
-            placeholder="john@premierauto.com"
+            placeholder={isInviteFlow ? "Invited email address" : "john@premierauto.com"}
             autoComplete="email"
+            readOnly={isInviteFlow} // Make email read-only for invites since it's pre-filled
           />
           {errors.email && (
             <p className="text-red-600 text-xs mt-1">{errors.email.message}</p>
@@ -292,15 +357,15 @@ function LoginForm({ form, onSubmit, showPassword, setShowPassword, isLoading, s
 
         <div className="auth-field-group">
           <label className="auth-label">
-            Password
+            {isInviteFlow ? "Temporary Password" : "Password"}
           </label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               {...register("password")}
               className={`auth-input pr-10 ${errors.password ? "border-red-300" : ""}`}
-              placeholder="Enter your password"
-              autoComplete="current-password"
+              placeholder={isInviteFlow ? "Enter the temporary password from your email" : "Enter your password"}
+              autoComplete={isInviteFlow ? "off" : "current-password"}
             />
             <button
               type="button"
@@ -315,19 +380,28 @@ function LoginForm({ form, onSubmit, showPassword, setShowPassword, isLoading, s
           )}
         </div>
 
-        <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              {...register("remember")}
-              type="checkbox"
-              className="h-4 w-4 text-blue-600 focus-ring-blue-500 border-gray-300 rounded"
-            />
-            Remember me
-          </label>
-          <Link href="/reset-password" className="text-sm text-blue-600 hover-text-blue-500 font-medium">
-            Forgot password?
-          </Link>
-        </div>
+        {!isInviteFlow && (
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                {...register("remember")}
+                type="checkbox"
+                className="h-4 w-4 text-blue-600 focus-ring-blue-500 border-gray-300 rounded"
+              />
+              Remember me
+            </label>
+            <Link href="/reset-password" className="text-sm text-blue-600 hover-text-blue-500 font-medium">
+              Forgot password?
+            </Link>
+          </div>
+        )}
+
+        {isInviteFlow && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-sm">
+            <p className="font-medium">Welcome to the team! 👋</p>
+            <p className="text-xs mt-1">Enter the temporary password from your invitation email to get started.</p>
+          </div>
+        )}
 
         <button
           type="submit"
@@ -349,10 +423,10 @@ function LoginForm({ form, onSubmit, showPassword, setShowPassword, isLoading, s
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              Signing In...
+              {isInviteFlow ? "Verifying..." : "Signing In..."}
             </>
           ) : (
-            "Sign In"
+            isInviteFlow ? "Continue with Temporary Password" : "Sign In"
           )}
         </button>
       </form>
