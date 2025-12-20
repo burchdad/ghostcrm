@@ -127,6 +127,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create user invitation' }, { status: 500 });
     }
 
+    // Create team invitation record for enhanced invitation flow
+    const { error: inviteError } = await supabase
+      .from('team_invites')
+      .insert([{
+        token: inviteToken,
+        email: email.toLowerCase(),
+        role: role.toLowerCase().replace(/\s+/g, '_'),
+        organization_id: actualOrganizationId,
+        organization_name: organization.name || organization.subdomain,
+        inviter_id: jwtUser.userId || null,
+        inviter_name: jwtUser.email || 'Team Owner',
+        status: 'pending',
+        expires_at: inviteExpires.toISOString(),
+        metadata: {
+          department: department || 'General',
+          tempPasswordGenerated: true
+        }
+      }]);
+
+    if (inviteError) {
+      console.error('Failed to create team invite record:', inviteError);
+      // Don't fail the whole operation, just log it since the user was already created
+    }
+
     // Also add to team_members table for additional team management data
     const { error: teamMemberError } = await supabase
       .from('team_members')
@@ -197,7 +221,10 @@ export async function POST(request: NextRequest) {
         inviteUrl: inviteUrl,
         expiresAt: inviteExpires.toISOString(),
         emailSent: emailSent
-      }
+      },
+      // Include these for enhanced invitation system testing
+      token: inviteToken,
+      tempPassword: tempPassword
     });
 
   } catch (error) {
