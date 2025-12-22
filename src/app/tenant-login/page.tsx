@@ -75,10 +75,10 @@ export default function TenantLogin() {
       console.log('🎫 [TENANT-LOGIN] Processing invite token:', inviteToken);
       
       // First verify the invite token and get user role
-      const inviteResponse = await fetch(`/api/invites/resolve?token=${inviteToken}`);
+      const inviteResponse = await fetch(`/api/team/invite/verify?token=${inviteToken}`);
       const inviteData = await inviteResponse.json();
       
-      if (inviteResponse.ok && inviteData.invite) {
+      if (inviteResponse.ok && inviteData.success && inviteData.invite) {
         const userRole = inviteData.invite.role;
         console.log('✅ [TENANT-LOGIN] Valid invite for role:', userRole);
         

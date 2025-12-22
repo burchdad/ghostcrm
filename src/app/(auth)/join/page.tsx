@@ -12,7 +12,7 @@ export default function JoinPage({ searchParams }: any) {
     e.preventDefault();
     setMsg("");
     // fetch invite to get org_id & role
-    const res = await fetch(`/api/invites/resolve?token=${token}`);
+    const res = await fetch(`/api/team/invite/verify?token=${token}`);
     const inv = await res.json();
     if (!res.ok) return setMsg(inv.error || "Invite invalid/expired.");
 

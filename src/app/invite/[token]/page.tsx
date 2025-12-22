@@ -36,7 +36,7 @@ export default function InvitePage() {
 
   const validateInvite = async () => {
     try {
-      const response = await fetch(`/api/invites/resolve?token=${token}`);
+      const response = await fetch(`/api/team/invite/verify?token=${token}`);
       const data = await response.json();
       
       if (response.ok) {
@@ -66,7 +66,7 @@ export default function InvitePage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/invites/resolve', {
+      const response = await fetch('/api/team/invite/complete', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
