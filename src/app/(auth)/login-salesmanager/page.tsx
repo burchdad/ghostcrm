@@ -9,14 +9,44 @@ import AuthForm from "@/components/auth/AuthForm";
 export default function SalesManagerLoginPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  
+  // Get invite parameter from URL
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const inviteToken = searchParams.get('invite');
 
-  // Redirect if already authenticated based on role
+  // Redirect if already authenticated based on role (unless it's an invite flow)
   useEffect(() => {
     if (user && !isLoading) {
-      // Sales manager login should go to sales manager leads
-      router.push("/tenant-salesmanager/leads");
+      if (inviteToken) {
+        // This is an invite flow - check if user needs profile setup
+        const checkInviteStatus = async () => {
+          try {
+            const response = await fetch(`/api/team/invite/verify?token=${inviteToken}`);
+            const data = await response.json();
+            
+            if (data.success && data.invite && user.email === data.invite.email) {
+              // Check if user requires password reset (still has temp password)
+              if (user.requires_password_reset) {
+                console.log('👥 [INVITE] User needs profile setup, redirecting...');
+                router.push(`/profile-setup?token=${inviteToken}&userId=${user.id}`);
+                return;
+              }
+            }
+          } catch (error) {
+            console.error('Failed to verify invite status:', error);
+          }
+          
+          // Default redirect for authenticated users
+          router.push("/tenant-salesmanager/leads");
+        };
+        
+        checkInviteStatus();
+      } else {
+        // Normal redirect for authenticated users without invite
+        router.push("/tenant-salesmanager/leads");
+      }
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, inviteToken]);
 
   return (
     <div style={{

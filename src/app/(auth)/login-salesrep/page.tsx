@@ -11,14 +11,44 @@ export default function SalesRepLoginPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const [organizationInfo, setOrganizationInfo] = useState<any>(null);
+  
+  // Get invite parameter from URL
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const inviteToken = searchParams.get('invite');
 
-  // 🔐 Redirect if already authenticated
+  // 🔐 Redirect if already authenticated (unless it's an invite flow)
   useEffect(() => {
     if (user && !isLoading) {
-      // Sales rep login should go to sales rep leads
-      router.push("/tenant-salesrep/leads");
+      if (inviteToken) {
+        // This is an invite flow - check if user needs profile setup
+        const checkInviteStatus = async () => {
+          try {
+            const response = await fetch(`/api/team/invite/verify?token=${inviteToken}`);
+            const data = await response.json();
+            
+            if (data.success && data.invite && user.email === data.invite.email) {
+              // Check if user requires password reset (still has temp password)
+              if (user.requires_password_reset) {
+                console.log('👥 [INVITE] User needs profile setup, redirecting...');
+                router.push(`/profile-setup?token=${inviteToken}&userId=${user.id}`);
+                return;
+              }
+            }
+          } catch (error) {
+            console.error('Failed to verify invite status:', error);
+          }
+          
+          // Default redirect for authenticated users
+          router.push("/tenant-salesrep/leads");
+        };
+        
+        checkInviteStatus();
+      } else {
+        // Normal redirect for authenticated users without invite
+        router.push("/tenant-salesrep/leads");
+      }
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, inviteToken]);
 
   // 🌐 Fetch organization info from subdomain
   useEffect(() => {

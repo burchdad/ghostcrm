@@ -36,6 +36,8 @@ export async function GET(req: NextRequest) {
     
     // Get organization subdomain if user has an organization
     let organizationSubdomain = null;
+    let requiresPasswordReset = false;
+    
     if (decoded.organizationId) {
       try {
         // Use service role to bypass RLS for organization lookup
@@ -45,6 +47,7 @@ export async function GET(req: NextRequest) {
           process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
         
+        // Get organization info
         const { data: org, error } = await supabaseAdmin
           .from('organizations')
           .select('subdomain')
@@ -57,6 +60,19 @@ export async function GET(req: NextRequest) {
           organizationSubdomain = org?.subdomain || null;
           console.log('🏢 [AUTH/ME] Found organization subdomain:', organizationSubdomain);
         }
+        
+        // Get user's password reset status
+        const { data: user, error: userError } = await supabaseAdmin
+          .from('users')
+          .select('requires_password_reset')
+          .eq('id', decoded.userId)
+          .single();
+        
+        if (!userError && user) {
+          requiresPasswordReset = user.requires_password_reset || false;
+          console.log('🔐 [AUTH/ME] User requires password reset:', requiresPasswordReset);
+        }
+        
       } catch (orgError) {
         console.warn('⚠️ [AUTH/ME] Could not fetch organization subdomain:', orgError);
       }
@@ -74,13 +90,15 @@ export async function GET(req: NextRequest) {
     
     return NextResponse.json({ 
       user: {
+        id: decoded.userId,
         userId: decoded.userId,
         email: decoded.email,
         role: decoded.role,
         organizationId: decoded.organizationId,
         organizationSubdomain,
         tenantId: decoded.tenantId,
-        exp: decoded.exp
+        exp: decoded.exp,
+        requires_password_reset: requiresPasswordReset
       }
     });
     
