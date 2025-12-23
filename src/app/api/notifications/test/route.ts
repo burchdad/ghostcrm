@@ -74,42 +74,42 @@ export async function POST(request: NextRequest) {
         title: 'Test: New Lead Received',
         message: 'This is a test notification for a new lead. A potential customer "John Doe" has submitted an inquiry about a 2024 Tesla Model 3.',
         priority: 'medium' as const,
-        channels: ['email', 'push', 'in_app']
+        channels: ['email', 'push', 'in_app'] as ('email' | 'sms' | 'push' | 'in_app')[]
       },
       deal_closed: {
         type: 'deal_closed' as const,
         title: 'Test: Deal Closed!',
         message: 'Congratulations! This is a test notification for a closed deal. Deal "2024 BMW X5 - Sarah Johnson" worth $45,000 has been successfully closed.',
         priority: 'high' as const,
-        channels: ['email', 'push', 'in_app']
+        channels: ['email', 'push', 'in_app'] as ('email' | 'sms' | 'push' | 'in_app')[]
       },
       task_reminder: {
         type: 'task_reminder' as const,
         title: 'Test: Task Reminder',
         message: 'This is a test reminder notification. You have a task "Follow up with Mike Wilson" due today at 3:00 PM.',
         priority: 'medium' as const,
-        channels: ['email', 'push', 'in_app']
+        channels: ['email', 'push', 'in_app'] as ('email' | 'sms' | 'push' | 'in_app')[]
       },
       appointment_reminder: {
         type: 'appointment_reminder' as const,
         title: 'Test: Appointment Reminder',
         message: 'This is a test appointment notification. You have an appointment "Vehicle Test Drive - Lisa Chen" scheduled for tomorrow at 2:00 PM.',
         priority: 'medium' as const,
-        channels: ['email', 'sms', 'push', 'in_app']
+        channels: ['email', 'sms', 'push', 'in_app'] as ('email' | 'sms' | 'push' | 'in_app')[]
       },
       system_alert: {
         type: 'system_alert' as const,
         title: 'Test: System Alert',
         message: 'This is a test system alert notification. Your inventory sync completed successfully with 25 vehicles updated.',
         priority: 'low' as const,
-        channels: ['email', 'push', 'in_app']
+        channels: ['email', 'push', 'in_app'] as ('email' | 'sms' | 'push' | 'in_app')[]
       },
       weekly_report: {
         type: 'weekly_report' as const,
         title: 'Test: Weekly Report',
         message: 'This is a test weekly report notification. Your team closed 12 deals this week totaling $340,000 in sales. Great work!',
         priority: 'low' as const,
-        channels: ['email', 'in_app']
+        channels: ['email', 'in_app'] as ('email' | 'sms' | 'push' | 'in_app')[]
       }
     };
 
