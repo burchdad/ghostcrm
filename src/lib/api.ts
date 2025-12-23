@@ -5,6 +5,7 @@ export interface User {
   id: string;
   email: string;
   role?: string;
+  requires_password_reset?: boolean; // For enhanced invitation flow
 }
 
 export interface Notification {

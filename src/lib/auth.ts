@@ -15,6 +15,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   profile: UserProfile;
+  requires_password_reset?: boolean; // For enhanced invitation flow
 }
 
 export interface UserProfile {
