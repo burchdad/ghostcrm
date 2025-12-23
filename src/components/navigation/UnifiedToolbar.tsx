@@ -455,7 +455,7 @@ export default function UnifiedToolbar({
         </div>
 
         {/* Ribbon Tabs */}
-        <div className="flex border-r border-gray-200 h-full">
+        <div className="flex border-r border-white h-full">
           {tabs.map((tab) => (
             <div key={tab.id} className="relative">
               <button
