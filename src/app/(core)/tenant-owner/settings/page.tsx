@@ -278,22 +278,37 @@ function BusinessSettingsPage() {
     switch (activeTab) {
       case 'general':
         return (
-          <div className="settings-section">
-            <h3 className="section-title">General Information</h3>
+          <div className="enhanced-settings-section">
+            <div className="section-header">
+              <div className="section-icon">
+                <Building size={24} />
+              </div>
+              <div className="section-info">
+                <h3 className="section-title">General Information</h3>
+                <p className="section-description">Basic details about your dealership</p>
+              </div>
+            </div>
             
-            <div className="form-grid">
-              <div className="form-group full-width">
-                <label className="form-label">
-                  <Building size={16} />
-                  Company Name
-                </label>
-                <input
-                  type="text"
-                  value={settings.companyName}
-                  onChange={(e) => setSettings(prev => ({ ...prev, companyName: e.target.value }))}
-                  className="form-input"
-                  placeholder="Your dealership name"
-                />
+            <div className="enhanced-form-grid">
+              <div className="form-card featured">
+                <div className="card-header">
+                  <Building size={20} />
+                  <span>Company Identity</span>
+                </div>
+                <div className="form-group">
+                  <label className="enhanced-label">
+                    Company Name
+                    <span className="required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.companyName}
+                    onChange={(e) => setSettings(prev => ({ ...prev, companyName: e.target.value }))}
+                    className="enhanced-input"
+                    placeholder="Enter your dealership name"
+                  />
+                  <div className="input-helper">This will appear on all your documents and communications</div>
+                </div>
               </div>
 
               <div className="form-group-row">
@@ -445,62 +460,87 @@ function BusinessSettingsPage() {
 
       case 'branding':
         return (
-          <div className="settings-section">
-            <h3 className="section-title">Branding & Colors</h3>
+          <div className="enhanced-settings-section">
+            <div className="section-header">
+              <div className="section-icon">
+                <Palette size={24} />
+              </div>
+              <div className="section-info">
+                <h3 className="section-title">Branding & Visual Identity</h3>
+                <p className="section-description">Customize your dealership's visual appearance and brand colors</p>
+              </div>
+            </div>
             
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">Primary Color</label>
-                <div className="color-picker-container">
-                  <input
-                    type="color"
-                    value={settings.branding.primaryColor}
-                    onChange={(e) => setSettings(prev => ({
-                      ...prev,
-                      branding: { ...prev.branding, primaryColor: e.target.value }
-                    }))}
-                    className="color-input"
-                  />
-                  <span className="color-value">{settings.branding.primaryColor}</span>
+            <div className="enhanced-form-grid">
+              <div className="form-card featured">
+                <div className="card-header">
+                  <Palette size={20} />
+                  <span>Brand Colors</span>
                 </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Secondary Color</label>
-                <div className="color-picker-container">
-                  <input
-                    type="color"
-                    value={settings.branding.secondaryColor}
-                    onChange={(e) => setSettings(prev => ({
-                      ...prev,
-                      branding: { ...prev.branding, secondaryColor: e.target.value }
-                    }))}
-                    className="color-input"
-                  />
-                  <span className="color-value">{settings.branding.secondaryColor}</span>
-                </div>
-              </div>
-
-              <div className="form-group full-width">
-                <label className="form-label">
-                  <Camera size={16} />
-                  Logo
-                </label>
-                <div className="logo-upload-container">
-                  <div className="logo-preview">
-                    {settings.branding.logo ? (
-                      <img src={settings.branding.logo} alt="Logo" className="logo-image" />
-                    ) : (
-                      <div className="logo-placeholder">
-                        <Camera size={24} />
-                        <span>No logo uploaded</span>
-                      </div>
-                    )}
+                <div className="color-picker-group">
+                  <div className="form-group">
+                    <label className="enhanced-label">Primary Color</label>
+                    <div className="color-picker-container">
+                      <input
+                        type="color"
+                        value={settings.branding.primaryColor}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          branding: { ...prev.branding, primaryColor: e.target.value }
+                        }))}
+                        className="color-input"
+                      />
+                      <span className="color-value">{settings.branding.primaryColor}</span>
+                    </div>
+                    <div className="input-helper">Main brand color for buttons, headers, and accents</div>
                   </div>
-                  <button className="upload-btn">
+                  <div className="form-group">
+                    <label className="enhanced-label">Secondary Color</label>
+                    <div className="color-picker-container">
+                      <input
+                        type="color"
+                        value={settings.branding.secondaryColor}
+                        onChange={(e) => setSettings(prev => ({
+                          ...prev,
+                          branding: { ...prev.branding, secondaryColor: e.target.value }
+                        }))}
+                        className="color-input"
+                      />
+                      <span className="color-value">{settings.branding.secondaryColor}</span>
+                    </div>
+                    <div className="input-helper">Complementary color for secondary elements</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-card">
+                <div className="card-header">
+                  <Camera size={20} />
+                  <span>Logo & Assets</span>
+                </div>
+                <div className="form-group">
+                  <label className="enhanced-label">
                     <Camera size={16} />
-                    Upload Logo
-                  </button>
+                    Company Logo
+                  </label>
+                  <div className="logo-upload-area">
+                    <div className="logo-preview">
+                      {settings.branding.logo ? (
+                        <img src={settings.branding.logo} alt="Logo" className="logo-image" />
+                      ) : (
+                        <div className="logo-placeholder">
+                          <Camera size={32} />
+                          <span>No logo uploaded</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="upload-text">Upload Company Logo</div>
+                    <div className="upload-hint">PNG, JPG, or SVG. Max 2MB. Recommended: 400x200px</div>
+                    <button className="enhanced-btn primary" style={{ marginTop: '1rem' }}>
+                      <Camera size={16} />
+                      Choose File
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -582,50 +622,78 @@ function BusinessSettingsPage() {
   return (
     <div className="settings-page">
       <div className="settings-container">
-        {/* Header */}
-        <div className="header-glass">
+        {/* Enhanced Header */}
+        <div className="enhanced-header">
           <div className="header-content">
             <div className="header-left">
-              <div className="settings-icon-container">
-                <Settings size={24} />
+              <div className="header-icon">
+                <Settings size={32} />
               </div>
-              <div>
-                <h1 className="header-title">Business Settings</h1>
-                <p className="header-subtitle">Configure your dealership preferences and settings</p>
+              <div className="header-text">
+                <h1 className="page-title">Business Settings</h1>
+                <p className="page-subtitle">Configure your dealership preferences and settings</p>
+                <div className="header-stats">
+                  <span className="stat-item">
+                    <Building size={14} />
+                    {settings.companyName || 'Your Business'}
+                  </span>
+                  <span className="stat-item">
+                    <Globe size={14} />
+                    Live Configuration
+                  </span>
+                </div>
               </div>
             </div>
             <div className="header-actions">
-              <button
+              <button 
                 onClick={handleSave}
                 disabled={saving}
-                className={`btn-primary ${saving ? 'saving' : ''}`}
+                className="enhanced-btn primary"
               >
-                <Save size={16} />
-                {saving ? 'Saving...' : 'Save Changes'}
+                <Save size={18} />
+                <span>{saving ? 'Saving Changes...' : 'Save Changes'}</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="tab-navigation">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
-              >
-                <Icon size={16} />
-                {tab.name}
-              </button>
-            );
-          })}
+        {/* Enhanced Tab Navigation */}
+        <div className="enhanced-tab-navigation">
+          <div className="tab-container">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`enhanced-tab ${activeTab === tab.id ? 'active' : ''}`}
+                >
+                  <div className="tab-icon">
+                    <Icon size={20} />
+                  </div>
+                  <div className="tab-content">
+                    <span className="tab-name">{tab.name}</span>
+                    <span className="tab-description">
+                      {tab.id === 'general' && 'Basic information'}
+                      {tab.id === 'hours' && 'Operating schedule'}
+                      {tab.id === 'branding' && 'Visual identity'}
+                      {tab.id === 'notifications' && 'Alert preferences'}
+                      {tab.id === 'security' && 'Access controls'}
+                    </span>
+                  </div>
+                  {activeTab === tab.id && <div className="tab-indicator"></div>}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Content Area */}
-        <div className="settings-content">{renderTabContent()}</div>
+        {/* Enhanced Content Area */}
+        <div className="enhanced-content-area">
+          <div className="content-wrapper">
+            {renderTabContent()}
+          </div>
+        </div>
         
         {/* Success Message */}
         {successMessage && (
