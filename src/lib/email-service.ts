@@ -209,6 +209,77 @@ The GhostCRM Team
 This invitation was sent to ${data.inviteeName}. If you received this in error, please contact ${data.inviterEmail}.
 `;
   }
+
+  /**
+   * Send a notification email
+   */
+  async sendNotificationEmail(
+    email: string, 
+    emailTemplate: { subject: string; template: string }
+  ): Promise<boolean> {
+    if (!this.isConfigured) {
+      console.warn('⚠️ [EMAIL] SendGrid not configured, skipping notification email');
+      return false;
+    }
+
+    try {
+      const msg = {
+        to: email,
+        from: {
+          email: process.env.FROM_EMAIL || 'noreply@ghostcrm.ai',
+          name: 'GhostCRM Notifications'
+        },
+        subject: emailTemplate.subject,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${emailTemplate.subject}</title>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
+              .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+              .header { text-align: center; margin-bottom: 30px; }
+              .logo { font-size: 24px; font-weight: bold; color: #2563eb; margin-bottom: 10px; }
+              .content { margin-bottom: 30px; }
+              .footer { text-align: center; font-size: 14px; color: #666; border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; }
+              h1, h2 { color: #2563eb; }
+              .priority-high { color: #dc2626; font-weight: bold; }
+              .priority-critical { color: #991b1b; font-weight: bold; background: #fee2e2; padding: 10px; border-radius: 5px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <div class="logo">👻 GhostCRM</div>
+                <p>Your Auto Dealership CRM Platform</p>
+              </div>
+              
+              <div class="content">
+                ${emailTemplate.template}
+              </div>
+              
+              <div class="footer">
+                <p>This notification was sent from your GhostCRM system.</p>
+                <p>To manage your notification preferences, log in to your account and visit Settings > Notifications.</p>
+                <p>© 2025 GhostCRM. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      };
+
+      const response = await sgMail.send(msg);
+      console.log('✅ [EMAIL] Notification email sent successfully to:', email);
+      return true;
+
+    } catch (error) {
+      console.error('❌ [EMAIL] Error sending notification email:', error);
+      return false;
+    }
+  }
 }
 
 export default EmailService;

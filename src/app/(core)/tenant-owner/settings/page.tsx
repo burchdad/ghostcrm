@@ -7,6 +7,7 @@ import { useRibbonPage } from "@/components/ribbon";
 import { I18nProvider } from "@/components/utils/I18nProvider";
 import { ToastProvider } from "@/components/utils/ToastProvider";
 import SettingsConfirmationDialog from "@/components/SettingsConfirmationDialog";
+import NotificationsSettingsSection from "@/components/settings/NotificationsSettingsSection";
 import { 
   Settings, 
   Building, 
@@ -507,41 +508,7 @@ function BusinessSettingsPage() {
         );
 
       case 'notifications':
-        return (
-          <div className="settings-section">
-            <h3 className="section-title">Notification Preferences</h3>
-            
-            <div className="notification-options">
-              {Object.entries(settings.notifications).map(([key, value]) => (
-                <div key={key} className="notification-item">
-                  <div className="notification-info">
-                    <span className="notification-title">
-                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                    </span>
-                    <p className="notification-description">
-                      {key === 'emailAlerts' && 'Receive email notifications for important events'}
-                      {key === 'smsAlerts' && 'Get SMS alerts for urgent notifications'}
-                      {key === 'pushNotifications' && 'Browser push notifications for real-time updates'}
-                      {key === 'weeklyReports' && 'Weekly summary reports via email'}
-                    </p>
-                  </div>
-                  <label className="toggle-container">
-                    <input
-                      type="checkbox"
-                      checked={value}
-                      onChange={(e) => setSettings(prev => ({
-                        ...prev,
-                        notifications: { ...prev.notifications, [key]: e.target.checked }
-                      }))}
-                      className="toggle-input"
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
+        return <NotificationsSettingsSection />;
 
       case 'security':
         return (
