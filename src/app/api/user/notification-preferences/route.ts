@@ -8,6 +8,29 @@ const jwtSecret = process.env.JWT_SECRET!;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Database type for user notification preferences
+interface UserNotificationPreferencesDB {
+  id: string;
+  user_id: string;
+  organization_id: string;
+  email_enabled: boolean;
+  email_new_leads: boolean;
+  email_lead_updates: boolean;
+  email_deal_closed: boolean;
+  email_task_reminders: boolean;
+  email_system_alerts: boolean;
+  email_daily_digest: boolean;
+  email_weekly_reports: boolean;
+  sms_enabled: boolean;
+  sms_phone_number: string | null;
+  sms_urgent_only: boolean;
+  push_enabled: boolean;
+  push_browser: boolean;
+  push_mobile: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // GET - Get user notification preferences
 export async function GET(request: NextRequest) {
   try {
@@ -74,7 +97,7 @@ export async function GET(request: NextRequest) {
     console.log('✅ Organization found:', orgData.id);
 
     // Try to get user notification preferences - with better error handling
-    let preferences = null;
+    let preferences: UserNotificationPreferencesDB | null = null;
     try {
       const { data, error } = await supabase
         .from('user_notification_preferences')
@@ -96,7 +119,7 @@ export async function GET(request: NextRequest) {
         preferences = data;
         console.log('✅ Found user preferences');
       }
-    } catch (dbError) {
+    } catch (dbError: any) {
       console.log('⚠️ Database error (likely table doesn\'t exist), returning defaults:', dbError.message);
     }
 
@@ -170,13 +193,16 @@ export async function POST(request: NextRequest) {
     const jwtCookie = request.cookies.get('ghostcrm_jwt');
     
     if (!jwtCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      console.error('❌ No ghostcrm_jwt cookie found');
+      return NextResponse.json({ error: 'Unauthorized - No JWT cookie' }, { status: 401 });
     }
 
     let jwtUser;
     try {
       jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
+      console.log('✅ JWT verified successfully for POST request');
     } catch (jwtError) {
+      console.error('❌ JWT verification failed:', jwtError);
       return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
     }
 
