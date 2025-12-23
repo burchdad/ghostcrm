@@ -15,21 +15,33 @@ export async function GET(request: NextRequest) {
     const jwtCookie = request.cookies.get('ghostcrm_jwt');
     
     if (!jwtCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      console.error('❌ No ghostcrm_jwt cookie found');
+      return NextResponse.json({ error: 'Unauthorized - No JWT cookie' }, { status: 401 });
     }
 
     let jwtUser;
     try {
       jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
+      console.log('✅ JWT verified successfully for user:', jwtUser.userId);
     } catch (jwtError) {
+      console.error('❌ JWT verification failed:', jwtError);
       return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
+    }
+
+    // Check if we have the required environment variables
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('❌ Missing Supabase credentials');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     // Get organization data
     const jwtOrganizationId = jwtUser.organizationId;
     if (!jwtOrganizationId) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      console.error('❌ No organizationId in JWT');
+      return NextResponse.json({ error: 'Organization not found in token' }, { status: 404 });
     }
+
+    console.log('🔍 Looking for organization:', jwtOrganizationId);
 
     // Check if organizationId is a UUID or subdomain
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jwtOrganizationId);
@@ -43,6 +55,7 @@ export async function GET(request: NextRequest) {
         .single();
       orgData = data;
       if (error) {
+        console.error('❌ Organization not found by ID:', error);
         return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
       }
     } else {
@@ -53,21 +66,38 @@ export async function GET(request: NextRequest) {
         .single();
       orgData = data;
       if (error) {
+        console.error('❌ Organization not found by subdomain:', error);
         return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
       }
     }
 
-    // Get user notification preferences
-    const { data: preferences, error } = await supabase
-      .from('user_notification_preferences')
-      .select('*')
-      .eq('user_id', jwtUser.userId)
-      .eq('organization_id', orgData.id)
-      .single();
+    console.log('✅ Organization found:', orgData.id);
 
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching notification preferences:', error);
-      return NextResponse.json({ error: 'Failed to fetch preferences' }, { status: 500 });
+    // Try to get user notification preferences - with better error handling
+    let preferences = null;
+    try {
+      const { data, error } = await supabase
+        .from('user_notification_preferences')
+        .select('*')
+        .eq('user_id', jwtUser.userId)
+        .eq('organization_id', orgData.id)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log('ℹ️ No preferences found for user - will return defaults');
+        } else if (error.message?.includes('relation "user_notification_preferences" does not exist')) {
+          console.log('⚠️ Notification preferences table does not exist - returning defaults');
+        } else {
+          console.error('❌ Error fetching notification preferences:', error);
+          throw error;
+        }
+      } else {
+        preferences = data;
+        console.log('✅ Found user preferences');
+      }
+    } catch (dbError) {
+      console.log('⚠️ Database error (likely table doesn\'t exist), returning defaults:', dbError.message);
     }
 
     // Return preferences or defaults if none exist
