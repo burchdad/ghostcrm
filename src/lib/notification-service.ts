@@ -26,7 +26,7 @@ export interface NotificationData {
   organizationId: string;
   userId?: string;
   entityId?: string;
-  entityType?: 'lead' | 'deal' | 'appointment' | 'user' | 'organization';
+  entityType?: 'lead' | 'deal' | 'appointment' | 'user' | 'organization' | 'test';
   metadata?: Record<string, any>;
   priority: 'low' | 'medium' | 'high' | 'critical';
   channels: ('email' | 'sms' | 'push' | 'in_app')[];
