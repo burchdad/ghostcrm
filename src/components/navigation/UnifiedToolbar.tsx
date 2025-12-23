@@ -13,6 +13,7 @@ import { NotificationsDropdown } from "./NotificationsDropdown";
 import { QuickLanguageSelector } from "@/components/global/LanguageSelector";
 import { useI18n } from "@/components/utils/I18nProvider";
 import { getOnlineUsers } from "@/lib/api";
+import styles from "./UnifiedToolbar.module.css";
 
 // Ribbon registries
 import {
@@ -442,20 +443,20 @@ export default function UnifiedToolbar({
   };
 
   return (
-    <header className="unified-toolbar bg-white border-b border-gray-200 shadow-sm">
-      <div className="toolbar-container flex items-center h-16">
+    <header className={styles.unifiedToolbar}>
+      <div className={styles.toolbarContainer}>
         {/* Logo Section */}
-        <div className="flex items-center gap-3 px-6 border-r border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 h-full">
-          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-xl shadow-lg transform transition-transform hover:scale-105">
+        <div className={styles.logoSection}>
+          <div className={styles.logoIcon}>
             🚗
           </div>
-          <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent whitespace-nowrap">
+          <span className={styles.logoText}>
             GHOST AUTO CRM
           </span>
         </div>
 
         {/* Ribbon Tabs */}
-        <div className="flex border-r border-white h-full">
+        <div className={styles.tabsContainer}>
           {tabs.map((tab) => (
             <div key={tab.id} className="relative">
               <button
@@ -468,12 +469,12 @@ export default function UnifiedToolbar({
                     setActiveTab(tab.id);
                   }
                 }}
-                className={[
-                  "px-6 py-3 text-sm font-semibold border-b-3 transition-all duration-200 h-full flex items-center relative overflow-hidden group",
-                  activeTab === tab.id
-                    ? "border-blue-500 text-blue-600 bg-white shadow-sm"
-                    : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-white hover:border-gray-200"
-                ].join(" ")}
+                className={`${styles.tabButton} ${
+                  activeTab === tab.id ? styles.active : ''
+                } ${
+                  tab.disabled ? styles.disabled : ''
+                }`}
+                disabled={tab.disabled}
               >
                 <span className="relative z-10 flex items-center gap-2">
                   {tab.label}
@@ -489,7 +490,7 @@ export default function UnifiedToolbar({
               
               {/* AI Dropdown Menu */}
               {tab.id === 'AI' && showAIDropdown && (
-                <div className="absolute top-full left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[200px]">
+                <div className={styles.dropdown}>
                   <div className="py-2">
                     <button
                       onClick={() => {
@@ -498,7 +499,7 @@ export default function UnifiedToolbar({
                         );
                         setShowAIDropdown(false);
                       }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3"
+                      className={styles.dropdownItem}
                     >
                       <span className="text-base">💡</span>
                       {t("smart_suggestions", "actions")}
@@ -623,22 +624,22 @@ export default function UnifiedToolbar({
         </div>
 
         {/* Search */}
-        <div className="relative mx-6 flex-shrink-0">
+        <div className={styles.searchContainer}>
           <div className="relative group">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors duration-200" />
+            <Search className={styles.searchIcon} />
             <input
               type="text"
               placeholder={t("search", "placeholders")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-3 w-80 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 hover:bg-white transition-all duration-200 shadow-sm"
+              className={styles.searchInput}
               aria-label={t("search_placeholder", "accessibility")}
             />
           </div>
         </div>
 
         {/* Right Controls */}
-        <div className="flex items-center gap-6 px-6 border-l border-gray-200 h-full bg-gradient-to-r from-white to-gray-50">
+        <div className={styles.rightSection}>
           {/* Online Users */}
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <div className="relative">
