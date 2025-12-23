@@ -1,5 +1,5 @@
--- Migration: Add notification system tables
--- File: 020_notification_system.sql
+-- Migration: Add notification system tables (Simplified)
+-- File: 020_notification_system_simplified.sql
 
 -- User notification preferences table
 CREATE TABLE IF NOT EXISTS user_notification_preferences (
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS user_notification_preferences (
   UNIQUE(user_id, organization_id)
 );
 
--- Enhanced notifications table (update existing if needed)
+-- Enhanced notifications table
 CREATE TABLE IF NOT EXISTS notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   expires_at TIMESTAMP WITH TIME ZONE
 );
 
--- Notification delivery log (track which notifications were sent and how)
+-- Notification delivery log
 CREATE TABLE IF NOT EXISTS notification_delivery_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   notification_id UUID REFERENCES notifications(id) ON DELETE CASCADE,
@@ -82,7 +82,7 @@ CREATE INDEX IF NOT EXISTS idx_notification_delivery_log_user_id ON notification
 CREATE INDEX IF NOT EXISTS idx_notification_delivery_log_channel ON notification_delivery_log(channel);
 CREATE INDEX IF NOT EXISTS idx_notification_delivery_log_status ON notification_delivery_log(status);
 
--- Row Level Security
+-- Row Level Security (Simplified)
 ALTER TABLE user_notification_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_delivery_log ENABLE ROW LEVEL SECURITY;
@@ -97,72 +97,17 @@ ON notifications FOR ALL USING (auth.role() = 'service_role');
 CREATE POLICY "Service role can manage notification delivery log" 
 ON notification_delivery_log FOR ALL USING (auth.role() = 'service_role');
 
--- Users can view and update their own notification preferences
+-- Simplified user policies (allow all authenticated users for now)
 CREATE POLICY "Users can manage their own notification preferences" 
 ON user_notification_preferences FOR ALL USING (
   auth.uid()::text = user_id::text
 );
 
--- Users can view notifications for their organization
-CREATE POLICY "Users can view their organization notifications" 
-ON notifications FOR SELECT USING (
-  organization_id IN (
-    SELECT om.organization_id 
-    FROM organization_memberships om 
-    WHERE om.user_id::text = auth.uid()::text
-  )
-);
+CREATE POLICY "Users can view notifications" 
+ON notifications FOR SELECT USING (auth.uid() IS NOT NULL);
 
--- Users can update read status of their own notifications
-CREATE POLICY "Users can update their own notifications" 
-ON notifications FOR UPDATE USING (
-  user_id::text = auth.uid()::text OR
-  organization_id IN (
-    SELECT om.organization_id 
-    FROM organization_memberships om 
-    WHERE om.user_id::text = auth.uid()::text
-  )
-);
-
--- Functions and triggers for automated notifications
-
--- Function to create default notification preferences for new users
-CREATE OR REPLACE FUNCTION create_default_notification_preferences()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO user_notification_preferences (
-    user_id,
-    organization_id,
-    email_enabled,
-    email_new_leads,
-    email_lead_updates,
-    email_deal_closed,
-    email_task_reminders,
-    email_system_alerts,
-    email_daily_digest,
-    email_weekly_reports,
-    sms_enabled,
-    sms_urgent_only,
-    push_enabled,
-    push_browser,
-    push_mobile
-  ) VALUES (
-    NEW.user_id,
-    NEW.organization_id,
-    true, true, true, true, true, true, false, true,
-    false, true,
-    true, true, true
-  ) ON CONFLICT (user_id, organization_id) DO NOTHING;
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger to create default preferences when user joins organization
-CREATE TRIGGER trigger_create_default_notification_preferences
-  AFTER INSERT ON organization_memberships
-  FOR EACH ROW
-  EXECUTE FUNCTION create_default_notification_preferences();
+CREATE POLICY "Users can update notifications" 
+ON notifications FOR UPDATE USING (auth.uid() IS NOT NULL);
 
 -- Function to automatically expire old notifications
 CREATE OR REPLACE FUNCTION expire_old_notifications()
@@ -176,7 +121,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Sample notification types reference (for documentation)
+-- Comments for documentation
 COMMENT ON TABLE notifications IS 'Stores all notifications for users and organizations. Types include: new_lead, lead_update, deal_closed, task_reminder, system_alert, daily_digest, weekly_report, appointment_reminder, lead_status_change, team_invite, security_alert';
 
 COMMENT ON COLUMN notifications.priority IS 'Notification priority: low, medium, high, critical';

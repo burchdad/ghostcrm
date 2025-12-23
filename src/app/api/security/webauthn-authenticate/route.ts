@@ -127,6 +127,6 @@ export async function PUT(req: Request) {
   // issue session
   const token = jwt.sign({ sub: String(userRow.id), email, role: userRow.role }, getJWTSecret(), { expiresIn: "2h" });
   const res = NextResponse.json({ success: true });
-  res.headers.set("Set-Cookie", `ghostcrm_jwt=${token}; HttpOnly; Secure; Path=/; Max-Age=7200; SameSite=Strict`);
+  res.headers.set("Set-Cookie", `ghostcrm_jwt=${token}; HttpOnly; Secure; Path=/; Max-Age=7200; SameSite=Lax`);
   return res;
 }
