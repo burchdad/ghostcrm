@@ -36,10 +36,20 @@ export async function GET(request: NextRequest) {
     const token = request.cookies.get('ghostcrm_jwt')?.value || 
                   request.cookies.get('jwt')?.value;
     if (!token) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      return NextResponse.json({ error: 'TOKEN_MISSING' }, { status: 401 });
     }
 
-    const decoded = verifyJwtToken(token);
+    let decoded;
+    try {
+      decoded = verifyJwtToken(token);
+    } catch (error: any) {
+      console.log(`🔄 [CHANNELS] Token verification failed: ${error.message}`);
+      if (error.name === 'TokenExpiredError') {
+        return NextResponse.json({ error: 'TOKEN_EXPIRED' }, { status: 401 });
+      }
+      return NextResponse.json({ error: 'TOKEN_INVALID' }, { status: 401 });
+    }
+
     if (!decoded || !decoded.organizationId) {
       return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
     }

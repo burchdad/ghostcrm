@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   console.log("🚪 [LOGOUT] Processing logout request...");
   
-  // CSRF protection
+  // CSRF protection - Allow subdomain tenants
   const allowedOrigins: string[] = [
     process.env.NEXT_PUBLIC_BASE_URL,
     process.env.NEXT_PUBLIC_DEPLOY_URL,
@@ -16,8 +16,14 @@ export async function POST(req: Request) {
     "https://ghostcrm.ai",
     "https://www.ghostcrm.ai"
   ].filter((url): url is string => Boolean(url)); // Remove undefined values with type guard
+  
   const origin = req.headers.get("origin") || req.headers.get("referer") || "";
-  if (origin && !allowedOrigins.some(o => origin.startsWith(o))) {
+  
+  // Allow any *.ghostcrm.ai subdomain
+  const isValidSubdomain = origin.includes('.ghostcrm.ai') || origin.includes('ghostcrm.ai');
+  const isAllowedOrigin = allowedOrigins.some(o => origin.startsWith(o));
+  
+  if (origin && !isAllowedOrigin && !isValidSubdomain) {
     console.log("❌ [LOGOUT] Invalid origin:", origin);
     console.log("❌ [LOGOUT] Allowed origins:", allowedOrigins);
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
