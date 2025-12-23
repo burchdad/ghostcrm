@@ -9,6 +9,7 @@ interface User {
   lastName: string;
   dealership: string;
   phone?: string;
+  requires_password_reset?: boolean; // For enhanced invitation flow
 }
 
 interface AuthContextType {
