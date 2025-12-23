@@ -36,8 +36,15 @@ export async function POST(request: NextRequest) {
     console.log('🤖 [AI-AGENT-API] Dashboard request:', {
       organizationId: decoded.organizationId,
       userId: decoded.userId,
-      action: body.action
+      action: body.action,
+      fullBody: body
     });
+
+    // Validate action parameter
+    if (!body.action) {
+      console.log('❌ [AI-AGENT-API] No action provided, defaulting to health_check');
+      body.action = 'health_check';
+    }
 
     // Handle different agent actions
     switch (body.action) {

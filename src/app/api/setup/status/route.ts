@@ -13,6 +13,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       status: 'completed',
+      isCompleted: true,
+      completedAt: new Date().toISOString(),
+      organizationId: 'system-default',
       steps: {
         organization: true,
         users: true,
