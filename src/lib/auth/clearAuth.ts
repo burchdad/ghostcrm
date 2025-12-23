@@ -11,11 +11,27 @@ if (typeof window !== 'undefined') {
   localStorage.removeItem('ghostcrm_trial_mode');
   localStorage.removeItem('ghostcrm_auth_token');
   
-  // Clear any cookies by setting them to expire
-  document.cookie = 'ghostcrm_jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.localhost;';
-  document.cookie = 'ghostcrm_jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  // Clear sessionStorage preserved auth state - KEY FIX!
+  sessionStorage.removeItem('ghost_auth_state');
+  sessionStorage.removeItem('ghost_auth_backup');
   
-  console.log('🔒 [SECURITY] Cleared all stored authentication data');
+  // Clear any cookies by setting them to expire
+  const cookiesToClear = ['ghostcrm_jwt'];
+  const domains = ['', window.location.hostname, `.${window.location.hostname}`];
+  const paths = ['/', '/login'];
+  
+  cookiesToClear.forEach(cookieName => {
+    domains.forEach(domain => {
+      paths.forEach(path => {
+        const cookieString = domain 
+          ? `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain};`
+          : `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
+        document.cookie = cookieString;
+      });
+    });
+  });
+  
+  console.log('🔒 [SECURITY] Cleared all stored authentication data including preserved state');
 }
 
 export const clearAuthStorage = () => {
@@ -26,8 +42,24 @@ export const clearAuthStorage = () => {
     localStorage.removeItem('ghostcrm_trial_mode');
     localStorage.removeItem('ghostcrm_auth_token');
     
-    // Clear cookies
-    document.cookie = 'ghostcrm_jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.localhost;';
-    document.cookie = 'ghostcrm_jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    // Clear sessionStorage preserved auth state - KEY FIX!
+    sessionStorage.removeItem('ghost_auth_state');
+    sessionStorage.removeItem('ghost_auth_backup');
+    
+    // Clear cookies with multiple configurations
+    const cookiesToClear = ['ghostcrm_jwt'];
+    const domains = ['', window.location.hostname, `.${window.location.hostname}`];
+    const paths = ['/', '/login'];
+    
+    cookiesToClear.forEach(cookieName => {
+      domains.forEach(domain => {
+        paths.forEach(path => {
+          const cookieString = domain 
+            ? `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain};`
+            : `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
+          document.cookie = cookieString;
+        });
+      });
+    });
   }
 };

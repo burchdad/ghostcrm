@@ -48,36 +48,54 @@ export async function POST(req: Request) {
     
     console.log("✅ [LOGOUT] Logout processed successfully");
     
+    // Clear JWT cookie with multiple configurations to ensure it's removed
     const isProd = process.env.NODE_ENV === "production";
-    const cookieOptions = [
-      "ghostcrm_jwt=",
-      "HttpOnly",
-      isProd ? "Secure" : "", // Only secure in production
-      "Path=/",
-      "Max-Age=0",
-      "SameSite=Lax"
-    ].filter(Boolean).join("; ");
-    
     const res = NextResponse.json({ ok: true });
-    res.headers.set("Set-Cookie", cookieOptions);
     
-    console.log("🍪 [LOGOUT] JWT cookie cleared");
+    // Clear cookie with different path/domain combinations
+    const cookieConfigs = [
+      // Main cookie clearing
+      "ghostcrm_jwt=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax" + (isProd ? "; Secure" : ""),
+      // Clear for subdomain
+      "ghostcrm_jwt=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax; Domain=.ghostcrm.ai" + (isProd ? "; Secure" : ""),
+      // Clear for specific domain  
+      "ghostcrm_jwt=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax; Domain=ghostcrm.ai" + (isProd ? "; Secure" : ""),
+    ];
+    
+    // Set multiple cookie headers to ensure clearing
+    cookieConfigs.forEach((cookieConfig, index) => {
+      if (index === 0) {
+        res.headers.set("Set-Cookie", cookieConfig);
+      } else {
+        res.headers.append("Set-Cookie", cookieConfig);
+      }
+    });
+    
+    console.log("🍪 [LOGOUT] JWT cookie cleared with multiple configurations");
     return res;
     
   } catch (error: any) {
     console.error("❌ [LOGOUT] Error:", error);
     const isProd = process.env.NODE_ENV === "production";
-    const cookieOptions = [
-      "ghostcrm_jwt=",
-      "HttpOnly", 
-      isProd ? "Secure" : "", // Only secure in production
-      "Path=/",
-      "Max-Age=0",
-      "SameSite=Lax"
-    ].filter(Boolean).join("; ");
-    
     const res = NextResponse.json({ ok: true }); // Still return ok for logout
-    res.headers.set("Set-Cookie", cookieOptions);
+    
+    // Clear cookie even on error
+    const cookieConfigs = [
+      "ghostcrm_jwt=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax" + (isProd ? "; Secure" : ""),
+      "ghostcrm_jwt=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax; Domain=.ghostcrm.ai" + (isProd ? "; Secure" : ""),
+      "ghostcrm_jwt=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax; Domain=ghostcrm.ai" + (isProd ? "; Secure" : ""),
+    ];
+    
+    cookieConfigs.forEach((cookieConfig, index) => {
+      if (index === 0) {
+        res.headers.set("Set-Cookie", cookieConfig);
+      } else {
+        res.headers.append("Set-Cookie", cookieConfig);
+      }
+    });
+    
+    console.log("🍪 [LOGOUT] JWT cookie cleared (error case)");
+    return res;
     return res;
   }
 }

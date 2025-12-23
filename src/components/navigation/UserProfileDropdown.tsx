@@ -61,13 +61,66 @@ export function UserProfileDropdown() {
     setShowProfileModal(true);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     console.log('Logout clicked');
     setOpen(false);
     if (window.confirm(t('Are you sure you want to logout?', 'ui'))) {
       console.log('Logout confirmed');
-      // Add actual logout logic here (clear tokens, etc.)
-      router.push('/login');
+      
+      try {
+        // Call logout API to clear server-side cookies
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        // Clear client-side auth state
+        if (typeof window !== 'undefined') {
+          // Clear localStorage
+          localStorage.removeItem('ghostcrm_user');
+          localStorage.removeItem('ghostcrm_session_time');
+          localStorage.removeItem('ghostcrm_demo_mode');
+          localStorage.removeItem('ghostcrm_trial_mode');
+          localStorage.removeItem('ghostcrm_auth_token');
+          localStorage.removeItem('ghostcrm_auth_state');
+          localStorage.clear(); // Clear everything to be safe
+          
+          // Clear sessionStorage - THIS IS THE KEY FIX!
+          sessionStorage.removeItem('ghost_auth_state');
+          sessionStorage.removeItem('ghost_auth_backup');
+          sessionStorage.clear(); // Clear everything to be safe
+          
+          // Clear cookies on client side
+          const cookiesToClear = ['ghostcrm_jwt'];
+          const domains = ['', window.location.hostname, `.${window.location.hostname}`];
+          const paths = ['/', '/login'];
+          
+          cookiesToClear.forEach(cookieName => {
+            domains.forEach(domain => {
+              paths.forEach(path => {
+                // Clear cookie with different domain/path combinations
+                const cookieString = domain 
+                  ? `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain};`
+                  : `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
+                document.cookie = cookieString;
+              });
+            });
+          });
+        }
+        
+        console.log('✅ Logout completed successfully');
+        
+        // Force a hard redirect to ensure clean state
+        window.location.href = '/login';
+        
+      } catch (error) {
+        console.error('Logout error:', error);
+        // Still redirect even if API call fails
+        window.location.href = '/login';
+      }
     }
   };
 
