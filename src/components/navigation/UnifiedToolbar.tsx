@@ -471,10 +471,7 @@ export default function UnifiedToolbar({
                 }}
                 className={`${styles.tabButton} ${
                   activeTab === tab.id ? styles.active : ''
-                } ${
-                  tab.disabled ? styles.disabled : ''
                 }`}
-                disabled={tab.disabled}
               >
                 <span className="relative z-10 flex items-center gap-2">
                   {tab.label}
