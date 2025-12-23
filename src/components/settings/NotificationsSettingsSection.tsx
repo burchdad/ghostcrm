@@ -50,7 +50,9 @@ const NotificationsSettingsSection: React.FC = () => {
   const loadPreferences = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/user/notification-preferences');
+      const response = await fetch('/api/user/notification-preferences', {
+        credentials: 'include'
+      });
       
       if (response.ok) {
         const data = await response.json();
@@ -69,7 +71,9 @@ const NotificationsSettingsSection: React.FC = () => {
 
   const loadTestNotifications = async () => {
     try {
-      const response = await fetch('/api/notifications/test');
+      const response = await fetch('/api/notifications/test', {
+        credentials: 'include'
+      });
       
       if (response.ok) {
         const data = await response.json();
@@ -90,6 +94,7 @@ const NotificationsSettingsSection: React.FC = () => {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ preferences })
       });
 
@@ -117,6 +122,7 @@ const NotificationsSettingsSection: React.FC = () => {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ notificationType })
       });
 
