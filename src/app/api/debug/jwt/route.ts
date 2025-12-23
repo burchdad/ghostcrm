@@ -7,9 +7,15 @@ export async function GET(request: NextRequest) {
   try {
     console.log('=== JWT Debug Endpoint ===');
     
+    // Check environment variables
+    const hasJwtSecret = !!process.env.JWT_SECRET;
+    const jwtSecretLength = process.env.JWT_SECRET?.length || 0;
+    
+    console.log('Environment check:', { hasJwtSecret, jwtSecretLength });
+    
     // Check all cookies
     const allCookies = request.cookies.getAll();
-    console.log('All cookies:', allCookies);
+    console.log('All cookies:', allCookies.map(c => ({ name: c.name, hasValue: !!c.value, valueLength: c.value?.length })));
     
     // Get JWT cookie specifically
     const jwtCookie = request.cookies.get('ghostcrm_jwt');
@@ -18,35 +24,95 @@ export async function GET(request: NextRequest) {
     if (!jwtCookie) {
       return NextResponse.json({ 
         error: 'No JWT cookie found',
-        cookies: allCookies,
-        headers: Object.fromEntries(request.headers.entries())
+        cookies: allCookies.map(c => ({ name: c.name, hasValue: !!c.value, valueLength: c.value?.length })),
+        headers: {
+          cookie: request.headers.get('cookie') || 'No cookie header',
+          userAgent: request.headers.get('user-agent'),
+          referer: request.headers.get('referer')
+        },
+        environment: { hasJwtSecret, jwtSecretLength }
       }, { status: 401 });
     }
 
     console.log('JWT Cookie value length:', jwtCookie.value.length);
+    console.log('JWT Cookie first 50 chars:', jwtCookie.value.substring(0, 50));
     
-    // Try to decode JWT
+    // Check if JWT secret exists
+    if (!jwtSecret) {
+      console.error('❌ JWT_SECRET environment variable not found');
+      return NextResponse.json({ 
+        error: 'Server configuration error - JWT_SECRET not found',
+        environment: { hasJwtSecret: false }
+      }, { status: 500 });
+    }
+    
+    // Try to decode JWT without verification first
+    let decodedHeader, decodedPayload;
+    try {
+      const parts = jwtCookie.value.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Invalid JWT format - not 3 parts');
+      }
+      
+      decodedHeader = JSON.parse(Buffer.from(parts[0], 'base64').toString());
+      decodedPayload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+      
+      console.log('JWT header:', decodedHeader);
+      console.log('JWT payload (unverified):', {
+        userId: decodedPayload.userId,
+        email: decodedPayload.email,
+        role: decodedPayload.role,
+        organizationId: decodedPayload.organizationId,
+        exp: decodedPayload.exp ? new Date(decodedPayload.exp * 1000).toISOString() : 'no expiry',
+        iat: decodedPayload.iat ? new Date(decodedPayload.iat * 1000).toISOString() : 'no issued time'
+      });
+      
+    } catch (decodeError) {
+      console.error('JWT decode error:', decodeError);
+      return NextResponse.json({ 
+        error: 'JWT decode failed',
+        details: decodeError.message,
+        cookieValue: jwtCookie.value.substring(0, 100) + '...'
+      }, { status: 400 });
+    }
+    
+    // Try to verify JWT
     let jwtUser;
     try {
       jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-      console.log('JWT decoded successfully:', jwtUser);
-    } catch (jwtError) {
-      console.error('JWT verification failed:', jwtError);
+      console.log('✅ JWT verified successfully:', jwtUser);
+    } catch (jwtError: any) {
+      console.error('❌ JWT verification failed:', jwtError);
       return NextResponse.json({ 
         error: 'JWT verification failed',
         details: jwtError.message,
-        cookieValue: jwtCookie.value.substring(0, 50) + '...'
+        errorType: jwtError.name,
+        decodedPayload: decodedPayload,
+        isExpired: jwtError.name === 'TokenExpiredError',
+        expiry: decodedPayload.exp ? new Date(decodedPayload.exp * 1000).toISOString() : null,
+        currentTime: new Date().toISOString()
       }, { status: 401 });
     }
 
     return NextResponse.json({ 
       success: true,
-      user: jwtUser,
-      cookieFound: true
+      message: 'JWT is valid and working correctly',
+      user: {
+        userId: jwtUser.userId,
+        email: jwtUser.email,
+        role: jwtUser.role,
+        organizationId: jwtUser.organizationId,
+        exp: jwtUser.exp ? new Date(jwtUser.exp * 1000).toISOString() : 'no expiry'
+      },
+      cookieFound: true,
+      environment: { hasJwtSecret, jwtSecretLength }
     });
 
-  } catch (error) {
-    console.error('Debug endpoint error:', error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('❌ Debug endpoint error:', error);
+    return NextResponse.json({ 
+      error: 'Server error in debug endpoint',
+      details: error.message 
+    }, { status: 500 });
   }
 }
