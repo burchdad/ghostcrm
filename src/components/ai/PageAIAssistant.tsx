@@ -61,29 +61,50 @@ function PageAIAssistant({
   const loadInsights = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await authenticatedFetch(`/api/ai/agents/${agentId}`, {
-        method: 'POST',
-        body: JSON.stringify({
-          operation: 'get-insights',
-          data: entityId ? { 
-            [`${agentId.slice(0, -1)}Id`]: entityId, // Remove 's' from agentId
-            [`${agentId.slice(0, -1)}Data`]: entityData 
-          } : {},
-        }),
-      });
+      // Handle dashboard endpoint differently
+      if (agentId === 'dashboard') {
+        const response = await authenticatedFetch(`/api/ai/agents/dashboard`, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'get-insights',
+            pageTitle,
+            entityId,
+            entityData,
+          }),
+        });
 
-      const data = await response.json();
-      
-      if (data.success) {
-        setInsights(data.data || []);
-        setLastUpdate(new Date());
+        const data = await response.json();
+        
+        if (data.success) {
+          setInsights(data.data?.insights || []);
+          setLastUpdate(new Date());
+        }
+      } else {
+        // Handle individual agent endpoints
+        const response = await authenticatedFetch(`/api/ai/agents/${agentId}`, {
+          method: 'POST',
+          body: JSON.stringify({
+            operation: 'get-insights',
+            data: entityId ? { 
+              [`${agentId.slice(0, -1)}Id`]: entityId, // Remove 's' from agentId
+              [`${agentId.slice(0, -1)}Data`]: entityData 
+            } : {},
+          }),
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          setInsights(data.data || []);
+          setLastUpdate(new Date());
+        }
       }
     } catch (error) {
       console.error(`Failed to load ${agentId} insights:`, error);
     } finally {
       setLoading(false);
     }
-  }, [agentId, entityId, entityData]);
+  }, [agentId, entityId, entityData, pageTitle]);
 
   useEffect(() => {
     loadInsights();
@@ -97,29 +118,50 @@ function PageAIAssistant({
 
     setLoading(true);
     try {
-      const response = await authenticatedFetch(`/api/ai/agents/${agentId}`, {
-        method: 'POST',
-        body: JSON.stringify({
-          operation: 'analyze',
-          data: {
-            [`${agentId.slice(0, -1)}Id`]: entityId,
-            [`${agentId.slice(0, -1)}Data`]: entityData,
-          },
-        }),
-      });
+      // Handle dashboard endpoint differently
+      if (agentId === 'dashboard') {
+        const response = await authenticatedFetch(`/api/ai/agents/dashboard`, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'analyze',
+            pageTitle,
+            entityId,
+            entityData,
+          }),
+        });
 
-      const data = await response.json();
-      
-      if (data.success) {
-        setInsights(data.data || []);
-        setLastUpdate(new Date());
+        const data = await response.json();
+        
+        if (data.success) {
+          setInsights(data.data?.insights || []);
+          setLastUpdate(new Date());
+        }
+      } else {
+        // Handle individual agent endpoints
+        const response = await authenticatedFetch(`/api/ai/agents/${agentId}`, {
+          method: 'POST',
+          body: JSON.stringify({
+            operation: 'analyze',
+            data: {
+              [`${agentId.slice(0, -1)}Id`]: entityId,
+              [`${agentId.slice(0, -1)}Data`]: entityData,
+            },
+          }),
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          setInsights(data.data || []);
+          setLastUpdate(new Date());
+        }
       }
     } catch (error) {
       console.error(`Failed to analyze with ${agentId}:`, error);
     } finally {
       setLoading(false);
     }
-  }, [agentId, entityId, entityData, loadInsights]);
+  }, [agentId, entityId, entityData, loadInsights, pageTitle]);
 
   if (collapsed) {
     return (
