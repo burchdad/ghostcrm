@@ -13,6 +13,27 @@
   margin: 0 auto;
 }
 
+/* Simple Header Styles */
+.simple-header {
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  margin-bottom: 32px;
+}
+
+.settings-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 8px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.settings-subtitle {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+}
+
 /* Glass Morphism Components */
 .glass-card {
   background: rgba(255, 255, 255, 0.12);
@@ -1351,6 +1372,28 @@
 
 .content-wrapper {
   padding: 2rem;
+}
+
+/* Section Action Buttons */
+.section-actions {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.save-section-btn {
+  min-width: 160px;
+}
+
+.save-section-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.save-section-btn:active {
+  transform: translateY(0);
 }
 
 /* Enhanced Settings Sections */

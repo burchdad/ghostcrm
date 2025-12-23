@@ -401,13 +401,33 @@ function BusinessSettingsPage() {
                 />
               </div>
             </div>
+            
+            {/* Save Button for General Section */}
+            <div className="section-actions">
+              <button 
+                onClick={handleSave}
+                disabled={saving}
+                className="enhanced-btn primary save-section-btn"
+              >
+                <Save size={18} />
+                <span>{saving ? 'Saving Changes...' : 'Save General Settings'}</span>
+              </button>
+            </div>
           </div>
         );
 
       case 'hours':
         return (
-          <div className="settings-section">
-            <h3 className="section-title">Business Hours</h3>
+          <div className="enhanced-settings-section">
+            <div className="section-header">
+              <div className="section-icon">
+                <Clock size={24} />
+              </div>
+              <div className="section-info">
+                <h3 className="section-title">Business Hours</h3>
+                <p className="section-description">Set your operating schedule</p>
+              </div>
+            </div>
             
             <div className="business-hours-grid">
               {Object.entries(settings.businessHours).map(([day, hours]) => (
@@ -453,12 +473,22 @@ function BusinessSettingsPage() {
                     )}
                   </div>
                 </div>
-              ))}
+                ))}
+            </div>
+            
+            {/* Save Button for Business Hours Section */}
+            <div className="section-actions">
+              <button 
+                onClick={handleSave}
+                disabled={saving}
+                className="enhanced-btn primary save-section-btn"
+              >
+                <Save size={18} />
+                <span>{saving ? 'Saving Changes...' : 'Save Business Hours'}</span>
+              </button>
             </div>
           </div>
-        );
-
-      case 'branding':
+        );      case 'branding':
         return (
           <div className="enhanced-settings-section">
             <div className="section-header">
@@ -544,16 +574,49 @@ function BusinessSettingsPage() {
                 </div>
               </div>
             </div>
+            
+            {/* Save Button for Branding Section */}
+            <div className="section-actions">
+              <button 
+                onClick={handleSave}
+                disabled={saving}
+                className="enhanced-btn primary save-section-btn"
+              >
+                <Save size={18} />
+                <span>{saving ? 'Saving Changes...' : 'Save Branding Settings'}</span>
+              </button>
+            </div>
           </div>
         );
 
       case 'notifications':
-        return <NotificationsSettingsSection />;
+        return (
+          <div className="enhanced-settings-section">
+            <div className="section-header">
+              <div className="section-icon">
+                <Bell size={24} />
+              </div>
+              <div className="section-info">
+                <h3 className="section-title">Notifications</h3>
+                <p className="section-description">Configure your alert preferences and communication settings</p>
+              </div>
+            </div>
+            <NotificationsSettingsSection />
+          </div>
+        );
 
       case 'security':
         return (
-          <div className="settings-section">
-            <h3 className="section-title">Security Settings</h3>
+          <div className="enhanced-settings-section">
+            <div className="section-header">
+              <div className="section-icon">
+                <Shield size={24} />
+              </div>
+              <div className="section-info">
+                <h3 className="section-title">Security Settings</h3>
+                <p className="section-description">Manage access controls and authentication</p>
+              </div>
+            </div>
             
             <div className="security-options">
               <div className="security-item">
@@ -611,6 +674,18 @@ function BusinessSettingsPage() {
                 </select>
               </div>
             </div>
+            
+            {/* Save Button for Security Section */}
+            <div className="section-actions">
+              <button 
+                onClick={handleSave}
+                disabled={saving}
+                className="enhanced-btn primary save-section-btn"
+              >
+                <Save size={18} />
+                <span>{saving ? 'Saving Changes...' : 'Save Security Settings'}</span>
+              </button>
+            </div>
           </div>
         );
 
@@ -622,39 +697,10 @@ function BusinessSettingsPage() {
   return (
     <div className="settings-page">
       <div className="settings-container">
-        {/* Enhanced Header */}
-        <div className="enhanced-header">
-          <div className="header-content">
-            <div className="header-left">
-              <div className="header-icon">
-                <Settings size={32} />
-              </div>
-              <div className="header-text">
-                <h1 className="page-title">Business Settings</h1>
-                <p className="page-subtitle">Configure your dealership preferences and settings</p>
-                <div className="header-stats">
-                  <span className="stat-item">
-                    <Building size={14} />
-                    {settings.companyName || 'Your Business'}
-                  </span>
-                  <span className="stat-item">
-                    <Globe size={14} />
-                    Live Configuration
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="header-actions">
-              <button 
-                onClick={handleSave}
-                disabled={saving}
-                className="enhanced-btn primary"
-              >
-                <Save size={18} />
-                <span>{saving ? 'Saving Changes...' : 'Save Changes'}</span>
-              </button>
-            </div>
-          </div>
+        {/* Simple Header */}
+        <div className="simple-header">
+          <h1 className="settings-title">Business Settings</h1>
+          <p className="settings-subtitle">Configure your dealership preferences and settings</p>
         </div>
 
         {/* Enhanced Tab Navigation */}
