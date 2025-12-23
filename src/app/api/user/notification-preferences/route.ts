@@ -46,8 +46,18 @@ export async function GET(request: NextRequest) {
     try {
       jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
       console.log('✅ JWT verified successfully for user:', jwtUser.userId);
-    } catch (jwtError) {
+    } catch (jwtError: any) {
       console.error('❌ JWT verification failed:', jwtError);
+      
+      // If token is expired, return specific error for client to handle
+      if (jwtError.name === 'TokenExpiredError') {
+        return NextResponse.json({ 
+          error: 'Token expired',
+          code: 'TOKEN_EXPIRED',
+          expiredAt: jwtError.expiredAt
+        }, { status: 401 });
+      }
+      
       return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
     }
 
@@ -201,8 +211,18 @@ export async function POST(request: NextRequest) {
     try {
       jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
       console.log('✅ JWT verified successfully for POST request');
-    } catch (jwtError) {
+    } catch (jwtError: any) {
       console.error('❌ JWT verification failed:', jwtError);
+      
+      // If token is expired, return specific error for client to handle
+      if (jwtError.name === 'TokenExpiredError') {
+        return NextResponse.json({ 
+          error: 'Token expired',
+          code: 'TOKEN_EXPIRED',
+          expiredAt: jwtError.expiredAt
+        }, { status: 401 });
+      }
+      
       return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
     }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { api } from '@/lib/api-client';
 import { Bell, Mail, MessageSquare, Smartphone, TestTube, Check, X, AlertCircle, Send } from 'lucide-react';
 
 interface NotificationPreferences {
@@ -50,9 +51,7 @@ const NotificationsSettingsSection: React.FC = () => {
   const loadPreferences = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/user/notification-preferences', {
-        credentials: 'include'
-      });
+      const response = await api.get('/api/user/notification-preferences');
       
       if (response.ok) {
         const data = await response.json();
@@ -71,9 +70,7 @@ const NotificationsSettingsSection: React.FC = () => {
 
   const loadTestNotifications = async () => {
     try {
-      const response = await fetch('/api/notifications/test', {
-        credentials: 'include'
-      });
+      const response = await api.get('/api/notifications/test');
       
       if (response.ok) {
         const data = await response.json();
@@ -89,14 +86,7 @@ const NotificationsSettingsSection: React.FC = () => {
 
     try {
       setSaving(true);
-      const response = await fetch('/api/user/notification-preferences', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ preferences })
-      });
+      const response = await api.post('/api/user/notification-preferences', { preferences });
 
       if (response.ok) {
         const data = await response.json();
@@ -117,14 +107,7 @@ const NotificationsSettingsSection: React.FC = () => {
   const sendTestNotification = async (notificationType: string) => {
     try {
       setSendingTest(notificationType);
-      const response = await fetch('/api/notifications/test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ notificationType })
-      });
+      const response = await api.post('/api/notifications/test', { notificationType });
 
       const data = await response.json();
       
