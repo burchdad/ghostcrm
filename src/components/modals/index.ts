@@ -5,5 +5,6 @@ export { default as ContactSalesModal } from "./ContactSalesModal";
 export { SettingsModal } from "./SettingsModal";
 export { default as QuickAddModal } from "./QuickAddModal";
 export { UserProfileModal } from "./UserProfileModal";
+export { UserSettingsModal } from "./UserSettingsModal";
 export { default as ChartSettingsModal } from "./ChartSettingsModal";
 export { NotificationsModal } from "./NotificationsModal";

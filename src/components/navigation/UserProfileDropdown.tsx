@@ -1,16 +1,14 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { UserProfileModal } from "@/components/modals/UserProfileModal";
-import { SettingsModal } from "@/components/modals/SettingsModal";
+import { UserSettingsModal } from "@/components/modals/UserSettingsModal";
 import { useI18n } from "@/components/utils/I18nProvider";
 
 export function UserProfileDropdown() {
   const router = useRouter();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showUserSettingsModal, setShowUserSettingsModal] = useState(false);
   const [avatar, setAvatar] = useState<string | null>(null);
   const [role, setRole] = useState("Admin");
   const [org, setOrg] = useState("Org 1");
@@ -49,16 +47,10 @@ export function UserProfileDropdown() {
     router.push(path);
   };
 
-  const handleSettingsClick = () => {
-    console.log('Opening settings modal');
+  const handleUserSettingsClick = () => {
+    console.log('Opening user settings modal');
     setOpen(false);
-    setShowSettingsModal(true);
-  };
-
-  const handleProfileClick = () => {
-    console.log('Opening profile modal');
-    setOpen(false);
-    setShowProfileModal(true);
+    setShowUserSettingsModal(true);
   };
 
   const handleLogout = async () => {
@@ -139,53 +131,44 @@ export function UserProfileDropdown() {
       </button>
       
       {open && (
-        <div className="absolute top-14 right-0 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-sm" role="menu" aria-label={t("user_menu", "accessibility")} style={{
-          transform: 'translateX(-50%)',
-          right: '50%'
-        }}>
+        <div className="absolute top-12 right-0 w-72 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden backdrop-blur-sm" role="menu" aria-label={t("user_menu", "accessibility")}>
           {/* Profile Header */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-100">
-            <div className="flex items-center gap-4">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-100">
+            <div className="flex items-center gap-3">
               <button 
-                className="relative w-16 h-16 bg-gradient-to-br from-blue-200 to-indigo-200 rounded-2xl flex items-center justify-center hover:from-blue-300 hover:to-indigo-300 transition-all duration-200 shadow-lg group" 
+                className="relative w-12 h-12 bg-gradient-to-br from-blue-200 to-indigo-200 rounded-xl flex items-center justify-center hover:from-blue-300 hover:to-indigo-300 transition-all duration-200 shadow-md group" 
                 onClick={() => fileInputRef.current?.click()} 
                 aria-label={t("upload_avatar", "accessibility")}
               >
                 {avatar ? (
-                  <img src={avatar} alt={t("avatar", "accessibility")} className="w-16 h-16 rounded-2xl object-cover" />
+                  <img src={avatar} alt={t("avatar", "accessibility")} className="w-12 h-12 rounded-xl object-cover" />
                 ) : (
-                  <span className="text-3xl group-hover:scale-110 transition-transform duration-200">👤</span>
+                  <span className="text-2xl group-hover:scale-110 transition-transform duration-200">👤</span>
                 )}
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center text-white text-xs shadow-lg">
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-600 rounded-lg flex items-center justify-center text-white text-xs shadow-lg">
                   📷
                 </div>
               </button>
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
               <div>
-                <div className="font-bold text-lg text-gray-900">{role}</div>
-                <div className="text-sm text-gray-500">{org}</div>
+                <div className="font-semibold text-gray-900">{role}</div>
+                <div className="text-sm text-gray-600">{org}</div>
               </div>
             </div>
           </div>
+          
           {/* Menu Items */}
-          <div className="p-4 space-y-1">
+          <div className="p-3 space-y-1">
             <button
-              className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-3 group"
-              onClick={handleSettingsClick}
+              className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer transition-all duration-200 flex items-center gap-3 group"
+              onClick={handleUserSettingsClick}
             >
               <span className="text-base group-hover:scale-110 transition-transform duration-200">⚙️</span>
-              <span className="font-medium">{t("settings", "navigation")}</span>
-            </button>
-            <button
-              className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-3 group"
-              onClick={handleProfileClick}
-            >
-              <span className="text-base group-hover:scale-110 transition-transform duration-200">👤</span>
-              <span className="font-medium">{t("profile", "common")}</span>
+              <span className="font-medium">{t("user_settings", "navigation") || "User Settings"}</span>
             </button>
             <div className="h-px bg-gray-200 my-2"></div>
             <button
-              className="w-full text-left px-4 py-3 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-3 group"
+              className="w-full text-left px-4 py-3 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg cursor-pointer transition-all duration-200 flex items-center gap-3 group"
               onClick={handleLogout}
             >
               <span className="text-base group-hover:scale-110 transition-transform duration-200">🚪</span>
@@ -195,14 +178,9 @@ export function UserProfileDropdown() {
         </div>
       )}
       
-      <UserProfileModal 
-        open={showProfileModal} 
-        onClose={() => setShowProfileModal(false)} 
-      />
-      
-      <SettingsModal 
-        open={showSettingsModal} 
-        onClose={() => setShowSettingsModal(false)} 
+      <UserSettingsModal 
+        open={showUserSettingsModal} 
+        onClose={() => setShowUserSettingsModal(false)} 
       />
     </div>
   );
