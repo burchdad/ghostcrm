@@ -519,7 +519,7 @@ export default function UnifiedToolbar({
                         );
                         setShowAIDropdown(false);
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3"
                     >
                       <span className="text-lg">💡</span>
                       <span className="text-sm font-medium text-gray-700">{t("smart_suggestions", "actions")}</span>
@@ -540,7 +540,7 @@ export default function UnifiedToolbar({
                         );
                         setShowAIDropdown(false);
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3"
                     >
                       <span className="text-lg">🧹</span>
                       <span className="text-sm font-medium text-gray-700">{t("data_cleanup", "ai")}</span>
@@ -562,7 +562,7 @@ export default function UnifiedToolbar({
                             if (control.onClick) control.onClick();
                             setShowFileDropdown(false);
                           }}
-                          className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                          className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3"
                         >
                           {typeof Icon === 'string' ? (
                             <span className="text-lg">{Icon}</span>
@@ -594,7 +594,7 @@ export default function UnifiedToolbar({
                             if (control.onClick) control.onClick();
                             setShowEditDropdown(false);
                           }}
-                          className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                          className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3"
                         >
                           {typeof Icon === 'string' ? (
                             <span className="text-lg">{Icon}</span>
@@ -626,7 +626,7 @@ export default function UnifiedToolbar({
                             if (control.onClick) control.onClick();
                             setShowSettingsDropdown(false);
                           }}
-                          className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                          className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3"
                         >
                           {typeof Icon === 'string' ? (
                             <span className="text-lg">{Icon}</span>
