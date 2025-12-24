@@ -60,6 +60,9 @@ export default function UnifiedToolbar({
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAIDropdown, setShowAIDropdown] = useState(false);
+  const [showFileDropdown, setShowFileDropdown] = useState(false);
+  const [showEditDropdown, setShowEditDropdown] = useState(false);
+  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   
   // Check if user is software owner (only they should see Developer button)
   const isSoftwareOwner = user?.email === 'burchdad@gmail.com';
@@ -86,17 +89,21 @@ export default function UnifiedToolbar({
       .catch(() => setOnlineUsers([]));
   }, []);
   
-  // Close AI dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showAIDropdown && !(event.target as Element)?.closest('.relative')) {
+      const isDropdownClick = (event.target as Element)?.closest('.relative');
+      if (!isDropdownClick) {
         setShowAIDropdown(false);
+        setShowFileDropdown(false);
+        setShowEditDropdown(false);
+        setShowSettingsDropdown(false);
       }
     };
     
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [showAIDropdown]);
+  }, [showAIDropdown, showFileDropdown, showEditDropdown, showSettingsDropdown]);
 
   // Auto-select appropriate tab based on current page
   useEffect(() => {
@@ -230,15 +237,17 @@ export default function UnifiedToolbar({
   /** Contextual tabs */
   const getContextualTabs = () => {
     const tabs = [
-      { id: "File", label: t("file", "navigation"), controls: CONTROLS_FILE },
-      { id: "Edit", label: t("edit", "navigation"), controls: CONTROLS_EDIT },
+      { id: "File", label: t("file", "navigation"), controls: CONTROLS_FILE, dropdown: true },
+      { id: "Edit", label: t("edit", "navigation"), controls: CONTROLS_EDIT, dropdown: true },
+      { id: "Settings", label: t("settings", "navigation"), controls: CONTROLS_SETTINGS, dropdown: true },
     ];
 
     // Always include AI tab with dropdown functionality (no controls, just dropdown)
     tabs.push({ 
       id: "AI", 
       label: "AI", 
-      controls: [] 
+      controls: [],
+      dropdown: true
     });
 
     // Add Leads-specific tab when on leads page
@@ -246,6 +255,7 @@ export default function UnifiedToolbar({
       tabs.push({
         id: "Leads",
         label: "Quick Actions",
+        dropdown: false,
         controls: [
           {
             id: "newLead" as ControlId,
@@ -295,6 +305,7 @@ export default function UnifiedToolbar({
         id: "Automation",
         label: t("automation", "navigation"),
         controls: CONTROLS_AUTOMATION,
+        dropdown: false,
       });
     }
     if (pathname.includes("/collaboration")) {
@@ -302,22 +313,19 @@ export default function UnifiedToolbar({
         id: "Collaboration",
         label: t("collaboration", "navigation"),
         controls: CONTROLS_COLLABORATION,
+        dropdown: false,
       });
     }
     if (pathname.includes("/reports") || pathname.includes("/bi/")) {
-      tabs.push({ id: "Reports", label: t("reports", "navigation"), controls: CONTROLS_REPORTS });
+      tabs.push({ id: "Reports", label: t("reports", "navigation"), controls: CONTROLS_REPORTS, dropdown: false });
     }
     if (pathname.includes("/data")) {
-      tabs.push({ id: "Data", label: t("data", "navigation"), controls: CONTROLS_DATA });
+      tabs.push({ id: "Data", label: t("data", "navigation"), controls: CONTROLS_DATA, dropdown: false });
     }
-
-    tabs.push(
-      { id: "Settings", label: t("settings", "navigation"), controls: CONTROLS_SETTINGS }
-    );
     
     // Only show Developer tab for software owner
     if (isSoftwareOwner) {
-      tabs.push({ id: "Developer", label: t("developer", "navigation"), controls: CONTROLS_DEVELOPER });
+      tabs.push({ id: "Developer", label: t("developer", "navigation"), controls: CONTROLS_DEVELOPER, dropdown: false });
     }
 
     return tabs;
@@ -399,7 +407,7 @@ export default function UnifiedToolbar({
           key={`${control.id}-${index}`}
           onClick={control.action}
           disabled={control.disabled}
-            className={[
+          className={[
             "group flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl transition-all duration-200 text-xs transform hover:-translate-y-0.5 border",
             control.disabled
               ? "text-gray-400 cursor-not-allowed border-gray-200 bg-gray-50"
@@ -461,11 +469,31 @@ export default function UnifiedToolbar({
             <div key={tab.id} className="relative">
               <button
                 onClick={() => {
-                  if (tab.id === 'AI') {
-                    setShowAIDropdown(!showAIDropdown);
+                  // Close all dropdowns first
+                  setShowAIDropdown(false);
+                  setShowFileDropdown(false);
+                  setShowEditDropdown(false);
+                  setShowSettingsDropdown(false);
+                  
+                  // Handle dropdown tabs
+                  if (tab.dropdown) {
                     setActiveTab(tab.id);
+                    switch (tab.id) {
+                      case 'AI':
+                        setShowAIDropdown(true);
+                        break;
+                      case 'File':
+                        setShowFileDropdown(true);
+                        break;
+                      case 'Edit':
+                        setShowEditDropdown(true);
+                        break;
+                      case 'Settings':
+                        setShowSettingsDropdown(true);
+                        break;
+                    }
                   } else {
-                    setShowAIDropdown(false);
+                    // Regular tab behavior
                     setActiveTab(tab.id);
                   }
                 }}
@@ -475,8 +503,14 @@ export default function UnifiedToolbar({
               >
                 <span className="relative z-10 flex items-center gap-2">
                   {tab.label}
-                  {tab.id === 'AI' && (
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showAIDropdown ? 'rotate-180' : ''}`} />
+                  {tab.dropdown && (
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
+                      (tab.id === 'AI' && showAIDropdown) ||
+                      (tab.id === 'File' && showFileDropdown) ||
+                      (tab.id === 'Edit' && showEditDropdown) ||
+                      (tab.id === 'Settings' && showSettingsDropdown)
+                        ? 'rotate-180' : ''
+                    }`} />
                   )}
                 </span>
                 {activeTab === tab.id && (
@@ -522,6 +556,69 @@ export default function UnifiedToolbar({
                       <span className="text-base">🧹</span>
                       {t("data_cleanup", "ai")}
                     </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* File Dropdown Menu */}
+              {tab.id === 'File' && showFileDropdown && (
+                <div className={styles.dropdown}>
+                  <div className="py-2">
+                    {CONTROLS_FILE.map((control, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          if (control.onClick) control.onClick();
+                          setShowFileDropdown(false);
+                        }}
+                        className={styles.dropdownItem}
+                      >
+                        <span className="text-base">{getControlIcon(control.id, control.group ?? "")}</span>
+                        {control.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Edit Dropdown Menu */}
+              {tab.id === 'Edit' && showEditDropdown && (
+                <div className={styles.dropdown}>
+                  <div className="py-2">
+                    {CONTROLS_EDIT.map((control, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          if (control.onClick) control.onClick();
+                          setShowEditDropdown(false);
+                        }}
+                        className={styles.dropdownItem}
+                      >
+                        <span className="text-base">{getControlIcon(control.id, control.group ?? "")}</span>
+                        {control.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Settings Dropdown Menu */}
+              {tab.id === 'Settings' && showSettingsDropdown && (
+                <div className={styles.dropdown}>
+                  <div className="py-2">
+                    {CONTROLS_SETTINGS.map((control, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          if (control.onClick) control.onClick();
+                          setShowSettingsDropdown(false);
+                        }}
+                        className={styles.dropdownItem}
+                      >
+                        <span className="text-base">{getControlIcon(control.id, control.group ?? "")}</span>
+                        {control.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
