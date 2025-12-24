@@ -188,11 +188,25 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
     setEditingProfile(prev => ({ ...prev, [field]: value }));
   };
 
+  const startProfileEditing = () => {
+    // Initialize editing state with current profile data
+    setEditingProfile({
+      name: profile.name,
+      email: profile.email,
+      phone: profile.phone,
+      title: profile.title,
+      department: profile.department,
+      location: profile.location,
+      avatar: profile.avatar
+    });
+    setIsEditingProfile(true);
+  };
+
   const handleProfileSave = async () => {
     setSaving(true);
     setError(null);
     try {
-      const [firstName, ...lastNameParts] = profile.name.split(' ');
+      const [firstName, ...lastNameParts] = editingProfile.name.split(' ');
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: {
@@ -202,17 +216,28 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
           profile: {
             first_name: firstName || '',
             last_name: lastNameParts.join(' ') || '',
-            email: profile.email,
-            phone: profile.phone,
-            title: profile.title,
-            department: profile.department,
-            location: profile.location,
-            avatar_url: profile.avatar
+            email: editingProfile.email,
+            phone: editingProfile.phone,
+            title: editingProfile.title,
+            department: editingProfile.department,
+            location: editingProfile.location,
+            avatar_url: editingProfile.avatar
           }
         })
       });
       
       if (response.ok) {
+        // Update the main profile state with edited values
+        setProfile({
+          ...profile,
+          name: editingProfile.name,
+          email: editingProfile.email,
+          phone: editingProfile.phone,
+          title: editingProfile.title,
+          department: editingProfile.department,
+          location: editingProfile.location,
+          avatar: editingProfile.avatar
+        });
         setIsEditingProfile(false);
       } else {
         const errorData = await response.json();
@@ -648,7 +673,7 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
                     </p>
                   </div>
                   <button
-                    onClick={isEditingProfile ? handleProfileSave : () => setIsEditingProfile(true)}
+                    onClick={isEditingProfile ? handleProfileSave : startProfileEditing}
                     className={`${styles.editButton} ${loading ? styles.saving : ''}`}
                     disabled={loading}
                   >
