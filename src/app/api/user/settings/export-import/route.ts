@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
 
     if (format === 'csv') {
       // Convert to CSV format
-      const csvLines = [];
+      const csvLines: string[] = [];
       csvLines.push('Setting Category,Setting Name,Value');
       
       // Profile settings
@@ -261,7 +261,7 @@ export async function POST(request: NextRequest) {
       orgData = data;
     }
 
-    const results = { success: [], failed: [] };
+    const results: { success: string[], failed: { section: string, error: string }[] } = { success: [], failed: [] };
 
     // Import profile settings (excluding sensitive data like email)
     if (importData.profile) {

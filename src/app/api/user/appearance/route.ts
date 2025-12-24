@@ -125,16 +125,6 @@ const defaultAppearanceSettings: AppearanceSettings = {
     wordWrap: true,
     minimap: false,
     lineNumbers: true
-  },
-  typography: {
-    fontFamily: 'Inter',
-    fontSize: 'medium',
-    fontWeight: 'normal'
-  },
-  accessibility: {
-    highContrast: false,
-    reduceMotion: false,
-    focusRingVisible: true
   }
 };
 

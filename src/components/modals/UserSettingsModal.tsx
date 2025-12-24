@@ -184,6 +184,10 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
     }
   };
 
+  const handleProfileInputChange = (field: keyof typeof editingProfile, value: string) => {
+    setEditingProfile(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleProfileSave = async () => {
     setSaving(true);
     setError(null);

@@ -10,6 +10,24 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const dynamic = 'force-dynamic';
 
+interface SyncConflict {
+  section: string;
+  serverTimestamp: string;
+  clientTimestamp: string;
+  message: string;
+}
+
+interface SyncError {
+  section: string;
+  error: string;
+}
+
+interface SyncResults {
+  success: string[];
+  failed: SyncError[];
+  conflicts: SyncConflict[];
+}
+
 // GET - Get settings sync status and recent changes
 export async function GET(request: NextRequest) {
   try {
@@ -219,7 +237,11 @@ export async function POST(request: NextRequest) {
       orgData = data;
     }
 
-    const results = { success: [], failed: [], conflicts: [] };
+    const results: SyncResults = { 
+      success: [], 
+      failed: [], 
+      conflicts: [] 
+    };
     const deviceId = syncData.deviceId || 'unknown';
     const clientTimestamp = syncData.timestamp;
 
