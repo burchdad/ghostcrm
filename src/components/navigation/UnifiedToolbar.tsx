@@ -520,6 +520,7 @@ export default function UnifiedToolbar({
                         setShowAIDropdown(false);
                       }}
                       className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3"
+                      style={{ border: 'none', borderBottom: 'none', backgroundColor: 'transparent', outline: 'none' }}
                     >
                       <span className="text-lg">💡</span>
                       <span className="text-sm font-medium text-gray-700">{t("smart_suggestions", "actions")}</span>
@@ -595,6 +596,7 @@ export default function UnifiedToolbar({
                             setShowEditDropdown(false);
                           }}
                           className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3"
+                          style={{ border: 'none', borderBottom: 'none', backgroundColor: 'transparent', outline: 'none' }}
                         >
                           {typeof Icon === 'string' ? (
                             <span className="text-lg">{Icon}</span>
@@ -627,6 +629,7 @@ export default function UnifiedToolbar({
                             setShowSettingsDropdown(false);
                           }}
                           className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3"
+                          style={{ border: 'none', borderBottom: 'none', backgroundColor: 'transparent', outline: 'none' }}
                         >
                           {typeof Icon === 'string' ? (
                             <span className="text-lg">{Icon}</span>
