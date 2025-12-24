@@ -6,7 +6,6 @@ import {
   Search,
   Bell,
   Settings,
-  ChevronDown,
 } from "lucide-react";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 import { NotificationsDropdown } from "./NotificationsDropdown";
@@ -439,7 +438,6 @@ export default function UnifiedToolbar({
             )}
             <div className="flex items-center gap-1">
               <span className="truncate max-w-[50px] font-medium">{control.label}</span>
-              <ChevronDown className="w-3 h-3 group-hover:scale-110 transition-transform duration-200" />
             </div>
           </button>
           {/* TODO: add dropdown panel if needed */}
@@ -501,17 +499,8 @@ export default function UnifiedToolbar({
                   activeTab === tab.id ? styles.active : ''
                 }`}
               >
-                <span className="relative z-10 flex items-center gap-2">
+                <span className="relative z-10 flex items-center">
                   {tab.label}
-                  {tab.dropdown && (
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
-                      (tab.id === 'AI' && showAIDropdown) ||
-                      (tab.id === 'File' && showFileDropdown) ||
-                      (tab.id === 'Edit' && showEditDropdown) ||
-                      (tab.id === 'Settings' && showSettingsDropdown)
-                        ? 'rotate-180' : ''
-                    }`} />
-                  )}
                 </span>
                 {activeTab === tab.id && (
                   <div className="absolute inset-0 bg-white opacity-90" />
@@ -522,7 +511,7 @@ export default function UnifiedToolbar({
               {/* AI Dropdown Menu */}
               {tab.id === 'AI' && showAIDropdown && (
                 <div className={styles.dropdown}>
-                  <div className="py-2">
+                  <div className="py-1">
                     <button
                       onClick={() => {
                         openAssistantWithPrompt(
@@ -530,10 +519,10 @@ export default function UnifiedToolbar({
                         );
                         setShowAIDropdown(false);
                       }}
-                      className={styles.dropdownItem}
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
                     >
-                      <span className="text-base">💡</span>
-                      {t("smart_suggestions", "actions")}
+                      <span className="text-lg">💡</span>
+                      <span className="text-sm font-medium text-gray-700">{t("smart_suggestions", "actions")}</span>
                     </button>
                     <button
                       onClick={() => {
@@ -551,10 +540,10 @@ export default function UnifiedToolbar({
                         );
                         setShowAIDropdown(false);
                       }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3"
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
                     >
-                      <span className="text-base">🧹</span>
-                      {t("data_cleanup", "ai")}
+                      <span className="text-lg">🧹</span>
+                      <span className="text-sm font-medium text-gray-700">{t("data_cleanup", "ai")}</span>
                     </button>
                   </div>
                 </div>
@@ -563,20 +552,31 @@ export default function UnifiedToolbar({
               {/* File Dropdown Menu */}
               {tab.id === 'File' && showFileDropdown && (
                 <div className={styles.dropdown}>
-                  <div className="py-2">
-                    {CONTROLS_FILE.map((control, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          if (control.onClick) control.onClick();
-                          setShowFileDropdown(false);
-                        }}
-                        className={styles.dropdownItem}
-                      >
-                        <span className="text-base">{getControlIcon(control.id, control.group ?? "")}</span>
-                        {control.label}
-                      </button>
-                    ))}
+                  <div className="py-1">
+                    {CONTROLS_FILE.map((control, index) => {
+                      const Icon = getControlIcon(control.id, control.group ?? "");
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            if (control.onClick) control.onClick();
+                            setShowFileDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                        >
+                          {typeof Icon === 'string' ? (
+                            <span className="text-lg">{Icon}</span>
+                          ) : Icon && React.isValidElement(Icon) ? (
+                            Icon
+                          ) : Icon ? (
+                            React.createElement(Icon as any, { className: "w-5 h-5 text-blue-600" })
+                          ) : (
+                            <span className="text-lg">📄</span>
+                          )}
+                          <span className="text-sm font-medium text-gray-700">{control.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -584,20 +584,31 @@ export default function UnifiedToolbar({
               {/* Edit Dropdown Menu */}
               {tab.id === 'Edit' && showEditDropdown && (
                 <div className={styles.dropdown}>
-                  <div className="py-2">
-                    {CONTROLS_EDIT.map((control, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          if (control.onClick) control.onClick();
-                          setShowEditDropdown(false);
-                        }}
-                        className={styles.dropdownItem}
-                      >
-                        <span className="text-base">{getControlIcon(control.id, control.group ?? "")}</span>
-                        {control.label}
-                      </button>
-                    ))}
+                  <div className="py-1">
+                    {CONTROLS_EDIT.map((control, index) => {
+                      const Icon = getControlIcon(control.id, control.group ?? "");
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            if (control.onClick) control.onClick();
+                            setShowEditDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                        >
+                          {typeof Icon === 'string' ? (
+                            <span className="text-lg">{Icon}</span>
+                          ) : Icon && React.isValidElement(Icon) ? (
+                            Icon
+                          ) : Icon ? (
+                            React.createElement(Icon as any, { className: "w-5 h-5 text-blue-600" })
+                          ) : (
+                            <span className="text-lg">✏️</span>
+                          )}
+                          <span className="text-sm font-medium text-gray-700">{control.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -605,116 +616,36 @@ export default function UnifiedToolbar({
               {/* Settings Dropdown Menu */}
               {tab.id === 'Settings' && showSettingsDropdown && (
                 <div className={styles.dropdown}>
-                  <div className="py-2">
-                    {CONTROLS_SETTINGS.map((control, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          if (control.onClick) control.onClick();
-                          setShowSettingsDropdown(false);
-                        }}
-                        className={styles.dropdownItem}
-                      >
-                        <span className="text-base">{getControlIcon(control.id, control.group ?? "")}</span>
-                        {control.label}
-                      </button>
-                    ))}
+                  <div className="py-1">
+                    {CONTROLS_SETTINGS.map((control, index) => {
+                      const Icon = getControlIcon(control.id, control.group ?? "");
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            if (control.onClick) control.onClick();
+                            setShowSettingsDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                        >
+                          {typeof Icon === 'string' ? (
+                            <span className="text-lg">{Icon}</span>
+                          ) : Icon && React.isValidElement(Icon) ? (
+                            Icon
+                          ) : Icon ? (
+                            React.createElement(Icon as any, { className: "w-5 h-5 text-blue-600" })
+                          ) : (
+                            <span className="text-lg">⚙️</span>
+                          )}
+                          <span className="text-sm font-medium text-gray-700">{control.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
             </div>
           ))}
-        </div>
-
-        {/* Active Controls */}
-        <div className="flex-1 flex items-center gap-3 px-6 overflow-x-auto min-h-0">
-          {activeControls.map((control: any, i: number) => renderControl(control, i))}
-
-          {/* Dashboard extras */}
-          {isDashboardPage && (
-            <>
-              <div className="w-px h-10 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-3" />
-              {onAddChart && (
-                <button
-                  onClick={onAddChart}
-                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  <span className="text-base group-hover:scale-110 transition-transform duration-200">📊</span>
-                  <span className="font-medium">Add Chart</span>
-                </button>
-              )}
-              {onAddTable && (
-                <button
-                  onClick={onAddTable}
-                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  <span className="text-base group-hover:scale-110 transition-transform duration-200">📋</span>
-                  <span className="font-medium">Add Table</span>
-                </button>
-              )}
-              {onShowTemplates && (
-                <button
-                  onClick={onShowTemplates}
-                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  <span className="text-base group-hover:scale-110 transition-transform duration-200">📄</span>
-                  <span className="font-medium">Templates</span>
-                </button>
-              )}
-              {onSaveLayout && (
-                <button
-                  onClick={onSaveLayout}
-                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  <span className="text-base group-hover:scale-110 transition-transform duration-200">💾</span>
-                  <span className="font-medium">Save Layout</span>
-                </button>
-              )}
-              {onShare && (
-                <button
-                  onClick={onShare}
-                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  <span className="text-base group-hover:scale-110 transition-transform duration-200">🔗</span>
-                  <span className="font-medium">Share</span>
-                </button>
-              )}
-              <div className="w-px h-10 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-3" />
-              {onUndo && (
-                <button
-                  onClick={onUndo}
-                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  <span className="text-base group-hover:scale-110 transition-transform duration-200">↶</span>
-                  <span className="font-medium">{t("undo", "actions")}</span>
-                </button>
-              )}
-              {onRedo && (
-                <button
-                  onClick={onRedo}
-                  className="group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs text-white bg-gradient-to-br from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  <span className="text-base group-hover:scale-110 transition-transform duration-200">↷</span>
-                  <span className="font-medium">{t("redo", "actions")}</span>
-                </button>
-              )}
-              <div className="w-px h-10 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-3" />
-              {setBulkMode && (
-                <button
-                  onClick={() => setBulkMode(!bulkMode)}
-                  className={[
-                    "group flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all duration-200 text-xs shadow-lg hover:shadow-xl transform hover:-translate-y-0.5",
-                    bulkMode
-                      ? "text-white bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
-                      : "text-white bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700",
-                  ].join(" ")}
-                >
-                  <span className="text-base group-hover:scale-110 transition-transform duration-200">{bulkMode ? "❌" : "☑️"}</span>
-                  <span className="font-medium">{bulkMode ? t("cancel", "common") + " " + t("bulk", "common") : t("bulk", "common") + " " + t("operations", "common")}</span>
-                </button>
-              )}
-            </>
-          )}
         </div>
 
         {/* Search */}
