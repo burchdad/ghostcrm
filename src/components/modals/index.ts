@@ -6,3 +6,4 @@ export { SettingsModal } from "./SettingsModal";
 export { default as QuickAddModal } from "./QuickAddModal";
 export { UserProfileModal } from "./UserProfileModal";
 export { default as ChartSettingsModal } from "./ChartSettingsModal";
+export { NotificationsModal } from "./NotificationsModal";

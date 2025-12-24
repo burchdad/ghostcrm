@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, X, Settings, Trash2 } from "lucide-react";
 import { useI18n } from "@/components/utils/I18nProvider";
+import { NotificationsModal } from "@/components/modals/NotificationsModal";
 import styles from './NotificationsDropdown.module.css';
 
 interface Notification {
@@ -18,6 +19,7 @@ export function NotificationsDropdown() {
   const router = useRouter();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [notifications, setNotifications] = useState<Notification[]>([
@@ -39,6 +41,15 @@ export function NotificationsDropdown() {
 
   const deleteNotification = (id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const handleViewAll = () => {
+    setOpen(false);
+    setModalOpen(true);
+  };
+
+  const handleClearAll = () => {
+    setNotifications([]);
   };
 
   // Close dropdown when clicking outside
@@ -198,10 +209,7 @@ export function NotificationsDropdown() {
           {/* Footer */}
           <div className={styles.footer}>
             <button
-              onClick={() => {
-                setOpen(false);
-                router.push('/notifications');
-              }}
+              onClick={handleViewAll}
               className={styles.viewAllButton}
             >
               {t("view_all_notifications", "actions")}
@@ -209,6 +217,17 @@ export function NotificationsDropdown() {
           </div>
         </div>
       )}
+      
+      {/* Notifications Modal */}
+      <NotificationsModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        notifications={notifications}
+        onMarkAsRead={markAsRead}
+        onMarkAllAsRead={markAllAsRead}
+        onDeleteNotification={deleteNotification}
+        onClearAll={handleClearAll}
+      />
     </div>
   );
 }
