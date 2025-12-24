@@ -8,23 +8,11 @@ import {
   Bell, 
   Palette, 
   Globe, 
-  Database, 
-  Zap, 
-  Key, 
-  Monitor,
-  Users,
   Building,
   Mail,
   Phone, 
   MapPin, 
-  Calendar,
-  FileText,
-  Download,
-  Upload,
-  RefreshCw,
-  CheckCircle,
-  AlertCircle,
-  Info,
+  Users,
   Edit,
   Save,
   X,
@@ -119,36 +107,6 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
       route: "/settings/language",
       status: "active",
       lastUpdated: "1 month ago"
-    },
-    {
-      id: "integrations",
-      title: "Integrations",
-      description: "Connect with external tools and services",
-      icon: Zap,
-      color: "yellow",
-      route: "/settings/integrations",
-      status: "inactive",
-      lastUpdated: "Never"
-    },
-    {
-      id: "api",
-      title: "API Keys",
-      description: "Manage API access tokens and webhooks",
-      icon: Key,
-      color: "gray",
-      route: "/settings/api",
-      status: "active",
-      lastUpdated: "2 weeks ago"
-    },
-    {
-      id: "billing",
-      title: "Billing & Usage",
-      description: "View your subscription and usage statistics",
-      icon: FileText,
-      color: "green",
-      route: "/settings/billing",
-      status: "active",
-      lastUpdated: "1 day ago"
     }
   ];
 
@@ -176,11 +134,9 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
       green: styles.iconGreen,
       red: styles.iconRed,
       purple: styles.iconPurple,
-      indigo: styles.iconIndigo,
-      yellow: styles.iconYellow,
-      gray: styles.iconGray
+      indigo: styles.iconIndigo
     };
-    return colorClasses[color as keyof typeof colorClasses] || styles.iconGray;
+    return colorClasses[color as keyof typeof colorClasses] || styles.iconBlue;
   };
 
   if (!open) return null;

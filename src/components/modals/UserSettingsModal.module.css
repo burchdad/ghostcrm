@@ -482,16 +482,6 @@
   background-color: #e0e7ff;
 }
 
-.iconYellow {
-  color: #f59e0b;
-  background-color: #fef3c7;
-}
-
-.iconGray {
-  color: #6b7280;
-  background-color: #f3f4f6;
-}
-
 /* Hidden file input */
 .hiddenInput {
   display: none;
