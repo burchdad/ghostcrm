@@ -154,7 +154,7 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
       color: "indigo",
       route: "/settings/language",
       status: "active",
-      lastUpdated: `${localeSettings.language.toUpperCase()}-${localeSettings.region}`
+      lastUpdated: `${(localeSettings.language || 'en').toUpperCase()}-${localeSettings.region || 'US'}`
     }
   ], [securitySettings.twoFactorEnabled, appearanceSettings.theme, localeSettings.language, localeSettings.region]);
 
@@ -604,7 +604,7 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
                 <div className={styles.profileHeader}>
                   <div className={styles.avatarContainer}>
                     <img
-                      src={profile.avatar || '/default-avatar.png'}
+                      src={profile.avatar || '/default-avatar.svg'}
                       alt={profile.name}
                       className={styles.avatar}
                     />
