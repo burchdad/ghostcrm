@@ -21,12 +21,29 @@ interface UserNotificationPreferencesDB {
   email_system_alerts: boolean;
   email_daily_digest: boolean;
   email_weekly_reports: boolean;
+  email_marketing_updates: boolean;
+  email_team_mentions: boolean;
+  email_security_alerts: boolean;
   sms_enabled: boolean;
   sms_phone_number: string | null;
   sms_urgent_only: boolean;
+  sms_deals_closing: boolean;
+  sms_high_value_leads: boolean;
   push_enabled: boolean;
   push_browser: boolean;
   push_mobile: boolean;
+  push_task_reminders: boolean;
+  push_team_messages: boolean;
+  push_deal_updates: boolean;
+  in_app_enabled: boolean;
+  in_app_mentions: boolean;
+  in_app_assignments: boolean;
+  in_app_comments: boolean;
+  in_app_system_updates: boolean;
+  quiet_hours_enabled: boolean;
+  quiet_hours_start: string | null;
+  quiet_hours_end: string | null;
+  notification_frequency: string; // immediate, hourly, daily
   created_at: string;
   updated_at: string;
 }
@@ -144,16 +161,37 @@ export async function GET(request: NextRequest) {
         systemAlerts: true,
         dailyDigest: false,
         weeklyReports: true,
+        marketingUpdates: false,
+        teamMentions: true,
+        securityAlerts: true,
       },
       smsNotifications: {
         enabled: false,
         phoneNumber: '',
         urgentAlertsOnly: true,
+        dealsClosing: false,
+        highValueLeads: false,
       },
       pushNotifications: {
         enabled: true,
         browser: true,
         mobile: true,
+        taskReminders: true,
+        teamMessages: true,
+        dealUpdates: true,
+      },
+      inAppNotifications: {
+        enabled: true,
+        mentions: true,
+        assignments: true,
+        comments: true,
+        systemUpdates: false,
+      },
+      preferences: {
+        quietHoursEnabled: false,
+        quietHoursStart: '22:00',
+        quietHoursEnd: '08:00',
+        frequency: 'immediate', // immediate, hourly, daily
       },
     };
 
@@ -170,16 +208,37 @@ export async function GET(request: NextRequest) {
           systemAlerts: preferences.email_system_alerts,
           dailyDigest: preferences.email_daily_digest,
           weeklyReports: preferences.email_weekly_reports,
+          marketingUpdates: preferences.email_marketing_updates || false,
+          teamMentions: preferences.email_team_mentions || true,
+          securityAlerts: preferences.email_security_alerts || true,
         },
         smsNotifications: {
           enabled: preferences.sms_enabled,
           phoneNumber: preferences.sms_phone_number || '',
           urgentAlertsOnly: preferences.sms_urgent_only,
+          dealsClosing: preferences.sms_deals_closing || false,
+          highValueLeads: preferences.sms_high_value_leads || false,
         },
         pushNotifications: {
           enabled: preferences.push_enabled,
           browser: preferences.push_browser,
           mobile: preferences.push_mobile,
+          taskReminders: preferences.push_task_reminders || true,
+          teamMessages: preferences.push_team_messages || true,
+          dealUpdates: preferences.push_deal_updates || true,
+        },
+        inAppNotifications: {
+          enabled: preferences.in_app_enabled || true,
+          mentions: preferences.in_app_mentions || true,
+          assignments: preferences.in_app_assignments || true,
+          comments: preferences.in_app_comments || true,
+          systemUpdates: preferences.in_app_system_updates || false,
+        },
+        preferences: {
+          quietHoursEnabled: preferences.quiet_hours_enabled || false,
+          quietHoursStart: preferences.quiet_hours_start || '22:00',
+          quietHoursEnd: preferences.quiet_hours_end || '08:00',
+          frequency: preferences.notification_frequency || 'immediate',
         },
       };
     }
