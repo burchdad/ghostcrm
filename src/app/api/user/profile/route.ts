@@ -210,22 +210,53 @@ export async function PUT(request: NextRequest) {
       location: profileUpdates.location || ''
     };
 
-    // Upsert profile
-    const { data, error } = await supabase
+    // Check if profile exists first
+    const { data: existingProfile } = await supabase
       .from('profiles')
-      .upsert({
-        user_id: jwtUser.userId,
-        organization_id: orgData.id,
-        email: profileUpdates.email,
-        first_name: profileUpdates.first_name || '',
-        last_name: profileUpdates.last_name || '',
-        avatar_url: profileUpdates.avatar_url || '',
-        settings: settings,
-        updated_at: now
-      }, {
-        onConflict: 'user_id,organization_id'
-      })
-      .select();
+      .select('id')
+      .eq('user_id', jwtUser.userId)
+      .eq('organization_id', orgData.id)
+      .single();
+
+    let data, error;
+    
+    if (existingProfile) {
+      // Update existing profile
+      const updateResult = await supabase
+        .from('profiles')
+        .update({
+          email: profileUpdates.email,
+          first_name: profileUpdates.first_name || '',
+          last_name: profileUpdates.last_name || '',
+          avatar_url: profileUpdates.avatar_url || '',
+          settings: settings,
+          updated_at: now
+        })
+        .eq('user_id', jwtUser.userId)
+        .eq('organization_id', orgData.id)
+        .select();
+      
+      data = updateResult.data;
+      error = updateResult.error;
+    } else {
+      // Insert new profile
+      const insertResult = await supabase
+        .from('profiles')
+        .insert({
+          user_id: jwtUser.userId,
+          organization_id: orgData.id,
+          email: profileUpdates.email,
+          first_name: profileUpdates.first_name || '',
+          last_name: profileUpdates.last_name || '',
+          avatar_url: profileUpdates.avatar_url || '',
+          settings: settings,
+          updated_at: now
+        })
+        .select();
+      
+      data = insertResult.data;
+      error = insertResult.error;
+    }
 
     if (error) {
       console.error('Error updating profile:', error);
