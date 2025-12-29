@@ -189,10 +189,24 @@ export function UserProfileDropdown() {
           <div className={styles.menuItems}>
             <button
               className={styles.menuItem}
+              onClick={() => handleNavigation('/tenant-owner/profile')}
+            >
+              <span className={styles.menuIcon}>👤</span>
+              <span className={styles.menuText}>My Profile</span>
+            </button>
+            <button
+              className={styles.menuItem}
               onClick={handleUserSettingsClick}
             >
               <span className={styles.menuIcon}>⚙️</span>
-              <span className={styles.menuText}>{t("user_settings", "navigation") || "User Settings"}</span>
+              <span className={styles.menuText}>Settings</span>
+            </button>
+            <button
+              className={styles.menuItem}
+              onClick={() => handleNavigation('/help')}
+            >
+              <span className={styles.menuIcon}>❓</span>
+              <span className={styles.menuText}>Help & Support</span>
             </button>
             <div className={styles.divider}></div>
             <button
