@@ -16,7 +16,8 @@ const AUTH_REQUIRED_ROUTES = [
   '/admin',
   '/billing',
   '/settings',
-  '/tenant-owner/setup'
+  '/owner',
+  '/tenant-owner'
 ];
 
 // Define truly public routes that don't need auth context (marketing pages)
