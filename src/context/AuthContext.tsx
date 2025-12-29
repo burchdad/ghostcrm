@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { User, Tenant, UserRole, AuthService, sampleUsers, sampleTenants } from '@/lib/auth';
 
 interface AuthContextType {
@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
+  const initializingRef = useRef(false);
 
   // Enhanced logging for state changes
   const setUserWithLogging = (newUser: User | null) => {
@@ -37,15 +38,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initialize auth state on mount
   useEffect(() => {
-    console.log('🔧 [AUTH] AuthProvider mounted, calling initializeAuth');
-    initializeAuth();
+    if (!initializingRef.current) {
+      console.log('🔧 [AUTH] AuthProvider mounted, calling initializeAuth');
+      initializingRef.current = true;
+      initializeAuth().finally(() => {
+        initializingRef.current = false;
+      });
+    }
   }, []);
 
   // Simple state preservation - preserve when user changes
   useEffect(() => {
-    if (user && user.email) {
+    if (user && user.email && tenant) {
       console.log('💾 [AUTH] User state updated, preserving for navigation');
-      sessionStorage.setItem('ghost_auth_backup', JSON.stringify({ user, tenant }));
+      const backupState = JSON.stringify({ user, tenant });
+      sessionStorage.setItem('ghost_auth_backup', backupState);
+      console.log('💾 [AUTH] Backup state saved:', { 
+        userEmail: user.email, 
+        tenantId: tenant.id,
+        length: backupState.length 
+      });
     }
   }, [user, tenant]);
 
@@ -65,7 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hasCurrentUser: !!user,
           preservedLength: preserved?.length || 0,
           backupLength: backup?.length || 0,
-          isPrivateMode: !window.indexedDB // Simple private mode detection
+          isPrivateMode: !window.indexedDB, // Simple private mode detection
+          initializingFlag: initializingRef.current
         });
         
         if (stateToRestore) {
@@ -74,7 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const { user: preservedUser, tenant: preservedTenant } = parsedState;
             
             if (preservedUser && preservedUser.email) {
-              console.log('♻️ [AUTH] Restoring preserved state:', { userEmail: preservedUser.email, userRole: preservedUser.role });
+              console.log('♻️ [AUTH] Restoring preserved state:', { 
+                userEmail: preservedUser.email, 
+                userRole: preservedUser.role,
+                source: preserved ? 'ghost_auth_state' : 'ghost_auth_backup'
+              });
               
               // Create tenant from preserved user if not provided
               const tenantToSet = preservedTenant || {
@@ -95,9 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setAuthReady(true);
               if (!skipLoadingState) setIsLoading(false);
               
-              // Clean up both storage items
-              sessionStorage.removeItem('ghost_auth_state');
-              sessionStorage.removeItem('ghost_auth_backup');
+              // Only clean up the primary storage, keep backup temporarily
+              if (preserved) {
+                sessionStorage.removeItem('ghost_auth_state');
+                console.log('🧹 [AUTH] Removed ghost_auth_state, keeping backup');
+              }
               
               console.log('✅ [AUTH] Successfully restored from preserved state');
               return; // Skip API call if we restored from session
