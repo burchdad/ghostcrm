@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import { User, Tenant, UserRole, AuthService, sampleUsers, sampleTenants } from '@/lib/auth';
 
 interface AuthContextType {
@@ -18,11 +19,13 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
   const initializingRef = useRef(false);
+  const previousPathRef = useRef<string>();
 
   // Enhanced logging for state changes
   const setUserWithLogging = (newUser: User | null) => {
@@ -48,6 +51,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('🚫 [AUTH] AuthProvider mount blocked - already initializing');
     }
   }, []);
+
+  // Route change detection - check for preserved state on navigation
+  useEffect(() => {
+    if (previousPathRef.current && previousPathRef.current !== pathname) {
+      console.log('🛣️ [AUTH] Route change detected:', { 
+        from: previousPathRef.current, 
+        to: pathname,
+        hasUser: !!user,
+        authReady 
+      });
+      
+      // If we lost the user during navigation, try to restore from preserved state
+      if (!user && authReady && !initializingRef.current) {
+        console.log('🔄 [AUTH] User lost during navigation, attempting state restoration');
+        if (typeof window !== 'undefined') {
+          const preserved = sessionStorage.getItem('ghost_auth_state');
+          const backup = sessionStorage.getItem('ghost_auth_backup');
+          
+          if (preserved || backup) {
+            console.log('🔄 [AUTH] Found preserved state after route change, calling initializeAuth');
+            initializeAuth(true).catch(error => {
+              console.error('❌ [AUTH] Route change restoration failed:', error);
+            });
+          }
+        }
+      }
+    }
+    previousPathRef.current = pathname;
+  }, [pathname, user, authReady]);
 
   // Simple state preservation - preserve when user changes
   useEffect(() => {
