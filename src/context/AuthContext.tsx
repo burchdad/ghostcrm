@@ -44,6 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       initializeAuth().finally(() => {
         initializingRef.current = false;
       });
+    } else {
+      console.log('🚫 [AUTH] AuthProvider mount blocked - already initializing');
     }
   }, []);
 
@@ -78,7 +80,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           preservedLength: preserved?.length || 0,
           backupLength: backup?.length || 0,
           isPrivateMode: !window.indexedDB, // Simple private mode detection
-          initializingFlag: initializingRef.current
+          initializingFlag: initializingRef.current,
+          stateToRestore: stateToRestore ? 'FOUND' : 'NONE',
+          skipLoadingState
         });
         
         if (stateToRestore) {
@@ -86,11 +90,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const parsedState = JSON.parse(stateToRestore);
             const { user: preservedUser, tenant: preservedTenant } = parsedState;
             
+            console.log('🔍 [AUTH] Parsed preserved state:', {
+              hasUser: !!preservedUser,
+              hasTenant: !!preservedTenant,
+              userEmail: preservedUser?.email,
+              userRole: preservedUser?.role
+            });
+            
             if (preservedUser && preservedUser.email) {
               console.log('♻️ [AUTH] Restoring preserved state:', { 
                 userEmail: preservedUser.email, 
                 userRole: preservedUser.role,
-                source: preserved ? 'ghost_auth_state' : 'ghost_auth_backup'
+                source: preserved ? 'ghost_auth_state' : 'ghost_auth_backup',
+                tenantId: preservedUser.tenantId
               });
               
               // Create tenant from preserved user if not provided
@@ -115,17 +127,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // Only clean up the primary storage, keep backup temporarily
               if (preserved) {
                 sessionStorage.removeItem('ghost_auth_state');
-                console.log('🧹 [AUTH] Removed ghost_auth_state, keeping backup');
+                console.log('🧹 [AUTH] Removed ghost_auth_state, keeping backup for redundancy');
               }
               
-              console.log('✅ [AUTH] Successfully restored from preserved state');
+              console.log('✅ [AUTH] Successfully restored from preserved state - RETURNING EARLY');
               return; // Skip API call if we restored from session
+            } else {
+              console.log('❌ [AUTH] Preserved state invalid - no user or email found');
             }
           } catch (error) {
             console.error('❌ [AUTH] Error parsing preserved state:', error);
             sessionStorage.removeItem('ghost_auth_state');
             sessionStorage.removeItem('ghost_auth_backup');
           }
+        } else {
+          console.log('❌ [AUTH] No preserved state found - continuing with API check');
         }
       }
       
