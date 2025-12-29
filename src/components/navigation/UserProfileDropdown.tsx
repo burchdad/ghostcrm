@@ -10,6 +10,7 @@ export function UserProfileDropdown() {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [showUserSettingsModal, setShowUserSettingsModal] = useState(false);
+  const [modalInitialTab, setModalInitialTab] = useState<'profile' | 'settings' | 'help' | 'support'>('profile');
   const [avatar, setAvatar] = useState<string | null>(null);
   const [role, setRole] = useState("Admin");
   const [org, setOrg] = useState("Org 1");
@@ -74,6 +75,21 @@ export function UserProfileDropdown() {
   const handleUserSettingsClick = () => {
     console.log('Opening user settings modal');
     setOpen(false);
+    setModalInitialTab('settings');
+    setShowUserSettingsModal(true);
+  };
+
+  const handleProfileClick = () => {
+    console.log('Opening profile tab in modal');
+    setOpen(false);
+    setModalInitialTab('profile');
+    setShowUserSettingsModal(true);
+  };
+
+  const handleHelpClick = () => {
+    console.log('Opening help tab in modal');
+    setOpen(false);
+    setModalInitialTab('help');
     setShowUserSettingsModal(true);
   };
 
@@ -189,7 +205,7 @@ export function UserProfileDropdown() {
           <div className={styles.menuItems}>
             <button
               className={styles.menuItem}
-              onClick={() => handleNavigation('/tenant-owner/profile')}
+              onClick={handleProfileClick}
             >
               <span className={styles.menuIcon}>👤</span>
               <span className={styles.menuText}>My Profile</span>
@@ -203,7 +219,7 @@ export function UserProfileDropdown() {
             </button>
             <button
               className={styles.menuItem}
-              onClick={() => handleNavigation('/help')}
+              onClick={handleHelpClick}
             >
               <span className={styles.menuIcon}>❓</span>
               <span className={styles.menuText}>Help & Support</span>
@@ -222,7 +238,8 @@ export function UserProfileDropdown() {
       
       <UserSettingsModal 
         open={showUserSettingsModal} 
-        onClose={() => setShowUserSettingsModal(false)} 
+        onClose={() => setShowUserSettingsModal(false)}
+        initialTab={modalInitialTab}
       />
     </div>
   );

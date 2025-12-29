@@ -24,9 +24,10 @@ import styles from "./UserSettingsModal.module.css";
 interface UserSettingsModalProps {
   open: boolean;
   onClose: () => void;
+  initialTab?: ActiveSection;
 }
 
-type ActiveSection = 'profile' | 'settings';
+type ActiveSection = 'profile' | 'settings' | 'help' | 'support';
 
 interface SettingsCard {
   id: string;
@@ -39,9 +40,9 @@ interface SettingsCard {
   lastUpdated: string;
 }
 
-export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
+export function UserSettingsModal({ open, onClose, initialTab = 'profile' }: UserSettingsModalProps) {
   const { t } = useI18n();
-  const [activeSection, setActiveSection] = useState<ActiveSection>('profile');
+  const [activeSection, setActiveSection] = useState<ActiveSection>(initialTab);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -563,6 +564,13 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
     }
   }, [open]);
 
+  // Update active section when initialTab changes
+  React.useEffect(() => {
+    if (open && initialTab) {
+      setActiveSection(initialTab);
+    }
+  }, [open, initialTab]);
+
   const filteredSettings = settingsCards.filter(card =>
     card.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     card.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -607,6 +615,22 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
               <Settings className={styles.navIcon} />
               Settings
             </button>
+            
+            <button
+              onClick={() => setActiveSection('help')}
+              className={`${styles.navItem} ${activeSection === 'help' ? styles.active : ''}`}
+            >
+              <Bell className={styles.navIcon} />
+              Help
+            </button>
+            
+            <button
+              onClick={() => setActiveSection('support')}
+              className={`${styles.navItem} ${activeSection === 'support' ? styles.active : ''}`}
+            >
+              <Mail className={styles.navIcon} />
+              Support
+            </button>
           </nav>
         </div>
 
@@ -614,7 +638,10 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
         <div className={styles.content}>
           <div className={styles.contentHeader}>
             <h3 className={styles.contentTitle}>
-              {activeSection === 'profile' ? 'Profile Information' : 'System Settings'}
+              {activeSection === 'profile' && 'Profile Information'}
+              {activeSection === 'settings' && 'System Settings'}
+              {activeSection === 'help' && 'Help & FAQs'}
+              {activeSection === 'support' && 'Support Center'}
             </h3>
             <button onClick={onClose} className={styles.closeButton}>
               <X style={{ width: '20px', height: '20px' }} />
@@ -975,6 +1002,155 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
                     <p className={styles.emptyMessage}>No settings found matching your search.</p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Help Section */}
+            {activeSection === 'help' && (
+              <div>
+                <div className={styles.helpSection}>
+                  <h3 className={styles.sectionTitle}>Frequently Asked Questions</h3>
+                  
+                  <div className={styles.faqList}>
+                    <div className={styles.faqItem}>
+                      <h4 className={styles.faqQuestion}>How do I update my profile information?</h4>
+                      <p className={styles.faqAnswer}>
+                        Navigate to the Profile tab and click the "Edit" button. You can update your name, email, phone number, job title, department, and location.
+                      </p>
+                    </div>
+                    
+                    <div className={styles.faqItem}>
+                      <h4 className={styles.faqQuestion}>How do I change my password?</h4>
+                      <p className={styles.faqAnswer}>
+                        Go to Settings → Security & Privacy to update your password and enable two-factor authentication for enhanced security.
+                      </p>
+                    </div>
+                    
+                    <div className={styles.faqItem}>
+                      <h4 className={styles.faqQuestion}>Can I customize the appearance of the CRM?</h4>
+                      <p className={styles.faqAnswer}>
+                        Yes! Visit Settings → Appearance & Theme to customize your workspace with different themes, color schemes, and layout options.
+                      </p>
+                    </div>
+                    
+                    <div className={styles.faqItem}>
+                      <h4 className={styles.faqQuestion}>How do I manage notifications?</h4>
+                      <p className={styles.faqAnswer}>
+                        You can configure email and push notifications in Settings → Notifications to control what alerts you receive and how often.
+                      </p>
+                    </div>
+                    
+                    <div className={styles.faqItem}>
+                      <h4 className={styles.faqQuestion}>How do I invite team members?</h4>
+                      <p className={styles.faqAnswer}>
+                        Team owners and admins can invite new members through the Team Management section in your organization settings.
+                      </p>
+                    </div>
+                    
+                    <div className={styles.faqItem}>
+                      <h4 className={styles.faqQuestion}>Where can I find my usage and billing information?</h4>
+                      <p className={styles.faqAnswer}>
+                        Billing and subscription details are available in your account dashboard. Contact support if you need help with billing questions.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Support Section */}
+            {activeSection === 'support' && (
+              <div>
+                <div className={styles.supportSection}>
+                  <h3 className={styles.sectionTitle}>Contact Support</h3>
+                  <p className={styles.supportDescription}>
+                    Need help? Send us a message and our support team will get back to you as soon as possible.
+                  </p>
+                  
+                  <form className={styles.supportForm} onSubmit={(e) => {
+                    e.preventDefault();
+                    // Handle support ticket submission
+                    alert('Support ticket submitted! We\'ll get back to you soon.');
+                  }}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>
+                        <Mail className={styles.formLabelIcon} />
+                        Subject
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Brief description of your issue..."
+                        className={styles.formInput}
+                        required
+                      />
+                    </div>
+                    
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>
+                        Priority Level
+                      </label>
+                      <select className={styles.formInput} required>
+                        <option value="">Select priority...</option>
+                        <option value="low">Low - General question</option>
+                        <option value="medium">Medium - Feature request</option>
+                        <option value="high">High - Bug report</option>
+                        <option value="urgent">Urgent - System down</option>
+                      </select>
+                    </div>
+                    
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>
+                        Message
+                      </label>
+                      <textarea
+                        placeholder="Please describe your issue in detail..."
+                        className={`${styles.formInput} ${styles.textArea}`}
+                        rows={6}
+                        required
+                      />
+                    </div>
+                    
+                    <div className={styles.formActions}>
+                      <button
+                        type="button"
+                        className={styles.cancelButton}
+                        onClick={() => {
+                          const form = document.querySelector(`.${styles.supportForm}`) as HTMLFormElement;
+                          if (form) form.reset();
+                        }}
+                      >
+                        Clear Form
+                      </button>
+                      <button
+                        type="submit"
+                        className={styles.saveButton}
+                      >
+                        <Mail style={{ width: '16px', height: '16px' }} />
+                        Send Message
+                      </button>
+                    </div>
+                  </form>
+                  
+                  <div className={styles.supportInfo}>
+                    <h4 className={styles.supportInfoTitle}>Other Ways to Get Help</h4>
+                    <div className={styles.supportInfoGrid}>
+                      <div className={styles.supportInfoItem}>
+                        <Mail className={styles.supportInfoIcon} />
+                        <div>
+                          <div className={styles.supportInfoLabel}>Email Support</div>
+                          <div className={styles.supportInfoValue}>support@ghostcrm.com</div>
+                        </div>
+                      </div>
+                      <div className={styles.supportInfoItem}>
+                        <Globe className={styles.supportInfoIcon} />
+                        <div>
+                          <div className={styles.supportInfoLabel}>Documentation</div>
+                          <div className={styles.supportInfoValue}>docs.ghostcrm.com</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
