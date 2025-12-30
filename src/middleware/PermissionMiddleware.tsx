@@ -397,17 +397,14 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
             setAuthorizationResult(true);
             return;
           } else {
-            console.log('❌ [ROUTE_GUARD] Owner session expired, removing and redirecting');
             localStorage.removeItem('ownerSession');
           }
         } catch (error) {
-          console.log('❌ [ROUTE_GUARD] Invalid owner session, removing');
           localStorage.removeItem('ownerSession');
         }
       }
       
       // No valid owner session for owner route
-      console.log('❌ [ROUTE_GUARD] No valid owner session, redirecting to owner login');
       authCheckInProgress.current = false;
       setIsCheckingRedirect(false);
       router.push('/owner/login');
@@ -416,11 +413,6 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
 
     // If not logged in and not on public path, redirect to login
     if (!user) {
-      console.log('❌ [ROUTE_GUARD] No user found, redirecting to login:', {
-        pathname,
-        authReady,
-        isLoading
-      });
       authCheckInProgress.current = false;
       setIsCheckingRedirect(false);
       router.push('/login');
@@ -497,11 +489,6 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
 
     // Check role authorization
     if (routeConfig.allowedRoles && !routeConfig.allowedRoles.includes(user.role)) {
-      console.log('❌ [ROUTE_GUARD] Role authorization failed:', {
-        route: pathname,
-        userRole: user.role,
-        allowedRoles: routeConfig.allowedRoles
-      });
       setAuthorizationResult(false);
       return;
     }
@@ -512,12 +499,6 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     );
 
     if (!hasRequiredPermissions) {
-      console.log('❌ [ROUTE_GUARD] Permission authorization failed:', {
-        route: pathname,
-        userRole: user.role,
-        requiredPermissions: routeConfig.requiredPermissions,
-        hasRequiredPermissions
-      });
       setAuthorizationResult(false);
       return;
     }
@@ -529,25 +510,12 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
       if (user.role === 'owner' && typeof window !== 'undefined') {
         const hostname = window.location.hostname;
         const subdomain = hostname.split('.')[0];
-        console.log('🔍 [TENANT_VALIDATION] Checking owner subdomain access:', {
-          hostname,
-          subdomain,
-          userRole: user.role,
-          hasValidSubdomain: subdomain && subdomain !== 'localhost' && hostname.includes('localhost')
-        });
         // If we're on a subdomain (not just localhost), allow owner access
         if (subdomain && subdomain !== 'localhost' && hostname.includes('localhost')) {
-          console.log('🔓 [ROUTE_GUARD] Allowing owner access to tenant route on subdomain:', subdomain);
           setAuthorizationResult(true);
           return;
         }
       }
-      console.log('❌ [ROUTE_GUARD] Tenant access denied - no tenantId for route:', {
-        route: pathname,
-        userRole: user.role,
-        requireTenantAccess: routeConfig.requireTenantAccess,
-        userTenantId: user.tenantId
-      });
       setAuthorizationResult(false);
       return;
     }
