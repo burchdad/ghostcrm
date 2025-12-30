@@ -15,13 +15,13 @@ export default function AIAgentInitializer() {
   useEffect(() => {
     const initializeAgents = async () => {
       try {
-        console.log('Initializing AI Agent System...');
+        // Initializing AI Agent System - silent mode
         
         // Skip server-side agent initialization on client
         // AI agents that require database access should be initialized via API routes
-        console.log('Client-side AI agent initialization skipped - agents run server-side');
+        // Client-side AI agent initialization skipped - agents run server-side
         
-        console.log('AI Agent System initialized successfully');
+        // AI Agent System initialized successfully - silent mode
       } catch (error) {
         console.error('Failed to initialize AI Agent System:', error);
       }

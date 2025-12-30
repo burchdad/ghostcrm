@@ -5,21 +5,16 @@ const jwtSecret = process.env.JWT_SECRET!;
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('=== JWT Debug Endpoint ===');
     
     // Check environment variables
     const hasJwtSecret = !!process.env.JWT_SECRET;
     const jwtSecretLength = process.env.JWT_SECRET?.length || 0;
     
-    console.log('Environment check:', { hasJwtSecret, jwtSecretLength });
-    
     // Check all cookies
     const allCookies = request.cookies.getAll();
-    console.log('All cookies:', allCookies.map(c => ({ name: c.name, hasValue: !!c.value, valueLength: c.value?.length })));
     
     // Get JWT cookie specifically
     const jwtCookie = request.cookies.get('ghostcrm_jwt');
-    console.log('JWT Cookie found:', !!jwtCookie);
     
     if (!jwtCookie) {
       return NextResponse.json({ 
@@ -39,7 +34,6 @@ export async function GET(request: NextRequest) {
     
     // Check if JWT secret exists
     if (!jwtSecret) {
-      console.error('❌ JWT_SECRET environment variable not found');
       return NextResponse.json({ 
         error: 'Server configuration error - JWT_SECRET not found',
         environment: { hasJwtSecret: false }
@@ -68,7 +62,6 @@ export async function GET(request: NextRequest) {
       });
       
     } catch (decodeError) {
-      console.error('JWT decode error:', decodeError);
       return NextResponse.json({ 
         error: 'JWT decode failed',
         details: decodeError.message,

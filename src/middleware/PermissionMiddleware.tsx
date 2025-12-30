@@ -433,13 +433,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
       return;
     }
 
-    console.log('✅ [ROUTE_GUARD] User authenticated, proceeding with route checks:', {
-      pathname,
-      userRole: user.role,
-      userEmail: user.email,
-      userId: user.id,
-      userFullDetails: user
-    });
+    // User authenticated - proceeding with route checks - silent mode
 
     // Auto-redirect users from legacy routes to tenant-specific routes
     const tenantRouteRedirects: Record<string, Record<string, string>> = {
@@ -509,7 +503,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     if (!routeConfig) {
       // No specific route protection, allow access
       // No route config found - allowing access
-      console.log('🔧 [ROUTE_GUARD] Setting isCheckingRedirect=false, isAuthorized=true');
+      // Setting isCheckingRedirect=false, isAuthorized=true - silent mode
       
       // Use the helper function for consistent state management
       setAuthorizationResult(true);

@@ -20,7 +20,7 @@ class AgentSystemInitializer {
       return;
     }
     
-    console.log('🚀 Initializing AI Agent System...');
+    // Initializing AI Agent System - silent mode
     this.startupTime = new Date();
     
     try {
@@ -34,7 +34,7 @@ class AgentSystemInitializer {
       this.initialized = true;
       
       const initTime = Date.now() - this.startupTime.getTime();
-      console.log(`✅ AI Agent System initialized successfully in ${initTime}ms`);
+      // AI Agent System initialized successfully - silent mode
       
     } catch (error: any) {
       console.error('❌ Failed to initialize AI Agent System:', error.message);

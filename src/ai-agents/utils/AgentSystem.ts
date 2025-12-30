@@ -25,7 +25,7 @@ export async function initializeAgentSystem(): Promise<void> {
     // Start all enabled agents
     await agentManager.startAll();
     
-    console.log('✅ AI Agent System initialized successfully');
+    // AI Agent System initialized successfully - silent mode
     
     // Set up graceful shutdown
     setupGracefulShutdown(agentManager);

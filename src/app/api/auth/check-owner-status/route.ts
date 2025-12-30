@@ -4,14 +4,11 @@ import { jwtVerify } from 'jose'
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 [OWNER-CHECK] Starting owner status check')
-    
     // Get JWT token from cookies
     const cookieStore = request.cookies
     const token = cookieStore.get('ghost_session')?.value
     
     if (!token) {
-      console.log('❌ [OWNER-CHECK] No JWT token found')
       return NextResponse.json({ 
         isSoftwareOwner: false, 
         userRole: null,
@@ -27,7 +24,6 @@ export async function GET(request: NextRequest) {
     const userId = payload.userId as string
     
     if (!userEmail || !userId) {
-      console.log('❌ [OWNER-CHECK] Invalid token payload')
       return NextResponse.json({ 
         isSoftwareOwner: false, 
         userRole: null,
@@ -35,16 +31,10 @@ export async function GET(request: NextRequest) {
       }, { status: 401 })
     }
 
-    console.log('🔍 [OWNER-CHECK] Checking user:', userEmail)
-
     // Check if user is the software owner
     const softwareOwnerEmail = process.env.SOFTWARE_OWNER_EMAIL || 'admin@ghostcrm.com'
     const isSoftwareOwner = userEmail === softwareOwnerEmail
     
-    console.log('🔍 [OWNER-CHECK] Software owner email:', softwareOwnerEmail)
-    console.log('🔍 [OWNER-CHECK] User email:', userEmail)
-    console.log('🔍 [OWNER-CHECK] Is software owner:', isSoftwareOwner)
-
     // Get user profile to check their role
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('user_profiles')
@@ -68,13 +58,10 @@ export async function GET(request: NextRequest) {
       emailMatch: isSoftwareOwner,
       globalAdmin: isGlobalAdmin
     }
-
-    console.log('✅ [OWNER-CHECK] Result:', result)
     
     return NextResponse.json(result)
 
   } catch (error: any) {
-    console.error('❌ [OWNER-CHECK] Error checking owner status:', error)
     return NextResponse.json({ 
       isSoftwareOwner: false, 
       userRole: null,
