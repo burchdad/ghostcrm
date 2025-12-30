@@ -143,7 +143,7 @@ async function loginHandler(req: Request) {
     
     // Cookie settings based on Remember Me choice
     const cookieOptions: any = {
-      httpOnly: true,
+      httpOnly: false, // Allow JavaScript access for client-side auth
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/"

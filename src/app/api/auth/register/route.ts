@@ -457,7 +457,7 @@ async function registerHandler(req: Request) {
     });
     
     res.cookies.set("ghostcrm_jwt", token, {
-      httpOnly: true,
+      httpOnly: false, // Allow JavaScript access for client-side auth
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60 * 24, // 24h
