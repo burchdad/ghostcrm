@@ -61,6 +61,7 @@ function getUserFromToken(token: string) {
 function parseJwtCookie(req: NextRequest) {
   const token = req.cookies.get("ghostcrm_jwt")?.value;
   if (!token) {
+
     return { token: null, user: null };
   }
   
@@ -68,8 +69,11 @@ function parseJwtCookie(req: NextRequest) {
     const payload = JSON.parse(
       Buffer.from(token.split(".")[1], "base64").toString()
     );
+
+
     return { token, user: payload };
   } catch (error) {
+
     return { token, user: null };
   }
 }
@@ -77,6 +81,7 @@ function parseJwtCookie(req: NextRequest) {
 function parseOwnerSession(req: NextRequest) {
   const ownerToken = req.cookies.get("owner_session")?.value;
   if (!ownerToken) {
+
     return { token: null, session: null };
   }
   
@@ -84,15 +89,12 @@ function parseOwnerSession(req: NextRequest) {
     const payload = JSON.parse(
       Buffer.from(ownerToken.split(".")[1], "base64").toString()
     );
-    return { token: ownerToken, session: payload };
-  } catch (error) {
-    return { token: ownerToken, session: null };
-  }
-}
-      permissions: payload.permissions,
-      issued: new Date(payload.issued).toISOString(),
-      expires: new Date(payload.expires).toISOString()
-    });
+
+
+
+
+
+
     return { 
       token: ownerToken, 
       session: { 
@@ -102,6 +104,7 @@ function parseOwnerSession(req: NextRequest) {
       } 
     };
   } catch (error) {
+
     return { token: ownerToken, session: null };
   }
 }
@@ -113,25 +116,25 @@ function isOwnerOnlyRoute(pathname: string): boolean {
 }
 
 function canAccessOwnerRoute(role: string, pathname: string, isSoftwareOwner: boolean = false): boolean {
-  
+  console.log(`🔍 [OWNER ROUTE CHECK] Path: ${pathname}, Role: ${role}, Software Owner: ${isSoftwareOwner}`);
   
   if (pathname.startsWith('/tenant-owner')) {
     // Tenant owner routes require owner role
     const canAccess = role === "owner";
-
+    console.log(`🔍 [TENANT OWNER ACCESS] ${canAccess ? '✅ ALLOWED' : '❌ DENIED'} for role: ${role}`);
     return canAccess;
   }
   
   if (pathname.startsWith('/owner')) {
     // Owner dashboard and related routes require software owner authentication
     const canAccess = isSoftwareOwner && role === "software_owner";
-
+    console.log(`🔍 [SOFTWARE OWNER ACCESS] ${canAccess ? '✅ ALLOWED' : '❌ DENIED'} for role: ${role}, isSoftwareOwner: ${isSoftwareOwner}`);
     return canAccess;
   }
   
   // Other owner routes (legacy)
   const isOwner = role === "owner";
-
+  console.log(`🔍 [OWNER ROUTE CHECK] Is Owner: ${isOwner ? '✅ YES' : '❌ NO'}`);
   return isOwner;
 }
 
@@ -182,6 +185,8 @@ export async function middleware(req: NextRequest) {
   
   const hostname = req.headers.get('host') || '';
   
+  console.log(`🚀 [MIDDLEWARE START] ${hostname}${pathname}`);
+  
   // Parse both JWT token and owner session
   const { token: jwtToken, user } = parseJwtCookie(req);
   const { token: ownerToken, session: ownerSession } = parseOwnerSession(req);
@@ -198,21 +203,59 @@ export async function middleware(req: NextRequest) {
     userRole = ownerSession.role || 'software_owner';
     isSoftwareOwner = ownerSession.isSoftwareOwner || false;
     authUser = ownerSession;
+    console.log(`🔑 [AUTH] Using OWNER SESSION for ${pathname}`);
   } else {
     // Use regular JWT for all other routes
     hasValidToken = !!(jwtToken && user);
     userRole = (user?.role as string) || "visitor";
     isSoftwareOwner = false;
     authUser = user;
+    console.log(`🔑 [AUTH] Using JWT TOKEN for ${pathname}`);
   }
   
-
+  console.log(`🔍 [MIDDLEWARE] Authentication Status:`, {
+    pathname,
+    hostname,
+    hasValidToken,
+    userRole,
+    userEmail: authUser?.email || 'N/A',
+    organizationId: authUser?.organizationId,
+    isSoftwareOwner,
+    isOwnerOnlyRoute: isOwnerOnlyRoute(pathname),
+    canAccess: canAccessOwnerRoute(userRole, pathname, isSoftwareOwner)
+  });
+  
+  // Enhanced debugging for authentication
+  console.log("🔍 [MIDDLEWARE DEBUG] Authentication Analysis:", {
+    pathname,
+    hostname,
+    hasJwtCookie: !!jwtToken,
+    hasOwnerSession: !!ownerToken,
+    jwtCookieLength: jwtToken?.length || 0,
+    ownerTokenLength: ownerToken?.length || 0,
+    hasUser: !!user,
+    userRole,
+    isSoftwareOwner,
+    organizationId: authUser?.organizationId,
+    tenantId: authUser?.tenantId,
+    hasValidToken,
+    authMethod: pathname.startsWith('/owner') && ownerSession ? 'OWNER_SESSION' : 'JWT_TOKEN',
+    cookiePreview: (pathname.startsWith('/owner') && ownerToken ? ownerToken : jwtToken)?.substring(0, 50) + "..." || "none"
+  });
   
   // Check if path is public (no authentication required)
   const allPublicPaths = [...PUBLIC_PATHS, ...ADDITIONAL_PUBLIC_PATHS];
   if (isPublicPath(pathname) || allPublicPaths.some(path => pathname.startsWith(path))) {
     // Parse subdomain for tenant identification for existing logic
     const subdomain = getSubdomain(hostname);
+    
+    // Log cookie status for debugging
+    console.log("🍪 [MIDDLEWARE] Cookie check:", {
+      hasCookie: !!jwtToken,
+      cookieLength: jwtToken?.length || 0,
+      hostname: hostname,
+      pathname: pathname
+    });
     
     const isMarketingSite = isMarketingRequest(hostname, subdomain, hasValidToken);
     
@@ -230,7 +273,7 @@ export async function middleware(req: NextRequest) {
       // For localhost, if there's a subdomain, it's a tenant request regardless of auth status
       // This allows login/auth endpoints to work on tenant subdomains
       hasTenant = !!subdomain;
-
+      console.log(`🏠 [LOCALHOST TENANT LOGIC] subdomain: ${subdomain}, hasTenant: ${hasTenant}`);
     } else {
       // For production/Vercel, authenticated users on any domain are tenant users
       // For unauthenticated requests, check if subdomain exists for tenant routing
@@ -238,13 +281,18 @@ export async function middleware(req: NextRequest) {
       console.log(`🌐 [PRODUCTION TENANT LOGIC] hasValidToken: ${hasValidToken}, subdomain: ${subdomain}, hasTenant: ${hasTenant}`);
     }
     
+    console.log(`🔍 Middleware: ${hostname} | Subdomain: ${subdomain} | Path: ${pathname} | Marketing: ${finalIsMarketing} | Tenant: ${!finalIsMarketing}`);
 
-
-
+    console.log(`🚨 [DEBUG] Tenant routing check:`, {
+      hasTenant,
+      subdomain,
+      finalIsMarketing,
+      shouldCallTenantHandler: hasTenant && subdomain
+    });
 
     // Simple owner-only route protection
     if (hasValidToken && isOwnerOnlyRoute(pathname) && !canAccessOwnerRoute(userRole, pathname, isSoftwareOwner)) {
-
+      console.log(`❌ [ACCESS DENIED] Owner-only route ${pathname} blocked for role: ${userRole}, isSoftwareOwner: ${isSoftwareOwner}`);
       const url = req.nextUrl.clone();
       url.pathname = "/unauthorized";
       return NextResponse.rewrite(url);
@@ -252,17 +300,17 @@ export async function middleware(req: NextRequest) {
 
     // Handle marketing site routing
     if (finalIsMarketing) {
-
+      console.log(`📰 [MARKETING] Calling handleMarketingRequest for ${pathname}`);
       return handleMarketingRequest(req, pathname);
     }
     
     // Handle tenant site routing  
     if (hasTenant && subdomain) {
-
+      console.log(`🏢 [TENANT] Calling handleTenantRequest for ${pathname} with subdomain: ${subdomain}`);
       return handleTenantRequest(req, pathname, subdomain, userRole);
     }
     
-
+    console.log(`⚠️ [FALLBACK] No handler matched, using NextResponse.next() for ${pathname}`);
     return NextResponse.next();
   }
 
