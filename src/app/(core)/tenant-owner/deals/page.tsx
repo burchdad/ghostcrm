@@ -24,7 +24,6 @@ export default function TenantOwnerDealsPage() {
   // Role-based access control
   useEffect(() => {
     if (user && !['owner'].includes(user.role)) {
-      console.log("🚨 [TENANT_OWNER_DEALS] Access denied - redirecting");
       router.push('/');
     }
   }, [user, router]);
@@ -52,16 +51,12 @@ export default function TenantOwnerDealsPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        console.log('🔄 Fetching deals and AI suggestions...');
-        
         // Fetch deals
         const dealsResponse = await fetch('/api/deals');
         if (dealsResponse.ok) {
           const dealsData = await dealsResponse.json();
-          console.log('✅ Deals fetched:', dealsData.records?.length || 0);
           setDeals(dealsData.records || []);
         } else {
-          console.error('❌ Deals API error:', dealsResponse.status, dealsResponse.statusText);
           setDeals([]);
         }
 
@@ -69,18 +64,14 @@ export default function TenantOwnerDealsPage() {
         const aiResponse = await fetch('/api/deals/ai-suggestions');
         if (aiResponse.ok) {
           const aiData = await aiResponse.json();
-          console.log('🤖 AI suggestions fetched:', aiData.suggestions?.length || 0);
           setAiMatches(aiData.suggestions || []);
         } else {
-          console.error('❌ AI suggestions API error:', aiResponse.status, aiResponse.statusText);
           // Don't fail completely if AI suggestions fail
           const errorData = await aiResponse.json().catch(() => ({}));
-          console.log('AI error details:', errorData);
           setAiMatches([]);
         }
 
       } catch (error) {
-        console.error('❌ Failed to fetch data:', error);
         toast({
           title: "Connection Issue",
           description: "Some data couldn't be loaded. Refresh the page to try again.",
