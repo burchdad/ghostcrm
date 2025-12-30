@@ -408,35 +408,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   
-  // Debug logging - only for meaningful transitions
+  // Debug logging - only for critical authentication events
   const prevUserRef = React.useRef<User | null>();
   const prevAuthReadyRef = React.useRef<boolean>();
-  const logCountRef = React.useRef(0);
+  const hasLoggedInitialRef = React.useRef(false);
   
   React.useEffect(() => {
     const userChanged = prevUserRef.current !== context?.user;
     const authReadyChanged = prevAuthReadyRef.current !== context?.authReady;
     
-    // Only log initial auth, user login/logout, and auth ready state changes
-    const shouldLog = (
-      (userChanged && (context?.user || prevUserRef.current)) || // User login/logout only
-      (authReadyChanged && context?.authReady) || // Auth ready transition only
-      (logCountRef.current < 2) // Allow first few logs for debugging
-    );
+    // Only log critical events: initial setup, user login/logout, first auth ready
+    const isUserLoginLogout = userChanged && (context?.user?.email || prevUserRef.current?.email);
+    const isInitialAuthReady = authReadyChanged && context?.authReady && !hasLoggedInitialRef.current;
+    const isInitialLoad = !hasLoggedInitialRef.current && context?.user?.email;
     
-    if (shouldLog) {
-      console.log('🔍 [useAuth] State transition:', {
-        user: context?.user?.email || 'null',
+    if (isUserLoginLogout || isInitialAuthReady || isInitialLoad) {
+      console.log('🔍 [useAuth] Critical event:', {
+        user: context?.user?.email || 'logged-out',
         authReady: context?.authReady,
-        isLoading: context?.isLoading,
-        trigger: userChanged ? 'user-change' : authReadyChanged ? 'auth-ready' : 'initial'
+        event: isUserLoginLogout ? 'user-auth-change' : isInitialAuthReady ? 'auth-system-ready' : 'initial-load'
       });
-      logCountRef.current++;
+      hasLoggedInitialRef.current = true;
     }
     
     prevUserRef.current = context?.user;
     prevAuthReadyRef.current = context?.authReady;
-  }, [context?.user, context?.isLoading, context?.authReady]);
+  }, [context?.user, context?.authReady]);
   
   if (context === undefined) {
     console.log('🔍 [useAuth] No context available, returning defaults');
