@@ -140,7 +140,6 @@ export default function TenantOwnerLeads() {
   // Load leads data function
   const loadLeads = useCallback(async () => {
     if (inFlight.current) {
-      console.log("🔁 [TENANT-OWNER] Load already in flight, skipping");
       return;
     }
 
@@ -149,33 +148,27 @@ export default function TenantOwnerLeads() {
 
     const ctrl = new AbortController();
     try {
-      console.log("🔍 [TENANT-OWNER] Loading leads…");
       const res = await fetch("/api/leads", {
         signal: ctrl.signal,
         // helps avoid stale ISR/route cache, if any
         cache: "no-store",
       });
-      console.log("📊 [TENANT-OWNER] Response status:", res.status);
 
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
 
       const data = await res.json();
-      console.log("📦 [TENANT-OWNER] API response:", data);
       // API may return {records: []} or {leads: []}
       const leadsData = Array.isArray(data?.records)
         ? data.records
         : Array.isArray(data?.leads)
         ? data.leads
         : [];
-      console.log("✅ [TENANT-OWNER] Setting leads:", leadsData.length);
       setLeads(leadsData);
-      console.log("🎯 [TENANT-OWNER] Leads state updated, forcing loading false...");
       setLoading(false);
     } catch (err: any) {
       if (err?.name === "AbortError") {
-        console.log("🛑 [TENANT-OWNER] Leads fetch aborted");
+        // Request was aborted
       } else {
-        console.error("❌ [TENANT-OWNER] Error loading leads:", err);
         toast({
           title: "Error",
           description: "Failed to load leads data",
@@ -184,7 +177,6 @@ export default function TenantOwnerLeads() {
       }
     } finally {
       inFlight.current = false;
-      console.log("🔄 [TENANT-OWNER] Setting loading to false in finally block");
       setLoading(false);
     }
   }, [toast]);
@@ -200,7 +192,6 @@ export default function TenantOwnerLeads() {
     let timer: ReturnType<typeof setInterval> | undefined;
     if (isProduction && enableAutoRefresh) {
       timer = setInterval(() => {
-        console.log("🔄 [TENANT-OWNER] Auto-refreshing leads");
         loadLeads();
       }, 60 * 60 * 1000);
     }
