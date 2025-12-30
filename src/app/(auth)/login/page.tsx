@@ -56,24 +56,12 @@ export default function LoginPage() {
         }
       }
       
-      console.log('🔄 [LOGIN] Redirecting user to:', {
-        role: user.role,
-        redirectPath,
-        referrer: document.referrer,
-        currentPath,
-        isSubdomain
-      });
+      // Redirecting authenticated user - silent mode
       
-      // Immediately preserve state before navigation
-      console.log('🔒 [LOGIN] Preserving auth state before navigation');
+      // Immediately preserve state before navigation - silent mode
       const stateToSave = JSON.stringify({ user, tenant, isLoading: false });
       sessionStorage.setItem('ghost_auth_state', stateToSave);
-      console.log('💾 [LOGIN] Saved state to session storage:', { 
-        length: stateToSave.length, 
-        hasUser: !!user, 
-        hasTenant: !!tenant,
-        isPrivateMode: !window.indexedDB 
-      });
+      // Saved state to session storage - silent mode
       
       // Small delay to ensure state propagation before navigation
       setTimeout(() => {

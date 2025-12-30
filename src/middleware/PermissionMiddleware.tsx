@@ -344,13 +344,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
       }
     }, 5000); // 5 second timeout
 
-    console.log('🔍 [ROUTE_GUARD] Starting authorization check:', {
-      pathname,
-      authReady,
-      hasUser: !!user,
-      userRole: user?.role,
-      isLoading
-    });
+    // Starting authorization check - silent mode
 
     // Define public paths that don't require authentication
     const publicPaths = [
@@ -596,18 +590,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
                          isAuthorized === null ? 'authorization not determined' : 
                          'checking redirects';
     
-    console.log('🔄 [ROUTE_GUARD] Showing loading state:', {
-      authReady,
-      isAuthorized,
-      isCheckingRedirect,
-      pathname,
-      loadingReason,
-      breakdown: {
-        'authReady_false': !authReady,
-        'isAuthorized_null': isAuthorized === null,
-        'isCheckingRedirect_true': isCheckingRedirect
-      }
-    });
+    // Showing loading state - silent mode
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>

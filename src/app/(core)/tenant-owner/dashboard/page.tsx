@@ -165,7 +165,7 @@ function TenantOwnerDashboard() {
       }
 
       // Skip onboarding check - allow access to dashboard
-      console.log('✅ [TENANT-OWNER-DASHBOARD] Owner access granted, proceeding to dashboard');
+      // Owner access granted, proceeding to dashboard - silent mode
       setOnboardingLoading(false);
     }
 
