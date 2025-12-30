@@ -33,12 +33,15 @@ function getJwtFromCookie(): string | null {
   
   const cookies = document.cookie.split(';');
   console.log('[AUTH_DEBUG] All cookies:', document.cookie);
+  console.log('[AUTH_DEBUG] Cookie count:', cookies.length);
   
   for (let cookie of cookies) {
     const [name, value] = cookie.trim().split('=');
+    console.log('[AUTH_DEBUG] Checking cookie:', name, 'has value:', !!value);
     if (name === 'ghostcrm_jwt') {
       console.log('[AUTH_DEBUG] Found JWT cookie, length:', value?.length || 0);
-      return value;
+      console.log('[AUTH_DEBUG] JWT cookie value preview:', value?.substring(0, 50) + '...');
+      return decodeURIComponent(value); // Make sure to decode the cookie value
     }
   }
   
@@ -65,12 +68,26 @@ function parseJwtPayload(token: string): any {
  */
 function isJwtValid(token: string): boolean {
   try {
+    console.log('[AUTH_DEBUG] Validating JWT token, length:', token?.length);
     const payload = parseJwtPayload(token);
-    if (!payload || !payload.exp) return false;
+    console.log('[AUTH_DEBUG] JWT payload:', payload);
+    
+    if (!payload || !payload.exp) {
+      console.log('[AUTH_DEBUG] JWT invalid: no payload or expiration');
+      return false;
+    }
     
     const currentTime = Math.floor(Date.now() / 1000);
-    return payload.exp > currentTime;
-  } catch {
+    const isValid = payload.exp > currentTime;
+    console.log('[AUTH_DEBUG] JWT expiration check:', {
+      exp: payload.exp,
+      current: currentTime,
+      valid: isValid
+    });
+    
+    return isValid;
+  } catch (error) {
+    console.log('[AUTH_DEBUG] JWT validation error:', error);
     return false;
   }
 }
@@ -81,15 +98,15 @@ function isJwtValid(token: string): boolean {
 async function getCachedAuthData() {
   const now = Date.now();
   
-  // Rate limiting - prevent excessive auth calls
-  if (now - lastAuthCall < MIN_AUTH_INTERVAL) {
-    console.log('[AUTH_DEBUG] Rate limited: returning cached auth data:', cachedAuthData);
+  // Return cached auth data if it's still fresh and valid
+  if (cachedAuthData.source !== 'none' && (now - authCacheTime) < CACHE_DURATION) {
+    console.log('[AUTH_DEBUG] Returning fresh cached auth data:', cachedAuthData);
     return cachedAuthData;
   }
   
-  // Return cached auth data if it's still fresh
-  if (cachedAuthData.source !== 'none' && (now - authCacheTime) < CACHE_DURATION) {
-    console.log('[AUTH_DEBUG] Returning fresh cached auth data:', cachedAuthData);
+  // Rate limiting - prevent excessive auth calls, but only if we have valid auth data
+  if (cachedAuthData.source !== 'none' && (now - lastAuthCall) < MIN_AUTH_INTERVAL) {
+    console.log('[AUTH_DEBUG] Rate limited: returning cached auth data:', cachedAuthData);
     return cachedAuthData;
   }
   
