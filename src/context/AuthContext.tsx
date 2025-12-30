@@ -30,11 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Enhanced logging for state changes
   const setUserWithLogging = (newUser: User | null) => {
     if (newUser !== user) {
-      console.log('🔄 [AUTH] User state changing:', { 
-        from: user?.email || 'null', 
-        to: newUser?.email || 'null',
-        stack: new Error().stack?.split('\n')[1]?.trim()
-      });
+      // User state changing - silent mode
       setUser(newUser);
     }
   };
@@ -42,13 +38,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initialize auth state on mount
   useEffect(() => {
     if (!initializingRef.current) {
-      console.log('🔧 [AUTH] AuthProvider mounted, calling initializeAuth');
+      // AuthProvider mounted, calling initializeAuth - silent mode
       initializingRef.current = true;
       initializeAuth().finally(() => {
         initializingRef.current = false;
       });
     } else {
-      console.log('🚫 [AUTH] AuthProvider mount blocked - already initializing');
+      // AuthProvider mount blocked - already initializing
     }
   }, []);
 
@@ -57,19 +53,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (previousPathRef.current && previousPathRef.current !== pathname) {
       // Only log route changes that matter for auth restoration
       if (!user && authReady && !initializingRef.current) {
-        console.log('🛣️ [AUTH] Route change - user lost, checking preservation:', { 
-          from: previousPathRef.current, 
-          to: pathname 
-        });
+        // Route change - user lost, checking preservation - silent mode
         
         if (typeof window !== 'undefined') {
           const preserved = sessionStorage.getItem('ghost_auth_state');
           const backup = sessionStorage.getItem('ghost_auth_backup');
           
           if (preserved || backup) {
-            console.log('🔄 [AUTH] Found preserved state after route change, calling initializeAuth');
+            // Found preserved state after route change, calling initializeAuth - silent mode
             initializeAuth(true).catch(error => {
-              console.error('❌ [AUTH] Route change restoration failed:', error);
+              // Route change restoration failed - silent mode
             });
           }
         }
@@ -81,20 +74,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Simple state preservation - preserve when user changes
   useEffect(() => {
     if (user && user.email && tenant) {
-      console.log('💾 [AUTH] User state updated, preserving for navigation');
+      // User state updated, preserving for navigation - silent mode
       const backupState = JSON.stringify({ user, tenant });
       sessionStorage.setItem('ghost_auth_backup', backupState);
-      console.log('💾 [AUTH] Backup state saved:', { 
-        userEmail: user.email, 
-        tenantId: tenant.id,
-        length: backupState.length 
-      });
     }
   }, [user, tenant]);
 
   async function initializeAuth(skipLoadingState = false) {
     try {
-      console.log('🔧 [AUTH] initializeAuth called:', { skipLoadingState });
+      // Initialize auth - silent mode
       
       // Always check for preserved state first (for navigation scenarios)
       if (typeof window !== 'undefined') {
@@ -102,37 +90,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const backup = sessionStorage.getItem('ghost_auth_backup');
         const stateToRestore = preserved || backup;
         
-        console.log('🔍 [AUTH] Checking for preserved state:', { 
-          hasPreserved: !!preserved, 
-          hasBackup: !!backup,
-          hasCurrentUser: !!user,
-          preservedLength: preserved?.length || 0,
-          backupLength: backup?.length || 0,
-          isPrivateMode: !window.indexedDB, // Simple private mode detection
-          initializingFlag: initializingRef.current,
-          stateToRestore: stateToRestore ? 'FOUND' : 'NONE',
-          skipLoadingState
-        });
+        // Checking for preserved state - silent mode
         
         if (stateToRestore) {
           try {
             const parsedState = JSON.parse(stateToRestore);
             const { user: preservedUser, tenant: preservedTenant } = parsedState;
             
-            console.log('🔍 [AUTH] Parsed preserved state:', {
-              hasUser: !!preservedUser,
-              hasTenant: !!preservedTenant,
-              userEmail: preservedUser?.email,
-              userRole: preservedUser?.role
-            });
+            // Parsed preserved state - silent mode
             
             if (preservedUser && preservedUser.email) {
-              console.log('♻️ [AUTH] Restoring preserved state:', { 
-                userEmail: preservedUser.email, 
-                userRole: preservedUser.role,
-                source: preserved ? 'ghost_auth_state' : 'ghost_auth_backup',
-                tenantId: preservedUser.tenantId
-              });
+              // Restoring preserved state - silent mode
               
               // Create tenant from preserved user if not provided
               const tenantToSet = preservedTenant || {
@@ -156,26 +124,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // Only clean up the primary storage, keep backup temporarily
               if (preserved) {
                 sessionStorage.removeItem('ghost_auth_state');
-                console.log('🧹 [AUTH] Removed ghost_auth_state, keeping backup for redundancy');
+                // Removed ghost_auth_state, keeping backup for redundancy
               }
               
-              console.log('✅ [AUTH] Successfully restored from preserved state - RETURNING EARLY');
+              // Successfully restored from preserved state
               return; // Skip API call if we restored from session
             } else {
-              console.log('❌ [AUTH] Preserved state invalid - no user or email found');
+              // Preserved state invalid - no user or email found
             }
           } catch (error) {
-            console.error('❌ [AUTH] Error parsing preserved state:', error);
+            // Error parsing preserved state - silent mode
             sessionStorage.removeItem('ghost_auth_state');
             sessionStorage.removeItem('ghost_auth_backup');
           }
         } else {
-          console.log('❌ [AUTH] No preserved state found - continuing with API check');
+          // No preserved state found - continuing with API check
         }
       }
       
       if (!skipLoadingState) {
-        console.log('🔧 [AUTH] Setting loading state to true');
+        // Setting loading state - silent mode
         setIsLoading(true);
       }
       
@@ -185,10 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         credentials: 'include' // Include cookies
       });
       
-      console.log('🔧 [AUTH] Auth check response:', { 
-        ok: response.ok, 
-        status: response.status 
-      });
+      // Auth check response - silent mode
       
       if (response.ok) {
         const userData = await response.json();
@@ -257,39 +222,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           setUser(authUser);
           setTenant(authTenant);
-          console.log('✅ [AUTH] User and tenant set:', { 
-            userEmail: authUser.email, 
-            userRole: authUser.role,
-            tenantId: authUser.tenantId 
-          });
+          // User and tenant set - silent mode
         } else {
           // No valid JWT cookie found
-          console.log('❌ [AUTH] No valid auth found, clearing user state');
+          // No valid auth found - clearing user state
           setUser(null);
           setTenant(null);
         }
       } else {
         // Response not ok
-        console.log('❌ [AUTH] Auth response not ok, clearing user state');
+        // Auth response not ok - clearing user state
         setUser(null);
         setTenant(null);
       }
     } catch (error) {
-        console.error('❌ [AUTH] Error initializing auth:', error);
+        // Error initializing auth - silent mode
         localStorage.removeItem('auth_token');
         setUser(null);
         setTenant(null);
       } finally {
         if (!skipLoadingState) {
-          console.log('🔧 [AUTH] Setting loading state to false');
+          // Setting loading state to false - silent mode
           setIsLoading(false);
         }
-        console.log('🔧 [AUTH] Setting authReady to true');
+        // Setting authReady to true - silent mode
         setAuthReady(true); // Auth initialization complete
         
         // Force a small delay to ensure state propagation
         if (skipLoadingState) {
-          console.log('🔧 [AUTH] Forcing state update after login');
+          // Forcing state update after login
           setTimeout(() => {
             setIsLoading(false);
           }, 10);

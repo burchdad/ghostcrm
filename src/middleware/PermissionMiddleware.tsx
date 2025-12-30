@@ -376,7 +376,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
 
     // If it's a public path, allow access without authentication
     if (isPublicPath) {
-      console.log('✅ [ROUTE_GUARD] Public path access granted:', pathname);
+      // Public path access granted
       setAuthorizationResult(true);
       return;
     }
@@ -405,7 +405,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
           
           // Check if session is still valid
           if (expires > new Date()) {
-            console.log('✅ [ROUTE_GUARD] Owner session valid, allowing access to:', pathname);
+            // Owner session valid - allowing access
             setAuthorizationResult(true);
             return;
           } else {
@@ -489,7 +489,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     // Check if current path should be redirected to tenant-specific route
     const redirectTarget = tenantRouteRedirects[pathname]?.[user.role];
     if (redirectTarget) {
-      console.log(`🔄 [ROUTE_GUARD] Redirecting ${user.role} from ${pathname} to ${redirectTarget}`);
+      // Redirecting user to appropriate path
       authCheckInProgress.current = false;
       setIsCheckingRedirect(false); // Complete redirect check
       router.push(redirectTarget);
@@ -514,7 +514,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     
     if (!routeConfig) {
       // No specific route protection, allow access
-      console.log('✅ [ROUTE_GUARD] No route config found, allowing access');
+      // No route config found - allowing access
       console.log('🔧 [ROUTE_GUARD] Setting isCheckingRedirect=false, isAuthorized=true');
       
       // Use the helper function for consistent state management
@@ -586,7 +586,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
       return;
     }
 
-    console.log('✅ [ROUTE_GUARD] All checks passed, authorizing access');
+    // All checks passed - authorizing access
     setAuthorizationResult(true);
   }, [authReady, user?.role, user?.id, pathname]); // Removed hasPermission and router to prevent unnecessary re-runs
 

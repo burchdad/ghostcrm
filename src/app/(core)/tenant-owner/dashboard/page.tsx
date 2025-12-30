@@ -92,12 +92,7 @@ function TenantOwnerDashboard() {
   const { user, tenant, authReady } = useAuth();
   const router = useRouter();
   
-  console.log('🏢 [TENANT-DASHBOARD] Component rendered:', {
-    hasUser: !!user,
-    userRole: user?.role,
-    userEmail: user?.email,
-    hasTenant: !!tenant
-  });
+  // Tenant dashboard component rendered - silent mode
   
   // Force deployment refresh - Dashboard page updated Dec 8, 2025
   const [analytics, setAnalytics] = useState<TenantOwnerAnalytics>({

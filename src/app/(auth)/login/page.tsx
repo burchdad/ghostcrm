@@ -77,7 +77,7 @@ export default function LoginPage() {
       
       // Small delay to ensure state propagation before navigation
       setTimeout(() => {
-        console.log('🚀 [LOGIN] Executing navigation to:', redirectPath);
+        // Executing navigation to dashboard
         router.push(redirectPath);
       }, 50);
     }
