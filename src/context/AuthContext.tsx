@@ -55,15 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Route change detection - check for preserved state on navigation
   useEffect(() => {
     if (previousPathRef.current && previousPathRef.current !== pathname) {
-      console.log('🛣️ [AUTH] Route change detected:', { 
-        from: previousPathRef.current, 
-        to: pathname,
-        hasUser: !!user 
-      });
-      
-      // If we lost the user during navigation, try to restore from preserved state
+      // Only log route changes that matter for auth restoration
       if (!user && authReady && !initializingRef.current) {
-        console.log('🔄 [AUTH] User lost during navigation, attempting state restoration');
+        console.log('🛣️ [AUTH] Route change - user lost, checking preservation:', { 
+          from: previousPathRef.current, 
+          to: pathname 
+        });
+        
         if (typeof window !== 'undefined') {
           const preserved = sessionStorage.getItem('ghost_auth_state');
           const backup = sessionStorage.getItem('ghost_auth_backup');
@@ -410,23 +408,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   
-  // Debug logging - only for significant state changes
+  // Debug logging - only for meaningful transitions
   const prevUserRef = React.useRef<User | null>();
   const prevAuthReadyRef = React.useRef<boolean>();
+  const logCountRef = React.useRef(0);
   
   React.useEffect(() => {
     const userChanged = prevUserRef.current !== context?.user;
     const authReadyChanged = prevAuthReadyRef.current !== context?.authReady;
     
-    if (userChanged || authReadyChanged) {
-      console.log('🔍 [useAuth] Significant state change:', {
-        hasContext: !!context,
-        user: context?.user ? { email: context.user.email, role: context.user.role } : null,
-        isLoading: context?.isLoading,
+    // Only log initial auth, user login/logout, and auth ready state changes
+    const shouldLog = (
+      (userChanged && (context?.user || prevUserRef.current)) || // User login/logout only
+      (authReadyChanged && context?.authReady) || // Auth ready transition only
+      (logCountRef.current < 2) // Allow first few logs for debugging
+    );
+    
+    if (shouldLog) {
+      console.log('🔍 [useAuth] State transition:', {
+        user: context?.user?.email || 'null',
         authReady: context?.authReady,
-        userChanged,
-        authReadyChanged
+        isLoading: context?.isLoading,
+        trigger: userChanged ? 'user-change' : authReadyChanged ? 'auth-ready' : 'initial'
       });
+      logCountRef.current++;
     }
     
     prevUserRef.current = context?.user;
