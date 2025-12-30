@@ -491,15 +491,6 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     // Find matching route configuration (includes /billing rule above)
     const routeConfig = PROTECTED_ROUTES.find(route => startsWithSeg(pathname, route.path));
     
-    console.log('🔍 [ROUTE_GUARD] Route matching debug:', {
-      pathname,
-      userRole: user.role,
-      foundRoute: routeConfig?.path,
-      requireTenantAccess: routeConfig?.requireTenantAccess,
-      allowedRoles: routeConfig?.allowedRoles,
-      userTenantId: user.tenantId
-    });
-    
     if (!routeConfig) {
       // No specific route protection, allow access
       // No route config found - allowing access
