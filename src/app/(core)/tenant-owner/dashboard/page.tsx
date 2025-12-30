@@ -153,7 +153,7 @@ function TenantOwnerDashboard() {
 
   // Onboarding guard for tenant owners
   useEffect(() => {
-    console.log('🔧 [TENANT-DASHBOARD] Onboarding check useEffect:', { user, router });
+    // Onboarding check effect - silent mode
     
     async function checkOnboardingStatus() {
       if (!user) {
@@ -179,7 +179,7 @@ function TenantOwnerDashboard() {
 
   // Redirect non-owners to regular dashboard
   useEffect(() => {
-    console.log('🔧 [TENANT-DASHBOARD] Redirect check useEffect:', { loading, user, userRole: user?.role, authReady });
+    // Redirect check effect - silent mode
     
     // Only redirect if auth is ready and we have a user who is not an owner
     if (!loading && authReady && user && user.role !== 'owner') {
@@ -238,11 +238,11 @@ function TenantOwnerDashboard() {
 
   // Fetch owner-specific analytics
   useEffect(() => {
-    console.log('🔧 [TENANT-DASHBOARD] Analytics fetch useEffect:', { user });
+    // Analytics fetch effect - silent mode
     
     async function fetchOwnerAnalytics() {
       try {
-        console.log('📊 [TENANT-DASHBOARD] Starting analytics fetch...');
+        // Starting analytics fetch - silent mode
         setLoading(true);
         
         // Check for success message from chart generation
@@ -436,7 +436,7 @@ function TenantOwnerDashboard() {
   };
 
   if (loading || onboardingLoading) {
-    console.log('🔄 [TENANT-DASHBOARD] Showing loading state:', { loading, onboardingLoading });
+    // Showing loading state - silent mode
     return (
       <div className="tenant-dashboard-loading">
         <div className="tenant-dashboard-loading-spinner">

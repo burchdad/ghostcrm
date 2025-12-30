@@ -311,19 +311,11 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
   }, []);
 
   useEffect(() => {
-    console.log('🔄 [ROUTE_GUARD] useEffect triggered:', {
-      authReady,
-      pathname,
-      isAuthorized,
-      isCheckingRedirect,
-      hasUser: !!user,
-      userRole: user?.role,
-      authCheckInProgress: authCheckInProgress.current
-    });
+    // Route guard effect - silent mode for production
 
     // Reset authorization state when auth context changes
     if (!authReady) {
-      console.log('🔄 [ROUTE_GUARD] Auth not ready, resetting state');
+      // Auth not ready, resetting state
       setIsAuthorized(null);
       setIsCheckingRedirect(true);
       authCheckInProgress.current = false;
@@ -332,12 +324,12 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
 
     // If already authorized and not checking redirects, don't re-run unless user/path changes
     if (isAuthorized === true && !isCheckingRedirect && authCheckInProgress.current === false) {
-      console.log('✅ [ROUTE_GUARD] Already authorized and stable, skipping check');
+      // Already authorized and stable, skipping check
       return;
     }
     
     if (authCheckInProgress.current) {
-      console.log('🔄 [ROUTE_GUARD] Auth check already in progress, skipping...');
+      // Auth check already in progress, skipping
       return; // Critical: don't decide if check is already in progress
     }
 

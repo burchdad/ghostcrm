@@ -408,48 +408,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   
-  // Production-ready logging - eliminate console spam completely
-  const hasLoggedRef = React.useRef({
-    initial: false,
-    login: '',
-    logout: false,
-    authReady: false
-  });
+  // Silent production mode - no console logging for performance
+  // Only enable logging in development for debugging if needed
+  const isDev = process.env.NODE_ENV === 'development';
+  const hasLoggedRef = React.useRef(false);
   
   React.useEffect(() => {
-    if (!context) return;
+    if (!context || !isDev || hasLoggedRef.current) return;
     
     const currentUser = context.user?.email || null;
-    const logs = hasLoggedRef.current;
     
-    // Only log once per session for each type of event
-    if (!logs.initial && context.authReady) {
-      // Initial system ready - log once per session
-      console.log('🔍 [useAuth] System ready:', {
-        user: currentUser || 'anonymous',
-        authReady: true,
-        event: 'session-start'
-      });
-      logs.initial = true;
-      logs.authReady = true;
-      if (currentUser) {
-        logs.login = currentUser;
-      }
-    } else if (currentUser && logs.login !== currentUser && logs.initial) {
-      // User login - only if different user than before
-      console.log('🔍 [useAuth] User login:', {
+    // Only log once per browser session in development mode
+    if (context.authReady && currentUser) {
+      console.log('🔍 [useAuth] Session initialized:', {
         user: currentUser,
-        event: 'user-login'
+        event: 'auth-ready'
       });
-      logs.login = currentUser;
-      logs.logout = false;
-    } else if (!currentUser && logs.login && !logs.logout) {
-      // User logout - only once per logout
-      console.log('🔍 [useAuth] User logout:', {
-        event: 'user-logout'
-      });
-      logs.logout = true;
-      logs.login = '';
+      hasLoggedRef.current = true;
     }
   }, [context?.user?.email, context?.authReady]);
   
