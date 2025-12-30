@@ -338,7 +338,6 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
 
     // Set a timeout as a safety net to prevent infinite loading
     checkTimeoutRef.current = setTimeout(() => {
-      console.log('⚠️ [ROUTE_GUARD] Auth check timeout, forcing authorization');
       if (authCheckInProgress.current) {
         setAuthorizationResult(true);
       }
@@ -377,11 +376,6 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
 
     // If not logged in and not on public path, redirect to login
     if (!user) {
-      console.log('❌ [ROUTE_GUARD] No user found, redirecting to login:', {
-        pathname,
-        authReady,
-        isLoading
-      });
       authCheckInProgress.current = false;
       setIsCheckingRedirect(false);
       router.push('/login');
@@ -529,13 +523,6 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     }
 
     // Check tenant access if required
-    console.log('🏢 [ROUTE_GUARD] Tenant access check:', {
-      requireTenantAccess: routeConfig.requireTenantAccess,
-      userTenantId: user.tenantId,
-      userRole: user.role,
-      pathname
-    });
-    
     if (routeConfig.requireTenantAccess && !user.tenantId) {
       // Special case: if user is an owner and we're on a tenant subdomain, allow access
       // This handles the case where owner logs in via subdomain but JWT doesn't have tenantId yet
