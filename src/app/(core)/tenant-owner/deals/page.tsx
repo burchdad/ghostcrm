@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { authenticatedFetch } from '@/lib/auth/client';
 import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
 import { Card } from "@/components/ui/card";
@@ -52,7 +53,7 @@ export default function TenantOwnerDealsPage() {
     async function fetchData() {
       try {
         // Fetch deals
-        const dealsResponse = await fetch('/api/deals');
+        const dealsResponse = await authenticatedFetch('/api/deals');
         if (dealsResponse.ok) {
           const dealsData = await dealsResponse.json();
           setDeals(dealsData.records || []);
@@ -61,7 +62,7 @@ export default function TenantOwnerDealsPage() {
         }
 
         // Fetch AI suggestions (server-side processed)
-        const aiResponse = await fetch('/api/deals/ai-suggestions');
+        const aiResponse = await authenticatedFetch('/api/deals/ai-suggestions');
         if (aiResponse.ok) {
           const aiData = await aiResponse.json();
           setAiMatches(aiData.suggestions || []);
