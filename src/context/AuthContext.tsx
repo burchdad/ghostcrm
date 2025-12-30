@@ -408,32 +408,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   
-  // Debug logging - only for critical authentication events
-  const prevUserRef = React.useRef<User | null>();
-  const prevAuthReadyRef = React.useRef<boolean>();
-  const hasLoggedInitialRef = React.useRef(false);
+  // Production-ready logging - eliminate console spam completely
+  const hasLoggedRef = React.useRef({
+    initial: false,
+    login: '',
+    logout: false,
+    authReady: false
+  });
   
   React.useEffect(() => {
-    const userChanged = prevUserRef.current !== context?.user;
-    const authReadyChanged = prevAuthReadyRef.current !== context?.authReady;
+    if (!context) return;
     
-    // Only log critical events: initial setup, user login/logout, first auth ready
-    const isUserLoginLogout = userChanged && (context?.user?.email || prevUserRef.current?.email);
-    const isInitialAuthReady = authReadyChanged && context?.authReady && !hasLoggedInitialRef.current;
-    const isInitialLoad = !hasLoggedInitialRef.current && context?.user?.email;
+    const currentUser = context.user?.email || null;
+    const logs = hasLoggedRef.current;
     
-    if (isUserLoginLogout || isInitialAuthReady || isInitialLoad) {
-      console.log('🔍 [useAuth] Critical event:', {
-        user: context?.user?.email || 'logged-out',
-        authReady: context?.authReady,
-        event: isUserLoginLogout ? 'user-auth-change' : isInitialAuthReady ? 'auth-system-ready' : 'initial-load'
+    // Only log once per session for each type of event
+    if (!logs.initial && context.authReady) {
+      // Initial system ready - log once per session
+      console.log('🔍 [useAuth] System ready:', {
+        user: currentUser || 'anonymous',
+        authReady: true,
+        event: 'session-start'
       });
-      hasLoggedInitialRef.current = true;
+      logs.initial = true;
+      logs.authReady = true;
+      if (currentUser) {
+        logs.login = currentUser;
+      }
+    } else if (currentUser && logs.login !== currentUser && logs.initial) {
+      // User login - only if different user than before
+      console.log('🔍 [useAuth] User login:', {
+        user: currentUser,
+        event: 'user-login'
+      });
+      logs.login = currentUser;
+      logs.logout = false;
+    } else if (!currentUser && logs.login && !logs.logout) {
+      // User logout - only once per logout
+      console.log('🔍 [useAuth] User logout:', {
+        event: 'user-logout'
+      });
+      logs.logout = true;
+      logs.login = '';
     }
-    
-    prevUserRef.current = context?.user;
-    prevAuthReadyRef.current = context?.authReady;
-  }, [context?.user, context?.authReady]);
+  }, [context?.user?.email, context?.authReady]);
   
   if (context === undefined) {
     console.log('🔍 [useAuth] No context available, returning defaults');

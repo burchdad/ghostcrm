@@ -53,9 +53,6 @@ interface QRFeature {
 export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalProps) {
   const { toast } = useToast();
   
-  // Debug logging
-  console.log("🔍 [QR MODAL] Component rendered with props:", { isOpen, vehicle: vehicle?.id });
-  
   // QR Configuration State
   const [qrConfig, setQRConfig] = useState({
     vehicleInfo: {
@@ -305,19 +302,9 @@ export default function QRCodeModal({ isOpen, onClose, vehicle }: QRCodeModalPro
     }));
   };
 
-  console.log("🔍 [QR MODAL] Rendering with vehicle:", vehicle);
-  console.log("🔍 [QR MODAL] isOpen:", isOpen);
-  console.log("🔍 [QR MODAL] onClose function:", typeof onClose);
-
-  // Force the modal to stay open for debugging
-  const forceOpen = isOpen;
-
   return (
-    <Dialog open={forceOpen} onOpenChange={(open) => {
-      console.log('🔍 [QR MODAL] onOpenChange called with:', open);
-      console.log('🔍 [QR MODAL] Current isOpen state:', isOpen);
-      if (!open && isOpen) {
-        console.log('🔍 [QR MODAL] Calling onClose');
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
         onClose();
       }
     }}>
