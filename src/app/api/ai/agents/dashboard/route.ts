@@ -14,7 +14,6 @@ export async function POST(request: NextRequest) {
                   request.cookies.get('jwt')?.value;
     
     if (!token) {
-      console.log('⚠️ [AI-AGENT-API] Authentication failed - no token');
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
@@ -22,27 +21,18 @@ export async function POST(request: NextRequest) {
     try {
       decoded = verifyJwtToken(token);
     } catch (error: any) {
-      console.log('⚠️ [AI-AGENT-API] Authentication failed - invalid token:', error.message);
       return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
     }
 
     if (!decoded || !decoded.organizationId) {
-      console.log('⚠️ [AI-AGENT-API] Authentication failed - missing organization');
       return NextResponse.json({ error: 'Authentication failed for agent dashboard' }, { status: 401 });
     }
 
     // Parse request body
     const body = await request.json();
-    console.log('🤖 [AI-AGENT-API] Dashboard request:', {
-      organizationId: decoded.organizationId,
-      userId: decoded.userId,
-      action: body.action,
-      fullBody: body
-    });
 
     // Validate action parameter
     if (!body.action) {
-      console.log('❌ [AI-AGENT-API] No action provided, defaulting to health_check');
       body.action = 'health_check';
     }
 
@@ -126,7 +116,6 @@ export async function POST(request: NextRequest) {
         });
 
       default:
-        console.log('❌ [AI-AGENT-API] Unknown action:', body.action);
         return NextResponse.json({
           success: false,
           error: 'Unknown agent action',
@@ -135,7 +124,6 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error: any) {
-    console.error('❌ [AI-AGENT-API] Error in dashboard endpoint:', error);
     return NextResponse.json({
       success: false,
       error: 'Agent dashboard error',

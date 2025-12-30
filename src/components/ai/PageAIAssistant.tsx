@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Bot, Lightbulb, TrendingUp, AlertCircle, RefreshCw, X } from 'lucide-react';
-import { authenticatedFetch } from '@/lib/auth/client';
+import { authenticatedFetch, isAuthenticated } from '@/lib/auth/client';
 
 interface AIInsight {
   id: string;
