@@ -79,7 +79,6 @@
   .dropdownMenu {
     position: absolute;
     position-anchor: --dropdown-anchor;
-    inset-area: bottom right;
     margin: 8px 0;
   }
 }

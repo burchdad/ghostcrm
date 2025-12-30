@@ -73,7 +73,7 @@ export class SupabaseAgentDataConnector implements AgentDataConnector {
           assigned_to,
           conversion_probability,
           estimated_value,
-          stage,
+          stage
         `)
         .order('created_at', { ascending: false });
 

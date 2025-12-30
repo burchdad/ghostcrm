@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
           phone
         )
       `)
-      .or(`organization_id.eq.${org_id},org_id.eq.${org_id}`) // Handle both column naming conventions
+      .eq('organization_id', org_id) // Use correct column name
       .not('stage', 'in', '(closed,lost)')
       .order('updated_at', { ascending: false });
 

@@ -26,15 +26,23 @@ function getSupabaseClient() {
  * Get JWT token from cookies
  */
 function getJwtFromCookie(): string | null {
-  if (typeof document === 'undefined') return null;
+  if (typeof document === 'undefined') {
+    console.log('[AUTH_DEBUG] getJwtFromCookie: document undefined (SSR)');
+    return null;
+  }
   
   const cookies = document.cookie.split(';');
+  console.log('[AUTH_DEBUG] All cookies:', document.cookie);
+  
   for (let cookie of cookies) {
     const [name, value] = cookie.trim().split('=');
     if (name === 'ghostcrm_jwt') {
+      console.log('[AUTH_DEBUG] Found JWT cookie, length:', value?.length || 0);
       return value;
     }
   }
+  
+  console.log('[AUTH_DEBUG] No JWT cookie found');
   return null;
 }
 
@@ -75,12 +83,13 @@ async function getCachedAuthData() {
   
   // Rate limiting - prevent excessive auth calls
   if (now - lastAuthCall < MIN_AUTH_INTERVAL) {
-    console.debug('Rate limited: returning cached auth data');
+    console.log('[AUTH_DEBUG] Rate limited: returning cached auth data:', cachedAuthData);
     return cachedAuthData;
   }
   
   // Return cached auth data if it's still fresh
   if (cachedAuthData.source !== 'none' && (now - authCacheTime) < CACHE_DURATION) {
+    console.log('[AUTH_DEBUG] Returning fresh cached auth data:', cachedAuthData);
     return cachedAuthData;
   }
   
@@ -89,8 +98,10 @@ async function getCachedAuthData() {
   try {
     // First, try JWT cookie authentication (primary method)
     const jwtToken = getJwtFromCookie();
+    console.log('[AUTH_DEBUG] JWT token from cookie:', jwtToken ? `Found (${jwtToken.length} chars)` : 'Not found');
+    
     if (jwtToken && isJwtValid(jwtToken)) {
-      console.debug('Authentication via JWT cookie successful');
+      console.log('[AUTH_DEBUG] JWT validation successful');
       cachedAuthData = { token: jwtToken, source: 'jwt' };
       authCacheTime = now;
       return cachedAuthData;
@@ -99,25 +110,25 @@ async function getCachedAuthData() {
     // Only try Supabase session if JWT is not available
     // and we don't have fresh cache data
     if (cachedAuthData.source === 'none' || (now - authCacheTime) > CACHE_DURATION) {
-      console.debug('JWT cookie not found or invalid, trying Supabase session...');
+      console.log('[AUTH_DEBUG] JWT cookie not found or invalid, trying Supabase session...');
       const supabase = getSupabaseClient();
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (!error && session?.access_token) {
-        console.debug('Authentication via Supabase session successful');
+        console.log('[AUTH_DEBUG] Supabase session successful');
         cachedAuthData = { token: session.access_token, source: 'supabase' };
         authCacheTime = now;
         return cachedAuthData;
       }
     }
     
-    console.debug('No valid authentication found');
+    console.log('[AUTH_DEBUG] No valid authentication found');
     cachedAuthData = { source: 'none' };
     authCacheTime = now;
     return cachedAuthData;
     
   } catch (error) {
-    console.error('Error fetching authentication data:', error);
+    console.error('[AUTH_DEBUG] Error fetching authentication data:', error);
     cachedAuthData = { source: 'none' };
     authCacheTime = now;
     return cachedAuthData;
@@ -140,13 +151,15 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
   try {
     const authData = await getCachedAuthData();
     
+    console.log('[AUTH_DEBUG] getAuthHeaders - authData:', authData);
+    
     if (authData.source === 'none') {
-      console.debug('No authentication available for API call');
+      console.log('[AUTH_DEBUG] No authentication available for API call');
       return {};
     }
     
     if (authData.source === 'jwt' && authData.token) {
-      console.debug('Using JWT Bearer token for API call');
+      console.log('[AUTH_DEBUG] Using JWT Bearer token for API call, token length:', authData.token.length);
       return {
         'Authorization': `Bearer ${authData.token}`,
         'Content-Type': 'application/json'
@@ -154,16 +167,17 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
     }
     
     if (authData.source === 'supabase' && authData.token) {
-      console.debug('Using Supabase Bearer token for API call');
+      console.log('[AUTH_DEBUG] Using Supabase Bearer token for API call');
       return {
         'Authorization': `Bearer ${authData.token}`,
         'Content-Type': 'application/json'
       };
     }
     
+    console.log('[AUTH_DEBUG] No valid auth source found');
     return {};
   } catch (error) {
-    console.error('Error getting auth headers:', error);
+    console.error('[AUTH_DEBUG] Error getting auth headers:', error);
     return {};
   }
 }
@@ -182,7 +196,9 @@ export async function authenticatedFetch(
     const authData = await getCachedAuthData();
     const authHeaders = await getAuthHeaders();
     
-    console.debug(`Making API request to ${url} with auth type: ${authData.source}`);
+    console.log('[AUTH_DEBUG] Making API request to', url);
+    console.log('[AUTH_DEBUG] Auth data:', authData);
+    console.log('[AUTH_DEBUG] Auth headers:', authHeaders);
     
     const response = await fetch(url, {
       ...options,
@@ -193,12 +209,11 @@ export async function authenticatedFetch(
       }
     });
 
-    // Log response status for debugging
-    console.debug(`API response from ${url}: ${response.status} ${response.statusText}`);
+    console.log('[AUTH_DEBUG] Response status:', response.status, response.statusText);
     
     return response;
   } catch (error) {
-    console.error(`Error making authenticated request to ${url}:`, error);
+    console.error(`[AUTH_DEBUG] Error making authenticated request to ${url}:`, error);
     throw error;
   }
 }
