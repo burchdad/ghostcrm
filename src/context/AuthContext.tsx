@@ -58,8 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('🛣️ [AUTH] Route change detected:', { 
         from: previousPathRef.current, 
         to: pathname,
-        hasUser: !!user,
-        authReady 
+        hasUser: !!user 
       });
       
       // If we lost the user during navigation, try to restore from preserved state
@@ -411,14 +410,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   
-  // Debug logging
+  // Debug logging - only for significant state changes
+  const prevUserRef = React.useRef<User | null>();
+  const prevAuthReadyRef = React.useRef<boolean>();
+  
   React.useEffect(() => {
-    console.log('🔍 [useAuth] Context update:', {
-      hasContext: !!context,
-      user: context?.user ? { email: context.user.email, role: context.user.role } : null,
-      isLoading: context?.isLoading,
-      authReady: context?.authReady
-    });
+    const userChanged = prevUserRef.current !== context?.user;
+    const authReadyChanged = prevAuthReadyRef.current !== context?.authReady;
+    
+    if (userChanged || authReadyChanged) {
+      console.log('🔍 [useAuth] Significant state change:', {
+        hasContext: !!context,
+        user: context?.user ? { email: context.user.email, role: context.user.role } : null,
+        isLoading: context?.isLoading,
+        authReady: context?.authReady,
+        userChanged,
+        authReadyChanged
+      });
+    }
+    
+    prevUserRef.current = context?.user;
+    prevAuthReadyRef.current = context?.authReady;
   }, [context?.user, context?.isLoading, context?.authReady]);
   
   if (context === undefined) {
