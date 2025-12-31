@@ -1,16 +1,20 @@
 import { NextRequest } from "next/server";
-import { supaFromReq } from "@/lib/supa-ssr";
-import { getMembershipOrgId } from "@/lib/rbac";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { ok, bad, oops } from "@/lib/http";
-
 
 export const dynamic = 'force-dynamic';
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
 export const runtime = 'nodejs';
 
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 // Auto Dealership Deal Analytics
 export async function GET(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
   const url = new URL(req.url);
   
   // Query parameters for analytics filtering
@@ -20,7 +24,18 @@ export async function GET(req: NextRequest) {
   const vehicleType = url.searchParams.get("vehicle_type") ?? undefined;
   
   try {
-    const org_id = await getMembershipOrgId(s);
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return bad("Authentication required");
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return bad("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(timeframe));
     

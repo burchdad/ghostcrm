@@ -1,12 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import Telnyx from "telnyx";
-import { supaFromReq } from "@/lib/supa-ssr";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
+
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const { s, res } = supaFromReq(req);
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: "User organization not found" }, { status: 401 });
+    }
+
+    const organizationId = user.organizationId;
     const { to, script, leadId } = await req.json();
     
     if (!to || !script) {

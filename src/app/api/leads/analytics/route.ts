@@ -1,16 +1,20 @@
 import { NextRequest } from "next/server";
-import { supaFromReq } from "@/lib/supa-ssr";
-import { getMembershipOrgId } from "@/lib/rbac";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { ok, bad, oops } from "@/lib/http";
-
 
 export const dynamic = 'force-dynamic';
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
 export const runtime = 'nodejs';
 
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 // Auto Dealership Lead Analytics
 export async function GET(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
   const url = new URL(req.url);
   
   // Query parameters for analytics filtering
@@ -19,11 +23,24 @@ export async function GET(req: NextRequest) {
   const includeDetails = url.searchParams.get("details") === "true";
   
   try {
-    const org_id = await getMembershipOrgId(s);
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return bad("Authentication required");
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return bad("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(timeframe));
     
-    if (!org_id) {
+    // For demo purposes, return mock analytics
+    // In production, we'd fetch real data using organizationId
+    if (!organizationId) {
       // Return comprehensive mock analytics for auto dealership
       const mockAnalytics = {
         timeframe: `Last ${timeframe} days`,
@@ -103,42 +120,42 @@ export async function GET(req: NextRequest) {
         }
       };
       
-      return ok(mockAnalytics, res.headers);
+      return ok(mockAnalytics);
     }
 
     try {
       // Get lead counts by stage
-      const { data: stageData, error: stageError } = await s
+      const { data: stageData, error: stageError } = await supabaseAdmin
         .from("leads")
         .select("stage")
-        .eq("org_id", org_id)
+        .eq("organization_id", organizationId)
         .gte("created_at", startDate.toISOString());
       
       if (stageError) throw new Error(stageError.message);
       
       // Get lead counts by source
-      const { data: sourceData, error: sourceError } = await s
+      const { data: sourceData, error: sourceError } = await supabaseAdmin
         .from("leads")
         .select("source, stage")
-        .eq("org_id", org_id)
+        .eq("organization_id", organizationId)
         .gte("created_at", startDate.toISOString());
       
       if (sourceError) throw new Error(sourceError.message);
       
       // Get vehicle interest data
-      const { data: vehicleData, error: vehicleError } = await s
+      const { data: vehicleData, error: vehicleError } = await supabaseAdmin
         .from("leads")
         .select("vehicle_interest, financing_info")
-        .eq("org_id", org_id)
+        .eq("organization_id", organizationId)
         .gte("created_at", startDate.toISOString());
       
       if (vehicleError) throw new Error(vehicleError.message);
       
       // Get lead scores and priority data
-      const { data: scoreData, error: scoreError } = await s
+      const { data: scoreData, error: scoreError } = await supabaseAdmin
         .from("leads")
         .select("lead_score, priority, stage")
-        .eq("org_id", org_id)
+        .eq("organization_id", organizationId)
         .gte("created_at", startDate.toISOString());
       
       if (scoreError) throw new Error(scoreError.message);
@@ -251,7 +268,7 @@ export async function GET(req: NextRequest) {
         }, {} as any)
       };
       
-      return ok(analytics, res.headers);
+      return ok(analytics);
       
     } catch (dbError) {
       console.log("Database error in lead analytics:", dbError);
@@ -260,7 +277,7 @@ export async function GET(req: NextRequest) {
         timeframe: `Last ${timeframe} days`,
         summary: { total_leads: 0, error: "Database connection issue" },
         message: "Analytics temporarily unavailable"
-      }, res.headers);
+      });
     }
     
   } catch (e: any) {

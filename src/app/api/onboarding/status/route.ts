@@ -1,6 +1,13 @@
 // app/api/onboarding/status/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { supaFromReq } from "@/lib/supa-ssr";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
+
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
 export const runtime = "nodejs";
@@ -16,13 +23,21 @@ type OrgRow = {
 };
 
 export async function GET(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
-
   try {
     console.log("🔍 [ONBOARDING_STATUS] Checking user onboarding status");
-    console.log("🍪 [ONBOARDING_STATUS] Request cookies:", req.cookies.getAll().map(c => c.name));
 
-    // Get JWT token from cookies
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: "User organization not found" }, { status: 401 });
+    }
+
+    const organizationId = user.organizationId;
     const jwtToken = req.cookies.get('ghostcrm_jwt')?.value;
     
     if (!jwtToken) {

@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supaFromReq } from "@/lib/supa-ssr";
-import { getMembershipOrgId } from "@/lib/rbac";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 
+// Use Node.js runtime to avoid Edge Runtime issues with Supabase
+export const runtime = "nodejs";
 export const dynamic = 'force-dynamic';
+
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 interface AIMatch {
   leadId: string;
@@ -20,40 +28,27 @@ interface AIMatch {
 
 // AI Matching Algorithm - Server-side with SQL optimization
 export async function GET(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
-  
   try {
-    // Try multiple ways to get org_id for compatibility with different auth methods
-    let org_id: string | null = null;
-    
-    // Method 1: Try getMembershipOrgId 
-    try {
-      org_id = await getMembershipOrgId(s) || null;
-    } catch (error) {
-      console.log('getMembershipOrgId failed, trying alternative methods');
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
     }
-    
-    // Method 2: If that fails, try to get it from the JWT cookie directly
-    if (!org_id) {
-      const cookieValue = req.cookies.get('ghostcrm_jwt')?.value;
-      if (cookieValue) {
-        try {
-          const payload = JSON.parse(atob(cookieValue.split('.')[1]));
-          org_id = payload.organizationId || payload.tenantId;
-          console.log('Using org_id from JWT:', org_id);
-        } catch (e) {
-          console.log('Failed to decode JWT:', e);
-        }
-      }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return NextResponse.json(
+        { error: "User organization not found" },
+        { status: 401 }
+      );
     }
+
+    const organizationId = user.organizationId;
     
-    // Method 3: Fallback to your specific org ID
-    if (!org_id) {
-      org_id = '122e543d-f112-4e21-8f29-726642316a19'; // Burch Enterprises
-      console.log('Using fallback org_id:', org_id);
-    }
-    
-    if (!org_id) {
+    if (!organizationId) {
       return NextResponse.json({ 
         error: "Organization not found", 
         suggestions: [] 
@@ -61,7 +56,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch active leads (no existing deals, not closed)
-    const { data: leads, error: leadsError } = await s
+    const { data: leads, error: leadsError } = await supabaseAdmin
       .from('leads')
       .select(`
         id,
@@ -76,7 +71,7 @@ export async function GET(req: NextRequest) {
           phone
         )
       `)
-      .eq('organization_id', org_id) // Use correct column name
+      .eq('organization_id', organizationId) // Use correct column name
       .not('stage', 'in', '(closed,lost)')
       .order('updated_at', { ascending: false });
 
@@ -89,10 +84,10 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch available inventory
-    const { data: inventory, error: inventoryError } = await s
+    const { data: inventory, error: inventoryError } = await supabaseAdmin
       .from('inventory')
       .select('id, make, model, year, price_selling, condition, status, vin')
-      .or(`organization_id.eq.${org_id},org_id.eq.${org_id}`) // Handle both column naming conventions
+      .eq('organization_id', organizationId) // Use correct column name
       .eq('status', 'available')
       .order('price_selling', { ascending: true });
 
@@ -105,10 +100,10 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch existing deals to avoid duplicates
-    const { data: existingDeals, error: dealsError } = await s
+    const { data: existingDeals, error: dealsError } = await supabaseAdmin
       .from('deals')
       .select('contact_id, customer_name')
-      .or(`organization_id.eq.${org_id},org_id.eq.${org_id}`) // Handle both column naming conventions
+      .eq('organization_id', organizationId) // Use correct column name
       .not('stage', 'in', '(closed_lost)');
 
     if (dealsError) {
@@ -128,7 +123,7 @@ export async function GET(req: NextRequest) {
         totalLeads: leads?.length || 0,
         totalInventory: inventory?.length || 0,
         matchesFound: suggestions.length,
-        organizationId: org_id
+        organizationId: organizationId
       }
     });
 

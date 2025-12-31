@@ -3,12 +3,31 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 import { NextRequest } from "next/server";
-import { supaFromReq } from "@/lib/supa-ssr";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { getMembershipOrgId } from "@/lib/rbac";
 import { ok, bad, oops } from "@/lib/http";
 
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export async function GET(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
+  try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: "User organization not found" }, { status: 401 });
+    }
+
+    const organizationId = user.organizationId;
   const url = new URL(req.url);
   
   // Calendar view parameters
@@ -77,7 +96,19 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
+  try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: "User organization not found" }, { status: 401 });
+    }
+
+    const organizationId = user.organizationId;
   
   try {
     const { action, appointment_id, external_calendar_id, sync_settings } = await req.json();

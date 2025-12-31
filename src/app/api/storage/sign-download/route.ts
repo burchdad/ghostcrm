@@ -1,17 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supaFromReq } from "@/lib/supa-ssr";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
-  const key = new URL(req.url).searchParams.get("key") || "";
-  const { data: mem } = await s.from("organization_memberships").select("organization_id").limit(1);
-  const org_id = mem?.[0]?.organization_id;
-  if (!org_id || !key.startsWith(`org/${org_id}/`)) return NextResponse.json({ error:"forbidden" }, { status:403 });
+  try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
 
-  const { data, error } = await s.storage.from("attachments").createSignedUrl(key, 60);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ url: data.signedUrl }, { headers: res.headers });
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: "User organization not found" }, { status: 401 });
+    }
+
+    const organizationId = user.organizationId;
+    const key = new URL(req.url).searchParams.get("key") || "";
+    
+    if (!key.startsWith(`org/${organizationId}/`)) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
+
+    const { data, error } = await supabaseAdmin.storage.from("attachments").createSignedUrl(key, 60);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ url: data.signedUrl });
+  } catch (error) {
+    console.error('Storage sign-download error:', error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 

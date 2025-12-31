@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { supaFromReq } from "@/lib/supa-ssr";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { getMembershipOrgId } from "@/lib/rbac";
 import { ok, bad, oops } from "@/lib/http";
 import { z } from "zod";
@@ -419,8 +419,32 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
+export async function PUT(req: NextRequest) {
+  try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return bad("Authentication required");
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return bad("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return bad("Authentication required");
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return bad("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
   
   try {
     const parsed = AIScoreRequest.safeParse(await req.json());

@@ -4,8 +4,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supaFromReq } from '@/lib/supa-ssr';
-import { getMembershipOrgId } from '@/lib/rbac';
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
+
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export const runtime = 'nodejs';
 
@@ -18,7 +24,23 @@ type JsonBody = {
 };
 
 export async function POST(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
+  try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.id) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 401 }
+      );
+    }
 
   try {
     const body = (await req.json()) as JsonBody;
@@ -206,7 +228,7 @@ export async function POST(req: NextRequest) {
  * Initialize empty tenant data for a new organization.
  */
 async function initializeEmptyTenantData(
-  supabase: ReturnType<typeof supaFromReq>['s'],
+  supabase: any,
   organizationId: string,
   userId: string
 ) {
@@ -312,22 +334,25 @@ async function initializeEmptyTenantData(
 }
 
 export async function GET(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
-
   try {
-    // Auth
-    const {
-      data: { user },
-      error: authError,
-    } = await s.auth.getUser();
-    if (authError || !user) {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
       return NextResponse.json(
         { error: 'Authentication required' },
-        { status: 401, headers: res.headers }
+        { status: 401 }
       );
     }
 
-    const organizationId = await getMembershipOrgId(s);
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return NextResponse.json(
+        { error: 'User organization not found' },
+        { status: 401 }
+      );
+    }
+
+    const organizationId = user.organizationId;
 
     if (!organizationId) {
       return NextResponse.json(

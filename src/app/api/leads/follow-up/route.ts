@@ -1,9 +1,15 @@
 import { NextRequest } from "next/server";
-import { supaFromReq } from "@/lib/supa-ssr";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { getMembershipOrgId } from "@/lib/rbac";
 import { ok, bad, oops } from "@/lib/http";
 import { z } from "zod";
 
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export const dynamic = 'force-dynamic';
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
@@ -184,11 +190,23 @@ Ready to get you driving today! When can you come in to finalize?
 
 // GET - Get available follow-up actions for a lead
 export async function GET(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
-  const url = new URL(req.url);
-  const leadId = url.searchParams.get("lead_id");
+  try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return bad("Authentication required");
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return bad("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
+    const url = new URL(req.url);
+    const leadId = url.searchParams.get("lead_id");
   
-  if (!leadId) return bad("lead_id parameter is required");
+    if (!leadId) return bad("lead_id parameter is required");
   
   try {
     const org_id = await getMembershipOrgId(s);
@@ -324,8 +342,20 @@ export async function GET(req: NextRequest) {
 }
 
 // POST - Create follow-up action
-export async function POST(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
+export async function PUT(req: NextRequest) {
+  try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return bad("Authentication required");
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return bad("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
   
   try {
     const parsed = FollowUpRequest.safeParse(await req.json());

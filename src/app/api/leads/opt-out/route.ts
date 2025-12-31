@@ -1,11 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supaFromReq } from "@/lib/supa-ssr";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { updateLeadOptOut } from "@/lib/mock-leads";
 
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: "User organization not found" }, { status: 401 });
+    }
+
+    const organizationId = user.organizationId;
     const { lead_id, opt_out } = await req.json();
     
     if (!lead_id || typeof opt_out !== "boolean") {
@@ -14,10 +32,9 @@ export async function POST(req: NextRequest) {
 
     // Try database first, fall back to mock data
     try {
-      const { s, res } = supaFromReq(req);
-      const { error } = await s.from("leads").update({ opted_out: opt_out }).eq("id", lead_id);
+      const { error } = await supabaseAdmin.from("leads").update({ opted_out: opt_out }).eq("id", lead_id).eq("organization_id", organizationId);
       if (!error) {
-        return NextResponse.json({ ok: true }, { headers: res.headers });
+        return NextResponse.json({ ok: true });
       }
       console.warn("Database update failed, using mock data:", error.message);
     } catch (dbError) {

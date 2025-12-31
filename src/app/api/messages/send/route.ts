@@ -1,11 +1,18 @@
 
 import { NextRequest } from "next/server";
-import { supaFromReq } from "@/lib/supa-ssr";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { MessageSend } from "@/lib/validators";
 import { getMembershipOrgId } from "@/lib/rbac";
 import { ok, bad, oops } from "@/lib/http";
 import { limitKey } from "@/lib/edge-limit";
 import { getSmsAdapterFor } from "@/lib/telephony/select";
+
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 async function isOptedOut(s: any, org_id: string, to: string) {
   const { data } = await s.from("lead_opt_outs").select("id").eq("org_id", org_id).eq("phone", to).limit(1);
@@ -23,7 +30,19 @@ function withinQuiet(now: Date, qs?: string | null, qe?: string | null) {
 }
 
 export async function POST(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
+  try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return bad("Authentication required");
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return bad("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
   
   try {
     const parsed = MessageSend.safeParse(await req.json());

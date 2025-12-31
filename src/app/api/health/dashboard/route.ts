@@ -1,13 +1,19 @@
-
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 import { NextRequest } from "next/server";
-import { supaFromReq } from "@/lib/supa-ssr";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { getMembershipOrgId } from "@/lib/rbac";
 import { ok, oops } from "@/lib/http";
 import { z } from "zod";
+
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 const MetricsSchema = z.object({
   leads: z.number(),
@@ -17,7 +23,19 @@ const MetricsSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
+  try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return oops("Authentication required");
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return oops("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
   try {
     const org_id = await getMembershipOrgId(s);
     if (!org_id) {

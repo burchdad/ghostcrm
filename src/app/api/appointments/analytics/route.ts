@@ -1,26 +1,42 @@
 import { NextRequest } from "next/server";
-import { supaFromReq } from "@/lib/supa-ssr";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { getMembershipOrgId } from "@/lib/rbac";
 import { ok, bad, oops } from "@/lib/http";
 
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
-  const url = new URL(req.url);
-  
-  // Query parameters for analytics filtering
-  const date_from = url.searchParams.get("date_from");
-  const date_to = url.searchParams.get("date_to");
-  const sales_rep_id = url.searchParams.get("sales_rep_id");
-  const appointment_type = url.searchParams.get("appointment_type");
+  try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return bad("Authentication required");
+    }
 
-  const org_id = await getMembershipOrgId(s);
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return bad("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
+    const url = new URL(req.url);
   
-  if (!org_id) {
-    // Return comprehensive mock analytics
-    return ok(generateMockAppointmentAnalytics(), res.headers);
-  }
+    // Query parameters for analytics filtering
+    const date_from = url.searchParams.get("date_from");
+    const date_to = url.searchParams.get("date_to");
+    const sales_rep_id = url.searchParams.get("sales_rep_id");
+    const appointment_type = url.searchParams.get("appointment_type");
+
+    if (!organizationId) {
+      // Return comprehensive mock analytics
+      return ok(generateMockAppointmentAnalytics());
+    }
 
   try {
     // Build base query for analytics

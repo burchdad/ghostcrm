@@ -1,24 +1,38 @@
 import { NextRequest } from "next/server";
-import { supaFromReq } from "@/lib/supa-ssr";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { ApptCreate } from "@/lib/schemas/appointments";
-
-export const dynamic = 'force-dynamic';
-// If the correct export is 'getMembershipOrgId', ensure it is exported in '@/lib/rbac'.
-// Otherwise, import the correct function or member, e.g.:
-// If the correct export is 'getMembershipOrgId', ensure it is exported in '@/lib/rbac'.
-// Otherwise, import the correct function or member, e.g.:
-import { getMembershipOrgId } from "@/lib/rbac";
-// And update usages of 'getMembershipOrgId' to 'getOrgIdFromMembership' below.
 import { ok, bad, oops } from "@/lib/http";
 
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
   const url = new URL(req.url);
   const status = url.searchParams.get("status") ?? undefined;
   const from = url.searchParams.get("from") ?? undefined;
   const to = url.searchParams.get("to") ?? undefined;
 
-  let q = s.from("appointments").select("*").order("starts_at", { ascending: true }).limit(500);
+  try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return bad("Authentication required");
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return bad("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
+
+  let q = supabaseAdmin.from("appointments").select("*").eq("organization_id", organizationId).order("starts_at", { ascending: true }).limit(500);
   if (status) q = q.eq("status", status);
   if (from) q = q.gte("starts_at", from);
   if (to) q = q.lte("ends_at", to);
@@ -28,18 +42,39 @@ export async function GET(req: NextRequest) {
   return ok(data, res.headers);
 }
 
-export async function POST(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
-  const parsed = ApptCreate.safeParse(await req.json());
-  if (!parsed.success) return bad(parsed.error.errors[0].message);
-  const org_id = await getMembershipOrgId(s);
-  if (!org_id) return bad("no_membership");
+export async function PATCH(req: NextRequest) {
+  try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return bad("Authentication required");
+    }
 
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return bad("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return bad("Authentication required");
+    }
+
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return bad("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
+    const parsed = ApptCreate.safeParse(await req.json());
+    if (!parsed.success) return bad(parsed.error.errors[0].message);
   const a = parsed.data;
-  const { data: appt, error } = await s
+  const { data: appt, error } = await supabaseAdmin
     .from("appointments")
     .insert({
-      org_id,
+      organization_id: organizationId,
       title: a.title,
       location: a.location ?? null,
       starts_at: a.starts_at,
@@ -52,25 +87,43 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) return oops(error.message);
-  await s.from("audit_events").insert({ org_id, entity: "appointment", entity_id: appt.id, action: "create" });
-  return ok(appt, res.headers);
+  await supabaseAdmin.from("audit_events").insert({ organization_id: organizationId, entity: "appointment", entity_id: appt.id, action: "create" });
+  return ok(appt);
+} catch (error) {
+  return oops(String(error));
+}
 }
 
 export async function PATCH(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
-  const body = await req.json();
-  if (!body?.id) return bad("missing id");
+  try {
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return bad("Authentication required");
+    }
 
-  const patch: Record<string, any> = {};
-  for (const k of ["title", "location", "starts_at", "ends_at", "status", "owner_id"]) {
-    if (k in body) patch[k] = body[k];
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return bad("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
+    const body = await req.json();
+    if (!body?.id) return bad("missing id");
+
+    const patch: Record<string, any> = {};
+    for (const k of ["title", "location", "starts_at", "ends_at", "status", "owner_id"]) {
+      if (k in body) patch[k] = body[k];
+    }
+
+    const { data: appt, error } = await supabaseAdmin.from("appointments").update(patch).eq("id", body.id).eq("organization_id", organizationId).select().single();
+    if (error) return oops(error.message);
+
+    await supabaseAdmin.from("audit_events").insert({ organization_id: organizationId, entity: "appointment", entity_id: body.id, action: "update", diff: patch });
+    return ok(appt);
+  } catch (error) {
+    return oops(String(error));
   }
-
-  const { data: appt, error } = await s.from("appointments").update(patch).eq("id", body.id).select().single();
-  if (error) return oops(error.message);
-
-  await s.from("audit_events").insert({ entity: "appointment", entity_id: body.id, action: "update", diff: patch });
-  return ok(appt, res.headers);
 }
 
 export async function DELETE(req: NextRequest) {
@@ -81,7 +134,7 @@ export async function DELETE(req: NextRequest) {
   const { error } = await s.from("appointments").delete().eq("id", id);
   if (error) return oops(error.message);
 
-  await s.from("audit_events").insert({ entity: "appointment", entity_id: id, action: "delete" });
+  await supabaseAdmin.from("audit_events").insert({ organization_id: organizationId, entity: "appointment", entity_id: id, action: "delete" });
   return ok({ ok: true }, res.headers);
 }
 
