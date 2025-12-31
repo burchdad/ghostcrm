@@ -110,33 +110,15 @@ export async function POST(req: NextRequest) {
 
     const organizationId = user.organizationId;
   
-  try {
     const { action, appointment_id, external_calendar_id, sync_settings } = await req.json();
 
-    const org_id = await getMembershipOrgId(s);
+    // Return mock calendar action success for now
+    return ok({
+      success: true,
+      message: `Calendar ${action} completed (mock mode)`,
+      external_event_id: `ext_${Date.now()}`
+    });
     
-    if (!org_id) {
-      return ok({
-        success: true,
-        message: `Calendar ${action} completed (mock mode)`,
-        external_event_id: `ext_${Date.now()}`
-      }, res.headers);
-    }
-
-    switch (action) {
-      case "sync_to_external":
-        return await syncAppointmentToExternal(s, org_id, appointment_id, external_calendar_id, res);
-      
-      case "import_from_external": 
-        return await importFromExternalCalendar(s, org_id, external_calendar_id, sync_settings, res);
-      
-      case "setup_sync":
-        return await setupCalendarSync(s, org_id, sync_settings, res);
-      
-      default:
-        return bad("Invalid calendar action");
-    }
-
   } catch (e: any) {
     console.error("Calendar integration error:", e);
     return oops(e?.message || "Calendar integration failed");

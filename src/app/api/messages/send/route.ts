@@ -163,11 +163,11 @@ export async function POST(req: NextRequest) {
       console.warn("Audit logging failed:", auditErr);
     }
 
-    if (error) return new Response(JSON.stringify({ ok: false, error }), { status: 502, headers: res.headers });
-    return ok({ ok: true, provider_id, message: provider_id === "mock" ? "Message sent (mock mode)" : "Message sent" }, res.headers);
+    if (error) return new Response(JSON.stringify({ ok: false, error }), { status: 502 });
+    return ok({ ok: true, provider_id, message: provider_id === "mock" ? "Message sent (mock mode)" : "Message sent" });
   } catch (e: any) {
     console.log("General error in message sending, returning mock success:", e);
-    return ok({ ok: true, provider_id: "mock", message: "Message sent (mock mode)" }, res?.headers || {});
+    return ok({ ok: true, provider_id: "mock", message: "Message sent (mock mode)" });
   }
 }
 

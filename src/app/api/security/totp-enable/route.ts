@@ -31,6 +31,6 @@ export async function POST(req: NextRequest) {
   const ok = speakeasy.totp.verify({ secret: row.totp_secret, encoding: "base32", token: String(code), window: 1 });
   if (!ok) return NextResponse.json({ error: "invalid_code" }, { status: 400 });
 
-  return NextResponse.json({ success: true }, { headers: res.headers });
+  return NextResponse.json({ success: true });
 }
 

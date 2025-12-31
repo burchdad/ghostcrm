@@ -230,20 +230,7 @@ export async function POST(req: NextRequest) {
     }
 
     const organizationId = user.organizationId;
-    // Check authentication using JWT
-    if (!isAuthenticated(req)) {
-      return bad("Authentication required");
-    }
-
-    // Get user data from JWT
-    const user = getUserFromRequest(req);
-    if (!user || !user.organizationId) {
-      return bad("User organization not found");
-    }
-
-    const organizationId = user.organizationId;
   
-  try {
     const parsed = LeadScoreRequest.safeParse(await req.json());
     if (!parsed.success) {
       return bad(`Validation error: ${parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`);

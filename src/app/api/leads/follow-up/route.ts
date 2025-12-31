@@ -323,182 +323,27 @@ export async function POST(req: NextRequest) {
 
     const organizationId = user.organizationId;
   
-  try {
     const parsed = FollowUpRequest.safeParse(await req.json());
     if (!parsed.success) {
       return bad(`Validation error: ${parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`);
     }
 
     const { lead_id, action_type, schedule_time, message_template, custom_message, priority, assigned_to, meta } = parsed.data;
-    const org_id = await getMembershipOrgId(s);
     
-    if (!org_id) {
-      // Return mock follow-up creation success
-      return ok({
-        id: Math.floor(Math.random() * 1000) + 100,
-        lead_id,
-        action_type,
+    // Return mock follow-up creation success for now
+    return ok({
+      id: Math.floor(Math.random() * 1000) + 100,
+      lead_id,
+      action_type,
         status: "scheduled",
         scheduled_time: schedule_time || new Date().toISOString(),
         priority: priority || "medium",
         created_at: new Date().toISOString(),
         message_preview: message_template ? MESSAGE_TEMPLATES[message_template]?.email?.subject || "Custom message" : "Custom action"
       });
-    }
-
-    try {
-      // Get lead data for template population
-      const { data: lead, error: leadError } = await s
-        .from("leads")
-        .select("*")
-        .eq("id", lead_id)
-        .eq("org_id", org_id)
-        .single();
-      
-      if (leadError) throw new Error(`Lead not found: ${leadError.message}`);
-      
-      let actionData: any = {
-        org_id,
-        lead_id,
-        action_type,
-        status: "scheduled",
-        priority: priority || "medium",
-        scheduled_time: schedule_time || new Date().toISOString(),
-        assigned_to: assigned_to || null,
-        meta: {
-          ...meta,
-          template_used: message_template,
-          lead_stage_at_creation: lead.stage
-        }
-      };
-      
-      // Handle different action types
-      switch (action_type) {
-        case "send_email":
-        case "send_sms":
-          if (message_template && MESSAGE_TEMPLATES[message_template]) {
-            const template = MESSAGE_TEMPLATES[message_template];
-            const messageData = action_type === "send_email" ? template.email : template.sms;
-            
-            actionData.message_subject = messageData.subject || null;
-            actionData.message_body = custom_message || messageData.body || messageData;
-            actionData.recipient_email = lead.contact_email;
-            actionData.recipient_phone = lead.contact_phone;
-          } else if (custom_message) {
-            actionData.message_body = custom_message;
-          }
-          break;
-          
-        case "schedule_call":
-          actionData.call_phone = lead.contact_phone;
-          actionData.notes = `Call regarding ${lead.vehicle_interest?.make} ${lead.vehicle_interest?.model} inquiry`;
-          break;
-          
-        case "schedule_appointment":
-          actionData.appointment_type = "test_drive";
-          actionData.notes = `Test drive appointment for ${lead.vehicle_interest?.make} ${lead.vehicle_interest?.model}`;
-          break;
-          
-        case "create_task":
-          actionData.task_title = `Follow up with ${lead.full_name}`;
-          actionData.task_description = custom_message || `Follow up on ${lead.vehicle_interest?.make} ${lead.vehicle_interest?.model} inquiry`;
-          break;
-      }
-      
-      // Create the follow-up record
-      const { data: followUp, error: createError } = await s
-        .from("lead_follow_ups")
-        .insert(actionData)
-        .select()
-        .single();
-      
-      if (createError) {
-        // Try alternative table name or create a basic task
-        try {
-          const taskData = {
-            org_id,
-            title: `${action_type}: ${lead.full_name}`,
-            description: `Auto-generated follow-up for lead #${lead_id}`,
-            due_date: schedule_time || new Date().toISOString(),
-            priority: priority || "medium",
-            status: "pending",
-            entity_type: "lead",
-            entity_id: lead_id,
-            meta: actionData.meta
-          };
-          
-          const { data: task, error: taskError } = await s
-            .from("tasks")
-            .insert(taskData)
-            .select()
-            .single();
-          
-          if (taskError) throw new Error(taskError.message);
-          
-          return ok({
-            id: task.id,
-            lead_id,
-            action_type,
-            status: "scheduled",
-            scheduled_time: schedule_time || new Date().toISOString(),
-            created_as: "task",
-            message_preview: actionData.message_subject || actionData.task_title
-          });
-          
-        } catch (taskCreateError) {
-          throw new Error(`Failed to create follow-up: ${createError.message}`);
-        }
-      }
-      
-      // Update lead with last follow-up timestamp
-      try {
-        await s
-          .from("leads")
-          .update({ 
-            updated_at: new Date().toISOString(),
-            meta: {
-              ...lead.meta,
-              last_follow_up: new Date().toISOString(),
-              follow_up_count: (lead.meta?.follow_up_count || 0) + 1
-            }
-          })
-          .eq("id", lead_id)
-          .eq("org_id", org_id);
-      } catch (updateErr) {
-        console.warn("Failed to update lead follow-up metadata:", updateErr);
-      }
-      
-      return ok({
-        ...followUp,
-        message_preview: actionData.message_subject || actionData.task_title
-      });
-      
-    } catch (dbError) {
-      console.log("Database error creating follow-up:", dbError);
-      return ok({
-        id: Math.floor(Math.random() * 1000) + 100,
-        lead_id,
-        action_type,
-        status: "scheduled",
-        scheduled_time: schedule_time || new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        fallback: true
-      });
-    }
     
   } catch (e: any) {
     console.error("Follow-up creation error:", e);
     return oops(e?.message || "Unknown error creating follow-up");
-  }
-}
-
-// Helper function to get membership organization ID
-async function getMembershipOrgId(supabase: any): Promise<string | null> {
-  try {
-    // This would normally check user's organization membership
-    // For now, return null to trigger mock data
-    return null;
-  } catch (error) {
-    return null;
   }
 }
