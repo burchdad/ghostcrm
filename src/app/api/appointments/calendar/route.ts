@@ -2,7 +2,7 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { getMembershipOrgId } from "@/lib/rbac";

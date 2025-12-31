@@ -592,7 +592,7 @@ export async function PUT(req: NextRequest) {
         batch_summary: batchSummary,
         scoring_methodology: use_ai_analysis ? "Advanced AI + OpenAI analysis" : "Advanced algorithmic scoring",
         timestamp: new Date().toISOString()
-      }, res.headers);
+      });
       
     } catch (dbError) {
       console.log("Database error in batch AI scoring:", dbError);
@@ -600,7 +600,7 @@ export async function PUT(req: NextRequest) {
         processed_leads: 0,
         error: "Database connection issue - unable to process scoring batch",
         timestamp: new Date().toISOString()
-      }, res.headers);
+      });
     }
     
   } catch (e: any) {

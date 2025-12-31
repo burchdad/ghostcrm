@@ -33,44 +33,37 @@ export async function GET(req: NextRequest) {
     const sales_rep_id = url.searchParams.get("sales_rep_id");
     const appointment_type = url.searchParams.get("appointment_type");
 
-    if (!organizationId) {
-      // Return comprehensive mock analytics
+    try {
+      // Build base query for analytics
+      let query = supabaseAdmin.from("appointments")
+        .select("*")
+        .eq("organization_id", organizationId);
+      
+      if (date_from) query = query.gte("starts_at", date_from);
+      if (date_to) query = query.lte("starts_at", date_to);
+      if (sales_rep_id) query = query.eq("sales_rep_id", sales_rep_id);
+      if (appointment_type) query = query.eq("type", appointment_type);
+
+      const { data: appointments, error } = await query;
+      
+      if (error) {
+        console.warn("Analytics query failed:", error);
+        return ok(generateMockAppointmentAnalytics());
+      }
+
+      // Calculate comprehensive analytics
+      const analytics = calculateAppointmentAnalytics(appointments || []);
+      
+      return ok(analytics);
+
+    } catch (dbError) {
+      console.warn("Database query error:", dbError);
       return ok(generateMockAppointmentAnalytics());
     }
 
-    // Continue with database queries using organizationId
-    // Implementation continues here...
-    return ok(generateMockAppointmentAnalytics());
   } catch (error) {
     console.error('Appointment analytics error:', error);
     return oops("Internal server error");
-  }
-}
-    // Build base query for analytics
-    let query = s.from("appointments")
-      .select("*")
-      .eq("org_id", org_id);
-    
-    if (date_from) query = query.gte("starts_at", date_from);
-    if (date_to) query = query.lte("starts_at", date_to);
-    if (sales_rep_id) query = query.eq("sales_rep_id", sales_rep_id);
-    if (appointment_type) query = query.eq("type", appointment_type);
-
-    const { data: appointments, error } = await query;
-    
-    if (error) {
-      console.warn("Analytics query failed:", error);
-      return ok(generateMockAppointmentAnalytics(), res.headers);
-    }
-
-    // Calculate comprehensive analytics
-    const analytics = calculateAppointmentAnalytics(appointments || []);
-    
-    return ok(analytics, res.headers);
-
-  } catch (err) {
-    console.warn("Appointments analytics error:", err);
-    return ok(generateMockAppointmentAnalytics(), res.headers);
   }
 }
 
