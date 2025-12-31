@@ -380,23 +380,19 @@ export async function GET(req: NextRequest) {
           appointments:appointments(count),
           deals:deals(count)
         `)
-        .eq("org_id", org_id)
+        .eq("organization_id", organizationId)
         .order("updated_at", { ascending: false })
         .limit(limit);
       
-      if (leadIds) {
-        query = query.in("id", leadIds);
+      if (leadIds?.length) {
+        query = query.in("id", leadIds!);
       }
 
       const { data: leads, error: leadsError } = await query;
 
       if (leadsError) {
-        console.warn("Database error, using enhanced mock lead scores:", leadsError.message);
-        return ok({
-          scores: generateEnhancedMockScores(),
-          error: "Database connection issue - using mock data",
-          timestamp: new Date().toISOString()
-        }, res.headers);
+        console.error("Database error in AI lead scoring:", leadsError);
+        throw new Error(leadsError?.message || "Failed to fetch leads");
       }
 
       // Generate advanced scores for existing leads
@@ -451,11 +447,9 @@ export async function GET(req: NextRequest) {
       });
       
       // Filter by minimum score if specified
-      const filteredScores = minScore 
-        ? scoredLeads.filter(lead => lead.score >= minScore)
-        : scoredLeads;
-      
-      // Calculate summary statistics
+      const filteredScores = minScore
+        ? scoredLeads.filter(lead => lead.score >= minScore!)
+        : scoredLeads;      // Calculate summary statistics
       const summary = {
         total_leads: filteredScores.length,
         avg_score: filteredScores.length > 0 
@@ -487,15 +481,11 @@ export async function GET(req: NextRequest) {
           "Sales stage progression and momentum"
         ],
         timestamp: new Date().toISOString()
-      }, res.headers);
+      });
       
     } catch (dbError) {
-      console.log("Database error in AI lead scoring:", dbError);
-      return ok({
-        scores: generateEnhancedMockScores(),
-        error: "Database connection issue - using enhanced mock data",
-        timestamp: new Date().toISOString()
-      }, res.headers);
+      console.error("Database error in AI lead scoring:", dbError);
+      return oops("Database error occurred while fetching lead scores");
     }
     
   } catch (e: any) {
