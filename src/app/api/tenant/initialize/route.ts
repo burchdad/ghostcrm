@@ -47,23 +47,62 @@ export async function POST(req: NextRequest) {
 
     console.log(`🏢 [TENANT_INIT] Creating organization for user ${user.id}`);
 
-    // Return mock organization data for now
-    const mockOrganization = {
-      id: `org_${Date.now()}`,
-      name: companyName,
-      subdomain: subdomain || `company${Date.now()}`,
-      created_at: new Date().toISOString(),
-      owner_id: user.id
-    };
+    // Create the organization in the database
+    const { data: organization, error: orgError } = await supabaseAdmin
+      .from('organizations')
+      .insert({
+        name: companyName,
+        subdomain: subdomain || `company-${Date.now()}`,
+        owner_id: user.id,
+        industry,
+        team_size: teamSize,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
 
-    return NextResponse.json(
-      {
-        success: true,
-        organization: mockOrganization,
-        message: 'Organization initialized successfully (mock mode)'
+    if (orgError) {
+      console.error('❌ [TENANT_INIT] Organization creation failed:', orgError);
+      return NextResponse.json(
+        { error: 'Failed to create organization' },
+        { status: 500 }
+      );
+    }
+
+    // Create organization membership for the owner
+    const { error: membershipError } = await supabaseAdmin
+      .from('organization_memberships')
+      .insert({
+        organization_id: organization.id,
+        user_id: user.id,
+        role: 'owner',
+        created_at: new Date().toISOString()
+      });
+
+    if (membershipError) {
+      console.error('❌ [TENANT_INIT] Membership creation failed:', membershipError);
+      // Clean up the organization if membership fails
+      await supabaseAdmin.from('organizations').delete().eq('id', organization.id);
+      return NextResponse.json(
+        { error: 'Failed to create organization membership' },
+        { status: 500 }
+      );
+    }
+
+    // Initialize basic tenant data (settings, default stages, etc.)
+    await initializeBasicTenantData(supabaseAdmin, organization.id, user.id);
+
+    return NextResponse.json({
+      success: true,
+      organization: {
+        id: organization.id,
+        name: organization.name,
+        subdomain: organization.subdomain,
+        created_at: organization.created_at,
+        owner_id: organization.owner_id
       },
-      {}
-    );
+      message: 'Organization initialized successfully'
+    });
   } catch (error) {
     console.error('❌ [TENANT_INIT] Unexpected error:', (error as Error)?.message || error);
     return NextResponse.json(
@@ -92,25 +131,77 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Return mock organization status
-    return NextResponse.json(
-      {
+    // Check if user already has an organization
+    const { data: membership } = await supabaseAdmin
+      .from('organization_memberships')
+      .select(`
+        organization_id,
+        role,
+        organizations!inner(
+          id,
+          name,
+          subdomain,
+          created_at,
+          owner_id
+        )
+      `)
+      .eq('user_id', user.id)
+      .eq('role', 'owner')
+      .single();
+
+    if (membership) {
+      return NextResponse.json({
         initialized: true,
-        organization: {
-          id: `org_${user.id}`,
-          name: "Mock Organization",
-          subdomain: "mock-org",
-          created_at: new Date().toISOString()
-        }
-      },
-      {}
-    );
+        organization: membership.organizations
+      });
+    }
+
+    return NextResponse.json({
+      initialized: false,
+      message: 'No organization found for user'
+    });
+
   } catch (error) {
-    console.error('❌ [TENANT_INIT] Unexpected error:', (error as Error)?.message || error);
+    console.error('❌ [TENANT_INIT] GET error:', (error as Error)?.message || error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
+  }
+}
+
+// Helper function to initialize basic tenant data
+async function initializeBasicTenantData(supabase: any, organizationId: string, userId: string) {
+  try {
+    // Create default lead stages
+    await supabase.from('lead_stages').insert([
+      { organization_id: organizationId, name: 'New', position: 1, color: '#3B82F6' },
+      { organization_id: organizationId, name: 'Contacted', position: 2, color: '#F59E0B' },
+      { organization_id: organizationId, name: 'Qualified', position: 3, color: '#10B981' },
+      { organization_id: organizationId, name: 'Proposal Sent', position: 4, color: '#8B5CF6' },
+      { organization_id: organizationId, name: 'Closed Won', position: 5, color: '#059669' },
+      { organization_id: organizationId, name: 'Closed Lost', position: 6, color: '#DC2626' }
+    ]);
+
+    // Create default settings
+    await supabase.from('organization_settings').insert({
+      organization_id: organizationId,
+      settings: {
+        timezone: 'America/New_York',
+        currency: 'USD',
+        date_format: 'MM/DD/YYYY',
+        business_hours: {
+          start: '09:00',
+          end: '17:00',
+          days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+        }
+      }
+    });
+
+    console.log(`✅ [TENANT_INIT] Initialized basic data for org ${organizationId}`);
+  } catch (error) {
+    console.error('❌ [TENANT_INIT] Failed to initialize tenant data:', error);
+    // Don't throw - let the organization creation succeed even if defaults fail
   }
 }
 

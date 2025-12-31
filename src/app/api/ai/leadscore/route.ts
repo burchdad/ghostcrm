@@ -280,23 +280,101 @@ export async function GET(req: NextRequest) {
   const minScore = url.searchParams.get("min_score") ? parseInt(url.searchParams.get("min_score")!) : undefined;
   const limit = Math.min(100, parseInt(url.searchParams.get("limit") || "50"));
   
-  // Return enhanced mock scores for auto dealership
-  return ok({
-    scores: generateEnhancedMockScores().slice(0, limit),
-    summary: {
-      total_leads: 4,
-      avg_score: 67.5,
-      high_priority: 2,
-      medium_priority: 1,
-      low_priority: 1
-    },
-    scoring_methodology: "Advanced auto dealership AI scoring algorithm",
-    timestamp: new Date().toISOString()
-  });
+  try {
+    // Fetch leads with comprehensive data
+    let query = supabaseAdmin.from("leads")
+      .select(`
+        *,
+        appointments:appointments(count),
+        deals:deals(count)
+      `)
+      .eq("organization_id", organizationId)
+      .order("updated_at", { ascending: false })
+      .limit(limit);
+
+    // Apply filters
+    if (leadIds) {
+      query = query.in("id", leadIds);
+    }
+
+    if (minScore) {
+      query = query.gte("lead_score", minScore);
+    }
+
+    const { data: leads, error: fetchError } = await query;
+    if (fetchError) throw new Error(fetchError.message);
+
+    // Process leads for AI scoring
+    const processedLeads = (leads || []).map(lead => {
+      const scoreAnalysis = calculateAdvancedLeadScore(lead, useAI);
+      
+      return {
+        lead_id: lead.id,
+        name: lead.full_name || `${lead.first_name} ${lead.last_name}`,
+        email: lead.email,
+        phone: lead.phone,
+        current_score: lead.lead_score || 0,
+        calculated_score: scoreAnalysis.score,
+        confidence: scoreAnalysis.confidence,
+        last_updated: lead.updated_at,
+        priority: scoreAnalysis.score >= 80 ? "urgent" : 
+                 scoreAnalysis.score >= 60 ? "high" : 
+                 scoreAnalysis.score >= 40 ? "medium" : "low",
+        factors: scoreAnalysis.factors,
+        risk_factors: scoreAnalysis.risk_factors || [],
+        opportunity_indicators: scoreAnalysis.opportunity_indicators || [],
+        ai_insights: scoreAnalysis.ai_insights,
+        recommendation: includeRecommendations ? generateRecommendation(scoreAnalysis, lead) : null,
+        meta: {
+          appointments_count: lead.appointments?.[0]?.count || 0,
+          deals_count: lead.deals?.[0]?.count || 0,
+          days_since_creation: Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24)),
+          last_activity: lead.updated_at
+        }
+      };
+    });
+
+    // Calculate summary statistics
+    const scores = processedLeads.map(l => l.calculated_score);
+    const avgScore = scores.length > 0 ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
+    
+    const summary = {
+      total_leads: processedLeads.length,
+      avg_score: Math.round(avgScore * 100) / 100,
+      high_priority: processedLeads.filter(l => l.priority === "urgent" || l.priority === "high").length,
+      needs_rescoring: processedLeads.filter(l => Math.abs(l.calculated_score - l.current_score) > 15).length,
+      ai_analyzed: processedLeads.filter(l => l.ai_insights).length,
+      score_distribution: {
+        urgent: processedLeads.filter(l => l.calculated_score >= 80).length,
+        high: processedLeads.filter(l => l.calculated_score >= 60 && l.calculated_score < 80).length,
+        medium: processedLeads.filter(l => l.calculated_score >= 40 && l.calculated_score < 60).length,
+        low: processedLeads.filter(l => l.calculated_score < 40).length
+      },
+      scoring_methodology: useAI ? "Advanced AI + OpenAI analysis" : "Advanced algorithmic scoring",
+      last_updated: new Date().toISOString()
+    };
+
+    return ok({
+      lead_scores: processedLeads,
+      summary,
+      query_params: {
+        lead_ids: leadIds,
+        include_recommendations: includeRecommendations,
+        use_ai_analysis: useAI,
+        min_score: minScore,
+        limit
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (dbError) {
+    console.error("Database error in AI lead scoring:", dbError);
+    return oops("Failed to fetch lead scores from database");
+  }
 
     try {
       // Fetch leads with comprehensive data
-      let query = s.from("leads")
+      let query = supabaseAdmin.from("leads")
         .select(`
           *,
           appointments:appointments(count),
@@ -448,25 +526,128 @@ export async function PUT(req: NextRequest) {
 
     const { lead_ids, include_recommendations = true, use_ai_analysis = false, batch_size = 50 } = parsed.data;
     
-    // Return mock batch processing result
-    return ok({
-      processed_leads: 4,
-      updated_scores: generateEnhancedMockScores().map(lead => ({
-        lead_id: lead.lead_id,
-        old_score: Math.max(0, lead.score - Math.floor(Math.random() * 20)),
-        new_score: lead.score,
-        score_change: Math.floor(Math.random() * 20),
-        updated_at: new Date().toISOString()
-      })),
-      batch_summary: {
-        total_processed: 4,
-        scores_improved: 2,
-        scores_decreased: 1,
-        no_change: 1,
-        avg_score_change: 8.5
-      },
-      timestamp: new Date().toISOString()
-    });
+    try {
+      // Fetch leads for scoring/re-scoring
+      let query = supabaseAdmin.from("leads")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .limit(batch_size);
+      
+      if (lead_ids) {
+        query = query.in("id", lead_ids);
+      } else {
+        // If no specific IDs, prioritize leads that need scoring updates
+        query = query.or("lead_score.is.null,updated_at.gt." + new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+      }
+
+      const { data: leads, error: fetchError } = await query;
+      if (fetchError) throw new Error(fetchError.message);
+
+      const processedLeads: any[] = [];
+      const scoreUpdates: any[] = [];
+
+      // Process each lead
+      for (const lead of leads || []) {
+        const oldScore = lead.lead_score || 0;
+        const scoreAnalysis = calculateAdvancedLeadScore(lead, use_ai_analysis);
+        const newScore = scoreAnalysis.score;
+        
+        // Prepare update data
+        const updateData = {
+          lead_score: newScore,
+          updated_at: new Date().toISOString(),
+          meta: {
+            ...lead.meta,
+            last_ai_score_update: new Date().toISOString(),
+            scoring_version: "v2.0",
+            score_factors: scoreAnalysis.factors,
+            confidence: scoreAnalysis.confidence
+          }
+        };
+        
+        // Update lead in database
+        try {
+          const { error: updateError } = await supabaseAdmin
+            .from("leads")
+            .update(updateData)
+            .eq("id", lead.id)
+            .eq("organization_id", organizationId);
+          
+          if (!updateError) {
+            scoreUpdates.push({
+              lead_id: lead.id,
+              old_score: oldScore,
+              new_score: newScore,
+              score_change: newScore - oldScore,
+              updated_at: new Date().toISOString()
+            });
+          }
+        } catch (updateErr) {
+          console.warn(`Failed to update score for lead ${lead.id}:`, updateErr);
+        }
+        
+        processedLeads.push({
+          lead_id: lead.id,
+          name: lead.full_name,
+          old_score: oldScore,
+          new_score: newScore,
+          score_change: newScore - oldScore,
+          confidence: scoreAnalysis.confidence,
+          priority: newScore >= 80 ? "urgent" : 
+                   newScore >= 60 ? "high" : 
+                   newScore >= 40 ? "medium" : "low",
+          factors: scoreAnalysis.factors,
+          risk_factors: scoreAnalysis.risk_factors,
+          opportunity_indicators: scoreAnalysis.opportunity_indicators,
+          recommendation: include_recommendations ? generateRecommendation(scoreAnalysis, lead) : null
+        });
+      }
+      
+      // Calculate batch statistics
+      const scoreChanges = scoreUpdates.map(u => u.score_change);
+      const avgScoreChange = scoreChanges.length > 0 
+        ? scoreChanges.reduce((sum, change) => sum + change, 0) / scoreChanges.length 
+        : 0;
+      
+      const batchSummary = {
+        total_processed: processedLeads.length,
+        scores_improved: scoreChanges.filter(c => c > 0).length,
+        scores_decreased: scoreChanges.filter(c => c < 0).length,
+        no_change: scoreChanges.filter(c => c === 0).length,
+        avg_score_change: Math.round(avgScoreChange * 100) / 100,
+        high_priority_leads: processedLeads.filter(l => l.priority === "urgent" || l.priority === "high").length
+      };
+      
+      // Log batch scoring event
+      try {
+        await supabaseAdmin.from("audit_events").insert({
+          organization_id: organizationId,
+          user_id: user.id,
+          entity: "lead_batch",
+          action: "ai_score_update", 
+          details: {
+            processed_count: processedLeads.length,
+            batch_summary: batchSummary,
+            use_ai_analysis
+          }
+        });
+      } catch (auditErr) {
+        console.warn("Audit logging failed:", auditErr);
+      }
+      
+      return ok({
+        processed_leads: processedLeads.length,
+        updated_scores: scoreUpdates,
+        leads_with_scores: processedLeads,
+        batch_summary: batchSummary,
+        scoring_methodology: use_ai_analysis ? "Advanced AI + OpenAI analysis" : "Advanced algorithmic scoring",
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (dbError) {
+      console.error("Database error in batch AI scoring:", dbError);
+      return oops("Failed to process batch AI scoring");
+    }
 
   } catch (e: any) {
     console.error("AI Lead scoring batch error:", e);
