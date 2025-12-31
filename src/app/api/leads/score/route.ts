@@ -254,21 +254,18 @@ export async function POST(req: NextRequest) {
     
     // If lead_id provided, fetch lead data from database
     if (lead_id && !lead_data) {
-      const org_id = await getMembershipOrgId(s);
-      if (org_id) {
-        try {
-          const { data: lead, error } = await s
-            .from("leads")
-            .select("*")
-            .eq("id", lead_id)
-            .eq("org_id", org_id)
-            .single();
-          
-          if (error) throw new Error(error.message);
-          dataToScore = lead;
-        } catch (dbError) {
-          return bad(`Lead not found: ${lead_id}`);
-        }
+      try {
+        const { data: lead, error } = await supabaseAdmin
+          .from("leads")
+          .select("*")
+          .eq("id", lead_id)
+          .eq("organization_id", organizationId)
+          .single();
+        
+        if (error) throw new Error(error.message);
+        dataToScore = lead;
+      } catch (dbError) {
+        return bad(`Lead not found: ${lead_id}`);
       }
     }
     
@@ -280,24 +277,21 @@ export async function POST(req: NextRequest) {
     
     // If updating an existing lead, save the new score
     if (lead_id) {
-      const org_id = await getMembershipOrgId(s);
-      if (org_id) {
-        try {
-          await s
-            .from("leads")
-            .update({ 
-              lead_score: scoreResult.total_score,
-              meta: {
-                ...(dataToScore as any)?.meta,
-                last_score_update: new Date().toISOString(),
-                score_breakdown: scoreResult.breakdown
-              }
-            })
-            .eq("id", lead_id)
-            .eq("org_id", org_id);
-        } catch (updateError) {
-          console.warn("Failed to update lead score:", updateError);
-        }
+      try {
+        await supabaseAdmin
+          .from("leads")
+          .update({ 
+            lead_score: scoreResult.total_score,
+            meta: {
+              ...(dataToScore as any)?.meta,
+              last_score_update: new Date().toISOString(),
+              score_breakdown: scoreResult.breakdown
+            }
+          })
+          .eq("id", lead_id)
+          .eq("organization_id", organizationId);
+      } catch (updateError) {
+        console.warn("Failed to update lead score:", updateError);
       }
     }
     
@@ -305,7 +299,7 @@ export async function POST(req: NextRequest) {
       lead_id,
       score_result: scoreResult,
       timestamp: new Date().toISOString()
-    }, res.headers);
+    });
     
   } catch (e: any) {
     console.error("Lead scoring error:", e);
