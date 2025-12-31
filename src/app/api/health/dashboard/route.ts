@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
       };
       const parsed = MetricsSchema.safeParse(metrics);
       if (!parsed.success) return oops(parsed.error.errors[0].message);
-      return ok({ ok: true, metrics }, res.headers);
+      return ok({ ok: true, metrics });
     } catch (dbError) {
       // Database error - return mock data
       console.log("Database error in dashboard metrics, using mock data:", dbError);
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
         messagesToday: 12,
         leadStages: { new: 5, working: 6, qualified: 3, lost: 1 }
       };
-      return ok({ ok: true, metrics: mockMetrics }, res.headers);
+      return ok({ ok: true, metrics: mockMetrics });
     }
   } catch (e: any) {
     // General error - return mock data  
@@ -94,6 +94,6 @@ export async function GET(req: NextRequest) {
       messagesToday: 12,
       leadStages: { new: 5, working: 6, qualified: 3, lost: 1 }
     };
-    return ok({ ok: true, metrics: mockMetrics }, res?.headers || {});
+    return ok({ ok: true, metrics: mockMetrics });
   }
 }

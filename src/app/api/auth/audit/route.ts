@@ -22,16 +22,21 @@ export async function GET(req: NextRequest) {
     }
 
     const organizationId = user.organizationId;
-  const { entity, entityId, action, diff } = await req.json();
+    const { entity, entityId, action, diff } = await req.json();
 
-  const { data: mem } = await s.from("organization_memberships").select("organization_id").limit(1);
-  const org_id = mem?.[0]?.organization_id;
-  if (!org_id) return NextResponse.json({ error: "no_membership" }, { status: 403 });
-
-  const { error } = await s.from("audit_events").insert({
-    org_id, entity, entity_id: String(entityId), action, diff: diff ?? null
-  });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ success: true }, { headers: res.headers });
+    const { error } = await supabaseAdmin.from("audit_events").insert({
+      org_id: organizationId, 
+      entity, 
+      entity_id: String(entityId), 
+      action, 
+      diff: diff ?? null
+    });
+    
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Auth audit error:', error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 

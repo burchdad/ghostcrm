@@ -87,11 +87,11 @@ export async function GET(req: NextRequest) {
         busy_hours: calendarEvents.length,
         utilization_rate: calculateUtilizationRate(appointments || [], startDate, endDate)
       }
-    }, res.headers);
+    });
 
   } catch (err) {
     console.warn("Calendar integration error:", err);
-    return ok(generateMockCalendarView(view, date, sales_rep_id), res.headers);
+    return ok(generateMockCalendarView(view, date, sales_rep_id));
   }
 }
 
