@@ -232,7 +232,7 @@ export async function GET(req: NextRequest) {
         ],
         available_templates: Object.keys(MESSAGE_TEMPLATES),
         next_recommended_action: "send_email"
-      }, res.headers);
+      });
     }
 
     try {
@@ -328,7 +328,7 @@ export async function GET(req: NextRequest) {
         suggested_actions: suggestedActions,
         available_templates: Object.keys(MESSAGE_TEMPLATES),
         next_recommended_action: suggestedActions[0]?.type || "send_email"
-      }, res.headers);
+      });
       
     } catch (dbError) {
       console.log("Database error fetching lead for follow-up:", dbError);
@@ -377,7 +377,7 @@ export async function PUT(req: NextRequest) {
         priority: priority || "medium",
         created_at: new Date().toISOString(),
         message_preview: message_template ? MESSAGE_TEMPLATES[message_template]?.email?.subject || "Custom message" : "Custom action"
-      }, res.headers);
+      });
     }
 
     try {
@@ -477,7 +477,7 @@ export async function PUT(req: NextRequest) {
             scheduled_time: schedule_time || new Date().toISOString(),
             created_as: "task",
             message_preview: actionData.message_subject || actionData.task_title
-          }, res.headers);
+          });
           
         } catch (taskCreateError) {
           throw new Error(`Failed to create follow-up: ${createError.message}`);
@@ -505,7 +505,7 @@ export async function PUT(req: NextRequest) {
       return ok({
         ...followUp,
         message_preview: actionData.message_subject || actionData.task_title
-      }, res.headers);
+      });
       
     } catch (dbError) {
       console.log("Database error creating follow-up:", dbError);
@@ -517,7 +517,7 @@ export async function PUT(req: NextRequest) {
         scheduled_time: schedule_time || new Date().toISOString(),
         created_at: new Date().toISOString(),
         fallback: true
-      }, res.headers);
+      });
     }
     
   } catch (e: any) {
