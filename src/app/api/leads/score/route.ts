@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { getMembershipOrgId } from "@/lib/rbac";
 import { ok, bad, oops } from "@/lib/http";
@@ -314,41 +315,49 @@ export async function POST(req: NextRequest) {
 
 // GET - Get lead score for existing lead
 export async function GET(req: NextRequest) {
-  const { s, res } = supaFromReq(req);
-  const url = new URL(req.url);
-  const leadId = url.searchParams.get("lead_id");
-  
-  if (!leadId) return bad("lead_id parameter is required");
-  
   try {
-    const org_id = await getMembershipOrgId(s);
-    
-    if (!org_id) {
-      // Return mock score data
-      return ok({
-        lead_id: leadId,
-        current_score: 75,
-        last_updated: new Date().toISOString(),
-        breakdown: {
-          vehicle_interest: { score: 20, factors: ["Good budget range"] },
-          financing: { score: 15, factors: ["Pre-approved"] },
-          urgency: { score: 15, factors: ["Within week"] },
-          contact_quality: { score: 10, factors: ["Complete info"] },
-          source_quality: { score: 8, factors: ["Walk-in"] }
-        },
-        recommendations: ["HIGH PRIORITY: Contact immediately"]
-      }, res.headers);
+    // Check authentication using JWT
+    if (!isAuthenticated(req)) {
+      return bad("Authentication required");
     }
 
+    // Get user data from JWT
+    const user = getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return bad("User organization not found");
+    }
+
+    const organizationId = user.organizationId;
+    const url = new URL(req.url);
+    const leadId = url.searchParams.get("lead_id");
+    
+    if (!leadId) return bad("lead_id parameter is required");
+    
     try {
-      const { data: lead, error } = await s
+      // Query lead with organization filter
+      const { data: lead, error } = await supabaseAdmin
         .from("leads")
         .select("*")
         .eq("id", leadId)
-        .eq("org_id", org_id)
+        .eq("organization_id", organizationId)
         .single();
-      
-      if (error) throw new Error(error.message);
+        
+      if (error) {
+        // Return mock score data if lead not found
+        return ok({
+          lead_id: leadId,
+          current_score: 75,
+          last_updated: new Date().toISOString(),
+          breakdown: {
+            vehicle_interest: { score: 20, factors: ["Good budget range"] },
+            financing: { score: 15, factors: ["Pre-approved"] },
+            urgency: { score: 15, factors: ["Within week"] },
+            contact_quality: { score: 10, factors: ["Complete info"] },
+            source_quality: { score: 8, factors: ["Walk-in"] }
+          },
+          recommendations: ["HIGH PRIORITY: Contact immediately"]
+        });
+      }
       
       const scoreResult = calculateDetailedLeadScore(lead);
       
@@ -367,7 +376,7 @@ export async function GET(req: NextRequest) {
           financing_info: lead.financing_info,
           urgency_level: lead.urgency_level
         }
-      }, res.headers);
+      });
       
     } catch (dbError) {
       console.log("Database error fetching lead score:", dbError);

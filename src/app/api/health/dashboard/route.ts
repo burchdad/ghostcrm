@@ -1,13 +1,13 @@
-// Force dynamic rendering for this API route
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { getMembershipOrgId } from "@/lib/rbac";
 import { ok, oops } from "@/lib/http";
 import { z } from "zod";
+
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // Create a service role client for admin operations
 const supabaseAdmin = createClient(
