@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
       callId: call.data.id,
       status: call.data.status,
       provider: 'telnyx'
-    }, { headers: res.headers });
+    });
 
   } catch (error: any) {
     console.error('❌ [TELNYX] Error initiating call:', error);

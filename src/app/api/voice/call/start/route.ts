@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
       status: call.data.status,
       provider: 'telnyx',
       sid: call.data.id // For backward compatibility
-    }, { headers: res.headers });
+    });
 
   } catch (error: any) {
     console.error('❌ [TELNYX] Error initiating call:', error);
