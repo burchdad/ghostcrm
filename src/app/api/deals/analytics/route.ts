@@ -150,7 +150,7 @@ export async function GET(req: NextRequest) {
         }
       };
       
-      return ok(mockAnalytics, res.headers);
+      return ok(mockAnalytics);
     }
 
     try {
@@ -296,7 +296,7 @@ export async function GET(req: NextRequest) {
         }
       };
       
-      return ok(analytics, res.headers);
+      return ok(analytics);
       
     } catch (dbError) {
       console.log("Database error in deal analytics:", dbError);
@@ -305,7 +305,7 @@ export async function GET(req: NextRequest) {
         timeframe: `Last ${timeframe} days`,
         summary: { total_deals: 0, error: "Database connection issue" },
         message: "Analytics temporarily unavailable"
-      }, res.headers);
+      });
     }
     
   } catch (e: any) {

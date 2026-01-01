@@ -124,7 +124,7 @@ export async function GET(req: NextRequest) {
         organizationName: null,
         organizationSubdomain: null,
       };
-      return NextResponse.json(response, { headers: res.headers });
+      return NextResponse.json(response);
     }
 
     const response = {
@@ -137,7 +137,7 @@ export async function GET(req: NextRequest) {
     };
 
     console.log("📤 [ONBOARDING_STATUS] Response:", response);
-    return NextResponse.json(response, { headers: res.headers });
+    return NextResponse.json(response);
   } catch (error) {
     console.error("❌ [ONBOARDING_STATUS] Error:", (error as Error)?.message || error);
     return NextResponse.json(
