@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
 
+// Force dynamic rendering for request.cookies usage
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   // Use service role client to bypass RLS since we're handling auth with JWT
   const supabase = createClient(

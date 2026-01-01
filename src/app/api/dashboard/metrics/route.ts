@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServer } from '@/utils/supabase/server';
 
+// Force dynamic rendering for request.url usage
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/dashboard/metrics
  * Get dashboard metrics for tenant owner

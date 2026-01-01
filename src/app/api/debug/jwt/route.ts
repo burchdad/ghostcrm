@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
+// Force dynamic rendering for request.cookies usage
+export const dynamic = 'force-dynamic'
+
 const jwtSecret = process.env.JWT_SECRET!;
 
 export async function GET(request: NextRequest) {

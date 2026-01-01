@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSafeStripeClient } from '@/lib/stripe-safe';
 
+// Force dynamic rendering to prevent build-time Stripe API calls
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const stripe = createSafeStripeClient();
@@ -20,7 +23,7 @@ export async function GET(request: NextRequest) {
       },
       body: new URLSearchParams({
         'code': 'SOFTWAREOWNER',
-        'coupon': 'software_owner_100_off',
+        'coupon': process.env.STRIPE_PROMO_COUPON_ID || 'fallback_coupon',
         'active': 'true',
         'max_redemptions': '10',
         'metadata[type]': 'software_owner',

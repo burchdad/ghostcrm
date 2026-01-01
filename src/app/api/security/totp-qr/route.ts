@@ -3,6 +3,9 @@ import QRCode from "qrcode";
 import { createClient } from "@supabase/supabase-js";
 import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 
+// Force dynamic rendering for request.headers usage
+export const dynamic = 'force-dynamic'
+
 // Create a service role client for admin operations
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
