@@ -155,7 +155,7 @@ export async function GET(req: NextRequest) {
 
     try {
       // Get deal data within timeframe
-      const { data: dealData, error: dealError } = await s
+      const { data: dealData, error: dealError } = await supabaseAdmin
         .from("deals")
         .select(`
           *,
