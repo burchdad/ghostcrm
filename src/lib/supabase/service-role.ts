@@ -139,11 +139,13 @@ export async function createTenantMembership(
 export async function updateUserTenantClaims(userId: string, tenantId: string) {
   try {
     // Get user's current metadata
-    const { data: user, error: getUserError } = await supabaseServiceRole.auth.admin.getUserById(userId)
+    const { data, error: getUserError } = await supabaseServiceRole.auth.admin.getUserById(userId)
     
-    if (getUserError || !user) {
+    if (getUserError || !data?.user) {
       throw new Error(`User not found: ${getUserError?.message || 'Unknown error'}`)
     }
+
+    const user = data.user;
 
     // Update app_metadata with tenant claims (this affects JWT tokens)
     const updatedAppMetadata = {
@@ -177,12 +179,13 @@ export async function updateUserTenantClaims(userId: string, tenantId: string) {
  */
 export async function verifyUserTenantClaims(userId: string): Promise<{ valid: boolean, tenantId?: string, error?: string }> {
   try {
-    const { data: user } = await supabaseServiceRole.auth.admin.getUserById(userId)
+    const { data } = await supabaseServiceRole.auth.admin.getUserById(userId)
     
-    if (!user) {
+    if (!data?.user) {
       return { valid: false, error: 'User not found' }
     }
 
+    const user = data.user;
     const tenantId = user.app_metadata?.tenant_id || user.app_metadata?.custom_claims?.tenant_id
     
     return {
