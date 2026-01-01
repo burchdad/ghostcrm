@@ -60,6 +60,80 @@ CREATE TABLE IF NOT EXISTS tenant_subscriptions (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- Ensure all columns exist on tenant_subscriptions table
+DO $$
+BEGIN
+    -- Check and add trial_ends_at column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'tenant_subscriptions' AND column_name = 'trial_ends_at') THEN
+        ALTER TABLE tenant_subscriptions ADD COLUMN trial_ends_at TIMESTAMP WITH TIME ZONE;
+    END IF;
+    
+    -- Check and add cancelled_at column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'tenant_subscriptions' AND column_name = 'cancelled_at') THEN
+        ALTER TABLE tenant_subscriptions ADD COLUMN cancelled_at TIMESTAMP WITH TIME ZONE;
+    END IF;
+    
+    -- Check and add plan_price_monthly column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'tenant_subscriptions' AND column_name = 'plan_price_monthly') THEN
+        ALTER TABLE tenant_subscriptions ADD COLUMN plan_price_monthly INTEGER NOT NULL DEFAULT 0;
+    END IF;
+    
+    -- Check and add plan_price_yearly column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'tenant_subscriptions' AND column_name = 'plan_price_yearly') THEN
+        ALTER TABLE tenant_subscriptions ADD COLUMN plan_price_yearly INTEGER NOT NULL DEFAULT 0;
+    END IF;
+    
+    -- Check and add usage_limits column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'tenant_subscriptions' AND column_name = 'usage_limits') THEN
+        ALTER TABLE tenant_subscriptions ADD COLUMN usage_limits JSONB NOT NULL DEFAULT '{
+            "users": 3,
+            "contacts": 1000,
+            "deals": 200,
+            "storage_gb": 5,
+            "api_calls_monthly": 5000,
+            "email_campaigns_monthly": 1000,
+            "workflow_runs_monthly": 500
+        }';
+    END IF;
+    
+    -- Check and add current_usage column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'tenant_subscriptions' AND column_name = 'current_usage') THEN
+        ALTER TABLE tenant_subscriptions ADD COLUMN current_usage JSONB NOT NULL DEFAULT '{
+            "users": 0,
+            "contacts": 0,
+            "deals": 0,
+            "storage_gb": 0,
+            "api_calls_this_month": 0,
+            "email_campaigns_this_month": 0,
+            "workflow_runs_this_month": 0
+        }';
+    END IF;
+    
+    -- Check and add enabled_features column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'tenant_subscriptions' AND column_name = 'enabled_features') THEN
+        ALTER TABLE tenant_subscriptions ADD COLUMN enabled_features TEXT[] NOT NULL DEFAULT '{}';
+    END IF;
+    
+    -- Check and add add_on_features column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'tenant_subscriptions' AND column_name = 'add_on_features') THEN
+        ALTER TABLE tenant_subscriptions ADD COLUMN add_on_features TEXT[] NOT NULL DEFAULT '{}';
+    END IF;
+    
+    -- Check and add metadata column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'tenant_subscriptions' AND column_name = 'metadata') THEN
+        ALTER TABLE tenant_subscriptions ADD COLUMN metadata JSONB DEFAULT '{}';
+    END IF;
+END $$;
+
 -- Add-on subscriptions (additional features purchased)
 CREATE TABLE IF NOT EXISTS subscription_add_ons (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -83,6 +157,40 @@ CREATE TABLE IF NOT EXISTS subscription_add_ons (
     UNIQUE(subscription_id, add_on_id)
 );
 
+-- Ensure all columns exist on subscription_add_ons table
+DO $$
+BEGIN
+    -- Check and add subscription_id column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'subscription_add_ons' AND column_name = 'subscription_id') THEN
+        ALTER TABLE subscription_add_ons ADD COLUMN subscription_id UUID NOT NULL;
+        -- Add foreign key constraint
+        ALTER TABLE subscription_add_ons ADD CONSTRAINT fk_subscription_add_ons_subscription_id 
+            FOREIGN KEY (subscription_id) REFERENCES tenant_subscriptions(id) ON DELETE CASCADE;
+    END IF;
+    
+    -- Check and add other columns if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'subscription_add_ons' AND column_name = 'add_on_id') THEN
+        ALTER TABLE subscription_add_ons ADD COLUMN add_on_id TEXT NOT NULL;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'subscription_add_ons' AND column_name = 'stripe_subscription_item_id') THEN
+        ALTER TABLE subscription_add_ons ADD COLUMN stripe_subscription_item_id TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'subscription_add_ons' AND column_name = 'activated_at') THEN
+        ALTER TABLE subscription_add_ons ADD COLUMN activated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'subscription_add_ons' AND column_name = 'cancelled_at') THEN
+        ALTER TABLE subscription_add_ons ADD COLUMN cancelled_at TIMESTAMP WITH TIME ZONE;
+    END IF;
+END $$;
+
 -- Subscription usage history (for analytics and billing)
 CREATE TABLE IF NOT EXISTS subscription_usage_history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -97,6 +205,35 @@ CREATE TABLE IF NOT EXISTS subscription_usage_history (
     
     UNIQUE(subscription_id, usage_date, usage_type)
 );
+
+-- Ensure all columns exist on subscription_usage_history table
+DO $$
+BEGIN
+    -- Check and add subscription_id column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'subscription_usage_history' AND column_name = 'subscription_id') THEN
+        ALTER TABLE subscription_usage_history ADD COLUMN subscription_id UUID NOT NULL;
+        -- Add foreign key constraint
+        ALTER TABLE subscription_usage_history ADD CONSTRAINT fk_subscription_usage_history_subscription_id 
+            FOREIGN KEY (subscription_id) REFERENCES tenant_subscriptions(id) ON DELETE CASCADE;
+    END IF;
+    
+    -- Check and add other columns if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'subscription_usage_history' AND column_name = 'usage_date') THEN
+        ALTER TABLE subscription_usage_history ADD COLUMN usage_date DATE NOT NULL DEFAULT CURRENT_DATE;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'subscription_usage_history' AND column_name = 'usage_type') THEN
+        ALTER TABLE subscription_usage_history ADD COLUMN usage_type TEXT NOT NULL;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'subscription_usage_history' AND column_name = 'usage_value') THEN
+        ALTER TABLE subscription_usage_history ADD COLUMN usage_value INTEGER NOT NULL DEFAULT 0;
+    END IF;
+END $$;
 
 -- Billing events and transactions
 CREATE TABLE IF NOT EXISTS billing_events (
@@ -128,6 +265,50 @@ CREATE TABLE IF NOT EXISTS billing_events (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- Ensure all columns exist on billing_events table
+DO $$
+BEGIN
+    -- Check and add subscription_id column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'billing_events' AND column_name = 'subscription_id') THEN
+        ALTER TABLE billing_events ADD COLUMN subscription_id UUID NOT NULL;
+        -- Add foreign key constraint
+        ALTER TABLE billing_events ADD CONSTRAINT fk_billing_events_subscription_id 
+            FOREIGN KEY (subscription_id) REFERENCES tenant_subscriptions(id) ON DELETE CASCADE;
+    END IF;
+    
+    -- Check and add other columns if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'billing_events' AND column_name = 'event_type') THEN
+        ALTER TABLE billing_events ADD COLUMN event_type TEXT NOT NULL;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'billing_events' AND column_name = 'stripe_event_id') THEN
+        ALTER TABLE billing_events ADD COLUMN stripe_event_id TEXT UNIQUE;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'billing_events' AND column_name = 'amount') THEN
+        ALTER TABLE billing_events ADD COLUMN amount INTEGER;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'billing_events' AND column_name = 'processed_at') THEN
+        ALTER TABLE billing_events ADD COLUMN processed_at TIMESTAMP WITH TIME ZONE;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'billing_events' AND column_name = 'error_message') THEN
+        ALTER TABLE billing_events ADD COLUMN error_message TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'billing_events' AND column_name = 'event_data') THEN
+        ALTER TABLE billing_events ADD COLUMN event_data JSONB DEFAULT '{}';
+    END IF;
+END $$;
+
 -- Feature access audit log
 CREATE TABLE IF NOT EXISTS feature_access_log (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -150,6 +331,62 @@ CREATE TABLE IF NOT EXISTS feature_access_log (
     metadata JSONB DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- Ensure all columns exist on feature_access_log table
+DO $$
+BEGIN
+    -- Check and add tenant_id column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'feature_access_log' AND column_name = 'tenant_id') THEN
+        ALTER TABLE feature_access_log ADD COLUMN tenant_id UUID NOT NULL;
+    END IF;
+    
+    -- Check and add other columns if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'feature_access_log' AND column_name = 'user_id') THEN
+        ALTER TABLE feature_access_log ADD COLUMN user_id UUID;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'feature_access_log' AND column_name = 'feature_id') THEN
+        ALTER TABLE feature_access_log ADD COLUMN feature_id TEXT NOT NULL;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'feature_access_log' AND column_name = 'access_granted') THEN
+        ALTER TABLE feature_access_log ADD COLUMN access_granted BOOLEAN NOT NULL;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'feature_access_log' AND column_name = 'access_reason') THEN
+        ALTER TABLE feature_access_log ADD COLUMN access_reason TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'feature_access_log' AND column_name = 'ip_address') THEN
+        ALTER TABLE feature_access_log ADD COLUMN ip_address INET;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'feature_access_log' AND column_name = 'user_agent') THEN
+        ALTER TABLE feature_access_log ADD COLUMN user_agent TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'feature_access_log' AND column_name = 'request_path') THEN
+        ALTER TABLE feature_access_log ADD COLUMN request_path TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'feature_access_log' AND column_name = 'current_usage') THEN
+        ALTER TABLE feature_access_log ADD COLUMN current_usage INTEGER;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'feature_access_log' AND column_name = 'usage_limit') THEN
+        ALTER TABLE feature_access_log ADD COLUMN usage_limit INTEGER;
+    END IF;
+END $$;
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- INDEXES FOR PERFORMANCE
@@ -400,15 +637,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Apply timestamp triggers
+-- Apply timestamp triggers (idempotent - drop existing first)
+DROP TRIGGER IF EXISTS trigger_tenant_subscriptions_updated_at ON tenant_subscriptions;
 CREATE TRIGGER trigger_tenant_subscriptions_updated_at
     BEFORE UPDATE ON tenant_subscriptions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+DROP TRIGGER IF EXISTS trigger_subscription_add_ons_updated_at ON subscription_add_ons;
 CREATE TRIGGER trigger_subscription_add_ons_updated_at
     BEFORE UPDATE ON subscription_add_ons
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+DROP TRIGGER IF EXISTS trigger_billing_events_updated_at ON billing_events;
 CREATE TRIGGER trigger_billing_events_updated_at
     BEFORE UPDATE ON billing_events
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
@@ -425,6 +665,7 @@ ALTER TABLE billing_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE feature_access_log ENABLE ROW LEVEL SECURITY;
 
 -- Subscription access policies (users can only see their own tenant's subscription)
+DROP POLICY IF EXISTS tenant_subscriptions_tenant_access ON tenant_subscriptions;
 CREATE POLICY tenant_subscriptions_tenant_access ON tenant_subscriptions
     FOR ALL USING (
         tenant_id = (
@@ -433,6 +674,7 @@ CREATE POLICY tenant_subscriptions_tenant_access ON tenant_subscriptions
     );
 
 -- Admin access policy (superusers can see all)
+DROP POLICY IF EXISTS tenant_subscriptions_admin_access ON tenant_subscriptions;
 CREATE POLICY tenant_subscriptions_admin_access ON tenant_subscriptions
     FOR ALL USING (
         EXISTS (
@@ -443,6 +685,7 @@ CREATE POLICY tenant_subscriptions_admin_access ON tenant_subscriptions
     );
 
 -- Similar policies for other tables
+DROP POLICY IF EXISTS subscription_add_ons_access ON subscription_add_ons;
 CREATE POLICY subscription_add_ons_access ON subscription_add_ons
     FOR ALL USING (
         subscription_id IN (
@@ -453,6 +696,7 @@ CREATE POLICY subscription_add_ons_access ON subscription_add_ons
         )
     );
 
+DROP POLICY IF EXISTS subscription_usage_history_access ON subscription_usage_history;
 CREATE POLICY subscription_usage_history_access ON subscription_usage_history
     FOR ALL USING (
         subscription_id IN (
@@ -463,6 +707,7 @@ CREATE POLICY subscription_usage_history_access ON subscription_usage_history
         )
     );
 
+DROP POLICY IF EXISTS billing_events_access ON billing_events;
 CREATE POLICY billing_events_access ON billing_events
     FOR ALL USING (
         subscription_id IN (
@@ -473,6 +718,7 @@ CREATE POLICY billing_events_access ON billing_events
         )
     );
 
+DROP POLICY IF EXISTS feature_access_log_access ON feature_access_log;
 CREATE POLICY feature_access_log_access ON feature_access_log
     FOR ALL USING (
         tenant_id = (
@@ -488,16 +734,25 @@ CREATE POLICY feature_access_log_access ON feature_access_log
 -- ALTER TABLE tenant_subscriptions ADD CONSTRAINT fk_tenant_subscriptions_tenant_id 
 --     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
 
--- Add unique constraint for tenant_id (one subscription per tenant)
-ALTER TABLE tenant_subscriptions ADD CONSTRAINT unique_tenant_subscription 
-    UNIQUE (tenant_id);
+-- Add unique constraint for tenant_id (one subscription per tenant) if not exists
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'unique_tenant_subscription') THEN
+        ALTER TABLE tenant_subscriptions ADD CONSTRAINT unique_tenant_subscription UNIQUE (tenant_id);
+    END IF;
+END $$;
 
--- Add check constraints
-ALTER TABLE tenant_subscriptions ADD CONSTRAINT check_current_period_order 
-    CHECK (current_period_start < current_period_end);
-
-ALTER TABLE tenant_subscriptions ADD CONSTRAINT check_trial_end_future 
-    CHECK (trial_ends_at IS NULL OR trial_ends_at > created_at);
+-- Add check constraints if they don't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'check_current_period_order') THEN
+        ALTER TABLE tenant_subscriptions ADD CONSTRAINT check_current_period_order CHECK (current_period_start < current_period_end);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'check_trial_end_future') THEN
+        ALTER TABLE tenant_subscriptions ADD CONSTRAINT check_trial_end_future CHECK (trial_ends_at IS NULL OR trial_ends_at > created_at);
+    END IF;
+END $$;
 
 -- Comments for documentation
 COMMENT ON TABLE tenant_subscriptions IS 'Stores subscription plans and billing information for each tenant';

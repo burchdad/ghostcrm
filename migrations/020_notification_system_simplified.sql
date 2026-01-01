@@ -87,25 +87,31 @@ ALTER TABLE user_notification_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_delivery_log ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for service role access
+-- RLS Policies for service role access (idempotent)
+DROP POLICY IF EXISTS "Service role can manage user notification preferences" ON user_notification_preferences;
 CREATE POLICY "Service role can manage user notification preferences" 
 ON user_notification_preferences FOR ALL USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Service role can manage notifications" ON notifications;
 CREATE POLICY "Service role can manage notifications" 
 ON notifications FOR ALL USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Service role can manage notification delivery log" ON notification_delivery_log;
 CREATE POLICY "Service role can manage notification delivery log" 
 ON notification_delivery_log FOR ALL USING (auth.role() = 'service_role');
 
--- Simplified user policies (allow all authenticated users for now)
+-- Simplified user policies (allow all authenticated users for now) - idempotent
+DROP POLICY IF EXISTS "Users can manage their own notification preferences" ON user_notification_preferences;
 CREATE POLICY "Users can manage their own notification preferences" 
 ON user_notification_preferences FOR ALL USING (
   auth.uid()::text = user_id::text
 );
 
+DROP POLICY IF EXISTS "Users can view notifications" ON notifications;
 CREATE POLICY "Users can view notifications" 
 ON notifications FOR SELECT USING (auth.uid() IS NOT NULL);
 
+DROP POLICY IF EXISTS "Users can update notifications" ON notifications;
 CREATE POLICY "Users can update notifications" 
 ON notifications FOR UPDATE USING (auth.uid() IS NOT NULL);
 
