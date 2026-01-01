@@ -15,6 +15,11 @@ const supabaseAdmin = createClient(
 );
 
 export async function GET(req: NextRequest) {
+  // Initialize variables at function scope for error handling
+  let view = "week";
+  let date = new Date().toISOString().split('T')[0];
+  let sales_rep_id: string | null = null;
+
   try {
     // Check authentication using JWT
     if (!isAuthenticated(req)) {
@@ -28,16 +33,16 @@ export async function GET(req: NextRequest) {
     }
 
     const organizationId = user.organizationId;
-  const url = new URL(req.url);
-  
-  // Calendar view parameters
-  const view = url.searchParams.get("view") || "week"; // week, month, day
-  const date = url.searchParams.get("date") || new Date().toISOString().split('T')[0];
-  const sales_rep_id = url.searchParams.get("sales_rep_id");
-  const include_availability = url.searchParams.get("include_availability") === "true";
+    const url = new URL(req.url);
+    
+    // Calendar view parameters
+    view = url.searchParams.get("view") || "week"; // week, month, day
+    date = url.searchParams.get("date") || new Date().toISOString().split('T')[0];
+    sales_rep_id = url.searchParams.get("sales_rep_id");
+    const include_availability = url.searchParams.get("include_availability") === "true";
 
-  // Return mock calendar data for now
-  return ok(generateMockCalendarView(view, date, sales_rep_id));
+    // Return mock calendar data for now
+    return ok(generateMockCalendarView(view, date, sales_rep_id));
 
   } catch (err) {
     console.warn("Calendar integration error:", err);
