@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     }
 
     let provider_id = "system";
-    let error = null;
+    let error: string | null = null;
 
     try {
       // Send via appropriate provider based on channel
