@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(timeframe));
     
-    if (!org_id) {
+    if (!organizationId) {
       // Return comprehensive mock analytics for auto dealership
       const mockAnalytics = {
         timeframe: `Last ${timeframe} days`,
@@ -161,7 +161,7 @@ export async function GET(req: NextRequest) {
           *,
           owner:users(id, first_name, last_name)
         `)
-        .eq("org_id", org_id)
+        .eq("org_id", organizationId)
         .gte("created_at", startDate.toISOString());
       
       if (dealError) throw new Error(dealError.message);
