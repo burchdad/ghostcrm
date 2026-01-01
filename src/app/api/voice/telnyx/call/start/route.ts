@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     // Log the call attempt in the database
     if (leadId) {
       try {
-        await s.from('call_logs').insert({
+        await supabaseAdmin.from('call_logs').insert({
           lead_id: leadId,
           phone_number: to,
           call_id: call.data.id,
