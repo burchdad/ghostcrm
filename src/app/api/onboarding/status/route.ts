@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
     let isCompleted = false;
     let completedAt: string | null = null;
 
-    const { data: ownerOrg, error: ownerOrgError } = await s
+    const { data: ownerOrg, error: ownerOrgError } = await supabaseAdmin
       .from("organizations")
       .select("id, name, subdomain, onboarding_completed, created_at, status")
       .eq("owner_id", jwtPayload.userId)
@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
 
     // 2) Fallback: find an active membership if no owner org
     if (!organizationData) {
-      const { data: membership, error: membershipError } = await s
+      const { data: membership, error: membershipError } = await supabaseAdmin
         .from("organization_memberships")
         .select("organization_id, status")
         .eq("user_id", jwtPayload.userId)
@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
         .maybeSingle();
 
       if (!membershipError && membership?.organization_id) {
-        const { data: memberOrg, error: orgError } = await s
+        const { data: memberOrg, error: orgError } = await supabaseAdmin
           .from("organizations")
           .select("id, name, subdomain, onboarding_completed, created_at, status")
           .eq("id", membership.organization_id)
