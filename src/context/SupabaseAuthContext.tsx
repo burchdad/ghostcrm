@@ -31,8 +31,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     console.log('🔄 [AuthProvider] Initializing auth state...');
     
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Add timeout protection
+    const timeoutId = setTimeout(() => {
+      console.log('⏰ [AuthProvider] Auth initialization timeout, setting loading to false');
+      setIsLoading(false);
+    }, 10000); // 10 second timeout
+    
+    // Get initial session with error handling
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      clearTimeout(timeoutId);
+      
+      if (error) {
+        console.error('❌ [AuthProvider] Error getting session:', error);
+        setIsLoading(false);
+        return;
+      }
+      
       if (session?.user) {
         console.log('✅ [AuthProvider] Found existing session');
         fetchUserProfile(session.user);
@@ -40,6 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('ℹ️ [AuthProvider] No existing session');
         setIsLoading(false);
       }
+    }).catch((error) => {
+      clearTimeout(timeoutId);
+      console.error('💥 [AuthProvider] Auth initialization error:', error);
+      setIsLoading(false);
     });
 
     // Listen for auth changes
@@ -76,6 +94,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('❌ [AuthProvider] Error fetching profile:', error);
+        // Create a basic user profile with defaults if database fetch fails
+        console.log('🔧 [AuthProvider] Creating fallback user profile...');
+        
+        const fallbackAuthUser: AuthUser = {
+          id: supabaseUser.id,
+          email: supabaseUser.email!,
+          role: supabaseUser.user_metadata?.role || 'user',
+          organizationId: supabaseUser.user_metadata?.organization_id || 'default-org',
+          tenantId: supabaseUser.user_metadata?.tenant_id || 'default-org',
+          requires_password_reset: false
+        };
+        
+        console.log('✅ [AuthProvider] Using fallback profile:', fallbackAuthUser);
+        setUser(fallbackAuthUser);
         setIsLoading(false);
         return;
       }
@@ -103,7 +135,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(authUser);
       setIsLoading(false);
     } catch (error) {
-      console.error('💥 [AuthProvider] Unexpected error:', error);
+      console.error('💥 [AuthProvider] Unexpected error in fetchUserProfile:', error);
+      
+      // Create emergency fallback user profile
+      const emergencyAuthUser: AuthUser = {
+        id: supabaseUser.id,
+        email: supabaseUser.email!,
+        role: 'user',
+        organizationId: 'default-org',
+        tenantId: 'default-org',
+        requires_password_reset: false
+      };
+      
+      console.log('🚨 [AuthProvider] Using emergency fallback profile:', emergencyAuthUser);
+      setUser(emergencyAuthUser);
       setIsLoading(false);
     }
   };
