@@ -224,7 +224,7 @@ export default function TenantSalesManagerLeads() {
               <Shield className="h-8 w-8 text-blue-500 mr-3 drop-shadow-lg" />
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  {tenant?.name || 'Tenant'} - Lead Management
+                  {user?.tenantId?.replace('-', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'Tenant'} - Lead Management
                 </h1>
                 <p className="text-sm text-gray-600">Sales Manager Dashboard - Team Lead Access</p>
               </div>

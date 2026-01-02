@@ -5,7 +5,7 @@ import { useAuth } from "@/context/SupabaseAuthContext";
 import { useState } from "react";
 
 export default function RoleDebugPage() {
-  const { user, hasPermission } = useAuth();
+  const { user } = useAuth();
   const [fixResult, setFixResult] = useState<any>(null);
   const [isFixing, setIsFixing] = useState(false);
 
@@ -54,7 +54,7 @@ export default function RoleDebugPage() {
 
       <div className="mb-6">
         <h2 className="font-semibold mb-2">Permissions Check:</h2>
-        <p>Has billing permission: {hasPermission("billing") ? "✅ Yes" : "❌ No"}</p>
+        <p>Has billing permission: {user?.role === 'admin' || user?.role === 'owner' || user?.role === 'manager' ? "✅ Yes" : "❌ No"}</p>
         <p>User role: {user?.role || "No role"}</p>
         <p>Tenant ID: {user?.tenantId || "No tenant"}</p>
       </div>

@@ -8,12 +8,12 @@ import ClientOnboardingModal from "./client-onboarding";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user, isLoading, authReady } = useAuth();
+  const { user, isLoading } = useAuth();
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     // Wait for auth to be ready before making any decisions
-    if (!authReady) {
+    if (isLoading) {
       return;
     }
 
@@ -29,7 +29,7 @@ export default function OnboardingPage() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [user, router, authReady]);
+  }, [user, router, isLoading]);
 
   const handleModalClose = () => {
     setShowModal(false);
@@ -42,7 +42,7 @@ export default function OnboardingPage() {
   };
 
   // Show loading spinner while auth is initializing
-  if (!authReady || isLoading) {
+  if (isLoading) {
     return (
       <div style={{ 
         minHeight: '100vh', 

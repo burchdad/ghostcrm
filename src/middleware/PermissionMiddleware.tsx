@@ -5,6 +5,39 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/SupabaseAuthContext';
 import { AuthService, Permission } from '@/lib/auth';
 
+// Simple role-based permission checker for new auth context
+function checkUserPermission(user: any, permission: Permission): boolean {
+  if (!user) return false;
+  
+  // Super admin has all permissions
+  if (user.role === 'admin') return true;
+  
+  // Owner has most permissions
+  if (user.role === 'owner') {
+    return ![
+      'system_admin', 'global_settings', 'user_management'
+    ].includes(permission);
+  }
+  
+  // Manager has moderate permissions
+  if (user.role === 'manager') {
+    return [
+      'view_dashboard', 'manage_leads', 'view_analytics', 
+      'manage_deals', 'team_management', 'view_reports'
+    ].includes(permission);
+  }
+  
+  // Sales rep has basic permissions
+  if (user.role === 'sales_rep') {
+    return [
+      'view_dashboard', 'manage_leads', 'view_own_deals'
+    ].includes(permission);
+  }
+  
+  // Default user permissions
+  return ['view_dashboard'].includes(permission);
+}
+
 // Route permission configuration
 interface RoutePermission {
   path: string;
@@ -276,7 +309,7 @@ interface PermissionMiddlewareProps {
 
 // Component to protect individual routes
 export function RouteGuard({ children, fallbackComponent: FallbackComponent }: PermissionMiddlewareProps) {
-  const { user, isLoading, hasPermission, authReady } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -314,8 +347,8 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     // Route guard effect - silent mode for production
 
     // Reset authorization state when auth context changes
-    if (!authReady) {
-      // Auth not ready, resetting state
+    if (isLoading) {
+      // Auth loading, resetting state
       setIsAuthorized(null);
       setIsCheckingRedirect(true);
       authCheckInProgress.current = false;
@@ -488,14 +521,14 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     }
 
     // Check role authorization
-    if (routeConfig.allowedRoles && !routeConfig.allowedRoles.includes(user.role)) {
+    if (routeConfig.allowedRoles && !routeConfig.allowedRoles.includes(user.role as any)) {
       setAuthorizationResult(false);
       return;
     }
 
     // Check permission authorization
     const hasRequiredPermissions = routeConfig.requiredPermissions.every(permission => 
-      hasPermission(permission)
+      checkUserPermission(user, permission)
     );
 
     if (!hasRequiredPermissions) {
@@ -522,11 +555,11 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
 
     // All checks passed - authorizing access
     setAuthorizationResult(true);
-  }, [authReady, user?.role, user?.id, pathname]); // Removed hasPermission and router to prevent unnecessary re-runs
+  }, [isLoading, user?.role, user?.id, pathname]); // Removed hasPermission and router to prevent unnecessary re-runs
 
   // Show loading state - including while checking for redirects
-  if (!authReady || isAuthorized === null || isCheckingRedirect) {
-    const loadingReason = !authReady ? 'auth not ready' : 
+  if (isLoading || isAuthorized === null || isCheckingRedirect) {
+    const loadingReason = isLoading ? 'auth loading' : 
                          isAuthorized === null ? 'authorization not determined' : 
                          'checking redirects';
     
@@ -588,17 +621,17 @@ export function FeatureGuard({
   fallback = null,
   requireTenantAccess = true
 }: FeatureGuardProps) {
-  const { user, hasPermission } = useAuth();
+  const { user } = useAuth();
 
   if (!user) return fallback;
 
   // Check role authorization
-  if (roles && !roles.includes(user.role)) {
+  if (roles && !roles.includes(user.role as any)) {
     return <>{fallback}</>;
   }
 
   // Check permission authorization
-  const hasRequiredPermissions = permissions.every(permission => hasPermission(permission));
+  const hasRequiredPermissions = permissions.every(permission => checkUserPermission(user, permission));
   if (!hasRequiredPermissions) {
     return <>{fallback}</>;
   }
@@ -613,7 +646,7 @@ export function FeatureGuard({
 
 // Hook for conditional rendering based on permissions
 export function usePermissionCheck() {
-  const { user, hasPermission } = useAuth();
+  const { user } = useAuth();
 
   const canAccess = (
     permissions: Permission[],
@@ -623,10 +656,10 @@ export function usePermissionCheck() {
     if (!user) return false;
 
     // Check role authorization
-    if (roles && !roles.includes(user.role)) return false;
+    if (roles && !roles.includes(user.role as any)) return false;
 
     // Check permission authorization
-    const hasRequiredPermissions = permissions.every(permission => hasPermission(permission));
+    const hasRequiredPermissions = permissions.every(permission => checkUserPermission(user, permission));
     if (!hasRequiredPermissions) return false;
 
     // Check tenant access if required

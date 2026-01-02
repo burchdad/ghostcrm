@@ -122,7 +122,7 @@ export default function TenantSalesRepLeads() {
       if (action === "message") {
         payload.action = "sms";
         payload.phone = lead["Phone Number"];
-        payload.message = `Hello ${lead["Full Name"]}, this is ${user?.firstName || 'your sales representative'} from ${tenant?.name || 'Ghost Auto CRM'} regarding your vehicle inquiry. Please let us know if you have any questions!`;
+        payload.message = `Hello ${lead["Full Name"]}, this is ${user?.email || 'your sales representative'} from ${user?.tenantId?.replace('-', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'Ghost Auto CRM'} regarding your vehicle inquiry. Please let us know if you have any questions!`;
       }
       
       const res = await fetch("/api/leads/action", {
@@ -161,7 +161,7 @@ export default function TenantSalesRepLeads() {
           action: "email",
           leadId: emailLead.id,
           email: emailLead.Email,
-          subject: `${emailType} from ${user?.firstName || 'Sales Representative'} at ${tenant?.name || 'Ghost Auto CRM'}`,
+          subject: `${emailType} from ${user?.email || 'Sales Representative'} at ${user?.tenantId?.replace('-', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'Ghost Auto CRM'}`,
           message: emailMessage
         })
       });
@@ -217,7 +217,7 @@ export default function TenantSalesRepLeads() {
               <Target className="h-8 w-8 text-green-500 mr-3 drop-shadow-lg" />
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  {tenant?.name || 'Tenant'} - My Leads
+                  {user?.tenantId?.replace('-', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'Tenant'} - My Leads
                 </h1>
                 <p className="text-sm text-gray-600">Sales Representative Dashboard - Personal Leads</p>
               </div>

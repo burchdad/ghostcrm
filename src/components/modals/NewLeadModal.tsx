@@ -208,8 +208,8 @@ export default function NewLeadModal({ isOpen, onClose, onLeadCreated }: NewLead
           method: 'POST',
           body: JSON.stringify({
             leads: bulkLeads,
-            organizationId: user?.tenantId || tenant?.id,
-            tenantId: tenant?.id
+            organizationId: user?.tenantId,
+            tenantId: user?.tenantId
           })
         });
         

@@ -11,7 +11,7 @@ export interface OnboardingStatus {
 }
 
 export function useOnboardingStatus(): OnboardingStatus {
-  const { user, authReady } = useAuth()
+  const { user } = useAuth()
   const [status, setStatus] = useState<OnboardingStatus>({
     isCompleted: false,
     completedAt: null,
@@ -21,7 +21,7 @@ export function useOnboardingStatus(): OnboardingStatus {
 
   useEffect(() => {
     // Don't check onboarding status until auth is ready
-    if (!authReady) {
+    if (!user) {
       return
     }
 
@@ -117,7 +117,7 @@ export function useOnboardingStatus(): OnboardingStatus {
     }
 
     checkOnboardingStatus()
-  }, [authReady, user])
+  }, [user])
 
   return status
 }

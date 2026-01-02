@@ -34,14 +34,14 @@ export default function MobileDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !tenant) {
+    if (!user) {
       router.push('/login?redirect=/mobile');
       return;
     }
 
     // Load dealership stats
     loadDashboardData();
-  }, [user, tenant, router]);
+  }, [user, router]);
 
   const loadDashboardData = async () => {
     try {
@@ -119,10 +119,10 @@ export default function MobileDashboard() {
       {/* Welcome Header */}
       <div className="bg-white rounded-lg shadow p-4">
         <h2 className="text-xl font-bold text-gray-900">
-          Welcome back, {user?.firstName || 'Sales Rep'}!
+          Welcome back, {user?.email || 'Sales Rep'}!
         </h2>
         <p className="text-gray-600 text-sm mt-1">
-          {tenant?.name || 'Your Dealership'} • {new Date().toLocaleDateString()}
+          {user?.tenantId?.replace('-', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'Your Dealership'} • {new Date().toLocaleDateString()}
         </p>
       </div>
 
