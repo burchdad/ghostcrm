@@ -89,7 +89,7 @@ interface InstalledChart {
 }
 
 function TenantOwnerDashboard() {
-  const { user, tenant, authReady } = useAuth();
+  const { user, authReady } = useAuth();
   const router = useRouter();
   
   // Tenant dashboard component rendered - silent mode
@@ -284,12 +284,12 @@ function TenantOwnerDashboard() {
           alerts: tasksData.alerts || []
         });
         
-        // Set organization name from API or fallback to tenant name
+        // Set organization name from API or fallback to tenant id
         if (organizationData?.organization?.name) {
           setOrganizationName(organizationData.organization.name);
-        } else if (tenant?.name && !tenant.name.includes('-')) {
+        } else if (user?.tenantId && !user.tenantId.includes('-')) {
           // Only use tenant name if it's not a UUID-like string
-          setOrganizationName(tenant.name);
+          setOrganizationName(user.tenantId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()));
         } else {
           setOrganizationName('Your Organization');
         }

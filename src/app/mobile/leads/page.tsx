@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/SupabaseAuthContext';
 
 interface Lead {
   id: string;
@@ -33,7 +33,7 @@ function getTenantRoute(user: any, basePath: string): string {
 }
 
 export default function MobileLeads() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filter, setFilter] = useState<'all' | 'new' | 'hot' | 'scheduled'>('all');

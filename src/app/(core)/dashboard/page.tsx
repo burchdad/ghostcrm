@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/SupabaseAuthContext";
 import { useRibbonPage } from "@/components/ribbon";
 import { Crown } from "lucide-react";
 import { DndProvider } from "react-dnd";
@@ -53,7 +53,7 @@ function DashboardContent() {
   });
 
   const router = useRouter();
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const { messages, aiAlerts } = useDashboardData();
   const [loading, setLoading] = useState(true);
   const [onboardingLoading, setOnboardingLoading] = useState(true);

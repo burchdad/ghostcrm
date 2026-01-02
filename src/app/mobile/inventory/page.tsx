@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/SupabaseAuthContext';
 
 interface Vehicle {
   id: string;
@@ -36,7 +36,7 @@ function getTenantRoute(user: any, basePath: string): string {
 }
 
 export default function MobileInventory() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [filter, setFilter] = useState<'all' | 'available' | 'pending' | 'sold'>('all');

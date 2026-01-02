@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/SupabaseAuthContext';
 import { useRouter } from 'next/navigation';
 
 interface DealershipStats {
@@ -21,7 +21,7 @@ interface RecentActivity {
 }
 
 export default function MobileDashboard() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<DealershipStats>({
     totalLeads: 0,

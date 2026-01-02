@@ -63,7 +63,7 @@ interface BusinessSettings {
 }
 
 function BusinessSettingsPage() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [settings, setSettings] = useState<BusinessSettings>({
     companyName: '',
@@ -142,11 +142,11 @@ function BusinessSettingsPage() {
           const data = await response.json();
           setSettings({ ...settings, ...data.settings });
         } else {
-          // Use tenant data if available
-          if (tenant) {
+          // Use user tenant data if available
+          if (user?.tenantId) {
             setSettings(prev => ({
               ...prev,
-              companyName: tenant.name || 'Your Dealership',
+              companyName: user.tenantId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Your Dealership',
             }));
           }
         }
@@ -160,7 +160,7 @@ function BusinessSettingsPage() {
     if (user) {
       loadSettings();
     }
-  }, [user, tenant]);
+  }, [user]);
 
   const handleSave = async () => {
     try {

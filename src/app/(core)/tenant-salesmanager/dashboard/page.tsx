@@ -28,7 +28,7 @@ interface TeamMember {
 }
 
 export default function SalesManagerDashboard() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<TeamMetrics | null>(null);
@@ -129,7 +129,7 @@ export default function SalesManagerDashboard() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Sales Manager Dashboard</h1>
           <p className="text-gray-600 mt-2">
-            Welcome back, {user?.firstName} {user?.lastName} • {tenant?.name}
+            Welcome back, {user?.email} • {user?.tenantId?.replace('-', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'Your Organization'}
           </p>
         </div>
 

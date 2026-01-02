@@ -49,7 +49,7 @@ interface BillingInfo {
 }
 
 function BillingSubscriptionPage() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [billingInfo, setBillingInfo] = useState<BillingInfo>({
     currentPlan: 'Professional',

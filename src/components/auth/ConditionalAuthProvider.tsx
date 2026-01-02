@@ -1,6 +1,6 @@
 "use client";
 import { usePathname } from 'next/navigation';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider } from '@/context/SupabaseAuthContext';
 import { ReactNode } from 'react';
 
 // Define routes that need authentication context (login pages + protected pages)

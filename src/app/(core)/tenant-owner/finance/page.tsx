@@ -46,7 +46,7 @@ interface SalesData {
 }
 
 function FinancialOverviewPage() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [metrics, setMetrics] = useState<FinancialMetrics>({
     totalRevenue: 0,

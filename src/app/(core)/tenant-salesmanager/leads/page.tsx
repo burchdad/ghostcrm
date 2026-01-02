@@ -34,7 +34,7 @@ function getDefaultEmailMessage(type: string, lead: any) {
 }
 
 export default function TenantSalesManagerLeads() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useI18n();
@@ -124,7 +124,7 @@ export default function TenantSalesManagerLeads() {
       if (action === "message") {
         payload.action = "sms";
         payload.phone = lead["Phone Number"];
-        payload.message = `Hello ${lead["Full Name"]}, this is a message from ${tenant?.name || 'Ghost Auto CRM'} regarding your vehicle inquiry. Please let us know if you have any questions!`;
+        payload.message = `Hello ${lead["Full Name"]}, this is a message from ${user?.tenantId?.replace('-', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'Ghost Auto CRM'} regarding your vehicle inquiry. Please let us know if you have any questions!`;
       }
       
       const res = await fetch("/api/leads/action", {
@@ -163,7 +163,7 @@ export default function TenantSalesManagerLeads() {
           action: "email",
           leadId: emailLead.id,
           email: emailLead.Email,
-          subject: `${emailType} from ${tenant?.name || 'Ghost Auto CRM'}`,
+          subject: `${emailType} from ${user?.tenantId?.replace('-', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'Ghost Auto CRM'}`,
           message: emailMessage
         })
       });

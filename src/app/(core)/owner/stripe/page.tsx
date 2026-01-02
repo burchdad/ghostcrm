@@ -61,7 +61,7 @@ interface StripeMetrics {
 }
 
 function StripeManagementPage() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [metrics, setMetrics] = useState<StripeMetrics>({
     totalRevenue: 125420,

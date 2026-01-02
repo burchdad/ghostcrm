@@ -66,7 +66,7 @@ interface Insight {
 }
 
 function ReportsInsightsPage() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [reports, setReports] = useState<Report[]>([
     {

@@ -51,7 +51,7 @@ interface SalesMetrics {
 }
 
 function SalesDashboardPage() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [metrics, setMetrics] = useState<SalesMetrics>({
     monthlyTarget: 50000,

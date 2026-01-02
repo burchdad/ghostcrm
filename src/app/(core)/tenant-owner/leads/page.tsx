@@ -26,7 +26,7 @@ import PageAIAssistant from "@/components/ai/PageAIAssistant";
 import "./page.css";
 
 export default function TenantOwnerLeads() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useI18n();
@@ -232,7 +232,7 @@ export default function TenantOwnerLeads() {
           action: "email",
           leadId: emailLead.id,
           email: emailLead["Email Address"] || emailLead["Email"] || emailLead["email"],
-          subject: emailSubject || `Email from ${tenant?.name || 'Ghost Auto CRM'}`,
+          subject: emailSubject || `Email from ${user?.tenantId?.replace('-', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'Ghost Auto CRM'}`,
           message: emailContent || "No email content provided"
         })
       });

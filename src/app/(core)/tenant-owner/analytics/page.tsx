@@ -102,7 +102,7 @@ interface AnalyticsData {
 }
 
 function BusinessAnalyticsPage() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     overview: {

@@ -118,7 +118,7 @@ export async function GET(req: NextRequest) {
           )
         )
       `, { count: 'exact' })
-      .eq('organization_id', userOrg.organization_id);
+      .eq('organization_id', tenantId);
 
     // Apply filters
     if (stage) {
@@ -203,34 +203,34 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     
-    // Get authenticated user and organization
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Authorization header required' }), { status: 401 });
-    }
-
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    console.log('🔍 [DEALS-POST] Getting authenticated user...');
+    
+    const supabase = await createSupabaseServer();
+    
+    // Get the authenticated user from Supabase SSR
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      console.log('❌ [DEALS-POST] No authenticated user:', authError?.message);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from('user_organizations')
-      .select('organization_id')
-      .eq('user_id', user.id)
-      .single();
+    console.log('✅ [DEALS-POST] User authenticated:', {
+      id: user.id,
+      email: user.email
+    });
 
-    if (orgError || !userOrg) {
-      return new Response(JSON.stringify({ error: 'No organization found' }), { status: 403 });
+    // Get tenant context from user metadata
+    const tenantId = user.user_metadata?.tenant_id || user.user_metadata?.organization_id;
+    
+    if (!tenantId) {
+      console.log('❌ [DEALS-POST] No tenant context found for user');
+      return new Response(JSON.stringify({ error: 'No organization context' }), { status: 400 });
     }
 
     // Create deal data
     const dealData = {
-      organization_id: userOrg.organization_id,
+      organization_id: tenantId,
       title: body.title || `${body.customer_name || 'New Deal'} - ${body.vehicle || 'Vehicle'}`,
       description: body.description || '',
       amount: body.amount || 0,
@@ -252,7 +252,7 @@ export async function POST(req: NextRequest) {
       notes: body.notes || ''
     };
 
-    const { data: deal, error } = await supabaseAdmin
+    const { data: deal, error } = await supabase
       .from('deals')
       .insert(dealData)
       .select()
@@ -264,8 +264,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Log audit event
-    await supabaseAdmin.from("audit_events").insert({ 
-      organization_id: userOrg.organization_id, 
+    await supabase.from("audit_events").insert({ 
+      organization_id: tenantId, 
       entity: "deal", 
       entity_id: deal.id, 
       action: "create",
@@ -292,33 +292,28 @@ export async function PUT(req: NextRequest) {
       return new Response(JSON.stringify({ error: 'Deal ID required' }), { status: 400 });
     }
 
-    // Get authenticated user and organization
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Authorization header required' }), { status: 401 });
-    }
-
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    console.log('🔍 [DEALS-PUT] Getting authenticated user...');
+    
+    const supabase = await createSupabaseServer();
+    
+    // Get the authenticated user from Supabase SSR
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      console.log('❌ [DEALS-PUT] No authenticated user:', authError?.message);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from('user_organizations')
-      .select('organization_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (orgError || !userOrg) {
-      return new Response(JSON.stringify({ error: 'No organization found' }), { status: 403 });
+    // Get tenant context from user metadata
+    const tenantId = user.user_metadata?.tenant_id || user.user_metadata?.organization_id;
+    
+    if (!tenantId) {
+      console.log('❌ [DEALS-PUT] No tenant context found for user');
+      return new Response(JSON.stringify({ error: 'No organization context' }), { status: 400 });
     }
 
     // Update deal
-    const { data: deal, error } = await supabaseAdmin
+    const { data: deal, error } = await supabase
       .from('deals')
       .update({
         title: updateData.title,
@@ -341,7 +336,7 @@ export async function PUT(req: NextRequest) {
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
-      .eq('organization_id', userOrg.organization_id)
+      .eq('organization_id', tenantId)
       .select()
       .single();
 
@@ -351,8 +346,8 @@ export async function PUT(req: NextRequest) {
     }
 
     // Log audit event
-    await supabaseAdmin.from("audit_events").insert({ 
-      organization_id: userOrg.organization_id, 
+    await supabase.from("audit_events").insert({ 
+      organization_id: tenantId, 
       entity: "deal", 
       entity_id: id, 
       action: "update",
@@ -379,37 +374,32 @@ export async function DELETE(req: NextRequest) {
       return new Response(JSON.stringify({ error: 'Deal ID required' }), { status: 400 });
     }
 
-    // Get authenticated user and organization
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Authorization header required' }), { status: 401 });
-    }
-
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    console.log('🔍 [DEALS-DELETE] Getting authenticated user...');
+    
+    const supabase = await createSupabaseServer();
+    
+    // Get the authenticated user from Supabase SSR
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      console.log('❌ [DEALS-DELETE] No authenticated user:', authError?.message);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from('user_organizations')
-      .select('organization_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (orgError || !userOrg) {
-      return new Response(JSON.stringify({ error: 'No organization found' }), { status: 403 });
+    // Get tenant context from user metadata
+    const tenantId = user.user_metadata?.tenant_id || user.user_metadata?.organization_id;
+    
+    if (!tenantId) {
+      console.log('❌ [DEALS-DELETE] No tenant context found for user');
+      return new Response(JSON.stringify({ error: 'No organization context' }), { status: 400 });
     }
 
     // Delete deal
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('deals')
       .delete()
       .eq('id', id)
-      .eq('organization_id', userOrg.organization_id);
+      .eq('organization_id', tenantId);
 
     if (error) {
       console.error('Error deleting deal:', error);
@@ -417,8 +407,8 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Log audit event
-    await supabaseAdmin.from("audit_events").insert({ 
-      organization_id: userOrg.organization_id, 
+    await supabase.from("audit_events").insert({ 
+      organization_id: tenantId, 
       entity: "deal", 
       entity_id: id, 
       action: "delete",

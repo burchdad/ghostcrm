@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export default function TenantOwnerCustomChartBuilder() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [selectedTool, setSelectedTool] = useState<string>('');
 
@@ -103,7 +103,7 @@ export default function TenantOwnerCustomChartBuilder() {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">Custom Chart Builder</h1>
-                  <p className="text-sm text-gray-500">{tenant?.name || 'Your Business'} • Build from scratch</p>
+                  <p className="text-sm text-gray-500">{user?.tenantId?.replace('-', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'Your Business'} • Build from scratch</p>
                 </div>
               </div>
             </div>
@@ -327,7 +327,7 @@ export default function TenantOwnerCustomChartBuilder() {
                         </div>
                         <p className="text-gray-600">Business Template Preview</p>
                         <p className="text-sm text-gray-500 mt-1">
-                          Customize your selected template for {tenant?.name || 'your business'}
+                          Customize your selected template for {user?.tenantId?.replace('-', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'your business'}
                         </p>
                       </div>
                     </div>

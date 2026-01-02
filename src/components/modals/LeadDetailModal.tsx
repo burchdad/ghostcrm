@@ -56,7 +56,7 @@ interface LeadData {
 }
 
 export default function LeadDetailModal({ isOpen, onClose, onLeadUpdated, leadId }: LeadDetailModalProps) {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(false);

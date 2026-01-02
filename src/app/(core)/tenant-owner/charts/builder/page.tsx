@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export default function TenantOwnerChartBuilder() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode') || 'basic';
@@ -99,7 +99,7 @@ export default function TenantOwnerChartBuilder() {
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">AI Chart Builder</h1>
                   <p className="text-sm text-gray-500">
-                    {tenant?.name || 'Your Business'} • {mode === 'advanced' ? 'Advanced Mode' : 'Basic Mode'}
+                    {user?.tenantId?.replace('-', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'Your Business'} • {mode === 'advanced' ? 'Advanced Mode' : 'Basic Mode'}
                   </p>
                 </div>
               </div>
@@ -124,7 +124,7 @@ export default function TenantOwnerChartBuilder() {
             <div className="text-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full text-purple-700 font-medium mb-4">
                 <Wand2 className="w-4 h-4" />
-                AI-Powered Chart Generation for {tenant?.name}
+                AI-Powered Chart Generation for {user?.tenantId?.replace('-', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'Your Business'}
               </div>
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
                 Describe Your Business Chart Vision

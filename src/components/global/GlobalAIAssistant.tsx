@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import AIAssistantModal from "@/components/modals/AIAssistantModal";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/SupabaseAuthContext";
 
 export default function GlobalAIAssistant() {
   const [showAIAssistant, setShowAIAssistant] = useState(false);

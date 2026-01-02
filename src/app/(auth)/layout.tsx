@@ -1,6 +1,6 @@
 "use client";
 
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider } from '@/context/SupabaseAuthContext';
 
 export default function AuthLayout({
   children,

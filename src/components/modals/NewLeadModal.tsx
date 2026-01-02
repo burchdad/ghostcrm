@@ -73,7 +73,7 @@ interface BulkLeadData {
 }
 
 export default function NewLeadModal({ isOpen, onClose, onLeadCreated }: NewLeadModalProps) {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   

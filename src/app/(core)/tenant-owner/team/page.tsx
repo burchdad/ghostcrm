@@ -48,7 +48,7 @@ interface TeamSummary {
 }
 
 function TeamManagementPage() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [teamSummary, setTeamSummary] = useState<TeamSummary>({

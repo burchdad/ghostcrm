@@ -89,7 +89,7 @@ interface OrganizationProfile {
 }
 
 function OrganizationProfilePage() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<OrganizationProfile>({
     basic: {

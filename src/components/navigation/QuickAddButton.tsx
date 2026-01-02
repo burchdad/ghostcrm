@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import QuickAddModal from "@/components/modals/QuickAddModal";
 import { useI18n } from "@/components/utils/I18nProvider";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/SupabaseAuthContext";
 import { useRouter } from "next/navigation";
 import "./QuickAddButton.css";
 

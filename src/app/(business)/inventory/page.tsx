@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/SupabaseAuthContext";
 import { FeatureGuard, usePermissionCheck } from "@/middleware/PermissionMiddleware";
 import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
@@ -595,7 +595,7 @@ function InventoryContent() {
                   isSalesRep ? 'text-blue-700' : 'text-green-700'
                 }`}>
                   {isSalesRep 
-                    ? `Viewing vehicles assigned to ${user.firstName} ${user.lastName} and available vehicles for your dealership`
+                    ? `Viewing vehicles assigned to you (${user.email}) and available vehicles for your dealership`
                     : `Managing all vehicles for your dealership (${vehicles.length} vehicles shown)`
                   }
                 </p>

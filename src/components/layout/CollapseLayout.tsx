@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import UnifiedToolbar from "@/components/navigation/UnifiedToolbar";
 import Sidebar from "@/components/layout/Sidebar";
 import CollaborationSidebar from "@/components/global/CollaborationSidebar";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/SupabaseAuthContext";
 
 export default function CollapseLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = React.useState(false);
