@@ -1,109 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyJwtToken, hasJwtSecret } from '@/lib/jwt';
 import { createSupabaseServer } from '@/utils/supabase/server';
 
-// Force dynamic rendering for this API route
+// Force dynamic rendering
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   try {
-    // Check for JWT_SECRET
-    if (!hasJwtSecret()) {
-      console.error('❌ [AUTH/ME] JWT_SECRET not configured in environment');
-      return NextResponse.json({ 
-        error: 'Server configuration error',
-        user: null 
-      }, { status: 500 });
-    }
+    console.log('🔍 [AUTH-ME] Getting user session...');
     
-    // Get JWT cookie
-    const token = req.cookies.get('ghostcrm_jwt')?.value;
+    const supabase = await createSupabaseServer();
     
-    if (!token) {
-      // Silent return for unauthenticated users - this is normal behavior
+    // Get the authenticated user
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error || !user) {
+      console.log('❌ [AUTH-ME] No authenticated user:', error?.message);
       return NextResponse.json({ user: null }, { status: 200 });
     }
-    
-    // Decode JWT using shared utility
-    const decoded = verifyJwtToken(token);
-    
-    if (!decoded) {
-      // Only log errors for invalid tokens, not missing ones
-      console.log('⚠️ [AUTH/ME] Invalid JWT token found');
-      return NextResponse.json({ user: null }, { status: 401 });
-    }
-    
-    // Get organization subdomain if user has an organization
-    let organizationSubdomain = null;
-    let requiresPasswordReset = false;
-    
-    if (decoded.organizationId) {
-      try {
-        // Use service role to bypass RLS for organization lookup
-        const { createClient } = await import('@supabase/supabase-js');
-        const supabaseAdmin = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
-        
-        // Get organization info
-        const { data: org, error } = await supabaseAdmin
-          .from('organizations')
-          .select('subdomain')
-          .eq('id', decoded.organizationId)
-          .single();
-        
-        if (error) {
-          console.warn('⚠️ [AUTH/ME] Organization query error:', error);
-        } else {
-          organizationSubdomain = org?.subdomain || null;
-          console.log('🏢 [AUTH/ME] Found organization subdomain:', organizationSubdomain);
-        }
-        
-        // Get user's password reset status
-        const { data: user, error: userError } = await supabaseAdmin
-          .from('users')
-          .select('requires_password_reset')
-          .eq('id', decoded.userId)
-          .single();
-        
-        if (!userError && user) {
-          requiresPasswordReset = user.requires_password_reset || false;
-          console.log('🔐 [AUTH/ME] User requires password reset:', requiresPasswordReset);
-        }
-        
-      } catch (orgError) {
-        console.warn('⚠️ [AUTH/ME] Could not fetch organization subdomain:', orgError);
-      }
-    }
-    
-    // Only log successful authentications to reduce noise
-    console.log('✅ [AUTH/ME] User authenticated:', {
-      userId: decoded.userId,
-      email: decoded.email,
-      role: decoded.role,
-      organizationId: decoded.organizationId,
-      organizationSubdomain,
-      tenantId: decoded.tenantId
+
+    console.log('✅ [AUTH-ME] User authenticated:', {
+      id: user.id,
+      email: user.email
     });
-    
-    return NextResponse.json({ 
+
+    // Get user profile from database
+    const { data: userProfile, error: profileError } = await supabase
+      .from("users")
+      .select("id, email, role, organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      console.log('⚠️ [AUTH-ME] Could not fetch user profile:', profileError.message);
+    }
+
+    // Get tenant info from user metadata
+    const tenantId = user.user_metadata?.tenant_id || userProfile?.organization_id || 'default-org';
+    const organizationId = user.user_metadata?.organization_id || userProfile?.organization_id || 'default-org';
+
+    console.log('✅ [AUTH-ME] Returning user data:', {
+      id: user.id,
+      email: user.email,
+      tenantId,
+      organizationId
+    });
+
+    return NextResponse.json({
       user: {
-        id: decoded.userId,
-        userId: decoded.userId,
-        email: decoded.email,
-        role: decoded.role,
-        organizationId: decoded.organizationId,
-        organizationSubdomain,
-        tenantId: decoded.tenantId,
-        exp: decoded.exp,
-        requires_password_reset: requiresPasswordReset
+        id: user.id,
+        email: user.email,
+        role: userProfile?.role || user.user_metadata?.role || 'user',
+        organizationId: organizationId,
+        tenantId: tenantId
       }
     });
-    
+
   } catch (error) {
-    console.error('❌ [AUTH/ME] Error checking auth:', error);
-    return NextResponse.json({ user: null }, { status: 401 });
+    console.error('💥 [AUTH-ME] Unexpected error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

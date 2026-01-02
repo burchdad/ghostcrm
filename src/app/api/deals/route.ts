@@ -1,16 +1,13 @@
 
 
 import { NextRequest } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseServer } from "@/utils/supabase/server";
 
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
 export const runtime = 'nodejs';
 
-// Create a service role client for admin operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Force dynamic rendering for cookies() usage
+export const dynamic = 'force-dynamic'
 
 // Auto Dealership Deal Stages in sales process order
 const DEALERSHIP_DEAL_STAGES = [
@@ -77,33 +74,35 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
 
   try {
-    // Get authenticated user and organization
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Authorization header required' }), { status: 401 });
-    }
-
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    console.log('🔍 [DEALS] Getting authenticated user...');
+    
+    const supabase = await createSupabaseServer();
+    
+    // Get the authenticated user from Supabase SSR
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      console.log('❌ [DEALS] No authenticated user:', authError?.message);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from('user_organizations')
-      .select('organization_id, role')
-      .eq('user_id', user.id)
-      .single();
+    console.log('✅ [DEALS] User authenticated:', {
+      id: user.id,
+      email: user.email
+    });
 
-    if (orgError || !userOrg) {
-      return new Response(JSON.stringify({ error: 'No organization found' }), { status: 403 });
+    // Get tenant context from user metadata
+    const tenantId = user.user_metadata?.tenant_id || user.user_metadata?.organization_id;
+    
+    if (!tenantId) {
+      console.log('❌ [DEALS] No tenant context found for user');
+      return new Response(JSON.stringify({ error: 'No organization context' }), { status: 400 });
     }
 
-    // Build query for deals with related data
-    let query = supabaseAdmin
+    console.log('🏢 [DEALS] Using tenant context:', { tenantId });
+
+    // Query deals with RLS - Supabase will automatically filter by user/tenant
+    let query = supabase
       .from('deals')
       .select(`
         *,

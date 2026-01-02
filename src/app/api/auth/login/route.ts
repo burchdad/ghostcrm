@@ -1,35 +1,14 @@
 export const runtime = "nodejs";
 
-import { NextResponse } from "next/server";
-import { compare } from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseServer } from "@/utils/supabase/server";
 import { limitKey } from "@/lib/rateLimitEdge";
-import { withCORS } from "@/lib/cors";
-import { withErrorHandling, createErrorResponse } from "@/lib/error-handling";
 
-// Get JWT secret with runtime validation
-function getJWTSecret() {
-  const JWT_SECRET = process.env.JWT_SECRET;
-  if (!JWT_SECRET) {
-    throw new Error("JWT_SECRET environment variable must be set");
-  }
-  if (JWT_SECRET === "supersecret" || JWT_SECRET.length < 32) {
-    throw new Error("JWT_SECRET must be a secure random string (min 32 characters)");
-  }
-  return JWT_SECRET;
-}
-
-async function loginHandler(req: Request) {
-  console.log('🚀 [LOGIN] Starting login process...');
-  console.log('🔍 [LOGIN] Request details:', {
-    method: req.method,
-    url: req.url,
-    headers: Object.fromEntries(req.headers.entries())
-  });
+export async function POST(req: NextRequest) {
+  console.log('🚀 [LOGIN] Starting Supabase auth login process...');
   
   try {
-    const { email, password, rememberMe } = await req.json();
+    const { email, password } = await req.json();
     
     if (!email || !password) {
       console.log('❌ [LOGIN] Missing email or password');
@@ -51,128 +30,76 @@ async function loginHandler(req: Request) {
         { status: 429 }
       );
     }
+
+    // Create Supabase server client
+    const supabase = await createSupabaseServer();
     
-    // Fetch user from Supabase
-    console.log('🔍 [LOGIN] Looking up user in database...');
-    const { data: user, error: userError } = await supabaseAdmin
+    // Authenticate with Supabase
+    console.log('🔐 [LOGIN] Authenticating with Supabase...');
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: emailNorm,
+      password: password
+    });
+
+    if (error || !data.user) {
+      console.log('❌ [LOGIN] Supabase authentication failed:', error?.message);
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    }
+
+    console.log('✅ [LOGIN] Supabase authentication successful:', {
+      userId: data.user.id,
+      email: data.user.email
+    });
+
+    // Get user profile from database to get role and organization
+    const { data: userProfile, error: profileError } = await supabase
       .from("users")
-      .select("id, email, password_hash, role, organization_id")
-      .eq("email", emailNorm)
+      .select("id, email, role, organization_id")
+      .eq("id", data.user.id)
       .single();
-      
-    if (!user || userError) {
-      console.log('❌ [LOGIN] User lookup failed:', { emailNorm, error: userError });
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+
+    if (profileError) {
+      console.log('⚠️ [LOGIN] Could not fetch user profile, using basic info');
     }
-    
-    console.log('✅ [LOGIN] User found:', { id: user.id, email: user.email, role: user.role, hasPassword: !!user.password_hash });
-    
-    // Verify password
-    console.log('🔐 [LOGIN] Verifying password...');
-    const valid = await compare(password, user.password_hash);
-    console.log('🔐 [LOGIN] Password verification result:', valid);
-    
-    if (!valid) {
-      console.log('❌ [LOGIN] Password verification failed');
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-    }
-    
-    console.log('✅ [LOGIN] Password verified successfully');
-    
+
     // Get tenant context from request headers (subdomain)
     const hostname = req.headers.get('host') || '';
     const subdomain = hostname.split('.')[0];
     
-    console.log('🏢 [LOGIN] Hostname analysis:', {
-      hostname,
-      subdomain,
-      isSubdomain: subdomain && subdomain !== 'localhost' && subdomain !== hostname,
-      hostnameIncludesLocalhost: hostname.includes('localhost')
-    });
-    
     // Determine tenant/organization ID
-    let tenantId = user.organization_id || 'default-org'; // Default fallback
-    let organizationId = user.organization_id || 'default-org';
+    let tenantId = userProfile?.organization_id || 'default-org';
+    let organizationId = userProfile?.organization_id || 'default-org';
     
     // If we have a subdomain (not localhost), use it as tenant context
-    // For burch-enterprises.localhost:3000, subdomain = 'burch-enterprises'
     if (subdomain && subdomain !== 'localhost' && subdomain !== hostname && hostname.includes('localhost')) {
       tenantId = subdomain;
       organizationId = subdomain;
-      console.log('🎯 [LOGIN] Using subdomain as tenant context:', {
-        hostname,
-        subdomain,
-        tenantId,
-        organizationId
-      });
-    } else {
-      console.log('🚨 [LOGIN] No subdomain detected, using database org:', {
-        hostname,
-        subdomain,
-        tenantId,
-        organizationId,
-        userOrgId: user.organization_id
-      });
     }
+
+    // Update user metadata with tenant info for RLS
+    await supabase.auth.updateUser({
+      data: {
+        tenant_id: tenantId,
+        organization_id: organizationId,
+        role: userProfile?.role || 'user'
+      }
+    });
+
+    console.log('✅ [LOGIN] Login successful');
     
-    // Create JWT token
-    console.log('🎫 [LOGIN] Creating JWT token...');
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
-        role: user.role,
-        organizationId: organizationId,
-        tenantId: tenantId
-      },
-      getJWTSecret(),
-      { expiresIn: rememberMe ? "30d" : "24h" }
-    );
-    
-    // Set HTTP-only cookie
-    const response = NextResponse.json({ 
+    return NextResponse.json({ 
       success: true, 
       user: { 
-        id: user.id, 
-        email: user.email, 
-        role: user.role,
+        id: data.user.id, 
+        email: data.user.email, 
+        role: userProfile?.role || 'user',
         organizationId: organizationId,
         tenantId: tenantId
       } 
     });
     
-    // Cookie settings based on Remember Me choice
-    const cookieOptions: any = {
-      httpOnly: false, // Allow JavaScript access for client-side auth
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/"
-    };
-    
-    // Only set maxAge if Remember Me is checked
-    // Without maxAge, cookie becomes a session cookie (expires on browser close)
-    if (rememberMe) {
-      cookieOptions.maxAge = 30 * 24 * 60 * 60; // 30 days
-    }
-    // If rememberMe is false, cookie will be a session cookie (no maxAge)
-    
-    response.cookies.set("ghostcrm_jwt", token, cookieOptions);
-    
-    console.log('🎉 [LOGIN] Login successful for:', user.email);
-    return response;
-    
   } catch (error) {
-    console.error('💥 [LOGIN] Login error:', error);
-    const context = {
-      endpoint: '/api/auth/login',
-      method: 'POST',
-      userAgent: req.headers.get('user-agent') || undefined,
-      ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined
-    };
-    
-    return createErrorResponse(error as Error, context, 500);
+    console.error('💥 [LOGIN] Unexpected error:', error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
-
-// Export CORS-protected POST handler
-export const POST = withCORS(loginHandler);
