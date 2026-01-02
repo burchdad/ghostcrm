@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/SupabaseAuthContext";
 import { Plus, User, DollarSign, Car, Calendar, Building, CheckSquare, Phone, FileText } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import "./QuickAddModal.css";

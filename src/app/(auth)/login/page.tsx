@@ -2,13 +2,13 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/SupabaseAuthContext";
 import BrandPanel from "@/components/auth/BrandPanel";
 import AuthForm from "@/components/auth/AuthForm";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, tenant, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
 
   // Redirect if already authenticated based on role and context
   useEffect(() => {
@@ -59,7 +59,7 @@ export default function LoginPage() {
       // Redirecting authenticated user - silent mode
       
       // Immediately preserve state before navigation - silent mode
-      const stateToSave = JSON.stringify({ user, tenant, isLoading: false });
+      const stateToSave = JSON.stringify({ user, isLoading: false });
       sessionStorage.setItem('ghost_auth_state', stateToSave);
       // Saved state to session storage - silent mode
       

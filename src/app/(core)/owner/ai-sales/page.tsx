@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/SupabaseAuthContext";
 import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
 import { I18nProvider } from "@/components/utils/I18nProvider";
@@ -71,7 +71,7 @@ interface AgentMetrics {
 }
 
 function AISalesAgentsPage() {
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [agents, setAgents] = useState<AIAgent[]>([
     {

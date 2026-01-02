@@ -9,6 +9,7 @@ interface AuthUser {
   role: string;
   organizationId: string;
   tenantId: string;
+  requires_password_reset?: boolean;
 }
 
 interface AuthContextType {
@@ -69,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Get user profile from database
       const { data: userProfile, error } = await supabase
         .from('users')
-        .select('id, email, role, organization_id')
+        .select('id, email, role, organization_id, requires_password_reset')
         .eq('id', supabaseUser.id)
         .single();
 
@@ -88,7 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: supabaseUser.email!,
         role: userProfile?.role || supabaseUser.user_metadata?.role || 'user',
         organizationId,
-        tenantId
+        tenantId,
+        requires_password_reset: userProfile?.requires_password_reset || false
       };
 
       console.log('✅ [AuthProvider] User profile loaded:', {

@@ -18,7 +18,7 @@ import { useI18n } from "@/components/utils/I18nProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Modal } from "@/components/modals/Modal";
 import NewLeadModal from "@/components/modals/NewLeadModal";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/SupabaseAuthContext";
 
 const emailTypes = ["Marketing", "Follow-up", "Appointment"];
 

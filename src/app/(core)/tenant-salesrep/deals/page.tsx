@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/SupabaseAuthContext";
 import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
 import { Card } from "@/components/ui/card";
@@ -120,7 +120,7 @@ export default function TenantSalesRepDealsPage() {
           lastActivity: '2 hours ago',
           nextFollowUp: '2024-01-25',
           notes: 'Customer very satisfied. Delivery scheduled for Friday.',
-          assignedTo: user ? `${user.firstName} ${user.lastName}`.trim() : 'Sales Rep',
+          assignedTo: user ? user.email.split('@')[0] : 'Sales Rep',
           createdDate: '2024-01-15',
           updatedDate: '2024-01-22',
           source: 'Website'
@@ -145,7 +145,7 @@ export default function TenantSalesRepDealsPage() {
           lastActivity: '4 hours ago',
           nextFollowUp: '2024-01-23',
           notes: 'Customer interested but wants better financing terms.',
-          assignedTo: user ? `${user.firstName} ${user.lastName}`.trim() : 'Sales Rep',
+          assignedTo: user ? user.email.split('@')[0] : 'Sales Rep',
           createdDate: '2024-01-18',
           updatedDate: '2024-01-22',
           source: 'Referral'
@@ -170,7 +170,7 @@ export default function TenantSalesRepDealsPage() {
           lastActivity: '1 day ago',
           nextFollowUp: '2024-01-24',
           notes: 'Sent detailed proposal with financing options.',
-          assignedTo: user ? `${user.firstName} ${user.lastName}`.trim() : 'Sales Rep',
+          assignedTo: user ? user.email.split('@')[0] : 'Sales Rep',
           createdDate: '2024-01-20',
           updatedDate: '2024-01-21',
           source: 'Walk-in'
@@ -195,7 +195,7 @@ export default function TenantSalesRepDealsPage() {
           lastActivity: '2 days ago',
           nextFollowUp: '2024-01-23',
           notes: 'Qualified lead, needs truck for business. Scheduled test drive.',
-          assignedTo: user ? `${user.firstName} ${user.lastName}`.trim() : 'Sales Rep',
+          assignedTo: user ? user.email.split('@')[0] : 'Sales Rep',
           createdDate: '2024-01-21',
           updatedDate: '2024-01-21',
           source: 'Phone Inquiry'
@@ -220,7 +220,7 @@ export default function TenantSalesRepDealsPage() {
           lastActivity: '3 days ago',
           nextFollowUp: '2024-01-23',
           notes: 'First-time buyer, needs financing assistance.',
-          assignedTo: user ? `${user.firstName} ${user.lastName}`.trim() : 'Sales Rep',
+          assignedTo: user ? user.email.split('@')[0] : 'Sales Rep',
           createdDate: '2024-01-19',
           updatedDate: '2024-01-19',
           source: 'Social Media'

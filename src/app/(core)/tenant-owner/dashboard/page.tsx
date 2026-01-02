@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/SupabaseAuthContext";
 import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
 import PageAIAssistant from "@/components/ai/PageAIAssistant";
@@ -89,7 +89,7 @@ interface InstalledChart {
 }
 
 function TenantOwnerDashboard() {
-  const { user, authReady } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   
   // Tenant dashboard component rendered - silent mode
@@ -115,16 +115,16 @@ function TenantOwnerDashboard() {
   // Chart marketplace state
   const [showMarketplace, setShowMarketplace] = useState(false);
   
-  // Give state time to settle after authReady
+  // Give state time to settle after auth loads
   useEffect(() => {
-    if (authReady) {
+    if (!isLoading) {
       const timer = setTimeout(() => {
         setStateSettled(true);
       }, 150); // Small delay to allow state propagation
       
       return () => clearTimeout(timer);
     }
-  }, [authReady]);
+  }, [isLoading]);
   const [installedCharts, setInstalledCharts] = useState<InstalledChart[]>([]);
   const [chartSettings, setChartSettings] = useState<Record<string, any>>({});
   const [activeChartsView, setActiveChartsView] = useState<'grid' | 'marketplace'>('grid');
@@ -177,11 +177,11 @@ function TenantOwnerDashboard() {
     // Redirect check effect - silent mode
     
     // Only redirect if auth is ready and we have a user who is not an owner
-    if (!loading && authReady && user && user.role !== 'owner') {
+    if (!loading && !isLoading && user && user.role !== 'owner') {
       console.log('🔄 [TENANT-DASHBOARD] Redirecting non-owner to dashboard');
       router.push('/dashboard');
     }
-  }, [user, loading, router, authReady]);
+  }, [user, loading, router, isLoading]);
 
   // Navigation handlers for metric cards
   const handleRevenueClick = () => {
@@ -447,7 +447,7 @@ function TenantOwnerDashboard() {
   }
 
   // Show loading if auth is ready but state hasn't settled yet
-  if (authReady && !stateSettled) {
+  if (!isLoading && !stateSettled) {
     return (
       <div className="tenant-dashboard-loading">
         <div className="tenant-dashboard-loading-spinner">
@@ -463,11 +463,11 @@ function TenantOwnerDashboard() {
   }
 
   // Show access denied only if auth is ready, state has settled, and confirmed no owner
-  if (authReady && stateSettled && (!user || user.role !== 'owner')) {
+  if (!isLoading && stateSettled && (!user || user.role !== 'owner')) {
     console.log('❌ [TENANT-DASHBOARD] Access denied:', { 
       hasUser: !!user, 
       userRole: user?.role,
-      authReady,
+      authReady: !isLoading,
       stateSettled
     });
     return null;

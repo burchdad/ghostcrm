@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/SupabaseAuthContext';
 import { useRouter } from 'next/navigation';
 import { TrendingUp, Users, Target, Calendar, AlertCircle, DollarSign, Phone, MessageSquare } from 'lucide-react';
 import { useRibbonPage } from '@/components/ribbon';

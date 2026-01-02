@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/SupabaseAuthContext';
 import BrandPanel from '@/components/auth/BrandPanel';
 import AuthForm from '@/components/auth/AuthForm';
 import { User } from 'lucide-react';

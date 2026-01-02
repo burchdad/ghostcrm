@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/SupabaseAuthContext";
 import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
 import { Card } from "@/components/ui/card";
@@ -274,7 +274,7 @@ export default function TenantSalesRepInventoryPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">My Assignments</p>
               <p className="text-2xl font-bold text-gray-900">
-                {vehicles.filter(v => v.assignedTo === (user ? `${user.firstName} ${user.lastName}`.trim() : 'Sales Rep')).length}
+                {vehicles.filter(v => v.assignedTo === (user ? user.email.split('@')[0] : 'Sales Rep')).length}
               </p>
             </div>
           </div>
@@ -443,7 +443,7 @@ export default function TenantSalesRepInventoryPage() {
                 )}
               </div>
 
-              {vehicle.assignedTo === (user ? `${user.firstName} ${user.lastName}`.trim() : 'Sales Rep') && (
+              {vehicle.assignedTo === (user ? user.email.split('@')[0] : 'Sales Rep') && (
                 <div className="mt-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
                   Assigned to you
                 </div>
