@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/context/SupabaseAuthContext";
 import {
   MessageSquare,
@@ -117,24 +117,112 @@ export default function CollaborationSidebar({ onExpandMode }: CollaborationSide
   const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const { user, isLoading: authLoading } = useAuth();
+  
+  // Teams-like presence tracking
+  const [userPresence, setUserPresence] = useState<'online' | 'away' | 'busy' | 'offline'>('online');
+  const [isPresenting, setIsPresenting] = useState(false);
+  const lastActivityRef = useRef<number>(Date.now());
+  const awayThresholdMs = 5 * 60 * 1000; // 5 minutes for away status
 
-  // Fetch real collaboration data
+  // Track user activity for presence
+  const updateLastActivity = useCallback(() => {
+    lastActivityRef.current = Date.now();
+    if (userPresence === 'away') {
+      setUserPresence('online');
+    }
+  }, [userPresence]);
+
+  // Monitor user activity
   useEffect(() => {
-    // Don't fetch data if user is not authenticated
+    if (!user) return;
+
+    // Activity event listeners
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    activityEvents.forEach(event => {
+      document.addEventListener(event, updateLastActivity, true);
+    });
+
+    return () => {
+      activityEvents.forEach(event => {
+        document.removeEventListener(event, updateLastActivity, true);
+      });
+    };
+  }, [user, updateLastActivity]);
+
+  // Check for away status
+  useEffect(() => {
+    if (!user) return;
+
+    const checkAwayStatus = () => {
+      const now = Date.now();
+      const timeSinceLastActivity = now - lastActivityRef.current;
+      
+      if (timeSinceLastActivity > awayThresholdMs && userPresence === 'online') {
+        setUserPresence('away');
+        console.log('🟪 [Presence] User is now away - no activity for 5+ minutes');
+      }
+    };
+
+    const awayCheckInterval = setInterval(checkAwayStatus, 30000); // Check every 30 seconds
+    return () => clearInterval(awayCheckInterval);
+  }, [user, userPresence]);
+
+  // Detect screen sharing/presenting
+  useEffect(() => {
+    if (!user || typeof navigator === 'undefined' || !navigator.mediaDevices) return;
+
+    const detectScreenShare = async () => {
+      try {
+        // @ts-ignore - getDisplayMedia might not be typed
+        if (navigator.mediaDevices.getDisplayMedia) {
+          // This is a simplified check - in a real implementation you'd want to
+          // track active screen sharing sessions more comprehensively
+          const isScreenSharing = document.visibilityState === 'visible' && 
+                                 window.innerHeight === screen.height;
+          
+          if (isScreenSharing !== isPresenting) {
+            setIsPresenting(isScreenSharing);
+            console.log(`📺 [Presence] Screen sharing: ${isScreenSharing ? 'started' : 'stopped'}`);
+          }
+        }
+      } catch (error) {
+        // Screen share detection failed, ignore
+      }
+    };
+
+    const shareCheckInterval = setInterval(detectScreenShare, 10000); // Check every 10 seconds
+    return () => clearInterval(shareCheckInterval);
+  }, [user, isPresenting]);
+
+  // Fetch real collaboration data - Teams-like live tracking
+  useEffect(() => {
+    // Don't start tracking if still loading auth or user not authenticated
     if (authLoading || !user) {
       setIsLoadingData(false);
       return;
     }
 
+    // Start live collaboration tracking immediately when authenticated
+    console.log('🔴 [CollaborationSidebar] Starting live tracking for user:', user.email);
+    console.log('🟪 [Presence] Initial status:', userPresence, isPresenting ? '(presenting)' : '');
+    
     const fetchCollaborationData = async () => {
       try {
         setIsLoadingData(true);
         
-        // Fetch chats, calls, and activity in parallel
+        // Include presence data in API calls
+        const presenceData = {
+          status: userPresence,
+          isPresenting,
+          lastActive: lastActivityRef.current
+        };
+        
+        // Fetch chats, calls, and activity in parallel with presence info
         const [chatsRes, callsRes, activityRes] = await Promise.allSettled([
-          fetch('/api/collaboration/channels'),
-          fetch('/api/collaboration/recent-calls'),
-          fetch('/api/collaboration/activity')
+          fetch(`/api/collaboration/channels?presence=${userPresence}&presenting=${isPresenting}`),
+          fetch(`/api/collaboration/recent-calls?presence=${userPresence}&presenting=${isPresenting}`),
+          fetch(`/api/collaboration/activity?presence=${userPresence}&presenting=${isPresenting}`)
         ]);
 
         // Process chats
@@ -173,11 +261,17 @@ export default function CollaborationSidebar({ onExpandMode }: CollaborationSide
       }
     };
 
+    // Initial data fetch
     fetchCollaborationData();
 
-    // Refresh data every 30 seconds for live updates
-    const interval = setInterval(fetchCollaborationData, 30000);
-    return () => clearInterval(interval);
+    // Teams-like live updates - more frequent for real-time presence
+    const interval = setInterval(fetchCollaborationData, 15000); // Every 15 seconds for live feel
+    
+    // Cleanup on unmount or auth change
+    return () => {
+      console.log('🔴 [CollaborationSidebar] Stopping live tracking');
+      clearInterval(interval);
+    };
   }, [user, authLoading]); // Re-run when auth state changes
 
   // Filter chats based on active filters
