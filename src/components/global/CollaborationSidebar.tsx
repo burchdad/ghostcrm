@@ -1,6 +1,15 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useAuth } from "@/context/SupabaseAuthContext";
+
+// Safe auth hook that handles missing context
+function useSafeAuth() {
+  try {
+    const { useAuth } = require('@/context/SupabaseAuthContext');
+    return useAuth();
+  } catch (error) {
+    return { user: null, isLoading: false };
+  }
+}
 import {
   MessageSquare,
   Phone,
@@ -116,7 +125,7 @@ export default function CollaborationSidebar({ onExpandMode }: CollaborationSide
   }>>([]);
   const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useSafeAuth();
   
   // Teams-like presence tracking
   const [userPresence, setUserPresence] = useState<'online' | 'away' | 'busy' | 'offline'>('online');

@@ -1,7 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/context/SupabaseAuthContext'
+
+// Safe auth hook that handles missing context
+function useSafeAuth() {
+  try {
+    const { useAuth } = require('@/context/SupabaseAuthContext');
+    return useAuth();
+  } catch (error) {
+    return { user: null, isLoading: false };
+  }
+}
 
 export interface OnboardingStatus {
   isCompleted: boolean
@@ -11,7 +20,7 @@ export interface OnboardingStatus {
 }
 
 export function useOnboardingStatus(): OnboardingStatus {
-  const { user } = useAuth()
+  const { user } = useSafeAuth()
   const [status, setStatus] = useState<OnboardingStatus>({
     isCompleted: false,
     completedAt: null,

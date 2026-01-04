@@ -3,11 +3,20 @@
 import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import AIAssistantModal from "@/components/modals/AIAssistantModal";
-import { useAuth } from "@/context/SupabaseAuthContext";
+
+// Safe auth hook that handles missing context
+function useSafeAuth() {
+  try {
+    const { useAuth } = require('@/context/SupabaseAuthContext');
+    return useAuth();
+  } catch (error) {
+    return { user: null, isLoading: false };
+  }
+}
 
 export default function GlobalAIAssistant() {
   const [showAIAssistant, setShowAIAssistant] = useState(false);
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
   const pathname = usePathname();
 
   // Convert pathname to readable page name
