@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useAuth } from "@/context/SupabaseAuthContext";
 import {
   MessageSquare,
   Phone,
@@ -115,9 +116,16 @@ export default function CollaborationSidebar({ onExpandMode }: CollaborationSide
   }>>([]);
   const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const { user, isLoading: authLoading } = useAuth();
 
   // Fetch real collaboration data
   useEffect(() => {
+    // Don't fetch data if user is not authenticated
+    if (authLoading || !user) {
+      setIsLoadingData(false);
+      return;
+    }
+
     const fetchCollaborationData = async () => {
       try {
         setIsLoadingData(true);
@@ -170,7 +178,7 @@ export default function CollaborationSidebar({ onExpandMode }: CollaborationSide
     // Refresh data every 30 seconds for live updates
     const interval = setInterval(fetchCollaborationData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user, authLoading]); // Re-run when auth state changes
 
   // Filter chats based on active filters
   const filteredChats = chats.filter((chat) => {
