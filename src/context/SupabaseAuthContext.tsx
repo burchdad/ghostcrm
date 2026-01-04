@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
+  const [processedUserId, setProcessedUserId] = useState<string | null>(null);
   const supabase = createClient();
 
   // Initialize auth state
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (session?.user) {
         console.log('✅ [AuthProvider] Found existing session');
+        setProcessedUserId(session.user.id);
         fetchUserProfile(session.user);
       } else {
         console.log('ℹ️ [AuthProvider] No existing session');
@@ -68,15 +70,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('✅ [AuthProvider] User signed in');
-          // Only fetch profile if we don't already have a user or if it's a different user
-          if (!user || user.id !== session.user.id) {
+          // Prevent duplicate fetches for the same user during rapid auth state changes
+          if (processedUserId !== session.user.id && !isFetchingProfile) {
+            console.log('📝 [AuthProvider] Processing new user:', session.user.id);
+            setProcessedUserId(session.user.id);
             await fetchUserProfile(session.user);
+          } else {
+            console.log('⏭️ [AuthProvider] User already processed or fetch in progress, skipping');
           }
         } else if (event === 'SIGNED_OUT') {
           console.log('👋 [AuthProvider] User signed out');
           setUser(null);
           setIsLoading(false);
           setIsFetchingProfile(false);
+          setProcessedUserId(null);
+          setProcessedUserId(null);
         }
       }
     );
@@ -225,6 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(emergencyAuthUser);
       setIsLoading(false);
       setIsFetchingProfile(false);
+      setProcessedUserId(null); // Reset so we can retry
     }
   };
 
