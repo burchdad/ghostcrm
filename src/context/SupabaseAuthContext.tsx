@@ -97,39 +97,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Create a basic user profile with defaults if database fetch fails
         console.log('🔧 [AuthProvider] Creating fallback user profile...');
         
+        // Detect tenant context from hostname
+        let detectedTenantId = 'default-org';
+        let detectedRole = 'user';
+        
+        if (typeof window !== 'undefined') {
+          const hostname = window.location.hostname;
+          const subdomain = hostname.split('.')[0];
+          
+          // If we're on a subdomain, use it as tenant context
+          if (subdomain && subdomain !== hostname && !hostname.includes('localhost')) {
+            detectedTenantId = subdomain;
+            // For burchmotors subdomain, this user should be owner
+            if (subdomain === 'burchmotors' && supabaseUser.email === 'burchsl4@gmail.com') {
+              detectedRole = 'owner';
+            }
+          }
+        }
+        
         const fallbackAuthUser: AuthUser = {
           id: supabaseUser.id,
           email: supabaseUser.email!,
-          role: supabaseUser.user_metadata?.role || 'user',
-          organizationId: supabaseUser.user_metadata?.organization_id || 'default-org',
-          tenantId: supabaseUser.user_metadata?.tenant_id || 'default-org',
+          role: supabaseUser.user_metadata?.role || detectedRole,
+          organizationId: supabaseUser.user_metadata?.organization_id || detectedTenantId,
+          tenantId: supabaseUser.user_metadata?.tenant_id || detectedTenantId,
           requires_password_reset: false
         };
         
-        console.log('✅ [AuthProvider] Using fallback profile:', fallbackAuthUser);
+        console.log('✅ [AuthProvider] Using fallback profile with tenant detection:', fallbackAuthUser);
         setUser(fallbackAuthUser);
         setIsLoading(false);
         return;
       }
 
-      // Get tenant info from metadata or profile
-      const tenantId = supabaseUser.user_metadata?.tenant_id || userProfile?.organization_id || 'default-org';
-      const organizationId = supabaseUser.user_metadata?.organization_id || userProfile?.organization_id || 'default-org';
+      // Get tenant info from metadata, profile, or detect from hostname
+      let tenantId = supabaseUser.user_metadata?.tenant_id || userProfile?.organization_id || 'default-org';
+      let organizationId = supabaseUser.user_metadata?.organization_id || userProfile?.organization_id || 'default-org';
+      
+      // Detect tenant context from hostname if not found in metadata
+      if (tenantId === 'default-org' && typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        const subdomain = hostname.split('.')[0];
+        
+        // If we're on a subdomain, use it as tenant context
+        if (subdomain && subdomain !== hostname && !hostname.includes('localhost')) {
+          tenantId = subdomain;
+          organizationId = subdomain;
+        }
+      }
+      
+      // Improve role detection
+      let userRole = userProfile?.role || supabaseUser.user_metadata?.role || 'user';
+      
+      // Special case for known owner email on burchmotors subdomain
+      if (tenantId === 'burchmotors' && supabaseUser.email === 'burchsl4@gmail.com' && userRole === 'user') {
+        userRole = 'owner';
+        console.log('🔧 [AuthProvider] Detected owner role for burchmotors tenant');
+      }
 
       const authUser: AuthUser = {
         id: supabaseUser.id,
         email: supabaseUser.email!,
-        role: userProfile?.role || supabaseUser.user_metadata?.role || 'user',
+        role: userRole,
         organizationId,
         tenantId,
         requires_password_reset: userProfile?.requires_password_reset || false
       };
 
-      console.log('✅ [AuthProvider] User profile loaded:', {
+      console.log('✅ [AuthProvider] User profile loaded with tenant detection:', {
         id: authUser.id,
         email: authUser.email,
         role: authUser.role,
-        tenantId: authUser.tenantId
+        tenantId: authUser.tenantId,
+        organizationId: authUser.organizationId
       });
 
       setUser(authUser);
@@ -137,17 +177,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('💥 [AuthProvider] Unexpected error in fetchUserProfile:', error);
       
+      // Detect tenant context for emergency fallback
+      let emergencyTenantId = 'default-org';
+      let emergencyRole = 'user';
+      
+      if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        const subdomain = hostname.split('.')[0];
+        
+        if (subdomain && subdomain !== hostname && !hostname.includes('localhost')) {
+          emergencyTenantId = subdomain;
+          if (subdomain === 'burchmotors' && supabaseUser.email === 'burchsl4@gmail.com') {
+            emergencyRole = 'owner';
+          }
+        }
+      }
+      
       // Create emergency fallback user profile
       const emergencyAuthUser: AuthUser = {
         id: supabaseUser.id,
         email: supabaseUser.email!,
-        role: 'user',
-        organizationId: 'default-org',
-        tenantId: 'default-org',
+        role: emergencyRole,
+        organizationId: emergencyTenantId,
+        tenantId: emergencyTenantId,
         requires_password_reset: false
       };
       
-      console.log('🚨 [AuthProvider] Using emergency fallback profile:', emergencyAuthUser);
+      console.log('🚨 [AuthProvider] Using emergency fallback profile with tenant detection:', emergencyAuthUser);
       setUser(emergencyAuthUser);
       setIsLoading(false);
     }
