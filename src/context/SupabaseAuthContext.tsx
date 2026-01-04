@@ -34,14 +34,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initialize auth state
   useEffect(() => {
-    console.log('🔄 [AuthProvider] Initializing auth state...');
-    
-    // Add timeout protection with longer duration for profile fetch
+    // Add timeout protection with reasonable duration
     const timeoutId = setTimeout(() => {
-      console.log('⏰ [AuthProvider] Auth initialization timeout (30s), setting loading to false');
       setIsLoading(false);
       setIsFetchingProfile(false);
-    }, 30000); // 30 second timeout
+    }, 15000); // 15 second timeout - balance between reliability and speed
     
     setAuthTimeoutId(timeoutId);
     
@@ -117,17 +114,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsFetchingProfile(true);
     
     try {
-      console.log('👤 [AuthProvider] Fetching user profile...');
-      const fetchStartTime = Date.now();
-      
       // Get user profile from database
       const { data: userProfile, error } = await supabase
         .from('users')
         .select('id, email, role, organization_id, requires_password_reset')
         .eq('id', supabaseUser.id)
         .single();
-        
-      console.log(`⏱️ [AuthProvider] Database query took ${Date.now() - fetchStartTime}ms`);
 
       if (error) {
         console.error('❌ [AuthProvider] Error fetching profile:', error);

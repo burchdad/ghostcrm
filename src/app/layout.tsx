@@ -31,11 +31,6 @@ export const viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        {/* Resource hints to optimize loading and reduce preload warnings */}
-        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-        <meta name="resource-hints" content="selective-preload" />
-      </head>
       <body className="bg-gray-900" suppressHydrationWarning={true}>
         <GlobalErrorBoundary>
           <I18nProvider>
