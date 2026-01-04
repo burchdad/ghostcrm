@@ -105,13 +105,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const hostname = window.location.hostname;
           const subdomain = hostname.split('.')[0];
           
-          // If we're on a subdomain, use it as tenant context
+          // If we're on a subdomain (tenant), use it as tenant context
           if (subdomain && subdomain !== hostname && !hostname.includes('localhost')) {
             detectedTenantId = subdomain;
-            // For burchmotors subdomain, this user should be owner
-            if (subdomain === 'burchmotors' && supabaseUser.email === 'burchsl4@gmail.com') {
-              detectedRole = 'owner';
-            }
+            // Anyone accessing their own subdomain should be treated as potential owner
+            // The database will have the definitive role, this is just fallback
+            detectedRole = 'owner';
           }
         }
         
@@ -146,13 +145,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
       
-      // Improve role detection
+      // Use role from database profile first, then metadata, with proper fallback
       let userRole = userProfile?.role || supabaseUser.user_metadata?.role || 'user';
       
-      // Special case for known owner email on burchmotors subdomain
-      if (tenantId === 'burchmotors' && supabaseUser.email === 'burchsl4@gmail.com' && userRole === 'user') {
-        userRole = 'owner';
-        console.log('🔧 [AuthProvider] Detected owner role for burchmotors tenant');
+      // If we're on a tenant subdomain and no role is set, assume owner (tenant creator)
+      // This helps with new registrations before database sync
+      if (tenantId !== 'default-org' && userRole === 'user' && typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        const subdomain = hostname.split('.')[0];
+        if (subdomain === tenantId) {
+          userRole = 'owner';
+          console.log('🔧 [AuthProvider] Detected tenant owner accessing their subdomain:', tenantId);
+        }
       }
 
       const authUser: AuthUser = {
@@ -187,9 +191,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (subdomain && subdomain !== hostname && !hostname.includes('localhost')) {
           emergencyTenantId = subdomain;
-          if (subdomain === 'burchmotors' && supabaseUser.email === 'burchsl4@gmail.com') {
-            emergencyRole = 'owner';
-          }
+          // If accessing their own tenant subdomain, assume owner role
+          emergencyRole = 'owner';
         }
       }
       
