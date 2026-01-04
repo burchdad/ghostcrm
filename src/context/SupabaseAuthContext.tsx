@@ -25,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingProfile, setIsFetchingProfile] = useState(false);
   const supabase = createClient();
 
   // Initialize auth state
@@ -67,11 +68,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('✅ [AuthProvider] User signed in');
-          await fetchUserProfile(session.user);
+          // Only fetch profile if we don't already have a user or if it's a different user
+          if (!user || user.id !== session.user.id) {
+            await fetchUserProfile(session.user);
+          }
         } else if (event === 'SIGNED_OUT') {
           console.log('👋 [AuthProvider] User signed out');
           setUser(null);
           setIsLoading(false);
+          setIsFetchingProfile(false);
         }
       }
     );
@@ -82,6 +87,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchUserProfile = async (supabaseUser: User) => {
+    // Prevent concurrent calls to fetchUserProfile
+    if (isFetchingProfile) {
+      console.log('⏸️ [AuthProvider] Profile fetch already in progress, skipping...');
+      return;
+    }
+    
+    setIsFetchingProfile(true);
+    
     try {
       console.log('👤 [AuthProvider] Fetching user profile...');
       
@@ -126,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('✅ [AuthProvider] Using fallback profile with tenant detection:', fallbackAuthUser);
         setUser(fallbackAuthUser);
         setIsLoading(false);
+        setIsFetchingProfile(false);
         return;
       }
 
@@ -178,6 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(authUser);
       setIsLoading(false);
+      setIsFetchingProfile(false);
     } catch (error) {
       console.error('💥 [AuthProvider] Unexpected error in fetchUserProfile:', error);
       
@@ -209,6 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('🚨 [AuthProvider] Using emergency fallback profile with tenant detection:', emergencyAuthUser);
       setUser(emergencyAuthUser);
       setIsLoading(false);
+      setIsFetchingProfile(false);
     }
   };
 
