@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
@@ -28,7 +28,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
   const [processedUserId, setProcessedUserId] = useState<string | null>(null);
   const [authTimeoutId, setAuthTimeoutId] = useState<NodeJS.Timeout | null>(null);
-  const supabase = createClient();
+  
+  // Memoize Supabase client to prevent multiple instances
+  const supabase = useMemo(() => createClient(), []);
 
   // Initialize auth state
   useEffect(() => {
@@ -97,6 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       subscription.unsubscribe();
+      // Clear any pending timeouts on cleanup
+      if (authTimeoutId) {
+        clearTimeout(authTimeoutId);
+        setAuthTimeoutId(null);
+      }
     };
   }, []);
 

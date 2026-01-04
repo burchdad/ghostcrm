@@ -11,6 +11,8 @@ import AIAgentInitializer from "@/components/ai/AIAgentInitializer";
 import { Toaster } from "@/components/ui/toaster";
 import "../styles/globals.css";  // <— REQUIRED
 import "../styles/modal.css";    // <— Modal styles
+// Import console suppressions to reduce noise from harmless warnings
+import "@/utils/console-suppressions";
 
 export const metadata = {
   title: "GhostCRM",
