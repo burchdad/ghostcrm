@@ -27,21 +27,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
   const [processedUserId, setProcessedUserId] = useState<string | null>(null);
+  const [authTimeoutId, setAuthTimeoutId] = useState<NodeJS.Timeout | null>(null);
   const supabase = createClient();
 
   // Initialize auth state
   useEffect(() => {
     console.log('🔄 [AuthProvider] Initializing auth state...');
     
-    // Add timeout protection
+    // Add timeout protection with longer duration for profile fetch
     const timeoutId = setTimeout(() => {
-      console.log('⏰ [AuthProvider] Auth initialization timeout, setting loading to false');
+      console.log('⏰ [AuthProvider] Auth initialization timeout (30s), setting loading to false');
       setIsLoading(false);
-    }, 10000); // 10 second timeout
+      setIsFetchingProfile(false);
+    }, 30000); // 30 second timeout
+    
+    setAuthTimeoutId(timeoutId);
     
     // Get initial session with error handling
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       clearTimeout(timeoutId);
+      setAuthTimeoutId(null);
       
       if (error) {
         console.error('❌ [AuthProvider] Error getting session:', error);
@@ -59,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }).catch((error) => {
       clearTimeout(timeoutId);
+      setAuthTimeoutId(null);
       console.error('💥 [AuthProvider] Auth initialization error:', error);
       setIsLoading(false);
     });
@@ -105,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     try {
       console.log('👤 [AuthProvider] Fetching user profile...');
+      const fetchStartTime = Date.now();
       
       // Get user profile from database
       const { data: userProfile, error } = await supabase
@@ -112,6 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('id, email, role, organization_id, requires_password_reset')
         .eq('id', supabaseUser.id)
         .single();
+        
+      console.log(`⏱️ [AuthProvider] Database query took ${Date.now() - fetchStartTime}ms`);
 
       if (error) {
         console.error('❌ [AuthProvider] Error fetching profile:', error);
@@ -148,6 +157,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(fallbackAuthUser);
         setIsLoading(false);
         setIsFetchingProfile(false);
+        
+        // Clear auth timeout since we completed
+        if (authTimeoutId) {
+          clearTimeout(authTimeoutId);
+          setAuthTimeoutId(null);
+        }
         return;
       }
 
@@ -201,6 +216,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(authUser);
       setIsLoading(false);
       setIsFetchingProfile(false);
+      
+      // Clear auth timeout since we completed successfully
+      if (authTimeoutId) {
+        clearTimeout(authTimeoutId);
+        setAuthTimeoutId(null);
+      }
     } catch (error) {
       console.error('💥 [AuthProvider] Unexpected error in fetchUserProfile:', error);
       
@@ -234,6 +255,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       setIsFetchingProfile(false);
       setProcessedUserId(null); // Reset so we can retry
+      
+      // Clear auth timeout
+      if (authTimeoutId) {
+        clearTimeout(authTimeoutId);
+        setAuthTimeoutId(null);
+      }
     }
   };
 
