@@ -2,8 +2,18 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/context/SupabaseAuthContext';
 import { AuthService, Permission } from '@/lib/auth';
+
+// Safe auth hook that handles missing context
+function useSafeAuth() {
+  try {
+    const { useAuth } = require('@/context/SupabaseAuthContext');
+    return useAuth();
+  } catch (error) {
+    // Return default values when auth context is not available
+    return { user: null, isLoading: false };
+  }
+}
 
 // Simple role-based permission checker for new auth context
 function checkUserPermission(user: any, permission: Permission): boolean {
@@ -309,7 +319,7 @@ interface PermissionMiddlewareProps {
 
 // Component to protect individual routes
 export function RouteGuard({ children, fallbackComponent: FallbackComponent }: PermissionMiddlewareProps) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading } = useSafeAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -621,7 +631,7 @@ export function FeatureGuard({
   fallback = null,
   requireTenantAccess = true
 }: FeatureGuardProps) {
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
 
   if (!user) return fallback;
 
@@ -646,7 +656,7 @@ export function FeatureGuard({
 
 // Hook for conditional rendering based on permissions
 export function usePermissionCheck() {
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
 
   const canAccess = (
     permissions: Permission[],
