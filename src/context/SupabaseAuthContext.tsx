@@ -70,31 +70,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }).catch((error) => {
       clearTimeout(timeoutId);
       setAuthTimeoutId(null);
-      console.error('💥 [AuthProvider] Auth initialization error:', error);
       setIsLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔄 [AuthProvider] Auth state changed:', event);
-        
         if (event === 'SIGNED_IN' && session?.user) {
-          console.log('✅ [AuthProvider] User signed in');
           // Prevent duplicate fetches for the same user during rapid auth state changes
           if (processedUserId !== session.user.id && !isFetchingProfile) {
-            console.log('📝 [AuthProvider] Processing new user:', session.user.id);
             setProcessedUserId(session.user.id);
             await fetchUserProfile(session.user);
-          } else {
-            console.log('⏭️ [AuthProvider] User already processed or fetch in progress, skipping');
           }
         } else if (event === 'SIGNED_OUT') {
-          console.log('👋 [AuthProvider] User signed out');
           setUser(null);
           setIsLoading(false);
           setIsFetchingProfile(false);
-          setProcessedUserId(null);
           setProcessedUserId(null);
         }
       }

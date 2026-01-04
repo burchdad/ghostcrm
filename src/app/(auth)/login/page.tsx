@@ -13,61 +13,38 @@ export default function LoginPage() {
   // Redirect if already authenticated based on role and context
   useEffect(() => {
     if (user && !isLoading) {
-      // Check if we're on a tenant subdomain (for tenant owners vs software owners)
-      const hostname = window.location.hostname;
-      const isSubdomain = hostname !== 'localhost' && 
-                          hostname !== '127.0.0.1' && 
-                          (hostname.includes('.localhost') || hostname.includes('.ghostcrm.ai'));
-      
-      // Try to determine login intent from referring URL or cookie
-      const currentPath = window.location.pathname;
+      // Simple role-based redirect - eliminate complex detection logic
       let redirectPath = "/dashboard"; // default
       
-      // Check which login page brought us here to determine correct dashboard
-      if (document.referrer.includes('/login-owner') || currentPath.includes('login-owner')) {
-        redirectPath = "/tenant-owner/dashboard";
-      } else if (document.referrer.includes('/login-admin') || currentPath.includes('login-admin')) {
-        redirectPath = "/dashboard"; // Admin uses main dashboard for now
-      } else if (document.referrer.includes('/login-salesmanager') || currentPath.includes('login-salesmanager')) {
-        redirectPath = "/tenant-salesmanager/leads"; // Sales manager goes to leads
-      } else if (document.referrer.includes('/login-salesrep') || currentPath.includes('login-salesrep')) {
-        redirectPath = "/tenant-salesrep/leads"; // Sales rep goes to leads
-      } else {
-        // Fallback to role-based routing for backwards compatibility
-        switch (user.role) {
-          case 'owner':
-            if (isSubdomain) {
-              redirectPath = "/tenant-owner/dashboard";
-            } else {
-              redirectPath = "/owner/dashboard"; // Software owner
-            }
-            break;
-          case 'admin':
-            redirectPath = "/dashboard"; // Admin uses main dashboard for now
-            break;
-          case 'manager':
-            redirectPath = "/tenant-salesmanager/leads"; // Manager goes to leads
-            break;
-          case 'sales_rep':
-            redirectPath = "/tenant-salesrep/leads"; // Sales rep goes to leads
-            break;
-          default:
-            redirectPath = "/dashboard";
-        }
+      switch (user.role) {
+        case 'owner':
+          // Check if we're on a tenant subdomain
+          const hostname = window.location.hostname;
+          const isSubdomain = hostname !== 'localhost' && 
+                              hostname !== '127.0.0.1' && 
+                              (hostname.includes('.localhost') || hostname.includes('.ghostcrm.ai'));
+          
+          if (isSubdomain) {
+            redirectPath = "/tenant-owner/dashboard";
+          } else {
+            redirectPath = "/owner/dashboard"; // Software owner
+          }
+          break;
+        case 'admin':
+          redirectPath = "/dashboard";
+          break;
+        case 'manager':
+          redirectPath = "/tenant-salesmanager/leads";
+          break;
+        case 'sales_rep':
+          redirectPath = "/tenant-salesrep/leads";
+          break;
+        default:
+          redirectPath = "/dashboard";
       }
       
-      // Redirecting authenticated user - silent mode
-      
-      // Immediately preserve state before navigation - silent mode
-      const stateToSave = JSON.stringify({ user, isLoading: false });
-      sessionStorage.setItem('ghost_auth_state', stateToSave);
-      // Saved state to session storage - silent mode
-      
-      // Small delay to ensure state propagation before navigation
-      setTimeout(() => {
-        // Executing navigation to dashboard
-        router.push(redirectPath);
-      }, 50);
+      // Immediate redirect without delay
+      router.push(redirectPath);
     }
   }, [user, isLoading, router]);
 

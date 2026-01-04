@@ -53,15 +53,9 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
   }, [inviteToken, loginForm]);
 
   const onLoginSubmit = async (data: LoginFormData) => {
-    console.log('🚀 [LOGIN] Form submitted! Data:', data);
-    console.log('🚀 [LOGIN] Form validation passed, proceeding with login...');
-    
     try {
-      console.log('🔐 [LOGIN] Attempting login with:', { email: data.email, isInviteFlow });
-      
       // Handle invite flow with temporary password
       if (isInviteFlow && inviteToken) {
-        console.log('👥 [INVITE] Processing invite login with temporary password');
         
         const response = await fetch('/api/team/invite/accept', {
           method: 'POST',
@@ -78,7 +72,6 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
         const result = await response.json();
         
         if (!result.success) {
-          console.error('❌ [INVITE] Invite login failed:', result.message);
           loginForm.setError("root", {
             type: "manual",
             message: result.message || "Invalid email or temporary password.",
@@ -86,7 +79,6 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
           return;
         }
 
-        console.log('✅ [INVITE] Temporary password accepted, redirecting to profile setup');
         // Redirect to profile setup with user data
         router.push(`/profile-setup?token=${inviteToken}&userId=${result.userId}`);
         return;
@@ -96,7 +88,6 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
       const result = await login(data.email, data.password);
       
       if (!result.success) {
-        console.error('❌ [LOGIN] Login failed:', result.message);
         loginForm.setError("root", {
           type: "manual",
           message: result.message || "Login failed. Please try again.",
@@ -104,10 +95,8 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
         return;
       }
       
-      console.log('✅ [LOGIN] Login successful, redirecting...');
       // Redirect handled by useEffect in parent component
     } catch (error: any) {
-      console.error('❌ [LOGIN] Login error:', error);
       loginForm.setError("root", {
         type: "manual",
         message: error.message || "An error occurred. Please try again.",

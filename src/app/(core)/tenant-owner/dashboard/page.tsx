@@ -110,21 +110,9 @@ function TenantOwnerDashboard() {
   const [organizationName, setOrganizationName] = useState('Your Organization');
   const [loading, setLoading] = useState(true);
   const [onboardingLoading, setOnboardingLoading] = useState(true);
-  const [stateSettled, setStateSettled] = useState(false);
   
   // Chart marketplace state
   const [showMarketplace, setShowMarketplace] = useState(false);
-  
-  // Give state time to settle after auth loads
-  useEffect(() => {
-    if (!isLoading) {
-      const timer = setTimeout(() => {
-        setStateSettled(true);
-      }, 150); // Small delay to allow state propagation
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading]);
   const [installedCharts, setInstalledCharts] = useState<InstalledChart[]>([]);
   const [chartSettings, setChartSettings] = useState<Record<string, any>>({});
   const [activeChartsView, setActiveChartsView] = useState<'grid' | 'marketplace'>('grid');
@@ -148,24 +136,19 @@ function TenantOwnerDashboard() {
 
   // Onboarding guard for tenant owners
   useEffect(() => {
-    // Onboarding check effect - silent mode
-    
     async function checkOnboardingStatus() {
       if (!user) {
-        console.log('🔧 [TENANT-DASHBOARD] No user, setting onboardingLoading to false');
         setOnboardingLoading(false);
         return;
       }
 
       // Only owners should be on this dashboard
       if (user.role !== 'owner') {
-        console.log('🔄 [TENANT-OWNER-DASHBOARD] Non-owner accessing tenant dashboard, redirecting to appropriate page');
         router.push('/dashboard');
         return;
       }
 
-      // Skip onboarding check - allow access to dashboard
-      // Owner access granted, proceeding to dashboard - silent mode
+      // Allow access to dashboard
       setOnboardingLoading(false);
     }
 
@@ -446,30 +429,8 @@ function TenantOwnerDashboard() {
     );
   }
 
-  // Show loading if auth is ready but state hasn't settled yet
-  if (!isLoading && !stateSettled) {
-    return (
-      <div className="tenant-dashboard-loading">
-        <div className="tenant-dashboard-loading-spinner">
-          <div className="tenant-dashboard-loading-ring"></div>
-          <div className="tenant-dashboard-loading-ring"></div>
-        </div>
-        <div className="tenant-dashboard-loading-text">
-          <h3 className="tenant-dashboard-loading-title">Loading Owner Dashboard...</h3>
-          <p className="tenant-dashboard-loading-subtitle">Verifying authentication...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show access denied only if auth is ready, state has settled, and confirmed no owner
-  if (!isLoading && stateSettled && (!user || user.role !== 'owner')) {
-    console.log('❌ [TENANT-DASHBOARD] Access denied:', { 
-      hasUser: !!user, 
-      userRole: user?.role,
-      authReady: !isLoading,
-      stateSettled
-    });
+  // Show access denied if not authenticated or not an owner
+  if (!user || user.role !== 'owner') {
     return null;
   }
 
