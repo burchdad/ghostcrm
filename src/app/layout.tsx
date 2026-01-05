@@ -34,23 +34,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-gray-900" suppressHydrationWarning={true}>
         <GlobalErrorBoundary>
           <I18nProvider>
-              <ConditionalAuthProvider>
-                {/* <ThemeProvider> */}
-                    <RibbonProvider>
-                      <RouteGuard>
-                        <CollapseLayout>{children}</CollapseLayout>
-                        {/* AI Agent System Initializer */}
-                        <AIAgentInitializer />
-                        {/* Global AI Assistant - available on all pages */}
-                        <GlobalAIAssistant />
-                        {/* Quick Add Button - available on all pages */}
-                        <QuickAddButton />
-                        {/* Toast notifications */}
-                        <Toaster />
-                      </RouteGuard>
-                    </RibbonProvider>
-                {/* </ThemeProvider> */}
-              </ConditionalAuthProvider>
+            <ConditionalAuthProvider>
+              {/* <ThemeProvider> */}
+              <RibbonProvider>
+                <CollapseLayout>
+                  <RouteGuard>
+                    {children}
+                  </RouteGuard>
+                </CollapseLayout>
+                {/* Global components that should work on ALL pages */}
+                <AIAgentInitializer />
+                <GlobalAIAssistant />
+                <QuickAddButton />
+                <Toaster />
+              </RibbonProvider>
+              {/* </ThemeProvider> */}
+            </ConditionalAuthProvider>
           </I18nProvider>
         </GlobalErrorBoundary>
       </body>

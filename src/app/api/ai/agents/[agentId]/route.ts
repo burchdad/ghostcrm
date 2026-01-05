@@ -28,7 +28,8 @@ export async function GET(request: NextRequest, { params }: AgentParams) {
     });
 
     // Check authentication
-    if (!isAuthenticated(request)) {
+    const isAuth = await isAuthenticated(request);
+    if (!isAuth) {
       console.log('❌ [AI AGENTS API GET] Authentication failed');
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest, { params }: AgentParams) {
       );
     }
 
-    const user = getUserFromRequest(request);
+    const user = await getUserFromRequest(request);
     console.log('✅ [AI AGENTS API GET] User authenticated:', user?.email);
     
     // Get registry and auto-initialize if needed
@@ -93,7 +94,8 @@ export async function POST(request: NextRequest, { params }: AgentParams) {
     console.log(`🔍 [AI-AGENT-API] POST request for agentId: ${agentId}, operation: ${operation}`);
 
     // Authenticate user using new JWT system
-    if (!isAuthenticated(request)) {
+    const isAuth = await isAuthenticated(request);
+    if (!isAuth) {
       console.warn(`⚠️ [AI-AGENT-API] Authentication failed for agent ${agentId}`);
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
@@ -101,7 +103,7 @@ export async function POST(request: NextRequest, { params }: AgentParams) {
       );
     }
 
-    const user = getUserFromRequest(request);
+    const user = await getUserFromRequest(request);
     console.log(`🔍 [AI-AGENT-API] Authenticated user:`, user ? `${user.email} (${user.id})` : 'Unable to extract user data');
 
     // Get registry and auto-initialize if needed

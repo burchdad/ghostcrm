@@ -16,7 +16,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const leadId = params.id;
 
     // Check authentication using our server utility
-    if (!isAuthenticated(req)) {
+    const isAuth = await isAuthenticated(req);
+    if (!isAuth) {
       return new Response(
         JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
 
     // Get user data from JWT
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || !user.organizationId) {
       return new Response(JSON.stringify({ error: "User organization not found" }), {
         status: 401,

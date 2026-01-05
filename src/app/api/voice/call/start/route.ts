@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     // Check authentication using JWT
-    if (!isAuthenticated(req)) {
+    if (!(await isAuthenticated(req))) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get user data from JWT
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || !user.organizationId) {
       return NextResponse.json(
         { error: "User organization not found" },

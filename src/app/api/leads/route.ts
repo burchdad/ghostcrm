@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // Check authentication using our new utility
-    if (!isAuthenticated(req)) {
+    if (!(await isAuthenticated(req))) {
       return new Response(
         JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get user data from JWT
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || !user.organizationId) {
       return new Response(JSON.stringify({ error: "User organization not found" }), {
         status: 401,
@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     // Check authentication using our server utility (same as GET)
-    if (!isAuthenticated(req)) {
+    if (!(await isAuthenticated(req))) {
       return new Response(
         JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get user data from JWT
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || !user.organizationId) {
       return new Response(JSON.stringify({ error: "User organization not found" }), {
         status: 401,
@@ -322,7 +322,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // Check authentication using our server utility (same as GET)
-    if (!isAuthenticated(req)) {
+    if (!(await isAuthenticated(req))) {
       return new Response(
         JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
@@ -330,7 +330,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // Get user data from JWT
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || !user.organizationId) {
       return new Response(JSON.stringify({ error: "User organization not found" }), {
         status: 401,
@@ -493,7 +493,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Check authentication using our server utility (same as GET)
-    if (!isAuthenticated(req)) {
+    if (!(await isAuthenticated(req))) {
       return new Response(
         JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
@@ -501,7 +501,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Get user data from JWT
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || !user.organizationId) {
       return new Response(JSON.stringify({ error: "User organization not found" }), {
         status: 401,

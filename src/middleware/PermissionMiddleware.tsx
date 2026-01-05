@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { AuthService, Permission } from '@/lib/auth';
+import { Permission } from '@/lib/permissions';
 
 // Safe auth hook that handles missing context
 function useSafeAuth() {
@@ -16,7 +16,7 @@ function useSafeAuth() {
 }
 
 // Simple role-based permission checker for new auth context
-function checkUserPermission(user: any, permission: Permission): boolean {
+function checkUserPermission(user: any, permissionId: string): boolean {
   if (!user) return false;
   
   // Super admin has all permissions
@@ -26,7 +26,7 @@ function checkUserPermission(user: any, permission: Permission): boolean {
   if (user.role === 'owner') {
     return ![
       'system_admin', 'global_settings', 'user_management'
-    ].includes(permission);
+    ].includes(permissionId);
   }
   
   // Manager has moderate permissions
@@ -34,24 +34,24 @@ function checkUserPermission(user: any, permission: Permission): boolean {
     return [
       'view_dashboard', 'manage_leads', 'view_analytics', 
       'manage_deals', 'team_management', 'view_reports'
-    ].includes(permission);
+    ].includes(permissionId);
   }
   
   // Sales rep has basic permissions
   if (user.role === 'sales_rep') {
     return [
       'view_dashboard', 'manage_leads', 'view_own_deals'
-    ].includes(permission);
+    ].includes(permissionId);
   }
   
   // Default user permissions
-  return ['view_dashboard'].includes(permission);
+  return ['view_dashboard'].includes(permissionId);
 }
 
 // Route permission configuration
 interface RoutePermission {
   path: string;
-  requiredPermissions: Permission[];
+  requiredPermissions: string[]; // Permission IDs as strings
   allowedRoles?: ('owner' | 'admin' | 'manager' | 'sales_rep' | 'user')[];
   requireTenantAccess?: boolean;
 }
@@ -617,7 +617,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
 
 // Component to protect specific features/components
 interface FeatureGuardProps {
-  permissions: Permission[];
+  permissions: string[]; // Permission IDs as strings
   roles?: ('owner' | 'admin' | 'manager' | 'sales_rep' | 'user')[];
   children: React.ReactNode;
   fallback?: React.ReactNode;
@@ -659,7 +659,7 @@ export function usePermissionCheck() {
   const { user } = useSafeAuth();
 
   const canAccess = (
-    permissions: Permission[],
+    permissions: string[], // Permission IDs as strings
     roles?: ('owner' | 'admin' | 'manager' | 'sales_rep' | 'user')[],
     requireTenantAccess: boolean = true
   ): boolean => {
@@ -709,7 +709,7 @@ export function usePermissionCheck() {
 // Higher-order component for page-level protection
 export function withPermissions<P extends object>(
   WrappedComponent: React.ComponentType<P>,
-  permissions: Permission[],
+  permissions: string[], // Permission IDs as strings
   roles?: ('owner' | 'admin' | 'manager' | 'sales_rep' | 'user')[],
   fallbackComponent?: React.ComponentType
 ) {

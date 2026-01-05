@@ -3,15 +3,23 @@ import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import QuickAddModal from "@/components/modals/QuickAddModal";
 import { useI18n } from "@/components/utils/I18nProvider";
-import { useAuth } from "@/context/SupabaseAuthContext";
 import { useRouter } from "next/navigation";
 import "./QuickAddButton.css";
 
 export default function QuickAddButton() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const { t } = useI18n();
-  const { user } = useAuth();
   const router = useRouter();
+
+  // Safe auth that doesn't break on marketing pages
+  let user = null;
+  try {
+    const { useAuth } = require('@/context/SupabaseAuthContext');
+    const auth = useAuth();
+    user = auth.user;
+  } catch (error) {
+    // Auth context not available (marketing page), user stays null
+  }
 
   // Simplified logic: show for most pages except marketing/auth/billing
   const shouldShowButton = React.useMemo(() => {

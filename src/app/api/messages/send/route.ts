@@ -27,12 +27,12 @@ export const runtime = 'nodejs';
 export async function POST(req: NextRequest) {
   try {
     // Check authentication using JWT
-    if (!isAuthenticated(req)) {
+    if (!(await isAuthenticated(req))) {
       return bad("Authentication required");
     }
 
     // Get user data from JWT
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || !user.organizationId) {
       return bad("User organization not found");
     }

@@ -15,12 +15,12 @@ export const runtime = 'nodejs';
 export async function GET(req: NextRequest) {
   try {
     // Check authentication using JWT
-    if (!isAuthenticated(req)) {
+    if (!(await isAuthenticated(req))) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
     // Get user data from JWT
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || !user.organizationId) {
       return NextResponse.json({ error: "User organization not found" }, { status: 401 });
     }

@@ -4,20 +4,32 @@ import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import AIAssistantModal from "@/components/modals/AIAssistantModal";
 
-// Safe auth hook that handles missing context
-function useSafeAuth() {
-  try {
-    const { useAuth } = require('@/context/SupabaseAuthContext');
-    return useAuth();
-  } catch (error) {
-    return { user: null, isLoading: false };
-  }
-}
+// Marketing routes that don't need auth
+const MARKETING_ROUTES = ['/', '/marketing', '/demo', '/terms', '/privacy', '/about', '/careers', '/press', '/roadmap', '/help', '/contact'];
 
 export default function GlobalAIAssistant() {
   const [showAIAssistant, setShowAIAssistant] = useState(false);
-  const { user } = useSafeAuth();
   const pathname = usePathname();
+  
+  // Check if we're on a marketing page
+  const isMarketingPage = MARKETING_ROUTES.some(route => {
+    if (route === '/') {
+      return pathname === '/';
+    }
+    return pathname.startsWith(route);
+  });
+
+  // Safe auth hook that handles missing context
+  let user = null;
+  if (!isMarketingPage) {
+    try {
+      const { useAuth } = require('@/context/SupabaseAuthContext');
+      const auth = useAuth();
+      user = auth.user;
+    } catch (error) {
+      // Auth context not available, user stays null
+    }
+  }
 
   // Convert pathname to readable page name
   const getCurrentPage = () => {
