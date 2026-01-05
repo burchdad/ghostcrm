@@ -203,29 +203,45 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🔄 Settings sync push request received');
 
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!jwtCookie) {
-      return NextResponse.json({ error: 'Unauthorized - No JWT cookie' }, { status: 401 });
+    if (!user) {
+      console.error('❌ No authenticated user found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-    } catch (jwtError: any) {
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
-    }
+    console.log('✅ User authenticated for sync push:', user.id);
+
+    // Create Supabase client
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: () => {},
+        },
+      }
+    );
 
     const syncData = await request.json();
 
     // Get organization info
+    const organizationId = user.organizationId;
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    // Check if organizationId is a UUID or subdomain
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(organizationId);
+    
     let orgData;
-    if (jwtUser.organizationId) {
+    if (isUUID) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id, subdomain')
-        .eq('id', jwtUser.organizationId)
+        .eq('id', organizationId)
         .single();
       
       if (error) {
@@ -236,7 +252,7 @@ export async function POST(request: NextRequest) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id, subdomain')
-        .eq('subdomain', jwtUser.subdomain || 'default')
+        .eq('subdomain', organizationId)
         .single();
 
       if (error) {
@@ -257,7 +273,7 @@ export async function POST(request: NextRequest) {
     const { data: currentProfile } = await supabase
       .from('profiles')
       .select('updated_at, settings')
-      .eq('id', jwtUser.userId)
+      .eq('user_id', user.id)
       .eq('organization_id', orgData.id)
       .single();
 
@@ -293,7 +309,7 @@ export async function POST(request: NextRequest) {
               settings: updatedSettings,
               updated_at: new Date().toISOString()
             })
-            .eq('id', jwtUser.userId)
+            .eq('user_id', user.id)
             .eq('organization_id', orgData.id);
 
           if (error) {
@@ -337,7 +353,7 @@ export async function POST(request: NextRequest) {
               settings: updatedSettings,
               updated_at: new Date().toISOString()
             })
-            .eq('id', jwtUser.userId)
+            .eq('user_id', user.id)
             .eq('organization_id', orgData.id);
 
           if (error) {
@@ -381,7 +397,7 @@ export async function POST(request: NextRequest) {
               settings: updatedSettings,
               updated_at: new Date().toISOString()
             })
-            .eq('id', jwtUser.userId)
+            .eq('user_id', user.id)
             .eq('organization_id', orgData.id);
 
           if (error) {
