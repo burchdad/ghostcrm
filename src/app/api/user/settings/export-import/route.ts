@@ -360,7 +360,7 @@ export async function POST(request: NextRequest) {
             }),
             updated_at: new Date().toISOString()
           })
-          .eq('id', jwtUser.userId)
+          .eq('user_id', user.id)
           .eq('organization_id', orgData.id);
 
         if (error) {
@@ -403,7 +403,7 @@ export async function POST(request: NextRequest) {
           const { error } = await supabase
             .from('user_notification_preferences')
             .upsert({
-              user_id: jwtUser.userId,
+              user_id: user.id,
               organization_id: orgData.id,
               ...notificationUpdates
             });
