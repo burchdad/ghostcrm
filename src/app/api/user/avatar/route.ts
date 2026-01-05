@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const jwtSecret = process.env.JWT_SECRET!;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { getUserFromRequest } from '@/lib/auth/server';
+import { createServerClient } from '@supabase/ssr';
 
 // Maximum file size (5MB)
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -19,22 +13,27 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🔄 Avatar upload request received');
 
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!jwtCookie) {
-      console.error('❌ No JWT cookie found');
-      return NextResponse.json({ error: 'Unauthorized - No JWT cookie' }, { status: 401 });
+    if (!user) {
+      console.error('❌ No authenticated user found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-      console.log('✅ JWT verified successfully for user:', jwtUser.userId);
-    } catch (jwtError: any) {
-      console.error('❌ JWT verification failed:', jwtError);
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
-    }
+    console.log('✅ User authenticated for avatar upload:', user.id);
+
+    // Create Supabase client
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: () => {},
+        },
+      }
+    );
 
     // Get form data
     const formData = await request.formData();
@@ -59,31 +58,37 @@ export async function POST(request: NextRequest) {
     }
 
     // Get organization info
+    const organizationId = user.organizationId;
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    // Check if organizationId is a UUID or subdomain
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(organizationId);
+    
     let orgData;
-    if (jwtUser.organizationId) {
+    if (isUUID) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id, subdomain')
-        .eq('id', jwtUser.organizationId)
+        .eq('id', organizationId)
         .single();
-      
+      orgData = data;
       if (error) {
         console.error('❌ Organization not found by ID:', error);
         return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
       }
-      orgData = data;
     } else {
       const { data, error } = await supabase
         .from('organizations')
         .select('id, subdomain')
-        .eq('subdomain', jwtUser.subdomain || 'default')
+        .eq('subdomain', organizationId)
         .single();
-
+      orgData = data;
       if (error) {
         console.error('❌ Organization not found by subdomain:', error);
         return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
       }
-      orgData = data;
     }
 
     // Convert file to buffer
@@ -93,7 +98,7 @@ export async function POST(request: NextRequest) {
     // Generate unique filename
     const fileExtension = file.name.split('.').pop();
     const timestamp = Date.now();
-    const fileName = `avatar_${jwtUser.userId}_${timestamp}.${fileExtension}`;
+    const fileName = `avatar_${user.id}_${timestamp}.${fileExtension}`;
     const filePath = `avatars/${orgData.id}/${fileName}`;
 
     console.log('📁 Uploading file to path:', filePath);
@@ -125,7 +130,7 @@ export async function POST(request: NextRequest) {
         avatar_url: avatarUrl,
         updated_at: new Date().toISOString()
       })
-      .eq('id', jwtUser.userId)
+      .eq('id', user.id)
       .eq('organization_id', orgData.id);
 
     if (updateError) {
@@ -157,40 +162,55 @@ export async function DELETE(request: NextRequest) {
   try {
     console.log('🔄 Avatar delete request received');
 
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!jwtCookie) {
-      return NextResponse.json({ error: 'Unauthorized - No JWT cookie' }, { status: 401 });
+    if (!user) {
+      console.error('❌ No authenticated user found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-    } catch (jwtError: any) {
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
-    }
+    console.log('✅ User authenticated for avatar deletion:', user.id);
+
+    // Create Supabase client
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: () => {},
+        },
+      }
+    );
 
     // Get organization info
+    const organizationId = user.organizationId;
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    // Check if organizationId is a UUID or subdomain
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(organizationId);
+    
     let orgData;
-    if (jwtUser.organizationId) {
+    if (isUUID) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id, subdomain')
-        .eq('id', jwtUser.organizationId)
+        .eq('id', organizationId)
         .single();
-      
+      orgData = data;
       if (error) {
         return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
       }
-      orgData = data;
     } else {
       const { data, error } = await supabase
         .from('organizations')
         .select('id, subdomain')
-        .eq('subdomain', jwtUser.subdomain || 'default')
+        .eq('subdomain', organizationId)
         .single();
-
+      orgData = data;
       if (error) {
         return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
       }
@@ -201,7 +221,7 @@ export async function DELETE(request: NextRequest) {
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('avatar_url')
-      .eq('id', jwtUser.userId)
+      .eq('user_id', user.id)
       .eq('organization_id', orgData.id)
       .single();
 
@@ -234,7 +254,7 @@ export async function DELETE(request: NextRequest) {
         avatar_url: null,
         updated_at: new Date().toISOString()
       })
-      .eq('id', jwtUser.userId)
+      .eq('user_id', user.id)
       .eq('organization_id', orgData.id);
 
     if (updateError) {

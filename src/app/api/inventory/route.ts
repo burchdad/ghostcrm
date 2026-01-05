@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 import { createClient } from "@supabase/supabase-js";
 
 // Force dynamic rendering for this API route
@@ -25,47 +26,21 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
 
   try {
-    // Get authenticated user from JWT cookie (consistent with other APIs)
-    const token = req.cookies.get("ghostcrm_jwt")?.value;
-    if (!token) {
+    // Get authenticated user using new Supabase auth
+    const user = await getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      console.log('❌ [INVENTORY API] Authentication failed or no organization');
       return new Response(
-        JSON.stringify({ error: "Authentication token required" }),
+        JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseAdmin.auth.getUser(token);
-
-    if (authError || !user) {
-      console.error('❌ [INVENTORY] Auth error:', authError);
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from("user_organizations")
-      .select("organization_id, role")
-      .eq("user_id", user.id)
-      .single();
-
-    if (orgError || !userOrg) {
-      return new Response(JSON.stringify({ error: "No organization found" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Build query for inventory
+    // Build query for inventory using the user's organization
     let query = supabaseAdmin
       .from("inventory")
       .select("*", { count: "exact" })
-      .eq("organization_id", userOrg.organization_id);
+      .eq("organization_id", user.organizationId);
 
     // Apply filters
     if (search) {

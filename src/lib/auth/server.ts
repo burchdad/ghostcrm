@@ -17,10 +17,10 @@ export interface ServerAuthUser {
 }
 
 /**
- * Get authenticated user from Supabase session with profile data
+ * Create a shared Supabase server client for API routes
  */
-export async function getUserFromRequest(req: NextRequest): Promise<ServerAuthUser | null> {
-  const supabase = createServerClient(
+function createSupabaseServerClient(req: NextRequest) {
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -30,20 +30,32 @@ export async function getUserFromRequest(req: NextRequest): Promise<ServerAuthUs
       },
     }
   );
+}
+
+/**
+ * Get authenticated user from Supabase session with profile data
+ */
+export async function getUserFromRequest(req: NextRequest): Promise<ServerAuthUser | null> {
+  const supabase = createSupabaseServerClient(req);
 
   try {
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error || !user) {
+      console.log('❌ [AUTH] No user or error:', error?.message);
       return null;
     }
 
     // Try to get user profile from database
-    const { data: userProfile } = await supabase
+    const { data: userProfile, error: profileError } = await supabase
       .from('users')
       .select('id, email, role, organization_id, requires_password_reset')
       .eq('id', user.id)
       .single();
+
+    if (profileError) {
+      console.log('⚠️ [AUTH] No user profile found, using fallback:', profileError.message);
+    }
 
     // Extract tenant ID from hostname for subdomain detection
     const url = new URL(req.url);
@@ -56,6 +68,14 @@ export async function getUserFromRequest(req: NextRequest): Promise<ServerAuthUs
     // Build auth user with fallbacks
     const organizationId = userProfile?.organization_id || user.user_metadata?.organization_id || detectedTenantId;
     const role = userProfile?.role || user.user_metadata?.role || (detectedTenantId !== 'default-org' ? 'owner' : 'user');
+
+    console.log('✅ [AUTH] User authenticated:', {
+      id: user.id,
+      email: user.email,
+      role,
+      organizationId,
+      hasProfile: !!userProfile
+    });
 
     return {
       id: user.id,
@@ -73,6 +93,7 @@ export async function getUserFromRequest(req: NextRequest): Promise<ServerAuthUs
 
 /**
  * Check if request is authenticated (has valid Supabase session)
+ * Reuses getUserFromRequest to avoid creating multiple Supabase clients
  */
 export async function isAuthenticated(req: NextRequest): Promise<boolean> {
   const user = await getUserFromRequest(req);

@@ -1,59 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const jwtSecret = process.env.JWT_SECRET!;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { getUserFromRequest } from '@/lib/auth/server';
+import { createServerClient } from '@supabase/ssr';
 
 export const dynamic = 'force-dynamic';
 
 // GET - Get user profile data
 export async function GET(request: NextRequest) {
   try {
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!jwtCookie) {
-      console.error('❌ No ghostcrm_jwt cookie found');
-      return NextResponse.json({ error: 'Unauthorized - No JWT cookie' }, { status: 401 });
+    if (!user) {
+      console.error('❌ No authenticated user found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-      console.log('✅ JWT verified successfully for user:', jwtUser.userId);
-    } catch (jwtError: any) {
-      console.error('❌ JWT verification failed:', jwtError);
-      
-      if (jwtError.name === 'TokenExpiredError') {
-        return NextResponse.json({ 
-          error: 'Token expired',
-          code: 'TOKEN_EXPIRED',
-          expiredAt: jwtError.expiredAt
-        }, { status: 401 });
+    console.log('✅ User authenticated for profile request:', user.id);
+
+    // Create Supabase client
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: () => {}, // No need to set cookies in server utilities
+        },
       }
-      
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
-    }
+    );
 
-    // Get organization data
-    const jwtOrganizationId = jwtUser.organizationId;
-    if (!jwtOrganizationId) {
+    // Get organization from user profile
+    const organizationId = user.organizationId;
+    if (!organizationId) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
     // Check if organizationId is a UUID or subdomain
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jwtOrganizationId);
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(organizationId);
     
     let orgData;
     if (isUUID) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id, name')
-        .eq('id', jwtOrganizationId)
+        .eq('id', organizationId)
         .single();
       orgData = data;
       if (error) {
@@ -63,7 +53,7 @@ export async function GET(request: NextRequest) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id, name')
-        .eq('subdomain', jwtOrganizationId)
+        .eq('subdomain', organizationId)
         .single();
       orgData = data;
       if (error) {
@@ -75,7 +65,7 @@ export async function GET(request: NextRequest) {
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('user_id', jwtUser.userId)
+      .eq('user_id', user.id)
       .eq('organization_id', orgData.id)
       .single();
 
@@ -92,7 +82,7 @@ export async function GET(request: NextRequest) {
           id: null,
           first_name: '',
           last_name: '',
-          email: jwtUser.email || '',
+          email: user.email || '',
           phone: '',
           avatar_url: '',
           role: 'member',
@@ -114,7 +104,7 @@ export async function GET(request: NextRequest) {
         id: profile.id,
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
-        email: profile.email || jwtUser.email || '',
+        email: profile.email || user.email || '',
         phone: settings.phone || '',
         avatar_url: profile.avatar_url || '',
         role: profile.role,
@@ -135,31 +125,27 @@ export async function GET(request: NextRequest) {
 // PUT - Update user profile data
 export async function PUT(request: NextRequest) {
   try {
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!jwtCookie) {
-      console.error('❌ No ghostcrm_jwt cookie found');
-      return NextResponse.json({ error: 'Unauthorized - No JWT cookie' }, { status: 401 });
+    if (!user) {
+      console.error('❌ No authenticated user found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-      console.log('✅ JWT verified successfully for PUT request');
-    } catch (jwtError: any) {
-      console.error('❌ JWT verification failed:', jwtError);
-      
-      if (jwtError.name === 'TokenExpiredError') {
-        return NextResponse.json({ 
-          error: 'Token expired',
-          code: 'TOKEN_EXPIRED',
-          expiredAt: jwtError.expiredAt
-        }, { status: 401 });
+    console.log('✅ User authenticated for PUT profile request:', user.id);
+
+    // Create Supabase client
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: () => {}, // No need to set cookies in server utilities
+        },
       }
-      
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
-    }
+    );
 
     const body = await request.json();
     const { profile: profileUpdates } = body;
@@ -168,21 +154,21 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Profile data is required' }, { status: 400 });
     }
 
-    // Get organization data
-    const jwtOrganizationId = jwtUser.organizationId;
-    if (!jwtOrganizationId) {
+    // Get organization from user profile
+    const organizationId = user.organizationId;
+    if (!organizationId) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
     // Check if organizationId is a UUID or subdomain
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jwtOrganizationId);
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(organizationId);
     
     let orgData;
     if (isUUID) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id')
-        .eq('id', jwtOrganizationId)
+        .eq('id', organizationId)
         .single();
       orgData = data;
       if (error) {
@@ -192,7 +178,7 @@ export async function PUT(request: NextRequest) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id')
-        .eq('subdomain', jwtOrganizationId)
+        .eq('subdomain', organizationId)
         .single();
       orgData = data;
       if (error) {
@@ -214,7 +200,7 @@ export async function PUT(request: NextRequest) {
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('id')
-      .eq('user_id', jwtUser.userId)
+      .eq('user_id', user.id)
       .eq('organization_id', orgData.id)
       .single();
 
@@ -232,7 +218,7 @@ export async function PUT(request: NextRequest) {
           settings: settings,
           updated_at: now
         })
-        .eq('user_id', jwtUser.userId)
+        .eq('user_id', user.id)
         .eq('organization_id', orgData.id)
         .select();
       
@@ -243,7 +229,7 @@ export async function PUT(request: NextRequest) {
       const insertResult = await supabase
         .from('profiles')
         .insert({
-          user_id: jwtUser.userId,
+          user_id: user.id,
           organization_id: orgData.id,
           email: profileUpdates.email,
           first_name: profileUpdates.first_name || '',
@@ -268,10 +254,10 @@ export async function PUT(request: NextRequest) {
       .from('audit_logs')
       .insert({
         organization_id: orgData.id,
-        user_id: jwtUser.userId,
+        user_id: user.id,
         action: 'PROFILE_UPDATE',
         entity_type: 'USER_PROFILE',
-        entity_id: jwtUser.userId,
+        entity_id: user.id,
         details: {
           updatedFields: Object.keys(profileUpdates),
           timestamp: now

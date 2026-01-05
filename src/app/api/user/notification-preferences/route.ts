@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
+import { getUserFromRequest } from '@/lib/auth/server';
+import { createServerClient } from '@supabase/ssr';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const jwtSecret = process.env.JWT_SECRET!;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+export const dynamic = 'force-dynamic';
 
 // Database type for user notification preferences
 interface UserNotificationPreferencesDB {
@@ -41,9 +37,9 @@ interface UserNotificationPreferencesDB {
   in_app_comments: boolean;
   in_app_system_updates: boolean;
   quiet_hours_enabled: boolean;
-  quiet_hours_start: string | null;
-  quiet_hours_end: string | null;
-  notification_frequency: string; // immediate, hourly, daily
+  quiet_hours_start: string;
+  quiet_hours_end: string;
+  notification_frequency: string;
   created_at: string;
   updated_at: string;
 }
@@ -51,57 +47,43 @@ interface UserNotificationPreferencesDB {
 // GET - Get user notification preferences
 export async function GET(request: NextRequest) {
   try {
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!jwtCookie) {
-      console.error('❌ No ghostcrm_jwt cookie found');
-      return NextResponse.json({ error: 'Unauthorized - No JWT cookie' }, { status: 401 });
+    if (!user) {
+      console.error('❌ No authenticated user found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-      console.log('✅ JWT verified successfully for user:', jwtUser.userId);
-    } catch (jwtError: any) {
-      console.error('❌ JWT verification failed:', jwtError);
-      
-      // If token is expired, return specific error for client to handle
-      if (jwtError.name === 'TokenExpiredError') {
-        return NextResponse.json({ 
-          error: 'Token expired',
-          code: 'TOKEN_EXPIRED',
-          expiredAt: jwtError.expiredAt
-        }, { status: 401 });
+    console.log('✅ User authenticated for notification preferences request:', user.id);
+
+    // Create Supabase client
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: () => {},
+        },
       }
-      
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
-    }
+    );
 
-    // Check if we have the required environment variables
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('❌ Missing Supabase credentials');
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    // Get organization ID
+    const organizationId = user.organizationId;
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
-
-    // Get organization data
-    const jwtOrganizationId = jwtUser.organizationId;
-    if (!jwtOrganizationId) {
-      console.error('❌ No organizationId in JWT');
-      return NextResponse.json({ error: 'Organization not found in token' }, { status: 404 });
-    }
-
-    console.log('🔍 Looking for organization:', jwtOrganizationId);
 
     // Check if organizationId is a UUID or subdomain
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jwtOrganizationId);
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(organizationId);
     
     let orgData;
     if (isUUID) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id')
-        .eq('id', jwtOrganizationId)
+        .eq('id', organizationId)
         .single();
       orgData = data;
       if (error) {
@@ -112,7 +94,7 @@ export async function GET(request: NextRequest) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id')
-        .eq('subdomain', jwtOrganizationId)
+        .eq('subdomain', organizationId)
         .single();
       orgData = data;
       if (error) {
@@ -123,13 +105,13 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ Organization found:', orgData.id);
 
-    // Try to get user notification preferences - with better error handling
+    // Try to get user notification preferences
     let preferences: UserNotificationPreferencesDB | null = null;
     try {
       const { data, error } = await supabase
         .from('user_notification_preferences')
         .select('*')
-        .eq('user_id', jwtUser.userId)
+        .eq('user_id', user.id)
         .eq('organization_id', orgData.id)
         .single();
 
@@ -191,7 +173,7 @@ export async function GET(request: NextRequest) {
         quietHoursEnabled: false,
         quietHoursStart: '22:00',
         quietHoursEnd: '08:00',
-        frequency: 'immediate', // immediate, hourly, daily
+        frequency: 'immediate',
       },
     };
 
@@ -258,32 +240,27 @@ export async function GET(request: NextRequest) {
 // POST - Update user notification preferences
 export async function POST(request: NextRequest) {
   try {
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!jwtCookie) {
-      console.error('❌ No ghostcrm_jwt cookie found');
-      return NextResponse.json({ error: 'Unauthorized - No JWT cookie' }, { status: 401 });
+    if (!user) {
+      console.error('❌ No authenticated user found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-      console.log('✅ JWT verified successfully for POST request');
-    } catch (jwtError: any) {
-      console.error('❌ JWT verification failed:', jwtError);
-      
-      // If token is expired, return specific error for client to handle
-      if (jwtError.name === 'TokenExpiredError') {
-        return NextResponse.json({ 
-          error: 'Token expired',
-          code: 'TOKEN_EXPIRED',
-          expiredAt: jwtError.expiredAt
-        }, { status: 401 });
+    console.log('✅ User authenticated for POST notification preferences request:', user.id);
+
+    // Create Supabase client
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: () => {},
+        },
       }
-      
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
-    }
+    );
 
     const body = await request.json();
     const { preferences } = body;
@@ -292,21 +269,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Preferences data is required' }, { status: 400 });
     }
 
-    // Get organization data
-    const jwtOrganizationId = jwtUser.organizationId;
-    if (!jwtOrganizationId) {
+    // Get organization ID
+    const organizationId = user.organizationId;
+    if (!organizationId) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
     // Check if organizationId is a UUID or subdomain
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jwtOrganizationId);
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(organizationId);
     
     let orgData;
     if (isUUID) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id')
-        .eq('id', jwtOrganizationId)
+        .eq('id', organizationId)
         .single();
       orgData = data;
       if (error) {
@@ -316,7 +293,7 @@ export async function POST(request: NextRequest) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id')
-        .eq('subdomain', jwtOrganizationId)
+        .eq('subdomain', organizationId)
         .single();
       orgData = data;
       if (error) {
@@ -326,11 +303,11 @@ export async function POST(request: NextRequest) {
 
     const now = new Date().toISOString();
 
-    // Upsert notification preferences
+    // Update user notification preferences using upsert
     const { data, error } = await supabase
       .from('user_notification_preferences')
       .upsert({
-        user_id: jwtUser.userId,
+        user_id: user.id,
         organization_id: orgData.id,
         email_enabled: preferences.emailNotifications?.enabled ?? true,
         email_new_leads: preferences.emailNotifications?.newLeads ?? true,
@@ -340,12 +317,29 @@ export async function POST(request: NextRequest) {
         email_system_alerts: preferences.emailNotifications?.systemAlerts ?? true,
         email_daily_digest: preferences.emailNotifications?.dailyDigest ?? false,
         email_weekly_reports: preferences.emailNotifications?.weeklyReports ?? true,
+        email_marketing_updates: preferences.emailNotifications?.marketingUpdates ?? false,
+        email_team_mentions: preferences.emailNotifications?.teamMentions ?? true,
+        email_security_alerts: preferences.emailNotifications?.securityAlerts ?? true,
         sms_enabled: preferences.smsNotifications?.enabled ?? false,
         sms_phone_number: preferences.smsNotifications?.phoneNumber || null,
         sms_urgent_only: preferences.smsNotifications?.urgentAlertsOnly ?? true,
+        sms_deals_closing: preferences.smsNotifications?.dealsClosing ?? false,
+        sms_high_value_leads: preferences.smsNotifications?.highValueLeads ?? false,
         push_enabled: preferences.pushNotifications?.enabled ?? true,
         push_browser: preferences.pushNotifications?.browser ?? true,
         push_mobile: preferences.pushNotifications?.mobile ?? true,
+        push_task_reminders: preferences.pushNotifications?.taskReminders ?? true,
+        push_team_messages: preferences.pushNotifications?.teamMessages ?? true,
+        push_deal_updates: preferences.pushNotifications?.dealUpdates ?? true,
+        in_app_enabled: preferences.inAppNotifications?.enabled ?? true,
+        in_app_mentions: preferences.inAppNotifications?.mentions ?? true,
+        in_app_assignments: preferences.inAppNotifications?.assignments ?? true,
+        in_app_comments: preferences.inAppNotifications?.comments ?? true,
+        in_app_system_updates: preferences.inAppNotifications?.systemUpdates ?? false,
+        quiet_hours_enabled: preferences.preferences?.quietHoursEnabled ?? false,
+        quiet_hours_start: preferences.preferences?.quietHoursStart ?? '22:00',
+        quiet_hours_end: preferences.preferences?.quietHoursEnd ?? '08:00',
+        notification_frequency: preferences.preferences?.frequency ?? 'immediate',
         updated_at: now
       }, {
         onConflict: 'user_id,organization_id'
@@ -362,10 +356,10 @@ export async function POST(request: NextRequest) {
       .from('audit_logs')
       .insert({
         organization_id: orgData.id,
-        user_id: jwtUser.userId,
+        user_id: user.id,
         action: 'NOTIFICATION_PREFERENCES_UPDATE',
         entity_type: 'USER_PREFERENCES',
-        entity_id: jwtUser.userId,
+        entity_id: user.id,
         details: {
           updatedFields: Object.keys(preferences),
           timestamp: now

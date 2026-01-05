@@ -2,7 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrgProviderAccount } from '@/lib/telephony/store';
 import { telnyxVoice } from '@/lib/telephony/providers/telnyx';
-import jwt from 'jsonwebtoken';
+import { getUserFromRequest } from '@/lib/auth/server';
+import { createServerClient } from '@supabase/ssr';
 
 // Force dynamic rendering for production
 export const dynamic = 'force-dynamic';
@@ -45,47 +46,36 @@ function formatPhoneNumber(phone: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get JWT token from cookies (same as middleware)
-    const token = request.cookies.get("ghostcrm_jwt")?.value;
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!token) {
-      console.error('❌ [VOICE API] No JWT token found');
+    if (!user) {
+      console.error('❌ [VOICE API] No authenticated user found');
       return NextResponse.json(
         { error: 'No authentication token found' },
         { status: 401 }
       );
     }
 
-    // Decode JWT token
-    let user;
-    let orgId;
-    try {
-      const jwtSecret = process.env.JWT_SECRET;
-      if (!jwtSecret) {
-        throw new Error('JWT_SECRET not configured');
+    // Create Supabase client
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: () => {},
+        },
       }
-      
-      const decoded = jwt.verify(token, jwtSecret) as any;
-      user = {
-        id: decoded.userId,
-        email: decoded.email,
-        role: decoded.role
-      };
-      orgId = decoded.organizationId || decoded.tenantId;
-      
-      console.log('🔍 [VOICE API] JWT authentication successful:', {
-        userId: user.id,
-        userEmail: user.email,
-        userRole: user.role,
-        orgId: orgId
-      });
-    } catch (jwtError) {
-      console.error('❌ [VOICE API] JWT verification failed:', jwtError);
-      return NextResponse.json(
-        { error: 'Invalid authentication token' },
-        { status: 401 }
-      );
-    }
+    );
+
+    const orgId = user.organizationId;
+    
+    console.log('🔍 [VOICE API] Supabase authentication successful:', {
+      userId: user.id,
+      userEmail: user.email,
+      orgId: orgId
+    });
     
     const { 
       to, 

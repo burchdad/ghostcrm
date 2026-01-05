@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
+import { getUserFromRequest } from '@/lib/auth/server';
+import { createServerClient } from '@supabase/ssr';
 import bcrypt from 'bcryptjs';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const jwtSecret = process.env.JWT_SECRET!;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const dynamic = 'force-dynamic';
 
@@ -58,47 +52,43 @@ const defaultSecuritySettings: SecuritySettings = {
 // GET - Get user security settings
 export async function GET(request: NextRequest) {
   try {
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!jwtCookie) {
-      console.error('❌ No ghostcrm_jwt cookie found');
-      return NextResponse.json({ error: 'Unauthorized - No JWT cookie' }, { status: 401 });
+    if (!user) {
+      console.error('❌ No authenticated user found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-      console.log('✅ JWT verified successfully for user:', jwtUser.userId);
-    } catch (jwtError: any) {
-      console.error('❌ JWT verification failed:', jwtError);
-      
-      if (jwtError.name === 'TokenExpiredError') {
-        return NextResponse.json({ 
-          error: 'Token expired',
-          code: 'TOKEN_EXPIRED',
-          expiredAt: jwtError.expiredAt
-        }, { status: 401 });
+    console.log('✅ User authenticated for security settings request:', user.id);
+
+    // Create Supabase client
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: () => {},
+        },
       }
-      
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
-    }
+    );
 
     // Get organization data
-    const jwtOrganizationId = jwtUser.organizationId;
-    if (!jwtOrganizationId) {
+    const organizationId = user.organizationId;
+    if (!organizationId) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
     // Check if organizationId is a UUID or subdomain
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jwtOrganizationId);
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(organizationId);
     
     let orgData;
     if (isUUID) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id')
-        .eq('id', jwtOrganizationId)
+        .eq('id', organizationId)
         .single();
       orgData = data;
       if (error) {
@@ -108,7 +98,7 @@ export async function GET(request: NextRequest) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id')
-        .eq('subdomain', jwtOrganizationId)
+        .eq('subdomain', organizationId)
         .single();
       orgData = data;
       if (error) {
@@ -120,7 +110,7 @@ export async function GET(request: NextRequest) {
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('settings')
-      .eq('user_id', jwtUser.userId)
+      .eq('user_id', user.id)
       .eq('organization_id', orgData.id)
       .single();
 
@@ -133,7 +123,7 @@ export async function GET(request: NextRequest) {
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('totp_secret, webauthn_credentials')
-      .eq('id', jwtUser.userId)
+      .eq('id', user.id)
       .single();
 
     // Extract security settings from profile settings
@@ -162,31 +152,27 @@ export async function GET(request: NextRequest) {
 // PUT - Update user security settings
 export async function PUT(request: NextRequest) {
   try {
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!jwtCookie) {
-      console.error('❌ No ghostcrm_jwt cookie found');
-      return NextResponse.json({ error: 'Unauthorized - No JWT cookie' }, { status: 401 });
+    if (!user) {
+      console.error('❌ No authenticated user found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-      console.log('✅ JWT verified successfully for PUT request');
-    } catch (jwtError: any) {
-      console.error('❌ JWT verification failed:', jwtError);
-      
-      if (jwtError.name === 'TokenExpiredError') {
-        return NextResponse.json({ 
-          error: 'Token expired',
-          code: 'TOKEN_EXPIRED',
-          expiredAt: jwtError.expiredAt
-        }, { status: 401 });
+    console.log('✅ User authenticated for PUT security settings request:', user.id);
+
+    // Create Supabase client
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: () => {},
+        },
       }
-      
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
-    }
+    );
 
     const body = await request.json();
     const { settings: securityUpdates, currentPassword, newPassword } = body;
@@ -196,20 +182,20 @@ export async function PUT(request: NextRequest) {
     }
 
     // Get organization data
-    const jwtOrganizationId = jwtUser.organizationId;
-    if (!jwtOrganizationId) {
+    const organizationId = user.organizationId;
+    if (!organizationId) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
     // Check if organizationId is a UUID or subdomain
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jwtOrganizationId);
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(organizationId);
     
     let orgData;
     if (isUUID) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id')
-        .eq('id', jwtOrganizationId)
+        .eq('id', organizationId)
         .single();
       orgData = data;
       if (error) {
@@ -219,7 +205,7 @@ export async function PUT(request: NextRequest) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id')
-        .eq('subdomain', jwtOrganizationId)
+        .eq('subdomain', organizationId)
         .single();
       orgData = data;
       if (error) {
@@ -279,7 +265,7 @@ export async function PUT(request: NextRequest) {
       const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
         .select('settings')
-        .eq('user_id', jwtUser.userId)
+        .eq('user_id', user.id)
         .eq('organization_id', orgData.id)
         .single();
 
@@ -299,9 +285,9 @@ export async function PUT(request: NextRequest) {
       const { data, error } = await supabase
         .from('profiles')
         .upsert({
-          user_id: jwtUser.userId,
+          user_id: user.id,
           organization_id: orgData.id,
-          email: jwtUser.email,
+          email: user.email,
           settings: updatedSettings,
           updated_at: now
         }, {
@@ -320,10 +306,10 @@ export async function PUT(request: NextRequest) {
       .from('audit_logs')
       .insert({
         organization_id: orgData.id,
-        user_id: jwtUser.userId,
+        user_id: user.id,
         action: newPassword ? 'PASSWORD_UPDATE' : 'SECURITY_SETTINGS_UPDATE',
         entity_type: 'USER_SECURITY',
-        entity_id: jwtUser.userId,
+        entity_id: user.id,
         details: {
           passwordChanged: !!newPassword,
           settingsUpdated: !!securityUpdates,

@@ -20,21 +20,14 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
 
   try {
-    // Check authentication using our new utility
-    if (!(await isAuthenticated(req))) {
+    // Get authenticated user (this also checks if authenticated)
+    const user = await getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      console.log('❌ [LEADS API] Authentication failed or no organization');
       return new Response(
         JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
-    }
-
-    // Get user data from JWT
-    const user = await getUserFromRequest(req);
-    if (!user || !user.organizationId) {
-      return new Response(JSON.stringify({ error: "User organization not found" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
     }
 
     // Build query for leads with contact information

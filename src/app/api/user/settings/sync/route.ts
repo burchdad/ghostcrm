@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const jwtSecret = process.env.JWT_SECRET!;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { getUserFromRequest } from '@/lib/auth/server';
+import { createServerClient } from '@supabase/ssr';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,44 +27,58 @@ export async function GET(request: NextRequest) {
   try {
     console.log('🔄 Settings sync status request received');
 
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!jwtCookie) {
-      return NextResponse.json({ error: 'Unauthorized - No JWT cookie' }, { status: 401 });
+    if (!user) {
+      console.error('❌ No authenticated user found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-    } catch (jwtError: any) {
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
-    }
+    console.log('✅ User authenticated for sync status:', user.id);
+
+    // Create Supabase client
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: () => {},
+        },
+      }
+    );
 
     // Get organization info
+    const organizationId = user.organizationId;
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    // Check if organizationId is a UUID or subdomain
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(organizationId);
+    
     let orgData;
-    if (jwtUser.organizationId) {
+    if (isUUID) {
       const { data, error } = await supabase
         .from('organizations')
         .select('id, subdomain')
-        .eq('id', jwtUser.organizationId)
+        .eq('id', organizationId)
         .single();
-      
+      orgData = data;
       if (error) {
         return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
       }
-      orgData = data;
     } else {
       const { data, error } = await supabase
         .from('organizations')
         .select('id, subdomain')
-        .eq('subdomain', jwtUser.subdomain || 'default')
+        .eq('subdomain', organizationId)
         .single();
-
+      orgData = data;
       if (error) {
         return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
       }
-      orgData = data;
     }
 
     // Get query parameters
@@ -82,7 +90,7 @@ export async function GET(request: NextRequest) {
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('id, settings, updated_at, full_name, email')
-      .eq('id', jwtUser.userId)
+      .eq('user_id', user.id)
       .eq('organization_id', orgData.id)
       .single();
 
@@ -94,7 +102,7 @@ export async function GET(request: NextRequest) {
     const { data: notificationData, error: notificationError } = await supabase
       .from('user_notification_preferences')
       .select('*, updated_at')
-      .eq('user_id', jwtUser.userId)
+      .eq('user_id', user.id)
       .eq('organization_id', orgData.id)
       .single();
 
@@ -176,7 +184,7 @@ export async function GET(request: NextRequest) {
 
     // Log sync activity (optional - for debugging/analytics)
     if (hasProfileUpdates || hasNotificationUpdates) {
-      console.log(`🔄 Settings sync for user ${jwtUser.userId} on device ${deviceId}: ${hasProfileUpdates ? 'profile' : ''}${hasProfileUpdates && hasNotificationUpdates ? ' + ' : ''}${hasNotificationUpdates ? 'notifications' : ''}`);
+      console.log(`🔄 Settings sync for user ${user.id} on device ${deviceId}: ${hasProfileUpdates ? 'profile' : ''}${hasProfileUpdates && hasNotificationUpdates ? ' + ' : ''}${hasNotificationUpdates ? 'notifications' : ''}`);
     }
 
     return NextResponse.json(syncResponse);
