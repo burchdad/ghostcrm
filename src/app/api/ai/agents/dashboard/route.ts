@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyJwtToken } from '@/lib/jwt';
+import { getUserFromRequest } from '@/lib/auth/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,22 +9,14 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value || 
-                  request.cookies.get('jwt')?.value;
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!token) {
+    if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    let decoded;
-    try {
-      decoded = verifyJwtToken(token);
-    } catch (error: any) {
-      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
-    }
-
-    if (!decoded || !decoded.organizationId) {
+    if (!user.organizationId) {
       return NextResponse.json({ error: 'Authentication failed for agent dashboard' }, { status: 401 });
     }
 

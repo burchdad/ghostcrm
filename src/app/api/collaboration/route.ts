@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { verifyJwtToken } from '@/lib/jwt';
+import { getUserFromRequest } from '@/lib/auth/server';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,16 +11,14 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value || 
-                  request.cookies.get('jwt')?.value;
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!token) {
+    if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const decoded = verifyJwtToken(token);
-    if (!decoded || !decoded.organizationId) {
+    if (!user.organizationId) {
       return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
     }
 
@@ -35,7 +33,7 @@ export async function GET(request: NextRequest) {
           email
         )
       `)
-      .eq('organization_id', decoded.organizationId);
+      .eq('organization_id', user.organizationId);
 
     if (usersError) {
       console.error('Error fetching team members:', usersError);
@@ -66,16 +64,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value || 
-                  request.cookies.get('jwt')?.value;
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!token) {
+    if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const decoded = verifyJwtToken(token);
-    if (!decoded || !decoded.organizationId) {
+    if (!user.organizationId) {
       return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
     }
 
@@ -83,8 +79,8 @@ export async function POST(request: NextRequest) {
     const { data: session, error } = await supabase
       .from('collaboration_sessions')
       .insert({
-        organization_id: decoded.organizationId,
-        user_id: decoded.userId,
+        organization_id: user.organizationId,
+        user_id: user.id,
         session_type: body.type || 'general',
         created_at: new Date().toISOString()
       })
@@ -100,7 +96,7 @@ export async function POST(request: NextRequest) {
       status: 'success',
       data: {
         sessionId: session.id,
-        participants: [decoded.userId],
+        participants: [user.id],
         createdAt: session.created_at
       }
     });
