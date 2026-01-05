@@ -36,17 +36,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
     
-    // Faster timeout for quicker user experience
+    // Much faster timeout for better UX - only 3 seconds
     const timeoutId = setTimeout(() => {
       if (mounted) {
+        console.warn('⚠️ [AuthProvider] Auth timeout reached - setting loading to false');
         setIsLoading(false);
         setIsFetchingProfile(false);
       }
-    }, 8000); // Reduced to 8 seconds for faster experience
+    }, 3000); // Reduced from 8 to 3 seconds
     
     setAuthTimeoutId(timeoutId);
     
-    // Get initial session with aggressive optimization
+    // Get initial session with better error handling
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (!mounted) return;
       
@@ -60,14 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       if (session?.user) {
-        console.log('✅ [AuthProvider] Found existing session');
+        console.log('✅ [AuthProvider] Found existing session for:', session.user.email);
         setProcessedUserId(session.user.id);
         fetchUserProfile(session.user);
       } else {
-        console.log('ℹ️ [AuthProvider] No existing session');
+        console.log('ℹ️ [AuthProvider] No existing session found');
         setIsLoading(false);
       }
     }).catch((error) => {
+      console.error('❌ [AuthProvider] Session fetch failed:', error);
       clearTimeout(timeoutId);
       setAuthTimeoutId(null);
       setIsLoading(false);
@@ -104,9 +106,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = async (supabaseUser: User) => {
     // Prevent concurrent calls to fetchUserProfile
-    if (isFetchingProfile) return;
+    if (isFetchingProfile) {
+      console.log('🔄 [AuthProvider] Profile fetch already in progress');
+      return;
+    }
     
     setIsFetchingProfile(true);
+    console.log('🔍 [AuthProvider] Starting profile fetch for:', supabaseUser.email);
     
     try {
       // Fast tenant detection from hostname first
@@ -121,16 +127,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           detectedTenantId = subdomain;
           detectedRole = 'owner';
         }
+        console.log('🌐 [AuthProvider] Detected tenant from hostname:', { hostname, subdomain, detectedTenantId, detectedRole });
       }
 
-      // Get user profile with minimal query
-      const { data: userProfile, error } = await supabase
+      // Try to get user profile with a timeout
+      const profilePromise = supabase
         .from('users')
         .select('id, email, role, organization_id, requires_password_reset')
         .eq('id', supabaseUser.id)
         .single();
 
+      // Add timeout to profile query
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile query timeout')), 2000)
+      );
+
+      const { data: userProfile, error } = await Promise.race([
+        profilePromise,
+        timeoutPromise
+      ]) as any;
+
       if (error) {
+        console.warn('⚠️ [AuthProvider] Profile query failed, using fallback:', error.message);
         // Fast fallback without verbose logging
         const fallbackAuthUser: AuthUser = {
           id: supabaseUser.id,
@@ -141,6 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           requires_password_reset: false
         };
         
+        console.log('✅ [AuthProvider] Using fallback user profile:', fallbackAuthUser);
         setUser(fallbackAuthUser);
         setIsLoading(false);
         setIsFetchingProfile(false);
@@ -188,6 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         requires_password_reset: userProfile?.requires_password_reset || false
       };
 
+      console.log('✅ [AuthProvider] Successfully created auth user:', authUser);
       setUser(authUser);
       setIsLoading(false);
       setIsFetchingProfile(false);
@@ -197,6 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthTimeoutId(null);
       }
     } catch (error) {
+      console.error('❌ [AuthProvider] Profile fetch failed completely:', error);
       // Fast emergency fallback
       let emergencyTenantId = 'default-org';
       let emergencyRole = 'user';
@@ -220,6 +241,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         requires_password_reset: false
       };
       
+      console.log('🚨 [AuthProvider] Using emergency fallback user:', emergencyAuthUser);
       setUser(emergencyAuthUser);
       setIsLoading(false);
       setIsFetchingProfile(false);

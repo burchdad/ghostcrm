@@ -13,6 +13,8 @@ export default function LoginPage() {
   // Redirect if already authenticated based on role and context
   useEffect(() => {
     if (user && !isLoading) {
+      console.log('🔄 [LoginPage] Redirecting authenticated user:', user.email, 'Role:', user.role);
+      
       // Simple role-based redirect - eliminate complex detection logic
       let redirectPath = "/dashboard"; // default
       
@@ -43,13 +45,29 @@ export default function LoginPage() {
           redirectPath = "/dashboard";
       }
       
+      console.log('➡️ [LoginPage] Redirecting to:', redirectPath);
       // Immediate redirect without delay
       router.push(redirectPath);
     }
   }, [user, isLoading, router]);
 
+  // Emergency timeout to prevent infinite loading
+  useEffect(() => {
+    const emergencyTimeout = setTimeout(() => {
+      console.warn('⚠️ [LoginPage] Emergency timeout reached - forcing loading to false');
+      // If still loading after 5 seconds, something is wrong - show the login form anyway
+      if (isLoading) {
+        // Force a page reload as last resort
+        window.location.reload();
+      }
+    }, 5000);
+
+    return () => clearTimeout(emergencyTimeout);
+  }, [isLoading]);
+
   // Show loading spinner while auth is initializing
   if (isLoading) {
+    console.log('⏳ [LoginPage] Showing loading state');
     return (
       <div style={{
         minHeight: '100vh',
@@ -73,11 +91,15 @@ export default function LoginPage() {
             margin: '0 auto 16px auto'
           }}></div>
           Loading...
+          <div style={{ fontSize: '14px', marginTop: '8px', opacity: 0.7 }}>
+            If this takes too long, please refresh the page
+          </div>
         </div>
       </div>
     );
   }
 
+  console.log('🎯 [LoginPage] Rendering login form');
   return (
     <div style={{
       minHeight: '100vh',
