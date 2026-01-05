@@ -5,14 +5,24 @@ import { usePathname, useRouter } from "next/navigation";
 import UnifiedToolbar from "@/components/navigation/UnifiedToolbar";
 import Sidebar from "@/components/layout/Sidebar";
 import CollaborationSidebar from "@/components/global/CollaborationSidebar";
-import { useAuth } from "@/context/SupabaseAuthContext";
+
+// Safe auth hook that handles missing context gracefully
+function useSafeAuth() {
+  try {
+    const { useAuth } = require('@/context/SupabaseAuthContext');
+    return useAuth();
+  } catch (error) {
+    // Return default values when auth context is not available (marketing pages)
+    return { user: null, isLoading: false };
+  }
+}
 
 export default function CollapseLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = React.useState(false);
   const [expandedMode, setExpandedMode] = React.useState<"video" | "whiteboard" | "documents" | null>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
   
   React.useEffect(() => { setMounted(true); }, []);
 
