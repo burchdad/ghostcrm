@@ -130,25 +130,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('🌐 [AuthProvider] Detected tenant from hostname:', { hostname, subdomain, detectedTenantId, detectedRole });
       }
 
-      // Try to get user profile with a timeout
-      const profilePromise = supabase
-        .from('users')
-        .select('id, email, role, organization_id, requires_password_reset')
-        .eq('id', supabaseUser.id)
-        .single();
+      // Use API endpoint instead of direct database query to avoid authentication issues
+      const profilePromise = fetch('/api/auth/me', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include' // Include cookies for authentication
+      });
 
       // Add timeout to profile query
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Profile query timeout')), 2000)
       );
 
-      const { data: userProfile, error } = await Promise.race([
+      const response = await Promise.race([
         profilePromise,
         timeoutPromise
-      ]) as any;
+      ]) as Response;
 
-      if (error) {
-        console.warn('⚠️ [AuthProvider] Profile query failed, using fallback:', error.message);
+      let userProfile: any = null;
+      let error: { message: string } | null = null;
+
+      if (response && response.ok) {
+        const data = await response.json();
+        if (data.user) {
+          userProfile = data.user;
+        } else {
+          error = { message: 'No user data returned' };
+        }
+      } else {
+        error = { message: `API error: ${response?.status || 'Unknown'}` };
+      }
+
+      if (error || !userProfile) {
+        console.warn('⚠️ [AuthProvider] Profile API failed, using fallback:', error?.message);
         // Fast fallback without verbose logging
         const fallbackAuthUser: AuthUser = {
           id: supabaseUser.id,
@@ -171,9 +187,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Use detected tenant or database values
-      let tenantId = supabaseUser.user_metadata?.tenant_id || userProfile?.organization_id || detectedTenantId;
-      let organizationId = supabaseUser.user_metadata?.organization_id || userProfile?.organization_id || detectedTenantId;
+      // Use API response data (userProfile now contains the data from /api/auth/me)
+      let tenantId = userProfile.tenantId || supabaseUser.user_metadata?.tenant_id || detectedTenantId;
+      let organizationId = userProfile.organizationId || supabaseUser.user_metadata?.organization_id || detectedTenantId;
       
       // Detect tenant context from hostname if not already set
       if (tenantId === 'default-org' && typeof window !== 'undefined') {
@@ -186,7 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
       
-      // Use role from database profile first, then metadata, with proper fallback
+      // Use role from API response first, then metadata, with proper fallback
       let userRole = userProfile?.role || supabaseUser.user_metadata?.role || 'user';
       
       // If we're on a tenant subdomain and no role is set, assume owner (tenant creator)
@@ -204,7 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: userRole,
         organizationId,
         tenantId,
-        requires_password_reset: userProfile?.requires_password_reset || false
+        requires_password_reset: supabaseUser.user_metadata?.requires_password_reset || false
       };
 
       console.log('✅ [AuthProvider] Successfully created auth user:', authUser);
