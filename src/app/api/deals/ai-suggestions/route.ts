@@ -129,9 +129,16 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     console.error('AI Suggestions API error:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
     return NextResponse.json({ 
       error: "Internal server error", 
-      suggestions: [] 
+      suggestions: [],
+      debug: process.env.NODE_ENV === 'development' ? {
+        message: error instanceof Error ? error.message : 'Unknown error'
+      } : undefined
     }, { status: 500 });
   }
 }
