@@ -408,7 +408,10 @@ DO $$
 BEGIN
   IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'billing_events') THEN
     CREATE INDEX IF NOT EXISTS idx_billing_events_tenant_id ON billing_events(tenant_id);
-    CREATE INDEX IF NOT EXISTS idx_billing_events_processed ON billing_events(processed);
+    -- Only create processed index if column exists
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'billing_events' AND column_name = 'processed') THEN
+      CREATE INDEX IF NOT EXISTS idx_billing_events_processed ON billing_events(processed);
+    END IF;
   END IF;
 END
 $$;
