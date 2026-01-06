@@ -154,7 +154,7 @@
 /* ================================
    MODAL BODY LAYOUT
    ================================ */
-.modal-body {
+.contact-modal-content .modal-body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
@@ -472,7 +472,7 @@
 
 /* Large screens and below (1024px) */
 @media (max-width: 1024px) {
-  .modal-body {
+  .contact-modal-content .modal-body {
     grid-template-columns: 1fr;
   }
   
