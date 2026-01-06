@@ -16,6 +16,7 @@ import {
   X,
   ArrowLeft
 } from "lucide-react";
+import "./TeamsStyleCollaborationModal.css";
 
 // Safe auth hook that handles missing context
 function useSafeAuth() {
@@ -166,146 +167,114 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
   return (
     <>
       {/* Backdrop */}
-      <div 
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(4px)',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-        onClick={onClose}
-      >
+      <div className="teams-modal-backdrop" onClick={onClose}>
         {/* Modal Content */}
-        <div 
-          className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[700px] max-h-[90vh] 
-                     flex flex-col overflow-hidden border border-gray-200"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="teams-modal-container" onClick={(e) => e.stopPropagation()}>
           {selectedChat ? (
             // Teams-style conversation view
-            <div className="flex flex-col h-full">
+            <div className="teams-conversation">
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
-                <div className="flex items-center gap-3">
-                  <button 
-                    onClick={() => setSelectedChat(null)}
-                    className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                  >
+              <div className="teams-conversation-header">
+                <div className="teams-conversation-info">
+                  <button onClick={() => setSelectedChat(null)} className="teams-back-btn">
                     <ArrowLeft className="w-5 h-5" />
                   </button>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-medium">
-                      {selectedChatData?.type === 'channel' ? (
-                        <Hash className="w-5 h-5" />
-                      ) : (
-                        selectedChatData?.avatar || selectedChatData?.name.split(' ').map(n => n[0]).join('').slice(0, 2)
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 text-lg">{selectedChatData?.name}</h3>
-                      <p className="text-sm text-gray-500">
-                        {selectedChatData?.isOnline ? 'Active now' : 'Last seen recently'}
-                      </p>
-                    </div>
+                  <div className="teams-conversation-avatar">
+                    {selectedChatData?.type === 'channel' ? (
+                      <Hash className="w-5 h-5" />
+                    ) : (
+                      selectedChatData?.avatar || selectedChatData?.name.split(' ').map(n => n[0]).join('').slice(0, 2)
+                    )}
+                  </div>
+                  <div className="teams-conversation-details">
+                    <h3>{selectedChatData?.name}</h3>
+                    <p>{selectedChatData?.isOnline ? 'Active now' : 'Last seen recently'}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button className="p-2.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                <div className="teams-conversation-actions">
+                  <button className="teams-action-btn">
                     <Video className="w-5 h-5" />
                   </button>
-                  <button className="p-2.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                  <button className="teams-action-btn">
                     <Phone className="w-5 h-5" />
                   </button>
-                  <button className="p-2.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                  <button className="teams-action-btn">
                     <MoreHorizontal className="w-5 h-5" />
                   </button>
-                  <button 
-                    onClick={onClose}
-                    className="p-2.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors ml-2"
-                  >
+                  <button onClick={onClose} className="teams-action-btn" style={{ marginLeft: '0.5rem' }}>
                     <X className="w-5 h-5" />
                   </button>
                 </div>
               </div>
 
               {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30">
-                {messages.map((message) => (
-                  <div key={message.id} className={`flex gap-3 ${message.isOwn ? 'flex-row-reverse' : ''}`}>
-                    {!message.isOwn && (
-                      <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-medium flex-shrink-0">
-                        {message.avatar}
-                      </div>
-                    )}
-                    <div className={`max-w-[70%] ${message.isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
+              <div className="teams-messages-area">
+                <div className="teams-messages-container">
+                  {messages.map((message) => (
+                    <div key={message.id} className={`teams-message ${message.isOwn ? 'teams-message-own' : ''}`}>
                       {!message.isOwn && (
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-semibold text-sm text-gray-900">{message.sender}</span>
-                          <span className="text-xs text-gray-500">{message.timestamp}</span>
+                        <div className="teams-message-avatar">
+                          {message.avatar}
                         </div>
                       )}
-                      <div className={`rounded-2xl px-4 py-3 ${
-                        message.isOwn 
-                          ? 'bg-blue-600 text-white' 
-                          : 'bg-white text-gray-900 shadow-sm border border-gray-100'
-                      }`}>
-                        <p className="text-sm leading-relaxed">{message.message}</p>
-                        {message.hasAttachment && (
-                          <div className={`mt-3 p-3 rounded-lg border ${
-                            message.isOwn 
-                              ? 'bg-white bg-opacity-10 border-white border-opacity-20' 
-                              : 'bg-gray-50 border-gray-200'
-                          }`}>
-                            <div className="flex items-center gap-2">
-                              <FileText className="w-4 h-4" />
-                              <span className="text-sm font-medium">{message.attachmentName}</span>
-                            </div>
+                      <div className={`teams-message-content ${message.isOwn ? 'teams-message-content-own' : ''}`}>
+                        {!message.isOwn && (
+                          <div className="teams-message-header">
+                            <span className="teams-message-sender">{message.sender}</span>
+                            <span className="teams-message-time">{message.timestamp}</span>
                           </div>
                         )}
-                      </div>
-                      {message.reactions && (
-                        <div className="flex items-center gap-1 mt-2">
-                          {message.reactions.map((reaction, idx) => (
-                            <div key={idx} className="flex items-center gap-1 bg-white border border-gray-200 rounded-full px-3 py-1 shadow-sm">
-                              <span className="text-sm">{reaction}</span>
-                              {idx === 0 && <span className="text-xs text-gray-500 font-medium">{message.reactionCount}</span>}
+                        <div className={`teams-message-bubble ${
+                          message.isOwn ? 'teams-message-bubble-own' : 'teams-message-bubble-other'
+                        }`}>
+                          <p className="teams-message-text">{message.message}</p>
+                          {message.hasAttachment && (
+                            <div className={`teams-message-attachment ${
+                              message.isOwn ? 'teams-attachment-own' : 'teams-attachment-other'
+                            }`}>
+                              <div className="teams-attachment-content">
+                                <FileText className="w-4 h-4" />
+                                <span className="teams-attachment-name">{message.attachmentName}</span>
+                              </div>
                             </div>
-                          ))}
+                          )}
                         </div>
-                      )}
-                      {message.isOwn && (
-                        <span className="text-xs text-gray-400 mt-2">{message.timestamp}</span>
-                      )}
+                        {message.reactions && (
+                          <div className="teams-message-reactions">
+                            {message.reactions.map((reaction, idx) => (
+                              <div key={idx} className="teams-reaction">
+                                <span className="teams-reaction-emoji">{reaction}</span>
+                                {idx === 0 && <span className="teams-reaction-count">{message.reactionCount}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {message.isOwn && (
+                          <span className="teams-message-time-own">{message.timestamp}</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
               {/* Message Input */}
-              <div className="border-t border-gray-200 p-4 bg-white">
-                <div className="bg-white border border-gray-300 rounded-xl focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-                  <div className="flex items-end gap-3 p-4">
+              <div className="teams-input-section">
+                <div className="teams-input-container">
+                  <div className="teams-input-wrapper">
                     <textarea
                       placeholder={`Message ${selectedChatData?.name}...`}
-                      className="flex-1 resize-none border-0 focus:ring-0 focus:outline-none text-sm placeholder:text-gray-400"
+                      className="teams-input"
                       rows={1}
-                      style={{ minHeight: '24px', maxHeight: '120px' }}
                     />
-                    <div className="flex items-center gap-2">
-                      <button className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                    <div className="teams-input-actions">
+                      <button className="teams-input-btn">
                         <Paperclip className="w-5 h-5" />
                       </button>
-                      <button className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                      <button className="teams-input-btn">
                         <Smile className="w-5 h-5" />
                       </button>
-                      <button className="p-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+                      <button className="teams-send-btn">
                         <Send className="w-4 h-4" />
                       </button>
                     </div>
@@ -315,62 +284,58 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
             </div>
           ) : (
             // Chat list view
-            <div className="flex flex-col h-full">
+            <div className="teams-chat-list">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <div className="flex items-center gap-4">
-                  <h2 className="text-xl font-semibold text-gray-900">Chat</h2>
-                  <button className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+              <div className="teams-header">
+                <div className="teams-header-title">
+                  <h2>Chat</h2>
+                  <button className="teams-btn">
                     <Plus className="w-5 h-5" />
                   </button>
                 </div>
-                <button 
-                  onClick={onClose}
-                  className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                >
+                <button onClick={onClose} className="teams-btn">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Search */}
-              <div className="p-6 border-b border-gray-100">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <div className="teams-search-section">
+                <div className="teams-search-container">
+                  <Search className="teams-search-icon" />
                   <input
                     type="text"
                     placeholder="Search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl text-sm 
-                             focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    className="teams-search-input"
                   />
                 </div>
               </div>
 
               {/* Chat List */}
-              <div className="flex-1 overflow-y-auto">
+              <div className="teams-chat-list-container">
                 {isLoadingData ? (
-                  <div className="p-6 space-y-4">
+                  <div className="teams-loading">
                     {[...Array(4)].map((_, i) => (
-                      <div key={i} className="flex items-center gap-4 animate-pulse">
-                        <div className="w-12 h-12 rounded-full bg-gray-200"></div>
-                        <div className="flex-1">
-                          <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
-                          <div className="h-3 bg-gray-200 rounded w-48"></div>
+                      <div key={i} className="teams-loading-item">
+                        <div className="teams-loading-avatar"></div>
+                        <div className="teams-loading-content">
+                          <div className="teams-loading-title"></div>
+                          <div className="teams-loading-text"></div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100">
+                  <>
                     {filteredChats.map((chat) => (
                       <div
                         key={chat.id}
                         onClick={() => setSelectedChat(chat.id)}
-                        className="flex items-center gap-4 p-6 hover:bg-gray-50 cursor-pointer transition-colors"
+                        className="teams-chat-item"
                       >
-                        <div className="relative flex-shrink-0">
-                          <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-semibold">
+                        <div className="teams-avatar-container">
+                          <div className={`teams-avatar ${chat.type === 'channel' ? 'teams-avatar-hash' : 'teams-avatar-blue'}`}>
                             {chat.type === 'channel' ? (
                               <Hash className="w-6 h-6" />
                             ) : (
@@ -378,22 +343,22 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
                             )}
                           </div>
                           {chat.isOnline && (
-                            <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                            <div className={`teams-status-indicator ${chat.isOnline ? 'teams-status-online' : 'teams-status-offline'}`}></div>
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <h4 className="font-semibold text-gray-900 truncate">{chat.name}</h4>
-                            <span className="text-sm text-gray-500">{chat.timestamp}</span>
+                        <div className="teams-chat-content">
+                          <div className="teams-chat-header">
+                            <h4 className="teams-chat-name">{chat.name}</h4>
+                            <span className="teams-chat-time">{chat.timestamp}</span>
                           </div>
-                          <p className="text-sm text-gray-600 truncate">{chat.lastMessage}</p>
+                          <p className="teams-chat-message">{chat.lastMessage}</p>
                         </div>
                         {chat.unreadCount > 0 && (
-                          <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                          <div className="teams-unread-indicator"></div>
                         )}
                       </div>
                     ))}
-                  </div>
+                  </>
                 )}
               </div>
             </div>
