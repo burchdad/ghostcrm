@@ -177,13 +177,13 @@ export default function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Quick Add" width="min(800px, 90vw)">
+    <Modal isOpen={isOpen} onClose={onClose} title="Quick Add" width="min(600px, 85vw)">
       {/* Hero Section */}
       <div className="mp-hero">
         <div className="mp-emoji">⚡</div>
         <div className="mp-hero-text">
           <h3>Create New Records</h3>
-          <p>Quickly add leads, deals, appointments, and more to your CRM. Choose from the options below to get started.</p>
+          <p>Quickly add leads, deals, appointments, and more to your CRM.</p>
         </div>
       </div>
 
