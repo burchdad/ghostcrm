@@ -572,21 +572,21 @@ export default function CollaborationModal({ isOpen, onClose, onExpandMode }: Co
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="absolute right-6 top-1/2 transform -translate-y-1/2 w-96 h-[600px] 
-                     bg-gradient-to-b from-slate-50 to-white rounded-lg shadow-2xl 
-                     border border-gray-200 flex flex-col">
+      {/* Modal - Centered and compact */}
+      <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                     w-[480px] h-[500px] bg-white rounded-xl shadow-2xl 
+                     border border-gray-200 flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 
-                       rounded-t-lg flex-shrink-0">
+        <div className="p-3 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50 
+                       flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 
                            flex items-center justify-center">
-                <MessageSquare className="w-4 h-4 text-white" />
+                <MessageSquare className="w-3.5 h-3.5 text-white" />
               </div>
-              <h2 className="font-semibold text-gray-900">Collaboration</h2>
+              <h2 className="font-semibold text-gray-900 text-sm">Team Collaboration</h2>
             </div>
 
             <div className="flex items-center gap-1">
@@ -594,10 +594,10 @@ export default function CollaborationModal({ isOpen, onClose, onExpandMode }: Co
               <div className="relative">
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
-                  className="p-1.5 rounded text-gray-600 hover:bg-gray-100"
+                  className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-white/60 transition-colors"
                   title="More"
                 >
-                  <MenuIcon className="w-4 h-4" />
+                  <MenuIcon className="w-3.5 h-3.5" />
                 </button>
 
                 {menuOpen && (
@@ -646,7 +646,7 @@ export default function CollaborationModal({ isOpen, onClose, onExpandMode }: Co
         </div>
 
         {/* Enhanced Tabs */}
-        <div className="bg-gray-50 p-2 flex-shrink-0">
+        <div className="bg-gray-50/50 p-2 flex-shrink-0">
           <div className="flex bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             {[
               { id: "chat", label: "Chat", icon: MessageSquare },
@@ -656,14 +656,14 @@ export default function CollaborationModal({ isOpen, onClose, onExpandMode }: Co
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium 
+                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium 
                          transition-all duration-200 ${
                   activeTab === tab.id
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-sm'
+                    ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
-                <tab.icon className="w-4 h-4" />
+                <tab.icon className="w-3.5 h-3.5" />
                 {tab.label}
               </button>
             ))}
