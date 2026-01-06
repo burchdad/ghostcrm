@@ -66,55 +66,252 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [messageText, setMessageText] = useState("");
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showAddPeopleModal, setShowAddPeopleModal] = useState(false);
+  const [showChatDetailsModal, setShowChatDetailsModal] = useState(false);
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [notificationsMuted, setNotificationsMuted] = useState(false);
 
   // Handler functions for button functionality
-  const handleVideoCall = () => {
-    console.log('Starting video call...');
-    // You can integrate with your video call service here
-    alert('Video call feature - integrate with your preferred video service!');
+  const handleVideoCall = async () => {
+    try {
+      console.log('Starting video call...');
+      
+      // Check for camera/microphone permissions
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: true, 
+        audio: true 
+      });
+      
+      // Stop the test stream
+      stream.getTracks().forEach(track => track.stop());
+      
+      // In production, integrate with your video service:
+      // - WebRTC peer-to-peer connection
+      // - Twilio Video, Agora, or similar service
+      // - Microsoft Teams SDK integration
+      
+      // For now, open a new window for video call (replace with your service)
+      const videoWindow = window.open(
+        `/video-call?chat=${selectedChat}&participants=${encodeURIComponent(selectedChatData?.name || '')}`,
+        'videocall',
+        'width=1200,height=800,resizable=yes,scrollbars=no'
+      );
+      
+      if (!videoWindow) {
+        throw new Error('Popup blocked. Please allow popups for video calls.');
+      }
+      
+    } catch (error: any) {
+      console.error('Video call error:', error);
+      alert(`Video call failed: ${error.message}`);
+    }
   };
 
-  const handleAudioCall = () => {
-    console.log('Starting audio call...');
-    // You can integrate with your audio call service here  
-    alert('Audio call feature - integrate with your preferred audio service!');
+  const handleAudioCall = async () => {
+    try {
+      console.log('Starting audio call...');
+      
+      // Check for microphone permissions
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: true 
+      });
+      
+      // Stop the test stream
+      stream.getTracks().forEach(track => track.stop());
+      
+      // In production, integrate with your audio service:
+      // - WebRTC audio-only connection
+      // - Twilio Voice, Vonage, or similar
+      // - SIP.js for VoIP integration
+      
+      // For now, open audio call interface
+      const audioWindow = window.open(
+        `/audio-call?chat=${selectedChat}&participants=${encodeURIComponent(selectedChatData?.name || '')}&mode=audio`,
+        'audiocall',
+        'width=400,height=300,resizable=no,scrollbars=no'
+      );
+      
+      if (!audioWindow) {
+        throw new Error('Popup blocked. Please allow popups for audio calls.');
+      }
+      
+    } catch (error: any) {
+      console.error('Audio call error:', error);
+      alert(`Audio call failed: ${error.message}`);
+    }
   };
 
-  const handleMoreOptions = () => {
-    setShowMoreMenu(!showMoreMenu);
+  const handleMoreOptions = (option?: string) => {
+    if (option) {
+      setShowMoreMenu(false);
+      
+      switch (option) {
+        case 'add-people':
+          setShowAddPeopleModal(true);
+          break;
+        case 'chat-details':
+          setShowChatDetailsModal(true);
+          break;
+        case 'mute-notifications':
+          setNotificationsMuted(prev => {
+            const newMuted = !prev;
+            console.log(`Notifications ${newMuted ? 'muted' : 'unmuted'}`);
+            // In production, save this preference to backend
+            return newMuted;
+          });
+          break;
+        default:
+          console.log(`More option selected: ${option}`);
+      }
+    } else {
+      setShowMoreMenu(!showMoreMenu);
+    }
   };
 
   const handleAttachment = () => {
-    console.log('Opening file picker...');
-    // Create file input and trigger click
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.multiple = true;
-    fileInput.onchange = (e) => {
+    fileInput.accept = 'image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar';
+    
+    fileInput.onchange = async (e) => {
       const files = (e.target as HTMLInputElement).files;
-      if (files) {
-        console.log('Selected files:', Array.from(files).map(f => f.name));
-        alert(`Selected ${files.length} file(s): ${Array.from(files).map(f => f.name).join(', ')}`);
+      if (!files || files.length === 0) return;
+      
+      const fileArray = Array.from(files);
+      const maxFileSize = 25 * 1024 * 1024; // 25MB limit
+      const maxFiles = 10;
+      
+      // Validate files
+      const oversizedFiles = fileArray.filter(f => f.size > maxFileSize);
+      if (oversizedFiles.length > 0) {
+        alert(`Files too large (max 25MB): ${oversizedFiles.map(f => f.name).join(', ')}`);
+        return;
+      }
+      
+      if (fileArray.length > maxFiles) {
+        alert(`Too many files selected (max ${maxFiles})`);
+        return;
+      }
+      
+      try {
+        setIsUploading(true);
+        setAttachedFiles(prev => [...prev, ...fileArray]);
+        
+        // In production, upload files to your server:
+        // const uploadPromises = fileArray.map(file => uploadFile(file));
+        // const uploadedFiles = await Promise.all(uploadPromises);
+        
+        console.log('Files attached:', fileArray.map(f => ({ name: f.name, size: f.size, type: f.type })));
+        
+      } catch (error) {
+        console.error('File attachment error:', error);
+        alert('Failed to attach files. Please try again.');
+      } finally {
+        setIsUploading(false);
       }
     };
+    
     fileInput.click();
   };
 
   const handleEmoji = () => {
-    console.log('Opening emoji picker...');
-    // You can integrate with an emoji picker library here
-    const emojis = ['😊', '👍', '❤️', '😂', '🎉', '👏', '🔥', '💯'];
-    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-    setMessageText(prev => prev + randomEmoji);
+    // Production emoji categories
+    const emojiCategories = {
+      'Smileys': ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙'],
+      'Gestures': ['👍', '👎', '👌', '🤞', '✌️', '🤟', '🤘', '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️', '🖖', '👋', '🤙', '💪', '🦵'],
+      'Objects': ['📱', '💻', '⌨️', '🖱️', '🖨️', '💾', '💿', '📀', '📼', '📷', '📸', '📹', '🎥', '📞', '☎️', '📟', '📠', '📺', '📻', '🎙️'],
+      'Hearts': ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '♥️']
+    };
+    
+    // Create emoji picker modal (in production, use a library like emoji-picker-react)
+    const picker = document.createElement('div');
+    picker.style.cssText = `
+      position: fixed;
+      bottom: 100px;
+      right: 100px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1001;
+      max-width: 300px;
+      max-height: 200px;
+      overflow-y: auto;
+    `;
+    
+    let html = '<div style="margin-bottom: 8px; font-weight: bold; font-size: 14px;">Choose an emoji:</div>';
+    
+    Object.entries(emojiCategories).forEach(([category, emojis]) => {
+      html += `<div style="margin-bottom: 8px;"><strong style="font-size: 12px; color: #666;">${category}</strong><br>`;
+      emojis.forEach(emoji => {
+        html += `<span style="cursor: pointer; font-size: 18px; margin: 2px; padding: 4px; border-radius: 4px; display: inline-block; hover: background-color: #f0f0f0;" onclick="
+          document.querySelector('textarea[placeholder*=\"Message\"]').value += '${emoji}';
+          document.querySelector('textarea[placeholder*=\"Message\"]').focus();
+          this.parentElement.parentElement.parentElement.remove();
+        ">${emoji}</span>`;
+      });
+      html += '</div>';
+    });
+    
+    html += '<button onclick="this.parentElement.remove()" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: #f5f5f5; cursor: pointer;">Close</button>';
+    
+    picker.innerHTML = html;
+    document.body.appendChild(picker);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+      if (picker.parentElement) {
+        picker.remove();
+      }
+    }, 10000);
   };
 
-  const handleSendMessage = () => {
-    if (!messageText.trim()) return;
+  const handleSendMessage = async () => {
+    if (!messageText.trim() && attachedFiles.length === 0) return;
+    if (isSending) return;
     
-    console.log('Sending message:', messageText);
-    // Here you would typically send the message to your backend
-    alert(`Message sent: "${messageText}"`);
-    setMessageText('');
+    setIsSending(true);
+    
+    try {
+      const messageData = {
+        chatId: selectedChat,
+        text: messageText.trim(),
+        attachments: attachedFiles.map(f => ({ name: f.name, size: f.size, type: f.type })),
+        timestamp: new Date().toISOString(),
+        sender: user?.email || 'Unknown User'
+      };
+      
+      // In production, send to your API:
+      // const response = await fetch('/api/collaboration/messages', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(messageData)
+      // });
+      // 
+      // if (!response.ok) throw new Error('Failed to send message');
+      
+      console.log('Message sent:', messageData);
+      
+      // Clear the input
+      setMessageText('');
+      setAttachedFiles([]);
+      
+      // In production, you would also:
+      // - Add message to local state/cache
+      // - Send real-time notification via WebSocket
+      // - Update chat list with latest message
+      
+    } catch (error) {
+      console.error('Send message error:', error);
+      alert('Failed to send message. Please try again.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -125,8 +322,7 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
   };
 
   const handleNewChat = () => {
-    console.log('Creating new chat...');
-    alert('New chat feature - this would open a dialog to start a new conversation!');
+    setShowNewChatModal(true);
   };
 
   // Close more menu when clicking outside
@@ -280,28 +476,28 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
                     <Phone className="w-5 h-5" />
                   </button>
                   <div style={{ position: 'relative' }}>
-                    <button onClick={handleMoreOptions} className="teams-action-btn" title="More options">
+                    <button onClick={() => setShowMoreMenu(!showMoreMenu)} className="teams-action-btn" title="More options">
                       <MoreHorizontal className="w-5 h-5" />
                     </button>
                     {showMoreMenu && (
                       <div className="teams-more-menu">
                         <button 
-                          onClick={() => {alert('Add people to chat'); setShowMoreMenu(false);}}
+                          onClick={() => handleMoreOptions('add-people')}
                           className="teams-more-menu-item"
                         >
                           Add people
                         </button>
                         <button 
-                          onClick={() => {alert('View chat details'); setShowMoreMenu(false);}}
+                          onClick={() => handleMoreOptions('chat-details')}
                           className="teams-more-menu-item"
                         >
                           Chat details
                         </button>
                         <button 
-                          onClick={() => {alert('Mute notifications'); setShowMoreMenu(false);}}
+                          onClick={() => handleMoreOptions('mute-notifications')}
                           className="teams-more-menu-item"
                         >
-                          Mute notifications
+                          {notificationsMuted ? 'Unmute notifications' : 'Mute notifications'}
                         </button>
                       </div>
                     )}
@@ -482,6 +678,207 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
           )}
         </div>
       </div>
+      
+      {/* Production Modals */}
+      {/* Add People Modal */}
+      {showAddPeopleModal && (
+        <div className="teams-modal-backdrop" onClick={() => setShowAddPeopleModal(false)}>
+          <div className="teams-add-people-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="teams-modal-header">
+              <h3>Add People to Chat</h3>
+              <button 
+                className="teams-modal-close" 
+                onClick={() => setShowAddPeopleModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="teams-modal-content">
+              <input 
+                type="text" 
+                placeholder="Search by name or email..."
+                className="teams-search-input"
+              />
+              <div className="teams-user-list">
+                <div className="teams-user-item">
+                  <div className="teams-user-avatar">JD</div>
+                  <div className="teams-user-info">
+                    <div className="teams-user-name">John Doe</div>
+                    <div className="teams-user-email">john@company.com</div>
+                  </div>
+                  <button className="teams-add-user-btn">Add</button>
+                </div>
+                <div className="teams-user-item">
+                  <div className="teams-user-avatar">SM</div>
+                  <div className="teams-user-info">
+                    <div className="teams-user-name">Sarah Miller</div>
+                    <div className="teams-user-email">sarah@company.com</div>
+                  </div>
+                  <button className="teams-add-user-btn">Add</button>
+                </div>
+              </div>
+            </div>
+            <div className="teams-modal-footer">
+              <button 
+                className="teams-btn teams-btn-secondary" 
+                onClick={() => setShowAddPeopleModal(false)}
+              >
+                Cancel
+              </button>
+              <button className="teams-btn teams-btn-primary">
+                Add Selected
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Details Modal */}
+      {showChatDetailsModal && (
+        <div className="teams-modal-backdrop" onClick={() => setShowChatDetailsModal(false)}>
+          <div className="teams-chat-details-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="teams-modal-header">
+              <h3>Chat Details</h3>
+              <button 
+                className="teams-modal-close" 
+                onClick={() => setShowChatDetailsModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="teams-modal-content">
+              <div className="teams-chat-info">
+                <div className="teams-chat-avatar-large">ST</div>
+                <h4>{selectedChatData?.name || 'Chat Name'}</h4>
+                <p className="teams-chat-status">Active now • 3 members</p>
+              </div>
+              <div className="teams-detail-section">
+                <h5>Members</h5>
+                <div className="teams-members-list">
+                  <div className="teams-member-item">
+                    <div className="teams-user-avatar">SC</div>
+                    <div className="teams-user-info">
+                      <div className="teams-user-name">Sarah Chen</div>
+                      <div className="teams-user-role">Owner</div>
+                    </div>
+                  </div>
+                  <div className="teams-member-item">
+                    <div className="teams-user-avatar">JD</div>
+                    <div className="teams-user-info">
+                      <div className="teams-user-name">John Doe</div>
+                      <div className="teams-user-role">Member</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="teams-detail-section">
+                <h5>Settings</h5>
+                <label className="teams-setting-item">
+                  <span>Notifications</span>
+                  <input 
+                    type="checkbox" 
+                    checked={!notificationsMuted}
+                    onChange={(e) => setNotificationsMuted(!e.target.checked)}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Chat Modal */}
+      {showNewChatModal && (
+        <div className="teams-modal-backdrop" onClick={() => setShowNewChatModal(false)}>
+          <div className="teams-new-chat-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="teams-modal-header">
+              <h3>Start New Chat</h3>
+              <button 
+                className="teams-modal-close" 
+                onClick={() => setShowNewChatModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="teams-modal-content">
+              <div className="teams-new-chat-options">
+                <button className="teams-chat-option" onClick={() => {
+                  // Start individual chat
+                  setShowNewChatModal(false);
+                  console.log('Starting individual chat');
+                }}>
+                  <div className="teams-option-icon">👤</div>
+                  <div className="teams-option-text">
+                    <h4>Individual Chat</h4>
+                    <p>Start a private conversation</p>
+                  </div>
+                </button>
+                <button className="teams-chat-option" onClick={() => {
+                  // Start group chat
+                  setShowNewChatModal(false);
+                  console.log('Starting group chat');
+                }}>
+                  <div className="teams-option-icon">👥</div>
+                  <div className="teams-option-text">
+                    <h4>Group Chat</h4>
+                    <p>Create a group conversation</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* File Attachments Display */}
+      {attachedFiles.length > 0 && (
+        <div className="teams-attachments-overlay">
+          <div className="teams-attachments">
+            <div className="teams-attachments-header">
+              <span>Attached Files ({attachedFiles.length})</span>
+              <button 
+                className="teams-clear-attachments"
+                onClick={() => setAttachedFiles([])}
+                disabled={isUploading}
+              >
+                Clear All
+              </button>
+            </div>
+            <div className="teams-attachments-list">
+              {attachedFiles.map((file, index) => (
+                <div key={index} className="teams-attachment-item">
+                  <div className="teams-file-icon">
+                    {file.type.startsWith('image/') ? '🖼️' : 
+                     file.type.startsWith('video/') ? '🎥' : 
+                     file.type.startsWith('audio/') ? '🎵' : '📄'}
+                  </div>
+                  <div className="teams-file-info">
+                    <div className="teams-file-name">{file.name}</div>
+                    <div className="teams-file-size">{(file.size / 1024 / 1024).toFixed(1)} MB</div>
+                  </div>
+                  <button 
+                    className="teams-remove-file"
+                    onClick={() => {
+                      setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+                    }}
+                    disabled={isUploading}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+            {isUploading && (
+              <div className="teams-upload-progress">
+                <div className="teams-progress-bar">
+                  <div className="teams-progress-fill"></div>
+                </div>
+                <span>Uploading files...</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
