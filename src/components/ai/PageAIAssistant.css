@@ -1,0 +1,225 @@
+/* 
+  ===========================================
+  🤖 AI INSIGHTS GRID LAYOUT
+  ===========================================
+  Component: /components/ai/PageAIAssistant.tsx
+  Purpose: 4-column card layout for AI insights with navigation
+  Theme: Compact cards matching metrics design
+*/
+
+/* AI Insights Grid - 4 Column Layout */
+.ai-insights-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1200px) {
+  .ai-insights-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.875rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .ai-insights-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+/* AI Insight Card */
+.ai-insight-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.ai-insight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+}
+
+.ai-insight-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+  opacity: 0.8;
+}
+
+/* AI Insight Header */
+.ai-insight-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.ai-insight-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.ai-insight-icon.low {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1d4ed8;
+}
+
+.ai-insight-icon.medium {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #d97706;
+}
+
+.ai-insight-icon.high {
+  background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+  color: #ea580c;
+}
+
+.ai-insight-icon.critical {
+  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+  color: #dc2626;
+}
+
+.ai-insight-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.3;
+  flex: 1;
+  min-width: 0;
+}
+
+/* AI Insight Content */
+.ai-insight-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.ai-insight-recommendation {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #374151;
+  background: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+  line-height: 1.4;
+}
+
+/* AI Insight Footer */
+.ai-insight-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.ai-insight-impact {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 4px;
+}
+
+.ai-insight-impact.low {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.ai-insight-impact.medium {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.ai-insight-impact.high {
+  background: #fed7aa;
+  color: #ea580c;
+}
+
+.ai-insight-impact.critical {
+  background: #fecaca;
+  color: #dc2626;
+}
+
+.ai-insight-confidence {
+  font-size: 0.625rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Empty Card Placeholder */
+.ai-insight-card-placeholder {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 1.25rem;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+}
+
+.ai-insight-placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 640px) {
+  .ai-insight-card {
+    padding: 1rem;
+    min-height: 160px;
+  }
+  
+  .ai-insight-title {
+    font-size: 0.8125rem;
+  }
+  
+  .ai-insight-description,
+  .ai-insight-recommendation {
+    font-size: 0.6875rem;
+  }
+  
+  .ai-insight-icon {
+    width: 28px;
+    height: 28px;
+  }
+}

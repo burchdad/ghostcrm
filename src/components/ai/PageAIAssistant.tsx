@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, memo } from 'react';
-import { Bot, Lightbulb, TrendingUp, AlertCircle, RefreshCw, X } from 'lucide-react';
+import { Bot, Lightbulb, TrendingUp, AlertCircle, RefreshCw, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { authenticatedFetch, isAuthenticated } from '@/lib/auth/client';
+import './PageAIAssistant.css';
 
 interface AIInsight {
   id: string;
@@ -57,6 +58,28 @@ function PageAIAssistant({
   const [loading, setLoading] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  
+  // Display 4 insights per page in card layout
+  const INSIGHTS_PER_PAGE = 4;
+  const totalPages = Math.ceil(insights.length / INSIGHTS_PER_PAGE);
+  const currentInsights = insights.slice(
+    currentPage * INSIGHTS_PER_PAGE,
+    (currentPage + 1) * INSIGHTS_PER_PAGE
+  );
+  
+  const goToNextPage = () => {
+    setCurrentPage((prev) => (prev + 1) % totalPages);
+  };
+  
+  const goToPrevPage = () => {
+    setCurrentPage((prev) => (prev - 1 + totalPages) % totalPages);
+  };
+  
+  // Reset pagination when insights change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [insights.length]);
 
   const loadInsights = useCallback(async () => {
     setLoading(true);
@@ -225,53 +248,88 @@ function PageAIAssistant({
             <p className="text-sm text-gray-600">Analyzing...</p>
           </div>
         ) : insights.length > 0 ? (
-          <div className="space-y-3">
-            {insights.slice(0, 5).map((insight) => {
-              const IconComponent = getTypeIcon(insight.type);
-              
-              return (
-                <div 
-                  key={insight.id} 
-                  className={`border-l-4 pl-4 py-3 rounded-r ${getImpactColor(insight.impact)}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <IconComponent className="h-4 w-4 mt-0.5 flex-shrink-0 text-gray-600" />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-gray-900 mb-1">
-                        {insight.title}
-                      </h4>
-                      <p className="text-xs text-gray-600 mb-2">
-                        {insight.description}
-                      </p>
-                      <p className="text-xs font-medium text-gray-800">
-                        💡 {insight.recommendation}
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
-                          insight.impact === 'critical' ? 'bg-red-100 text-red-800' :
-                          insight.impact === 'high' ? 'bg-orange-100 text-orange-800' :
-                          insight.impact === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-blue-100 text-blue-800'
-                        }`}>
-                          {insight.impact} impact
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {(insight.confidence * 100).toFixed(0)}% confidence
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+          <div>
+            {/* Navigation Header */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mb-4 pb-2 border-b">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">
+                    Page {currentPage + 1} of {totalPages}
+                  </span>
+                  <span className="text-xs text-gray-400">•</span>
+                  <span className="text-xs text-gray-500">
+                    {insights.length} insights total
+                  </span>
                 </div>
-              );
-            })}
-            
-            {insights.length > 5 && (
-              <div className="text-center pt-2 border-t">
-                <p className="text-xs text-gray-500">
-                  +{insights.length - 5} more insights available
-                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={goToPrevPage}
+                    disabled={totalPages <= 1}
+                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Previous insights"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={goToNextPage}
+                    disabled={totalPages <= 1}
+                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Next insights"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             )}
+            
+            {/* 4-Column Insights Grid */}
+            <div className="ai-insights-grid">
+              {currentInsights.map((insight) => {
+                const IconComponent = getTypeIcon(insight.type);
+                
+                return (
+                  <div 
+                    key={insight.id} 
+                    className="ai-insight-card"
+                  >
+                    <div className="ai-insight-header">
+                      <div className={`ai-insight-icon ${insight.impact}`}>
+                        <IconComponent className="h-4 w-4" />
+                      </div>
+                      <h4 className="ai-insight-title">
+                        {insight.title}
+                      </h4>
+                    </div>
+                    <p className="ai-insight-description">
+                      {insight.description}
+                    </p>
+                    <div className="ai-insight-recommendation">
+                      💡 {insight.recommendation}
+                    </div>
+                    <div className="ai-insight-footer">
+                      <span className={`ai-insight-impact ${insight.impact}`}>
+                        {insight.impact}
+                      </span>
+                      <span className="ai-insight-confidence">
+                        {(insight.confidence * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {/* Fill empty slots if less than 4 insights */}
+              {currentInsights.length < INSIGHTS_PER_PAGE && (
+                [...Array(INSIGHTS_PER_PAGE - currentInsights.length)].map((_, index) => (
+                  <div key={`empty-${index}`} className="ai-insight-card-placeholder">
+                    <div className="ai-insight-placeholder-content">
+                      <Bot className="h-6 w-6 text-gray-300" />
+                      <p className="text-xs text-gray-400">More insights coming</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         ) : (
           <div className="text-center py-6">
