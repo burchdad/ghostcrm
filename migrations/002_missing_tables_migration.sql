@@ -296,59 +296,151 @@ CREATE TABLE IF NOT EXISTS _migrations (
 -- ===================================================================
 
 -- Collaboration indexes
-CREATE INDEX IF NOT EXISTS idx_collaboration_channels_org_id ON collaboration_channels(organization_id);
-CREATE INDEX IF NOT EXISTS idx_collaboration_channels_type ON collaboration_channels(type);
-CREATE INDEX IF NOT EXISTS idx_collaboration_channels_archived ON collaboration_channels(is_archived);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'collaboration_channels') THEN
+    CREATE INDEX IF NOT EXISTS idx_collaboration_channels_org_id ON collaboration_channels(organization_id);
+    CREATE INDEX IF NOT EXISTS idx_collaboration_channels_type ON collaboration_channels(type);
+    CREATE INDEX IF NOT EXISTS idx_collaboration_channels_archived ON collaboration_channels(is_archived);
+  END IF;
+END
+$$;
 
-CREATE INDEX IF NOT EXISTS idx_collaboration_messages_channel_id ON collaboration_messages(channel_id);
-CREATE INDEX IF NOT EXISTS idx_collaboration_messages_user_id ON collaboration_messages(user_id);
-CREATE INDEX IF NOT EXISTS idx_collaboration_messages_created_at ON collaboration_messages(created_at);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'collaboration_messages') THEN
+    CREATE INDEX IF NOT EXISTS idx_collaboration_messages_channel_id ON collaboration_messages(channel_id);
+    CREATE INDEX IF NOT EXISTS idx_collaboration_messages_user_id ON collaboration_messages(user_id);
+    CREATE INDEX IF NOT EXISTS idx_collaboration_messages_created_at ON collaboration_messages(created_at);
+  END IF;
+END
+$$;
 
-CREATE INDEX IF NOT EXISTS idx_collaboration_calls_channel_id ON collaboration_calls(channel_id);
-CREATE INDEX IF NOT EXISTS idx_collaboration_calls_status ON collaboration_calls(status);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'collaboration_calls') THEN
+    CREATE INDEX IF NOT EXISTS idx_collaboration_calls_channel_id ON collaboration_calls(channel_id);
+    CREATE INDEX IF NOT EXISTS idx_collaboration_calls_status ON collaboration_calls(status);
+  END IF;
+END
+$$;
 
-CREATE INDEX IF NOT EXISTS idx_collaboration_meetings_channel_id ON collaboration_meetings(channel_id);
-CREATE INDEX IF NOT EXISTS idx_collaboration_meetings_scheduled_for ON collaboration_meetings(scheduled_for);
-CREATE INDEX IF NOT EXISTS idx_collaboration_meetings_status ON collaboration_meetings(status);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'collaboration_meetings') THEN
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'collaboration_meetings' AND column_name = 'scheduled_for') THEN
+      CREATE INDEX IF NOT EXISTS idx_collaboration_meetings_channel_id ON collaboration_meetings(channel_id);
+      CREATE INDEX IF NOT EXISTS idx_collaboration_meetings_scheduled_for ON collaboration_meetings(scheduled_for);
+      CREATE INDEX IF NOT EXISTS idx_collaboration_meetings_status ON collaboration_meetings(status);
+    END IF;
+  END IF;
+END
+$$;
 
-CREATE INDEX IF NOT EXISTS idx_collaboration_files_channel_id ON collaboration_files(channel_id);
-CREATE INDEX IF NOT EXISTS idx_collaboration_files_uploaded_by ON collaboration_files(uploaded_by);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'collaboration_files') THEN
+    CREATE INDEX IF NOT EXISTS idx_collaboration_files_channel_id ON collaboration_files(channel_id);
+    CREATE INDEX IF NOT EXISTS idx_collaboration_files_uploaded_by ON collaboration_files(uploaded_by);
+  END IF;
+END
+$$;
 
 -- User management indexes
-CREATE INDEX IF NOT EXISTS idx_organization_memberships_org_id ON organization_memberships(organization_id);
-CREATE INDEX IF NOT EXISTS idx_organization_memberships_user_id ON organization_memberships(user_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'organization_memberships') THEN
+    CREATE INDEX IF NOT EXISTS idx_organization_memberships_org_id ON organization_memberships(organization_id);
+    CREATE INDEX IF NOT EXISTS idx_organization_memberships_user_id ON organization_memberships(user_id);
+  END IF;
+END
+$$;
 
-CREATE INDEX IF NOT EXISTS idx_user_organizations_user_id ON user_organizations(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_organizations_org_id ON user_organizations(organization_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'user_organizations') THEN
+    CREATE INDEX IF NOT EXISTS idx_user_organizations_user_id ON user_organizations(user_id);
+    CREATE INDEX IF NOT EXISTS idx_user_organizations_org_id ON user_organizations(organization_id);
+  END IF;
+END
+$$;
 
-CREATE INDEX IF NOT EXISTS idx_user_notification_preferences_user_id ON user_notification_preferences(user_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'user_notification_preferences') THEN
+    CREATE INDEX IF NOT EXISTS idx_user_notification_preferences_user_id ON user_notification_preferences(user_id);
+  END IF;
+END
+$$;
 
 -- Workflow indexes
-CREATE INDEX IF NOT EXISTS idx_workflow_triggers_org_id ON workflow_triggers(organization_id);
-CREATE INDEX IF NOT EXISTS idx_workflow_triggers_active ON workflow_triggers(is_active);
-CREATE INDEX IF NOT EXISTS idx_workflow_triggers_type ON workflow_triggers(trigger_type);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'workflow_triggers') THEN
+    CREATE INDEX IF NOT EXISTS idx_workflow_triggers_org_id ON workflow_triggers(organization_id);
+    CREATE INDEX IF NOT EXISTS idx_workflow_triggers_active ON workflow_triggers(is_active);
+    CREATE INDEX IF NOT EXISTS idx_workflow_triggers_type ON workflow_triggers(trigger_type);
+  END IF;
+END
+$$;
 
 -- Billing indexes
-CREATE INDEX IF NOT EXISTS idx_subscriptions_org_id ON subscriptions(organization_id);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_id ON subscriptions(stripe_subscription_id);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'subscriptions') THEN
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_org_id ON subscriptions(organization_id);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_id ON subscriptions(stripe_subscription_id);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+  END IF;
+END
+$$;
 
-CREATE INDEX IF NOT EXISTS idx_tenant_subscriptions_tenant_id ON tenant_subscriptions(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_tenant_subscriptions_status ON tenant_subscriptions(status);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'tenant_subscriptions') THEN
+    CREATE INDEX IF NOT EXISTS idx_tenant_subscriptions_tenant_id ON tenant_subscriptions(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_tenant_subscriptions_status ON tenant_subscriptions(status);
+  END IF;
+END
+$$;
 
-CREATE INDEX IF NOT EXISTS idx_billing_events_tenant_id ON billing_events(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_billing_events_processed ON billing_events(processed);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'billing_events') THEN
+    CREATE INDEX IF NOT EXISTS idx_billing_events_tenant_id ON billing_events(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_billing_events_processed ON billing_events(processed);
+  END IF;
+END
+$$;
 
-CREATE INDEX IF NOT EXISTS idx_billing_sessions_org_id ON billing_sessions(organization_id);
-CREATE INDEX IF NOT EXISTS idx_billing_sessions_session_id ON billing_sessions(session_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'billing_sessions') THEN
+    CREATE INDEX IF NOT EXISTS idx_billing_sessions_org_id ON billing_sessions(organization_id);
+    CREATE INDEX IF NOT EXISTS idx_billing_sessions_session_id ON billing_sessions(session_id);
+  END IF;
+END
+$$;
 
-CREATE INDEX IF NOT EXISTS idx_promo_codes_code ON promo_codes(code);
-CREATE INDEX IF NOT EXISTS idx_promo_codes_active ON promo_codes(active);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'promo_codes') THEN
+    CREATE INDEX IF NOT EXISTS idx_promo_codes_code ON promo_codes(code);
+    CREATE INDEX IF NOT EXISTS idx_promo_codes_active ON promo_codes(active);
+  END IF;
+END
+$$;
 
 -- System indexes
-CREATE INDEX IF NOT EXISTS idx_subdomains_org_id ON subdomains(organization_id);
-CREATE INDEX IF NOT EXISTS idx_subdomains_subdomain ON subdomains(subdomain);
-CREATE INDEX IF NOT EXISTS idx_subdomains_status ON subdomains(status);
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'subdomains') THEN
+    CREATE INDEX IF NOT EXISTS idx_subdomains_org_id ON subdomains(organization_id);
+    CREATE INDEX IF NOT EXISTS idx_subdomains_subdomain ON subdomains(subdomain);
+    CREATE INDEX IF NOT EXISTS idx_subdomains_status ON subdomains(status);
+  END IF;
+END
+$$;
 
 -- ===================================================================
 -- TRIGGERS FOR AUTOMATIC TIMESTAMPS
