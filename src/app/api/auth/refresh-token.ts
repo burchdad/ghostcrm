@@ -1,30 +1,84 @@
-import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { NextRequest, NextResponse } from "next/server";
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
-
-export async function POST(req: Request) {
-  const { token } = await req.json();
-  if (!token) return NextResponse.json({ error: "Missing token" }, { status: 400 });
+export async function POST(req: NextRequest) {
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    // Issue new token with updated expiry
-    const newToken = jwt.sign({ userId: payload.userId, email: payload.email, role: payload.role }, JWT_SECRET, { expiresIn: "2h" });
+    // Create Supabase client for server-side operations
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return req.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            // We'll handle cookie setting in the response
+          },
+          remove(name: string, options: CookieOptions) {
+            // We'll handle cookie removal in the response
+          },
+        },
+      }
+    );
+
+    // Get current session
+    const { data: { session }, error } = await supabase.auth.getSession();
     
-    const isProd = process.env.NODE_ENV === "production";
-    const cookieOptions = [
-      `ghostcrm_jwt=${newToken}`,
-      "HttpOnly",
-      isProd ? "Secure" : "", // Only secure in production
-      "Path=/",
-      "Max-Age=7200",
-      "SameSite=Lax" // Changed from Strict to Lax for better redirect handling
-    ].filter(Boolean).join("; ");
+    if (error || !session) {
+      return NextResponse.json({ 
+        error: "No valid session found", 
+        message: "Please log in again" 
+      }, { status: 401 });
+    }
+
+    // Refresh the session
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
     
-    const response = NextResponse.json({ token: newToken });
-    response.headers.set("Set-Cookie", cookieOptions);
+    if (refreshError || !refreshData.session) {
+      return NextResponse.json({ 
+        error: "Failed to refresh session", 
+        message: "Please log in again" 
+      }, { status: 401 });
+    }
+
+    // Create response with new session cookies
+    const response = NextResponse.json({ 
+      success: true,
+      message: "Session refreshed successfully",
+      session: {
+        access_token: refreshData.session.access_token,
+        expires_at: refreshData.session.expires_at,
+        user: refreshData.session.user
+      }
+    });
+
+    // Set the new session cookies using Supabase's cookie handling
+    const supabaseResponse = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return req.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            response.cookies.set(name, value, options);
+          },
+          remove(name: string, options: CookieOptions) {
+            response.cookies.set(name, '', { ...options, maxAge: 0 });
+          },
+        },
+      }
+    );
+
     return response;
-  } catch (err) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    return NextResponse.json({ 
+      error: "Internal server error during token refresh",
+      message: "Please try logging in again"
+    }, { status: 500 });
   }
 }

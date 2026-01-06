@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTenantQuery } from '@/lib/tenant/database';
-import { verifyJwtToken } from '@/lib/jwt';
+import { isAuthenticated, getUserFromRequest } from '@/lib/auth/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,19 +10,18 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value;
-    if (!token) {
+    // Authenticate user
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const decoded = verifyJwtToken(token);
-    if (!decoded || !decoded.tenantId) {
-      return NextResponse.json({ error: 'Invalid token or missing tenant' }, { status: 401 });
+    const user = await getUserFromRequest(request);
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: 'User organization not found' }, { status: 401 });
     }
 
-    const tenantId = decoded.tenantId;
-    const userId = decoded.userId;
+    const tenantId = user.organizationId.toString();
+    const userId = user.id;
 
     // Get search parameters
     const query = request.nextUrl.searchParams.get('q');

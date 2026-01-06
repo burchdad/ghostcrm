@@ -1,43 +1,35 @@
 // AI SMS Message Generation API
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { getUserFromRequest, isAuthenticated } from '@/lib/auth/server';
 
 export async function POST(request: NextRequest) {
   try {
-    // Get JWT token from cookies for authentication
-    const token = request.cookies.get("ghostcrm_jwt")?.value;
-    
-    if (!token) {
-      console.error('❌ [SMS API] No JWT token found');
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
+      console.error('❌ [SMS API] Authentication failed');
       return NextResponse.json(
         { error: 'No authentication token found' },
         { status: 401 }
       );
     }
 
-    // Decode JWT token to get organization info
-    let orgId, orgName;
-    try {
-      const jwtSecret = process.env.JWT_SECRET;
-      if (!jwtSecret) {
-        throw new Error('JWT_SECRET not configured');
-      }
-      
-      const decoded = jwt.verify(token, jwtSecret) as any;
-      orgId = decoded.organizationId || decoded.tenantId;
-      orgName = decoded.organizationName || 'your dealership'; // Default fallback
-      
-      console.log('🔍 [SMS API] JWT authentication successful:', {
-        orgId: orgId,
-        orgName: orgName
-      });
-    } catch (jwtError) {
-      console.error('❌ [SMS API] JWT verification failed:', jwtError);
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
+      console.error('❌ [SMS API] User or organization not found');
       return NextResponse.json(
-        { error: 'Invalid authentication token' },
+        { error: 'User or organization not found' },
         { status: 401 }
       );
     }
+
+    const orgId = user.organizationId;
+    const orgName = 'your dealership'; // Default fallback
+    
+    console.log('🔍 [SMS API] Authentication successful:', {
+      orgId: orgId,
+      orgName: orgName
+    });
     
     const { 
       leadData,

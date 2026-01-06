@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import jwt from 'jsonwebtoken';
+import { getUserFromRequest, isAuthenticated } from '@/lib/auth/server';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
@@ -12,21 +12,19 @@ export async function POST(req: NextRequest) {
   });
 
   try {
-    // JWT Authentication
-    const token = req.cookies.get('ghostcrm_jwt')?.value;
-    if (!token) {
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(req))) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-    } catch (error) {
-      return NextResponse.json({ error: 'Invalid authentication token' }, { status: 401 });
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: 'User or organization not found' }, { status: 401 });
     }
 
-    const { organizationId: orgId } = decoded;
-    console.log('🔍 [EMAIL API] JWT authentication successful:', { 
+    const { organizationId: orgId } = user;
+    console.log('🔍 [EMAIL API] Authentication successful:', { 
       orgId, 
       orgName: 'your dealership' // Will be dynamically extracted later
     });

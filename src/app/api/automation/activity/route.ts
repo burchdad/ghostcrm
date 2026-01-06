@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { verifyJwtToken } from '@/lib/jwt';
+import { isAuthenticated, getUserFromRequest } from '@/lib/auth/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -16,19 +16,17 @@ const supabase = createClient(
  */
 export async function GET(request: NextRequest) {
   try {
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value || 
-                  request.cookies.get('jwt')?.value;
-    if (!token) {
+    // Authenticate user
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const decoded = verifyJwtToken(token);
-    if (!decoded || !decoded.organizationId) {
-      return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
+    const user = await getUserFromRequest(request);
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: 'User organization not found' }, { status: 401 });
     }
 
-    const organizationId = decoded.organizationId;
+    const organizationId = user.organizationId;
 
     try {
       // Try to fetch from automation_activity table

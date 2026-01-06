@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { verifyJwtToken } from '@/lib/jwt';
+import { getUserFromRequest, isAuthenticated } from '@/lib/auth/server';
 
 // Types for better type safety
 interface Message {
@@ -31,30 +31,21 @@ const supabase = createClient(
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get params from query
-    const { searchParams } = new URL(request.url);
-    const channelId = searchParams.get('channelId');
-    let tenantId = searchParams.get('tenantId');
-
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value || 
-                  request.cookies.get('jwt')?.value;
-    if (!token) {
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const decoded = verifyJwtToken(token);
-    if (!decoded || !decoded.organizationId) {
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
       return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
     }
 
-    // Use organization ID from token if not provided in query
-    tenantId = tenantId || decoded.organizationId;
-
-    // Verify user has access to this tenant
-    if (decoded.organizationId !== tenantId) {
-      return NextResponse.json({ error: 'Unauthorized access to tenant data' }, { status: 403 });
-    }
+    // Get params from query
+    const { searchParams } = new URL(request.url);
+    const channelId = searchParams.get('channelId');
+    const tenantId = user.organizationId;
 
     if (!channelId) {
       return NextResponse.json(
@@ -80,7 +71,7 @@ export async function GET(request: NextRequest) {
 
     // For private/direct channels, verify user is a member
     if ((channel.type === 'private' || channel.type === 'direct') && 
-        !channel.members?.includes(decoded.userId)) {
+        !channel.members?.includes(user.id)) {
       return NextResponse.json(
         { error: 'Access denied to this channel' },
         { status: 403 }
@@ -143,20 +134,19 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value || 
-                  request.cookies.get('jwt')?.value;
-    if (!token) {
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const decoded = verifyJwtToken(token);
-    if (!decoded || !decoded.organizationId) {
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
       return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
     }
 
-    const tenantId = decoded.organizationId;
-    const userId = decoded.userId;
+    const tenantId = user.organizationId;
+    const userId = user.id;
 
     // Parse request body
     const body = await request.json();

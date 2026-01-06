@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
+import { getUserFromRequest, isAuthenticated } from '@/lib/auth/server';
 import { randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { EmailService } from '@/lib/email-service';
@@ -11,52 +11,26 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(request: NextRequest) {
   try {
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
-    
-    if (!jwtCookie) {
-      console.error('❌ No ghostcrm_jwt cookie found');
-      return NextResponse.json({ error: 'Unauthorized - No JWT token' }, { status: 401 });
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
+      console.error('❌ Authentication failed');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, process.env.JWT_SECRET!) as any;
-    } catch (jwtError) {
-      console.error('❌ JWT decode failed:', jwtError);
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
+      console.error('❌ User or organization not found');
+      return NextResponse.json({ error: 'Unauthorized - User not found' }, { status: 401 });
     }
 
     // Verify user is owner
-    if (!jwtUser || jwtUser.role !== 'owner') {
+    if (user.role !== 'owner') {
       return NextResponse.json({ error: 'Forbidden - Only owners can invite team members' }, { status: 403 });
     }
 
-    // Use organizationId from JWT
-    const jwtOrganizationId = jwtUser.organizationId;
-    if (!jwtOrganizationId) {
-      return NextResponse.json({ error: 'Unauthorized - No organization' }, { status: 401 });
-    }
-
-    // Check if organizationId is a UUID or subdomain
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jwtOrganizationId);
-    
-    let actualOrganizationId = jwtOrganizationId;
-    
-      if (!isUUID) {
-      // If it's a subdomain, look up the actual UUID
-      const { data: org, error: orgLookupError } = await supabase
-        .from('organizations')
-        .select('id, subdomain')
-        .eq('subdomain', jwtOrganizationId)
-        .single();
-
-      if (orgLookupError || !org) {
-        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-      }
-      
-      actualOrganizationId = org.id;
-    }
+    // Use organizationId from user object
+    const actualOrganizationId = user.organizationId;
 
     // Get organization details for email
     const { data: organization, error: orgError } = await supabase
@@ -136,8 +110,8 @@ export async function POST(request: NextRequest) {
         role: role.toLowerCase().replace(/\s+/g, '_'),
         organization_id: actualOrganizationId,
         organization_name: organization.name || organization.subdomain,
-        inviter_id: jwtUser.userId || null,
-        inviter_name: jwtUser.email || 'Team Owner',
+        inviter_id: user.id || null,
+        inviter_name: user.email || 'Team Owner',
         status: 'pending',
         expires_at: inviteExpires.toISOString(),
         metadata: {
@@ -187,8 +161,8 @@ export async function POST(request: NextRequest) {
     
     const emailSent = await emailService.sendTeamInvitation(email, {
       inviteeName: name,
-      inviterName: jwtUser.email || 'Team Owner',
-      inviterEmail: jwtUser.email || 'owner@company.com',
+      inviterName: user.email || 'Team Owner',
+      inviterEmail: user.email || 'owner@company.com',
       inviteeEmail: email.toLowerCase(),
       organizationName: organization.name || organization.subdomain || 'Your Organization',
       role: role,

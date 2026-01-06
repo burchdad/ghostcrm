@@ -1,51 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
+import { getUserFromRequest } from '@/lib/auth/server';
 
-// Force dynamic rendering for request.cookies usage
+// Force dynamic rendering
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  // Use service role client to bypass RLS since we're handling auth with JWT
+  // Use service role client to bypass RLS since we're handling auth with Supabase SSR
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
   try {
-    // Get user info from JWT cookie (same as middleware uses)
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!jwtCookie) {
-      console.error('❌ No ghostcrm_jwt cookie found');
-      return NextResponse.json({ error: 'Unauthorized - No JWT token' }, { status: 401 });
+    if (!user?.organizationId) {
+      console.error('❌ No authenticated user found');
+      return NextResponse.json({ error: 'Unauthorized - No user session' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, process.env.JWT_SECRET!) as any;
-      console.log('🔍 [ORGANIZATION API] JWT user:', {
-        userId: jwtUser.userId,
-        email: jwtUser.email,
-        organizationId: jwtUser.organizationId
-      });
-    } catch (jwtError) {
-      console.error('❌ JWT decode failed:', jwtError);
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
-    }
+    console.log('🔍 [ORGANIZATION API] Authenticated user:', {
+      userId: user.id,
+      email: user.email,
+      organizationId: user.organizationId
+    });
 
-    // Use organizationId from JWT directly (most reliable)
-    if (jwtUser.organizationId) {
-      console.log('🎯 [ORGANIZATION API] Using organizationId from JWT:', jwtUser.organizationId);
+    // Use organizationId from user object (most reliable)
+    if (user.organizationId) {
+      console.log('🎯 [ORGANIZATION API] Using organizationId from user:', user.organizationId);
       
       const { data: org, error: orgError } = await supabase
         .from('organizations')
         .select('id, name, subdomain, created_at, updated_at')
-        .eq('id', jwtUser.organizationId)
+        .eq('id', user.organizationId)
         .single();
         
       if (!orgError && org) {
-        console.log('✅ [ORGANIZATION API] Found organization via JWT organizationId:', org);
+        console.log('✅ [ORGANIZATION API] Found organization via user organizationId:', org);
         return NextResponse.json({
           success: true,
           organization: org
@@ -55,8 +48,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Fallback: Check organization_memberships table using JWT userId
-    console.log('🔍 [ORGANIZATION API] Fallback: Checking memberships for user:', jwtUser.userId);
+    // Fallback: Check organization_memberships table using user ID
+    console.log('🔍 [ORGANIZATION API] Fallback: Checking memberships for user:', user.id);
     
     const { data: membership, error: membershipError } = await supabase
       .from('organization_memberships')
@@ -70,11 +63,11 @@ export async function GET(request: NextRequest) {
           updated_at
         )
       `)
-      .eq('user_id', jwtUser.userId)
+      .eq('user_id', user.id)
       .maybeSingle();
 
     console.log('🔍 [ORGANIZATION API] Membership query result:', {
-      userId: jwtUser.userId,
+      userId: user.id,
       membership: membership,
       error: membershipError
     });
@@ -88,7 +81,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!membership || !membership.organizations) {
-      console.log('ℹ️ No organization membership found for user:', jwtUser.userId);
+      console.log('ℹ️ No organization membership found for user:', user.id);
       return NextResponse.json({ 
         error: 'No organization found for user',
         message: 'User has not completed organization setup yet'
@@ -117,26 +110,19 @@ export async function PUT(request: NextRequest) {
   );
 
   try {
-    // Get user info from JWT cookie (same as GET method)
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
     
-    if (!jwtCookie) {
-      console.error('❌ No ghostcrm_jwt cookie found');
-      return NextResponse.json({ error: 'Unauthorized - No JWT token' }, { status: 401 });
+    if (!user?.organizationId) {
+      console.error('❌ No authenticated user found');
+      return NextResponse.json({ error: 'Unauthorized - No user session' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, process.env.JWT_SECRET!) as any;
-      console.log('🔍 [ORGANIZATION PUT] JWT user:', {
-        userId: jwtUser.userId,
-        email: jwtUser.email,
-        organizationId: jwtUser.organizationId
-      });
-    } catch (jwtError) {
-      console.error('❌ JWT decode failed:', jwtError);
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
-    }
+    console.log('🔍 [ORGANIZATION PUT] Authenticated user:', {
+      userId: user.id,
+      email: user.email,
+      organizationId: user.organizationId
+    });
 
     const body = await request.json();
     const { industry, team_size } = body;
@@ -149,15 +135,15 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Use organizationId from JWT directly (most reliable)
-    if (!jwtUser.organizationId) {
+    // Use organizationId from user object (most reliable)
+    if (!user.organizationId) {
       return NextResponse.json({ 
         error: 'Organization not found',
         message: 'User has no organization to update'
       }, { status: 404 });
     }
 
-    console.log('🎯 [ORGANIZATION PUT] Updating organization:', jwtUser.organizationId);
+    console.log('🎯 [ORGANIZATION PUT] Updating organization:', user.organizationId);
 
     // Update the organization directly using organizationId from JWT
     const { data: updatedOrg, error: updateError } = await supabase
@@ -168,7 +154,7 @@ export async function PUT(request: NextRequest) {
         // industry: industry,
         // team_size: team_size
       })
-      .eq('id', jwtUser.organizationId)
+      .eq('id', user.organizationId)
       .select()
       .single();
 

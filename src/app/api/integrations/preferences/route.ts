@@ -1,69 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { IntegrationPreferences } from '@/lib/integrations'
+import { isAuthenticated, getUserFromRequest } from '@/lib/auth/server'
 
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// Helper function to extract user from Authorization header or JWT token
-async function getAuthenticatedUser(request: NextRequest) {
-  // Try Authorization header first (Bearer token)
-  const authHeader = request.headers.get('authorization')
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.substring(7)
-    try {
-      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
-      if (!error && user) return user
-    } catch (error) {
-      console.log('Bearer token auth failed:', error)
-    }
-  }
-
-  // Try cookie-based authentication
-  const sessionCookie = request.cookies.get('ghostcrm_jwt')?.value
-  if (sessionCookie) {
-    try {
-      // For cookie-based auth, we might need to verify JWT manually
-      // This is a placeholder - you might need to adjust based on your auth implementation
-      const jwt = await import('jsonwebtoken')
-      const decoded = jwt.verify(sessionCookie, process.env.JWT_SECRET!) as any
-      if (decoded?.sub) {
-        // Get user by ID from our database
-        const { data: user, error } = await supabaseAdmin
-          .from('users')
-          .select('id, email')
-          .eq('id', decoded.sub)
-          .single()
-        
-        if (!error && user) {
-          return { id: user.id, email: user.email }
-        }
-      }
-    } catch (error) {
-      console.log('JWT cookie auth failed:', error)
-    }
-  }
-
-  return null
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const user = await getAuthenticatedUser(request)
-
-    if (!user) {
+    // Authenticate user
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const user = await getUserFromRequest(request);
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: 'User organization not found' }, { status: 401 });
     }
 
     const body = await request.json()
     const { integrationPreferences, organizationData } = body
 
-    // Get user's organization
+    // Get user's organization using the organizationId from user object
     const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from('organization_members')
-      .select('organization_id, organizations(*)')
-      .eq('user_id', user.id)
+      .from('organizations')
+      .select('*')
+      .eq('id', user.organizationId)
       .single()
 
     if (orgError || !userOrg) {
@@ -91,7 +54,7 @@ export async function POST(request: NextRequest) {
     // Database integration task
     if (integrationPreferences.database?.type !== 'supabase') {
       integrationTasks.push({
-        organization_id: userOrg.organization_id,
+        organization_id: user.organizationId,
         task_type: 'database_integration',
         title: `Set up ${integrationPreferences.database.type} integration`,
         description: `Configure database integration for ${integrationPreferences.database.type}`,
@@ -105,7 +68,7 @@ export async function POST(request: NextRequest) {
     // Telephony integration task
     if (integrationPreferences.telephony?.provider !== 'none') {
       integrationTasks.push({
-        organization_id: userOrg.organization_id,
+        organization_id: user.organizationId,
         task_type: 'telephony_integration',
         title: `Set up ${integrationPreferences.telephony.provider} integration`,
         description: `Configure phone system integration with ${integrationPreferences.telephony.provider}`,
@@ -119,7 +82,7 @@ export async function POST(request: NextRequest) {
     // Implementation support task
     if (integrationPreferences.implementationSupport !== 'self_service') {
       integrationTasks.push({
-        organization_id: userOrg.organization_id,
+        organization_id: user.organizationId,
         task_type: 'implementation_support',
         title: `Provide ${integrationPreferences.implementationSupport.replace('_', ' ')} support`,
         description: `Customer requested ${integrationPreferences.implementationSupport} implementation support`,
@@ -146,14 +109,14 @@ export async function POST(request: NextRequest) {
     const { error: notificationError } = await supabaseAdmin
       .from('notifications')
       .insert({
-        organization_id: userOrg.organization_id,
+        organization_id: user.organizationId,
         type: 'integration_setup',
         title: 'New Integration Setup Required',
-        message: `Organization "${(userOrg.organizations as any)?.name || 'Unknown'}" has completed onboarding with ${integrationTasks.length} integration tasks`,
+        message: `Organization "${userOrg?.name || 'Unknown'}" has completed onboarding with ${integrationTasks.length} integration tasks`,
         data: {
           integrationCount: integrationTasks.length,
           implementationSupport: integrationPreferences.implementationSupport,
-          organizationName: (userOrg.organizations as any)?.name
+          organizationName: userOrg?.name
         },
         created_at: new Date().toISOString()
       })
@@ -179,17 +142,21 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getAuthenticatedUser(request)
-
-    if (!user) {
+    // Authenticate user
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user's organization integration preferences
+    const user = await getUserFromRequest(request);
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: 'User organization not found' }, { status: 401 });
+    }
+
+    // Get user's organization integration preferences using organizationId directly
     const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from('organization_members')
-      .select('organization_id, organizations!inner(integration_preferences, onboarding_completed)')
-      .eq('user_id', user.id)
+      .from('organizations')
+      .select('integration_preferences, onboarding_completed')
+      .eq('id', user.organizationId)
       .single()
 
     if (orgError || !userOrg) {
@@ -197,8 +164,8 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      integrationPreferences: (userOrg.organizations as any)?.integration_preferences,
-      onboardingCompleted: (userOrg.organizations as any)?.onboarding_completed
+      integrationPreferences: userOrg.integration_preferences,
+      onboardingCompleted: userOrg.onboarding_completed
     })
 
   } catch (error) {

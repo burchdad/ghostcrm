@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { verifyJwtToken } from '@/lib/jwt';
+import { getUserFromRequest, isAuthenticated } from '@/lib/auth/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -16,19 +16,18 @@ const supabase = createClient(
  */
 export async function GET(request: NextRequest) {
   try {
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value || 
-                  request.cookies.get('jwt')?.value;
-    if (!token) {
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const decoded = verifyJwtToken(token);
-    if (!decoded || !decoded.organizationId) {
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
       return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
     }
 
-    const organizationId = decoded.organizationId;
+    const organizationId = user.organizationId;
 
     // Check if automation_workflows table exists, if not create mock data
     const { data: workflows, error } = await supabase
@@ -74,21 +73,19 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value || 
-                  request.cookies.get('jwt')?.value;
-    if (!token) {
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const decoded = verifyJwtToken(token);
-    if (!decoded || !decoded.organizationId) {
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
       return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
     }
 
-    const organizationId = decoded.organizationId;
-    const userId = decoded.userId;
-
+    const organizationId = user.organizationId;
+    const userId = user.id;
     // Parse request body
     const body = await request.json();
     const { name, description, type, triggers, status = 'draft' } = body;
@@ -165,19 +162,18 @@ export async function POST(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value || 
-                  request.cookies.get('jwt')?.value;
-    if (!token) {
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const decoded = verifyJwtToken(token);
-    if (!decoded || !decoded.organizationId) {
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
       return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
     }
 
-    const organizationId = decoded.organizationId;
+    const organizationId = user.organizationId;
     const body = await request.json();
     const { id, ...updateData } = body;
 

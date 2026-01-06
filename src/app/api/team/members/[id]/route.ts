@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
+import { getUserFromRequest, isAuthenticated } from '@/lib/auth/server';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -8,49 +8,24 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
-    
-    if (!jwtCookie) {
-      return NextResponse.json({ error: 'Unauthorized - No JWT token' }, { status: 401 });
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, process.env.JWT_SECRET!) as any;
-    } catch (jwtError) {
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized - User not found' }, { status: 401 });
     }
 
     // Verify user is owner
-    if (!jwtUser || jwtUser.role !== 'owner') {
+    if (user.role !== 'owner') {
       return NextResponse.json({ error: 'Forbidden - Only owners can update team members' }, { status: 403 });
     }
 
-    // Get organization ID
-    const jwtOrganizationId = jwtUser.organizationId;
-    if (!jwtOrganizationId) {
-      return NextResponse.json({ error: 'Unauthorized - No organization' }, { status: 401 });
-    }
-
-    // Check if organizationId is a UUID or subdomain
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jwtOrganizationId);
-    
-    let actualOrganizationId = jwtOrganizationId;
-    
-    if (!isUUID) {
-      const { data: org, error: orgLookupError } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('subdomain', jwtOrganizationId)
-        .single();
-
-      if (orgLookupError || !org) {
-        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-      }
-      
-      actualOrganizationId = org.id;
-    }
+    // Use organizationId from user object
+    const actualOrganizationId = user.organizationId;
 
     const { id } = params;
     const body = await request.json();
@@ -112,48 +87,24 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
-    
-    if (!jwtCookie) {
-      return NextResponse.json({ error: 'Unauthorized - No JWT token' }, { status: 401 });
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, process.env.JWT_SECRET!) as any;
-    } catch (jwtError) {
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized - User not found' }, { status: 401 });
     }
 
     // Verify user is owner
-    if (!jwtUser || jwtUser.role !== 'owner') {
+    if (user.role !== 'owner') {
       return NextResponse.json({ error: 'Forbidden - Only owners can delete team members' }, { status: 403 });
     }
 
-    // Get organization ID
-    const jwtOrganizationId = jwtUser.organizationId;
-    if (!jwtOrganizationId) {
-      return NextResponse.json({ error: 'Unauthorized - No organization' }, { status: 401 });
-    }
-
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jwtOrganizationId);
-    
-    let actualOrganizationId = jwtOrganizationId;
-    
-    if (!isUUID) {
-      const { data: org, error: orgLookupError } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('subdomain', jwtOrganizationId)
-        .single();
-
-      if (orgLookupError || !org) {
-        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-      }
-      
-      actualOrganizationId = org.id;
-    }
+    // Use organizationId from user object
+    const actualOrganizationId = user.organizationId;
 
     const { id } = params;
 
@@ -170,7 +121,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Don't allow deletion of the owner
-    if (userToDelete.email === jwtUser.email) {
+    if (userToDelete.email === user.email) {
       return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
     }
 

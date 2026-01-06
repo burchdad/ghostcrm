@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyJwtToken } from '@/lib/jwt';
+import { isAuthenticated, getUserFromRequest } from '@/lib/auth/server';
 import { createClient } from '@supabase/supabase-js';
 
 export async function GET(
@@ -7,22 +7,20 @@ export async function GET(
     { params }: { params: { id: string } }
 ) {
     try {
-        // Verify JWT token
-        const token = req.cookies.get('ghostcrm_jwt')?.value;
-        
-        if (!token) {
+        // Authenticate user
+        if (!(await isAuthenticated(req))) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const decoded = verifyJwtToken(token);
-        if (!decoded) {
-            return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        const user = await getUserFromRequest(req);
+        if (!user?.organizationId) {
+            return NextResponse.json({ error: 'User organization not found' }, { status: 401 });
         }
 
         const organizationId = params.id;
 
         // Verify user has access to this organization
-        if (decoded.organizationId !== organizationId) {
+        if (user.organizationId.toString() !== organizationId) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

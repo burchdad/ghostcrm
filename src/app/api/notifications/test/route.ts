@@ -1,29 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
+import { isAuthenticated, getUserFromRequest } from '@/lib/auth/server';
 import { NotificationService } from '@/lib/notification-service';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const jwtSecret = process.env.JWT_SECRET!;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // POST - Send test notification
 export async function POST(request: NextRequest) {
   try {
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
-    
-    if (!jwtCookie) {
+    // Authenticate user
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-    } catch (jwtError) {
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
+    const user = await getUserFromRequest(request);
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: 'User organization not found' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -33,36 +28,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Notification type is required' }, { status: 400 });
     }
 
-    // Get organization data
-    const jwtOrganizationId = jwtUser.organizationId;
-    if (!jwtOrganizationId) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
-
-    // Check if organizationId is a UUID or subdomain
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jwtOrganizationId);
+    // Get organization data using user's organizationId
+    const { data: orgData, error } = await supabase
+      .from('organizations')
+      .select('id, name')
+      .eq('id', user.organizationId)
+      .single();
     
-    let orgData;
-    if (isUUID) {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name')
-        .eq('id', jwtOrganizationId)
-        .single();
-      orgData = data;
-      if (error) {
-        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-      }
-    } else {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name')
-        .eq('subdomain', jwtOrganizationId)
-        .single();
-      orgData = data;
-      if (error) {
-        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-      }
+    if (error || !orgData) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
     const notificationService = NotificationService.getInstance();
@@ -123,11 +97,11 @@ export async function POST(request: NextRequest) {
     const result = await notificationService.sendNotification({
       ...testNotification,
       organizationId: orgData.id,
-      userId: jwtUser.userId,
+      userId: user.id,
       entityType: 'test',
       metadata: {
         isTest: true,
-        sentBy: jwtUser.userId,
+        sentBy: user.id,
         organizationName: orgData.name
       }
     });
@@ -156,18 +130,14 @@ export async function POST(request: NextRequest) {
 // GET - Get available test notification types
 export async function GET(request: NextRequest) {
   try {
-    // Get user info from JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
-    
-    if (!jwtCookie) {
+    // Authenticate user
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-    } catch (jwtError) {
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
+    const user = await getUserFromRequest(request);
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: 'User organization not found' }, { status: 401 });
     }
 
     const availableTests = [

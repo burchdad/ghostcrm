@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { verifyJwtToken } from '@/lib/jwt';
+import { getUserFromRequest, isAuthenticated } from '@/lib/auth/server';
 
 // Types for better type safety
 interface TeamMember {
@@ -26,30 +26,18 @@ const supabase = createClient(
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get tenant ID from query params or JWT
-    const { searchParams } = new URL(request.url);
-    let tenantId = searchParams.get('tenantId');
-
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value || 
-                  request.cookies.get('jwt')?.value;
-    
-    if (!token) {
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const decoded = verifyJwtToken(token);
-    if (!decoded || !decoded.organizationId) {
-      return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: 'Invalid user or missing organization' }, { status: 401 });
     }
 
-    // Use organization ID from token if not provided in query
-    tenantId = tenantId || decoded.organizationId;
-
-    // Verify user has access to this tenant
-    if (decoded.organizationId !== tenantId) {
-      return NextResponse.json({ error: 'Unauthorized access to tenant data' }, { status: 403 });
-    }
+    const tenantId = user.organizationId;
 
     // Get team members for the organization using organization_memberships
     const { data: members, error } = await supabase

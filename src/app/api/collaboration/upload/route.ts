@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { verifyJwtToken } from '@/lib/jwt';
+import { getUserFromRequest, isAuthenticated } from '@/lib/auth/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,20 +15,19 @@ const supabase = createClient(
  */
 export async function POST(request: NextRequest) {
   try {
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value || 
-                  request.cookies.get('jwt')?.value;
-    if (!token) {
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const decoded = verifyJwtToken(token);
-    if (!decoded || !decoded.organizationId) {
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
       return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
     }
 
-    const tenantId = decoded.organizationId;
-    const userId = decoded.userId;
+    const tenantId = user.organizationId;
+    const userId = user.id;
 
     // Parse form data
     const formData = await request.formData();

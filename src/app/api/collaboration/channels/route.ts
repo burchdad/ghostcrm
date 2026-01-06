@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { verifyJwtToken } from '@/lib/jwt';
+import { getUserFromRequest } from '@/lib/auth/server';
 
 // Types for better type safety
 interface Channel {
@@ -32,34 +32,18 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     let tenantId = searchParams.get('tenantId');
 
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value || 
-                  request.cookies.get('jwt')?.value;
-    if (!token) {
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user?.organizationId) {
       return NextResponse.json({ error: 'TOKEN_MISSING' }, { status: 401 });
     }
 
-    let decoded;
-    try {
-      decoded = verifyJwtToken(token);
-    } catch (error: any) {
-      console.log(`🔄 [CHANNELS] Token verification failed: ${error.message}`);
-      if (error.name === 'TokenExpiredError') {
-        return NextResponse.json({ error: 'TOKEN_EXPIRED' }, { status: 401 });
-      }
-      return NextResponse.json({ error: 'TOKEN_INVALID' }, { status: 401 });
-    }
-
-    if (!decoded || !decoded.organizationId) {
-      return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
-    }
-
-    // Use organization ID from token if not provided in query
-    tenantId = tenantId || decoded.organizationId;
-    const userId = decoded.userId;
+    // Use organization ID from user if not provided in query
+    tenantId = tenantId || user.organizationId.toString();
+    const userId = user.id;
 
     // Verify user has access to this tenant
-    if (decoded.organizationId !== tenantId) {
+    if (user.organizationId.toString() !== tenantId) {
       return NextResponse.json({ error: 'Unauthorized access to tenant data' }, { status: 403 });
     }
 
@@ -149,20 +133,14 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Extract and verify JWT token
-    const token = request.cookies.get('ghostcrm_jwt')?.value || 
-                  request.cookies.get('jwt')?.value;
-    if (!token) {
+    // Get authenticated user from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user?.organizationId) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const decoded = verifyJwtToken(token);
-    if (!decoded || !decoded.organizationId) {
-      return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
-    }
-
-    const tenantId = decoded.organizationId;
-    const userId = decoded.userId;
+    const tenantId = user.organizationId.toString();
+    const userId = user.id;
 
     // Parse request body
     const body = await request.json();

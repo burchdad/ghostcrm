@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
+import { getUserFromRequest, isAuthenticated } from '@/lib/auth/server';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -56,28 +56,25 @@ interface OrganizationSettings {
 // GET - Fetch business settings
 export async function GET(request: NextRequest) {
   try {
-    // Get user info from JWT cookie (same as team API uses)
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
-    
-    if (!jwtCookie) {
-      console.error('❌ No ghostcrm_jwt cookie found');
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
+      console.error('❌ Authentication failed');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-    } catch (jwtError) {
-      console.error('❌ JWT decode failed:', jwtError);
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
+      console.error('❌ User or organization not found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (jwtUser.role !== 'owner') {
+    if (user.role !== 'owner') {
       return NextResponse.json({ error: 'Forbidden - Owner access required' }, { status: 403 });
     }
 
-    // Get organization data from subdomain (using same logic as team API)
-    const jwtOrganizationId = jwtUser.organizationId;
+    // Use organizationId from user object
+    const jwtOrganizationId = user.organizationId;
     if (!jwtOrganizationId) {
       console.error('❌ No organizationId found in JWT');
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
@@ -188,23 +185,20 @@ export async function GET(request: NextRequest) {
 // POST - Save business settings
 export async function POST(request: NextRequest) {
   try {
-    // Get user info from JWT cookie (same as team API uses)
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
-    
-    if (!jwtCookie) {
-      console.error('❌ No ghostcrm_jwt cookie found');
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
+      console.error('❌ Authentication failed');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let jwtUser;
-    try {
-      jwtUser = jwt.verify(jwtCookie.value, jwtSecret) as any;
-    } catch (jwtError) {
-      console.error('❌ JWT decode failed:', jwtError);
-      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
+      console.error('❌ User or organization not found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (jwtUser.role !== 'owner') {
+    if (user.role !== 'owner') {
       return NextResponse.json({ error: 'Forbidden - Owner access required' }, { status: 403 });
     }
 
@@ -215,41 +209,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Settings data is required' }, { status: 400 });
     }
 
-    // Get organization data from subdomain (using same logic as team API)
-    const jwtOrganizationId = jwtUser.organizationId;
-    if (!jwtOrganizationId) {
-      console.error('❌ No organizationId found in JWT');
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
+    // Use organizationId from user object
+    const organizationId = user.organizationId;
 
-    // Check if organizationId is a UUID or subdomain
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jwtOrganizationId);
-    
-    let orgData;
-    if (isUUID) {
-      // Direct UUID lookup
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name')
-        .eq('id', jwtOrganizationId)
-        .single();
-      orgData = data;
-      if (error) {
-        console.error('Organization lookup error:', error);
-        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-      }
-    } else {
-      // Subdomain lookup
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name')
-        .eq('subdomain', jwtOrganizationId)
-        .single();
-      orgData = data;
-      if (error) {
-        console.error('Organization lookup error:', error);
-        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-      }
+    // Get organization data using organizationId from user object
+    const { data: orgData, error: orgError } = await supabase
+      .from('organizations')
+      .select('id, name')
+      .eq('id', organizationId)
+      .single();
+
+    if (orgError || !orgData) {
+      console.error('Organization lookup error:', orgError);
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
     // If not confirmed, return preview of changes
@@ -405,7 +377,7 @@ export async function POST(request: NextRequest) {
       .from('audit_logs')
       .insert({
         organization_id: orgData.id,
-        user_id: jwtUser.userId,
+        user_id: user.id,
         action: 'SETTINGS_UPDATE',
         entity_type: 'ORGANIZATION_SETTINGS',
         entity_id: orgData.id,
