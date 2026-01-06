@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
     // Fetch available inventory
     const { data: inventory, error: inventoryError } = await supabaseAdmin
       .from('inventory')
-      .select('id, make, model, year, price_selling, condition, status, vin')
+      .select('id, name, brand, model, year, price_selling, condition, status, vin')
       .eq('organization_id', organizationId) // Use correct column name
       .eq('status', 'available')
       .order('price_selling', { ascending: true });
@@ -174,7 +174,7 @@ function generateAIMatches(
             leadId: lead.id,
             vehicleId: vehicle.id,
             leadName: leadFullName || `${lead.contacts?.first_name} ${lead.contacts?.last_name}`,
-            vehicleDesc: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+            vehicleDesc: `${vehicle.year} ${vehicle.brand || vehicle.name} ${vehicle.model}`,
             leadBudget: leadBudget ? 
               `$${(leadBudget.min/1000).toFixed(0)}k-$${(leadBudget.max/1000).toFixed(0)}k` : 
               'Budget not specified',

@@ -10,19 +10,17 @@ interface LeadActivity {
 
 interface Lead {
   id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: string;
-  score: number;
-  source: string;
+  title: string;  // Changed from 'name' to match database schema
+  contact_id?: string;
+  value?: number;
+  stage: string;
+  priority?: string;
+  source?: string;
   created_at: string;
-  last_contacted?: string;
-  notes?: string;
+  updated_at?: string;
   assigned_to?: string;
-  conversion_probability?: number;
-  estimated_value?: number;
-  stage?: string;
+  probability?: number;
+  expected_close_date?: string;
   activities?: LeadActivity[];
 }
 
@@ -61,19 +59,17 @@ export class SupabaseAgentDataConnector implements AgentDataConnector {
         .from('leads')
         .select(`
           id,
-          name,
-          email,
-          phone,
-          status,
-          score,
+          title,
+          contact_id,
+          value,
+          stage,
+          priority,
           source,
           created_at,
-          last_contacted,
-          notes,
+          updated_at,
           assigned_to,
-          conversion_probability,
-          estimated_value,
-          stage
+          probability,
+          expected_close_date
         `)
         .order('created_at', { ascending: false });
 
@@ -95,12 +91,13 @@ export class SupabaseAgentDataConnector implements AgentDataConnector {
       // Calculate analytics using the original leads data
       const leadsForAnalytics = (leads || []) as unknown as Lead[];
       const totalLeads = leadsForAnalytics.length;
-      const qualifiedLeads = leadsForAnalytics.filter(l => l.score >= 70).length;
-      const activeLeads = leadsForAnalytics.filter(l => l.status === 'active').length;
-      const avgScore = leadsForAnalytics.reduce((sum, l) => sum + (l.score || 0), 0) / totalLeads || 0;
+      const qualifiedLeads = leadsForAnalytics.filter(l => l.stage === 'qualified').length;
+      const activeLeads = leadsForAnalytics.filter(l => l.stage !== 'lost' && l.stage !== 'closed').length;
+      const avgScore = leadsForAnalytics.reduce((sum, l) => sum + (l.probability || 0), 0) / totalLeads || 0;
 
       const leadsBySource = leadsForAnalytics.reduce((acc, lead) => {
-        acc[lead.source] = (acc[lead.source] || 0) + 1;
+        const source = lead.source || 'unknown';
+        acc[source] = (acc[source] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
 

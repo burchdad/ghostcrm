@@ -1,7 +1,7 @@
 
-
 import { NextRequest } from "next/server";
 import { createSupabaseServer } from "@/utils/supabase/server";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 
 // Use Node.js runtime to avoid Edge Runtime issues with Supabase
 export const runtime = 'nodejs';
@@ -76,30 +76,21 @@ export async function GET(req: NextRequest) {
   try {
     console.log('🔍 [DEALS] Getting authenticated user...');
     
-    const supabase = await createSupabaseServer();
-    
-    // Get the authenticated user from Supabase SSR
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      console.log('❌ [DEALS] No authenticated user:', authError?.message);
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    // Check authentication using centralized function
+    if (!(await isAuthenticated(req))) {
+      return new Response(JSON.stringify({ error: "Authentication required" }), { status: 401 });
     }
 
-    console.log('✅ [DEALS] User authenticated:', {
-      id: user.id,
-      email: user.email
-    });
-
-    // Get tenant context from user metadata
-    const tenantId = user.user_metadata?.tenant_id || user.user_metadata?.organization_id;
-    
-    if (!tenantId) {
-      console.log('❌ [DEALS] No tenant context found for user');
-      return new Response(JSON.stringify({ error: 'No organization context' }), { status: 400 });
+    // Get user data with UUID resolution
+    const user = await getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return new Response(JSON.stringify({ error: "User organization not found" }), { status: 401 });
     }
 
+    const tenantId = user.organizationId;
     console.log('🏢 [DEALS] Using tenant context:', { tenantId });
+
+    const supabase = await createSupabaseServer();
 
     // Query deals with RLS - Supabase will automatically filter by user/tenant
     let query = supabase

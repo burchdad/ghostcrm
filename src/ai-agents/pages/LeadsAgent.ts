@@ -592,8 +592,8 @@ export class LeadsAgent extends BaseAgent {
   private async getQualifiedLeadsCount(): Promise<number> {
     try {
       const leadData = await agentDataConnector.getLeadsData();
-      // Filter leads by qualification status or score threshold
-      return leadData.leads.filter(lead => lead.score >= 70 || lead.status === 'qualified').length;
+      // Filter leads by qualification status or probability threshold
+      return leadData.leads.filter(lead => (lead.probability || 0) >= 70 || lead.stage === 'qualified').length;
     } catch (error) {
       this.log('error', 'Failed to get qualified leads count', { error });
       return 0;
@@ -603,10 +603,10 @@ export class LeadsAgent extends BaseAgent {
   private async getHotLeadsCount(): Promise<number> {
     try {
       const leadData = await agentDataConnector.getLeadsData();
-      // Filter leads by hot criteria (high score and recent activity)
+      // Filter leads by hot criteria (high probability and recent activity)
       return leadData.leads.filter(lead => 
-        lead.score >= 80 && 
-        (lead.conversion_probability ?? 0) >= 0.7
+        (lead.probability || 0) >= 80 && 
+        lead.stage !== 'lost' && lead.stage !== 'closed'
       ).length;
     } catch (error) {
       this.log('error', 'Failed to get hot leads count', { error });
