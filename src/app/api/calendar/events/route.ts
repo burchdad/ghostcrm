@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServer } from '@/utils/supabase/server';
+import { getUserFromRequest, isAuthenticated } from '@/lib/auth/server';
+import { createClient } from '@supabase/supabase-js';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
+
+// Use Node.js runtime to avoid Edge Runtime issues
+export const runtime = 'nodejs';
+
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 interface CalendarEvent {
   id: string;
@@ -23,7 +33,6 @@ interface CalendarEvent {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createSupabaseServer();
     const { searchParams } = new URL(request.url);
     const month = parseInt(searchParams.get('month') || '0');
     const year = parseInt(searchParams.get('year') || '0');
@@ -36,34 +45,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user for organization check
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // Check authentication using centralized system
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabase
-      .from('user_organizations')
-      .select('organization_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (orgError || !userOrg) {
+    // Get user data from JWT
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
       return NextResponse.json(
         { success: false, error: 'Organization access required' },
         { status: 403 }
       );
     }
-
     // Build date filters for the specific month/year if provided
-    let query = supabase
+    let query = supabaseAdmin
       .from('calendar_events')
       .select('*')
-      .eq('organization_id', userOrg.organization_id)
+      .eq('organization_id', user.organizationId)
       .order('start_time', { ascending: true });
 
     // Filter by month/year if provided
@@ -105,7 +107,7 @@ export async function GET(request: NextRequest) {
         location: undefined, // TODO: Add location field to schema
         isAllDay: false, // TODO: Calculate from start/end times
         createdBy: event.user_id || '',
-        tenantId: userOrg.organization_id
+        tenantId: user.organizationId
       };
     });
 
@@ -151,26 +153,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createSupabaseServer();
     const eventData = await request.json();
 
-    // Get user for organization check
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // Check authentication using centralized system
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabase
-      .from('user_organizations')
-      .select('organization_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (orgError || !userOrg) {
+    // Get user data from JWT
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
       return NextResponse.json(
         { success: false, error: 'Organization access required' },
         { status: 403 }
@@ -184,7 +179,7 @@ export async function POST(request: NextRequest) {
       new Date(startDateTime.getTime() + 60 * 60 * 1000); // Default 1 hour
 
     const dbEvent = {
-      organization_id: userOrg.organization_id,
+      organization_id: user.organizationId,
       user_id: user.id,
       title: eventData.title,
       description: eventData.description || null,
@@ -195,7 +190,7 @@ export async function POST(request: NextRequest) {
       status: 'scheduled'
     };
 
-    const { data: newEvent, error } = await supabase
+    const { data: newEvent, error } = await supabaseAdmin
       .from('calendar_events')
       .insert(dbEvent)
       .select()
@@ -227,7 +222,7 @@ export async function POST(request: NextRequest) {
       location: undefined,
       isAllDay: false,
       createdBy: newEvent.user_id || '',
-      tenantId: userOrg.organization_id
+      tenantId: user.organizationId
     };
 
     return NextResponse.json({
@@ -246,26 +241,19 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = await createSupabaseServer();
     const { eventId, ...eventData } = await request.json();
 
-    // Get user for organization check
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // Check authentication using centralized system
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabase
-      .from('user_organizations')
-      .select('organization_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (orgError || !userOrg) {
+    // Get user data from JWT
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
       return NextResponse.json(
         { success: false, error: 'Organization access required' },
         { status: 403 }
@@ -285,11 +273,11 @@ export async function PUT(request: NextRequest) {
       updateData.end_time = new Date(`${eventData.date}T${eventData.endTime}`).toISOString();
     }
 
-    const { data: updatedEvent, error } = await supabase
+    const { data: updatedEvent, error } = await supabaseAdmin
       .from('calendar_events')
       .update(updateData)
       .eq('id', eventId)
-      .eq('organization_id', userOrg.organization_id)
+      .eq('organization_id', user.organizationId)
       .select()
       .single();
 
@@ -319,7 +307,7 @@ export async function PUT(request: NextRequest) {
       location: undefined,
       isAllDay: false,
       createdBy: updatedEvent.user_id || '',
-      tenantId: userOrg.organization_id
+      tenantId: user.organizationId
     };
 
     return NextResponse.json({
@@ -338,7 +326,6 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createSupabaseServer();
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get('id');
 
@@ -349,34 +336,28 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Get user for organization check
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // Check authentication using centralized system
+    if (!(await isAuthenticated(request))) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabase
-      .from('user_organizations')
-      .select('organization_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (orgError || !userOrg) {
+    // Get user data from JWT
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
       return NextResponse.json(
         { success: false, error: 'Organization access required' },
         { status: 403 }
       );
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('calendar_events')
       .delete()
       .eq('id', eventId)
-      .eq('organization_id', userOrg.organization_id);
+      .eq('organization_id', user.organizationId);
 
     if (error) {
       console.error('Error deleting calendar event:', error);
