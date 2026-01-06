@@ -117,7 +117,10 @@ export async function GET(request: NextRequest) {
       attachments: message.attachments || []
     }));
 
-    return NextResponse.json(formattedMessages);
+    return NextResponse.json({
+      success: true,
+      messages: formattedMessages
+    });
 
   } catch (error) {
     console.error('Error in messages API:', error);
@@ -235,7 +238,10 @@ export async function POST(request: NextRequest) {
       attachments: []
     };
 
-    return NextResponse.json(formattedMessage);
+    return NextResponse.json({
+      success: true,
+      message: formattedMessage
+    });
 
   } catch (error) {
     console.error('Error in send message API:', error);

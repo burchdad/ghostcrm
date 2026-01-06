@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     ];
 
     return NextResponse.json({
-      status: 'success',
+      success: true,
       data: {
         calls: recentCalls,
         totalCount: recentCalls.length
@@ -62,9 +62,8 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json(
       {
-        status: 'error',
-        message: 'Failed to fetch recent calls',
-        error: process.env.NODE_ENV === 'development' ? error : 'Internal server error'
+        success: false,
+        error: 'Failed to fetch recent calls'
       },
       { status: 500 }
     );

@@ -15,15 +15,10 @@ const supabase = createClient(
  */
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication using Supabase SSR
-    if (!(await isAuthenticated(request))) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    // Get user data from Supabase session
+    // Get authenticated user from Supabase session
     const user = await getUserFromRequest(request);
     if (!user || !user.organizationId) {
-      return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     const tenantId = user.organizationId;
@@ -76,7 +71,6 @@ export async function POST(request: NextRequest) {
         initiator_id: userId,
         organization_id: tenantId,
         call_url: callUrl,
-        call_type: 'video',
         status: 'active',
         participants: [userId]
       }])
@@ -91,7 +85,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return call data
+    // Return call data in consistent format
     const callData = {
       callUrl: call.call_url,
       channelId: call.channel_id,
@@ -99,7 +93,10 @@ export async function POST(request: NextRequest) {
       startTime: new Date(call.created_at)
     };
 
-    return NextResponse.json(callData);
+    return NextResponse.json({
+      success: true,
+      call: callData
+    });
 
   } catch (error) {
     console.error('Error in start call API:', error);

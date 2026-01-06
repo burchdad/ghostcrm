@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const userList = onlineUsers?.map(item => (item as any).users?.id).filter(Boolean) || [];
 
     return NextResponse.json({
-      status: 'success',
+      success: true,
       data: {
         activeCollaborators,
         onlineUsers: userList,
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      status: 'success',
+      success: true,
       data: {
         sessionId: session.id,
         participants: [user.id],

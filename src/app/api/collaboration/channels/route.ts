@@ -39,11 +39,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Use organization ID from user if not provided in query
-    tenantId = tenantId || user.organizationId.toString();
+    tenantId = tenantId || user.organizationId;
     const userId = user.id;
 
     // Verify user has access to this tenant
-    if (user.organizationId.toString() !== tenantId) {
+    if (user.organizationId !== tenantId) {
       return NextResponse.json({ error: 'Unauthorized access to tenant data' }, { status: 403 });
     }
 
@@ -116,7 +116,10 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json(formattedChannels);
+    return NextResponse.json({
+      success: true,
+      channels: formattedChannels
+    });
 
   } catch (error) {
     console.error('Error in channels API:', error);
@@ -139,7 +142,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const tenantId = user.organizationId.toString();
+    const tenantId = user.organizationId;
     const userId = user.id;
 
     // Parse request body
@@ -197,7 +200,10 @@ export async function POST(request: NextRequest) {
       createdBy: channel.created_by
     };
 
-    return NextResponse.json(formattedChannel);
+    return NextResponse.json({
+      success: true,
+      channel: formattedChannel
+    });
 
   } catch (error) {
     console.error('Error in create channel API:', error);
