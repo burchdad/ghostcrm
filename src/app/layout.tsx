@@ -7,6 +7,7 @@ import { RouteGuard } from "@/middleware/PermissionMiddleware";
 import { I18nProvider } from "@/components/utils/I18nProvider";
 import GlobalAIAssistant from "@/components/global/GlobalAIAssistant";
 import QuickAddButton from "@/components/navigation/QuickAddButton";
+import GlobalCollaborationButton from "@/components/navigation/GlobalCollaborationButton";
 import AIAgentInitializer from "@/components/ai/AIAgentInitializer";
 import { Toaster } from "@/components/ui/toaster";
 import "../styles/globals.css";  // <— REQUIRED
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <AIAgentInitializer />
                 <GlobalAIAssistant />
                 <QuickAddButton />
+                <GlobalCollaborationButton />
                 <Toaster />
               </RibbonProvider>
               {/* </ThemeProvider> */}

@@ -1,0 +1,101 @@
+/* 
+  ===========================================
+  💬 GLOBAL COLLABORATION FLOATING BUTTON
+  ===========================================
+  Component: /components/navigation/GlobalCollaborationButton.tsx
+  Purpose: Global floating button for team collaboration (similar to QuickAdd)
+  Theme: Positioned next to QuickAdd button with collaboration styling
+*/
+
+.global-collaboration-btn {
+  /* Positioning - Next to QuickAdd button */
+  position: fixed;
+  bottom: 1.5rem;
+  left: 5.5rem; /* Positioned after QuickAdd button (4rem + gap) */
+  z-index: 1000;
+  
+  /* Size and Shape */
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  
+  /* Collaboration Theme Colors */
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #c084fc 100%);
+  border: none;
+  box-shadow: 
+    0 4px 12px rgba(139, 92, 246, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+  
+  /* Content */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  
+  /* Interactions */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  transform: scale(1);
+}
+
+.global-collaboration-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 6px 16px rgba(139, 92, 246, 0.5),
+    0 4px 8px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 50%, #a855f7 100%);
+}
+
+.global-collaboration-btn:active {
+  transform: scale(0.95);
+}
+
+/* Notification Badge */
+.global-collaboration-badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  
+  background: #ef4444;
+  color: white;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .global-collaboration-btn {
+    bottom: 1rem;
+    left: 4.5rem; /* Adjusted spacing for mobile */
+    width: 3rem;
+    height: 3rem;
+  }
+  
+  .global-collaboration-badge {
+    width: 1rem;
+    height: 1rem;
+    font-size: 0.625rem;
+  }
+}
+
+/* Ensure proper stacking with other floating elements */
+@media (max-width: 640px) {
+  .global-collaboration-btn {
+    /* Stack vertically on very small screens if needed */
+    bottom: 5.5rem; /* Above QuickAdd button */
+    left: 1.5rem;
+  }
+}

@@ -4,7 +4,6 @@ import React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import UnifiedToolbar from "@/components/navigation/UnifiedToolbar";
 import Sidebar from "@/components/layout/Sidebar";
-import CollaborationSidebar from "@/components/global/CollaborationSidebar";
 
 // Safe auth hook that handles missing context gracefully
 function useSafeAuth() {
@@ -46,7 +45,6 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
   
   // Fixed sidebar widths - updated for better readability
   const sidebarWidth = 240; // w-60 = 240px (increased from 200px for better text visibility)
-  const collaborationSidebarWidth = 240; // w-60 = 240px
 
   // If on auth pages (login/register), render children directly with no layout
   if (isAuthPage) {
@@ -96,22 +94,6 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
         </div>
       </aside>
 
-      {/* Right Sidebar (Collaboration) */}
-      {!expandedMode && (
-        <aside
-          className="fixed right-0 bottom-0 z-30 shadow-lg overflow-hidden collaboration-sidebar-container"
-          style={{
-            top: "var(--unified-toolbar-h, 64px)",
-            width: `${collaborationSidebarWidth}px`,
-            height: "calc(100vh - var(--unified-toolbar-h, 64px))",
-            position: "fixed",
-            right: "0",
-          }}
-        >
-          <CollaborationSidebar onExpandMode={setExpandedMode} />
-        </aside>
-      )}
-
       {/* Expanded Mode Overlay */}
       {expandedMode && (
         <div
@@ -160,13 +142,13 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
         </div>
       )}
 
-      {/* Main content (between left sidebar and right sidebar/expanded mode) */}
+      {/* Main content (no right sidebar, now using global floating collaboration button) */}
       <main 
         className="main-content themed-bg-tertiary"
         style={{ 
           paddingTop: "calc(var(--unified-toolbar-h, 64px) + 10px)",
           paddingLeft: `${sidebarWidth + 16}px`,
-          paddingRight: expandedMode ? "16px" : `${collaborationSidebarWidth + 16}px`,
+          paddingRight: expandedMode ? "16px" : "16px", // No collaboration sidebar padding needed
           minHeight: "calc(100vh - var(--unified-toolbar-h, 64px))",
           paddingBottom: "40px", // Extra space at bottom
         }}
