@@ -191,7 +191,7 @@ function PageAIAssistant({
       <div className={`bg-white rounded-lg shadow-sm border ${className}`}>
         <button
           onClick={() => setCollapsed(false)}
-          className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50"
+          className="w-full p-3 flex items-center justify-between text-left hover:bg-gray-50"
         >
           <div className="flex items-center gap-2">
             <Bot className="h-5 w-5 text-blue-600" />
@@ -209,7 +209,7 @@ function PageAIAssistant({
 
   return (
     <div className={`bg-white rounded-lg shadow-sm border ${className}`}>
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bot className="h-5 w-5 text-blue-600" />
@@ -241,7 +241,7 @@ function PageAIAssistant({
         )}
       </div>
 
-      <div className="p-4">
+      <div className="p-3">
         {loading && insights.length === 0 ? (
           <div className="text-center py-4">
             <RefreshCw className="h-6 w-6 animate-spin mx-auto text-blue-600 mb-2" />
@@ -251,7 +251,7 @@ function PageAIAssistant({
           <div>
             {/* Navigation Header */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between mb-4 pb-2 border-b">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500">
                     Page {currentPage + 1} of {totalPages}
