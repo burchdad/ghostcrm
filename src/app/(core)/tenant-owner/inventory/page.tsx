@@ -78,8 +78,8 @@ export default function TenantOwnerInventoryPage() {
           
           if (inventoryResponse.ok) {
             const inventoryData = await inventoryResponse.json();
-            setInventory(inventoryData || []);
-            console.log('✅ [INVENTORY] Successfully fetched inventory data:', inventoryData?.length || 0, 'items');
+            setInventory(inventoryData?.data || []);
+            console.log('✅ [INVENTORY] Successfully fetched inventory data:', inventoryData?.data?.length || 0, 'items');
           } else {
             throw new Error(`HTTP error! status: ${inventoryResponse.status}`);
           }
@@ -130,7 +130,7 @@ export default function TenantOwnerInventoryPage() {
       
       if (response.ok) {
         const data = await response.json();
-        setInventory(data || []);
+        setInventory(data?.data || []);
         console.log('🔄 [INVENTORY] Data refreshed after vehicle update');
       }
     } catch (error) {
@@ -151,7 +151,7 @@ export default function TenantOwnerInventoryPage() {
       
       if (response.ok) {
         const data = await response.json();
-        setInventory(data || []);
+        setInventory(data?.data || []);
         console.log('🗑️ [INVENTORY] Data refreshed after vehicle deletion');
         
         toast({
@@ -191,10 +191,10 @@ export default function TenantOwnerInventoryPage() {
 
   // Calculate analytics
   const analytics = {
-    totalItems: inventory.reduce((sum, item) => sum + item.quantity, 0),
-    totalValue: inventory.reduce((sum, item) => sum + (item.quantity * item.price), 0),
-    lowStock: inventory.filter(item => item.status === 'low_stock').length,
-    outOfStock: inventory.filter(item => item.status === 'out_of_stock').length,
+    totalItems: inventory.reduce((sum, item) => sum + (item.stock_available || 0), 0),
+    totalValue: inventory.reduce((sum, item) => sum + (item.total_value || 0), 0),
+    lowStock: inventory.filter(item => item.availability_status === 'Low Stock' || item.stock_available <= (item.stock_reorder_level || 5)).length,
+    outOfStock: inventory.filter(item => item.availability_status === 'Out of Stock' || item.stock_available === 0).length,
   };
 
   const formatCurrency = (amount: number) => {

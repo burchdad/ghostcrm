@@ -57,8 +57,16 @@ export class AIAnalysisService {
         throw new Error('No response from OpenAI');
       }
 
+      // Clean the response to extract JSON from markdown code blocks
+      let jsonResponse = response;
+      
+      // Remove markdown code block markers
+      jsonResponse = jsonResponse.replace(/^```json\s*/i, '');
+      jsonResponse = jsonResponse.replace(/\s*```\s*$/i, '');
+      jsonResponse = jsonResponse.trim();
+      
       // Parse the JSON response
-      const insights = JSON.parse(response);
+      const insights = JSON.parse(jsonResponse);
       
       // Validate and format insights
       return this.validateInsights(insights);

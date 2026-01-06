@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
     // Fetch existing deals to avoid duplicates
     const { data: existingDeals, error: dealsError } = await supabaseAdmin
       .from('deals')
-      .select('contact_id, customer_name')
+      .select('lead_id, customer_name')
       .eq('organization_id', organizationId) // Use correct column name
       .not('stage', 'in', '(closed_lost)');
 
@@ -152,7 +152,7 @@ function generateAIMatches(
   if (!leads.length || !inventory.length) return [];
 
   const matches: AIMatch[] = [];
-  const existingContactIds = new Set(existingDeals.map(d => d.contact_id));
+  const existingLeadIds = new Set(existingDeals.map(d => d.lead_id));
   const existingCustomerNames = new Set(
     existingDeals.map(d => d.customer_name?.toLowerCase()).filter(Boolean)
   );
@@ -161,7 +161,7 @@ function generateAIMatches(
     // Skip leads with existing deals
     const leadFullName = `${lead.contacts?.first_name || ''} ${lead.contacts?.last_name || ''}`.trim().toLowerCase();
     
-    if (existingContactIds.has(lead.contact_id) || 
+    if (existingLeadIds.has(lead.id) || 
         existingCustomerNames.has(leadFullName)) {
       continue;
     }
