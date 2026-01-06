@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { MessageSquare } from "lucide-react";
-import CollaborationModal from "@/components/collaboration/CollaborationModal";
+import TeamsStyleCollaborationModal from "@/components/collaboration/TeamsStyleCollaborationModal";
 import "./GlobalCollaborationButton.css";
 
 export default function GlobalCollaborationButton() {
@@ -64,16 +64,11 @@ export default function GlobalCollaborationButton() {
         )}
       </button>
 
-      {/* Collaboration Modal with all current functionality */}
+      {/* Teams-style Collaboration Modal */}
       {showCollaboration && (
-        <CollaborationModal
+        <TeamsStyleCollaborationModal
           isOpen={showCollaboration}
           onClose={() => setShowCollaboration(false)}
-          onExpandMode={(mode) => {
-            // Handle expand modes (video, whiteboard, documents)
-            console.log('Collaboration expand mode:', mode);
-            // Keep modal open when expanding to full features
-          }}
         />
       )}
     </>
