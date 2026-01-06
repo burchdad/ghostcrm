@@ -460,12 +460,14 @@ export default function TenantOwnerLeads() {
           <div className="tenant-owner-leads-analytics-grid-header">
             <div className="tenant-owner-leads-analytics-card total">
               <div className="tenant-owner-leads-card-header">
-                <span className="tenant-owner-leads-card-label">TOTAL LEADS</span>
+                <div className="tenant-owner-leads-card-title-row">
+                  <span className="tenant-owner-leads-card-label">TOTAL LEADS</span>
+                  <span className="tenant-owner-leads-card-value">{analytics.totalLeads}</span>
+                </div>
                 <div className="tenant-owner-leads-card-icon total">
                   <Users />
                 </div>
               </div>
-              <div className="tenant-owner-leads-card-value">{analytics.totalLeads}</div>
               <div className="tenant-owner-leads-card-trend">
                 <TrendingUp />
                 {analytics.totalLeads > 0 ? 'Getting started' : 'Getting started'}
@@ -474,12 +476,14 @@ export default function TenantOwnerLeads() {
 
             <div className="tenant-owner-leads-analytics-card conversion">
               <div className="tenant-owner-leads-card-header">
-                <span className="tenant-owner-leads-card-label">CONVERSION RATE</span>
+                <div className="tenant-owner-leads-card-title-row">
+                  <span className="tenant-owner-leads-card-label">CONVERSION RATE</span>
+                  <span className="tenant-owner-leads-card-value">{analytics.conversionRate}%</span>
+                </div>
                 <div className="tenant-owner-leads-card-icon conversion">
                   <TrendingUp />
                 </div>
               </div>
-              <div className="tenant-owner-leads-card-value">{analytics.conversionRate}%</div>
               <div className="tenant-owner-leads-card-trend">
                 <TrendingUp />
                 {parseFloat(analytics.conversionRate) > 20 ? 'Room for growth' : 'Room for growth'}
@@ -488,12 +492,14 @@ export default function TenantOwnerLeads() {
 
             <div className="tenant-owner-leads-analytics-card new-today">
               <div className="tenant-owner-leads-card-header">
-                <span className="tenant-owner-leads-card-label">NEW TODAY</span>
+                <div className="tenant-owner-leads-card-title-row">
+                  <span className="tenant-owner-leads-card-label">NEW TODAY</span>
+                  <span className="tenant-owner-leads-card-value">{analytics.newToday}</span>
+                </div>
                 <div className="tenant-owner-leads-card-icon new-today">
                   <Plus />
                 </div>
               </div>
-              <div className="tenant-owner-leads-card-value">{analytics.newToday}</div>
               <div className="tenant-owner-leads-card-trend">
                 <TrendingUp />
                 {analytics.hotLeadsToday > 0 ? 'No hot leads yet' : 'No hot leads yet'}
@@ -502,12 +508,14 @@ export default function TenantOwnerLeads() {
 
             <div className="tenant-owner-leads-analytics-card follow-ups">
               <div className="tenant-owner-leads-card-header">
-                <span className="tenant-owner-leads-card-label">FOLLOW-UPS DUE</span>
+                <div className="tenant-owner-leads-card-title-row">
+                  <span className="tenant-owner-leads-card-label">FOLLOW-UPS DUE</span>
+                  <span className="tenant-owner-leads-card-value">{analytics.followUpsDue}</span>
+                </div>
                 <div className="tenant-owner-leads-card-icon follow-ups">
                   <Phone />
                 </div>
               </div>
-              <div className="tenant-owner-leads-card-value">{analytics.followUpsDue}</div>
               <div className="tenant-owner-leads-card-trend">
                 <TrendingUp />
                 {analytics.followUpsDue > 0 ? 'All caught up' : 'All caught up'}
