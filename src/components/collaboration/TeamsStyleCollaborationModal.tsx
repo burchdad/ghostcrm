@@ -64,6 +64,87 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
   const [searchQuery, setSearchQuery] = useState("");
   const [chats, setChats] = useState<Chat[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [messageText, setMessageText] = useState("");
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+
+  // Handler functions for button functionality
+  const handleVideoCall = () => {
+    console.log('Starting video call...');
+    // You can integrate with your video call service here
+    alert('Video call feature - integrate with your preferred video service!');
+  };
+
+  const handleAudioCall = () => {
+    console.log('Starting audio call...');
+    // You can integrate with your audio call service here  
+    alert('Audio call feature - integrate with your preferred audio service!');
+  };
+
+  const handleMoreOptions = () => {
+    setShowMoreMenu(!showMoreMenu);
+  };
+
+  const handleAttachment = () => {
+    console.log('Opening file picker...');
+    // Create file input and trigger click
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = true;
+    fileInput.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files) {
+        console.log('Selected files:', Array.from(files).map(f => f.name));
+        alert(`Selected ${files.length} file(s): ${Array.from(files).map(f => f.name).join(', ')}`);
+      }
+    };
+    fileInput.click();
+  };
+
+  const handleEmoji = () => {
+    console.log('Opening emoji picker...');
+    // You can integrate with an emoji picker library here
+    const emojis = ['😊', '👍', '❤️', '😂', '🎉', '👏', '🔥', '💯'];
+    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+    setMessageText(prev => prev + randomEmoji);
+  };
+
+  const handleSendMessage = () => {
+    if (!messageText.trim()) return;
+    
+    console.log('Sending message:', messageText);
+    // Here you would typically send the message to your backend
+    alert(`Message sent: "${messageText}"`);
+    setMessageText('');
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const handleNewChat = () => {
+    console.log('Creating new chat...');
+    alert('New chat feature - this would open a dialog to start a new conversation!');
+  };
+
+  // Close more menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showMoreMenu) {
+        setShowMoreMenu(false);
+      }
+    };
+
+    if (showMoreMenu) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showMoreMenu]);
 
   // Mock data
   useEffect(() => {
@@ -192,16 +273,40 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
                   </div>
                 </div>
                 <div className="teams-conversation-actions">
-                  <button className="teams-action-btn">
+                  <button onClick={handleVideoCall} className="teams-action-btn" title="Start video call">
                     <Video className="w-5 h-5" />
                   </button>
-                  <button className="teams-action-btn">
+                  <button onClick={handleAudioCall} className="teams-action-btn" title="Start audio call">
                     <Phone className="w-5 h-5" />
                   </button>
-                  <button className="teams-action-btn">
-                    <MoreHorizontal className="w-5 h-5" />
-                  </button>
-                  <button onClick={onClose} className="teams-action-btn" style={{ marginLeft: '0.5rem' }}>
+                  <div style={{ position: 'relative' }}>
+                    <button onClick={handleMoreOptions} className="teams-action-btn" title="More options">
+                      <MoreHorizontal className="w-5 h-5" />
+                    </button>
+                    {showMoreMenu && (
+                      <div className="teams-more-menu">
+                        <button 
+                          onClick={() => {alert('Add people to chat'); setShowMoreMenu(false);}}
+                          className="teams-more-menu-item"
+                        >
+                          Add people
+                        </button>
+                        <button 
+                          onClick={() => {alert('View chat details'); setShowMoreMenu(false);}}
+                          className="teams-more-menu-item"
+                        >
+                          Chat details
+                        </button>
+                        <button 
+                          onClick={() => {alert('Mute notifications'); setShowMoreMenu(false);}}
+                          className="teams-more-menu-item"
+                        >
+                          Mute notifications
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={onClose} className="teams-action-btn" style={{ marginLeft: '0.5rem' }} title="Close">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
@@ -266,15 +371,27 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
                       placeholder={`Message ${selectedChatData?.name}...`}
                       className="teams-input"
                       rows={1}
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      onKeyPress={handleKeyPress}
                     />
                     <div className="teams-input-actions">
-                      <button className="teams-input-btn">
+                      <button onClick={handleAttachment} className="teams-input-btn" title="Attach file">
                         <Paperclip className="w-5 h-5" />
                       </button>
-                      <button className="teams-input-btn">
+                      <button onClick={handleEmoji} className="teams-input-btn" title="Add emoji">
                         <Smile className="w-5 h-5" />
                       </button>
-                      <button className="teams-send-btn">
+                      <button 
+                        onClick={handleSendMessage} 
+                        className="teams-send-btn"
+                        disabled={!messageText.trim()}
+                        title="Send message"
+                        style={{
+                          opacity: messageText.trim() ? 1 : 0.5,
+                          cursor: messageText.trim() ? 'pointer' : 'not-allowed'
+                        }}
+                      >
                         <Send className="w-4 h-4" />
                       </button>
                     </div>
@@ -289,11 +406,11 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
               <div className="teams-header">
                 <div className="teams-header-title">
                   <h2>Chat</h2>
-                  <button className="teams-btn">
+                  <button onClick={handleNewChat} className="teams-btn" title="Start new chat">
                     <Plus className="w-5 h-5" />
                   </button>
                 </div>
-                <button onClick={onClose} className="teams-btn">
+                <button onClick={onClose} className="teams-btn" title="Close">
                   <X className="w-5 h-5" />
                 </button>
               </div>
