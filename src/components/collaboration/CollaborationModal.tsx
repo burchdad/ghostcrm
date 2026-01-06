@@ -566,14 +566,28 @@ export default function CollaborationModal({ isOpen, onClose, onExpandMode }: Co
 
   return (
     <>
-      {/* Modal Backdrop */}
+      {/* Modal Backdrop - matches other modals in the app */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 50,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+          background: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)'
+        }}
         onClick={onClose}
       >
         {/* Modal Content - Click event stops propagation to prevent closing when clicking inside */}
         <div 
-          className="bg-white rounded-xl shadow-2xl w-[480px] h-[500px] flex flex-col overflow-hidden border border-gray-200 m-4"
+          className="bg-white rounded-xl shadow-2xl w-[480px] h-[500px] flex flex-col overflow-hidden border border-gray-200"
           onClick={(e) => e.stopPropagation()}
         >
         
