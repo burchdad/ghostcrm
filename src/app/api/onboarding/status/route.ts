@@ -27,36 +27,14 @@ export async function GET(req: NextRequest) {
     console.log("🔍 [ONBOARDING_STATUS] Checking user onboarding status");
 
     // Check authentication using JWT
-    if (!(await isAuthenticated(req))) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-    }
-
-    // Get user data from JWT
+    // Get authenticated user from Supabase SSR
     const user = await getUserFromRequest(req);
     if (!user || !user.organizationId) {
       return NextResponse.json({ error: "User organization not found" }, { status: 401 });
     }
 
     const organizationId = user.organizationId;
-    const jwtToken = req.cookies.get('ghostcrm_jwt')?.value;
-    
-    if (!jwtToken) {
-      console.error("❌ [ONBOARDING_STATUS] No JWT token found");
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-    }
-
-    // Decode JWT to get user info
-    let jwtPayload: any;
-    try {
-      const base64Payload = jwtToken.split('.')[1];
-      const decodedPayload = Buffer.from(base64Payload, 'base64').toString('utf-8');
-      jwtPayload = JSON.parse(decodedPayload);
-    } catch (jwtError) {
-      console.error("❌ [ONBOARDING_STATUS] Invalid JWT token:", jwtError);
-      return NextResponse.json({ error: "Invalid authentication token" }, { status: 401 });
-    }
-
-    console.log("🔍 [ONBOARDING_STATUS] Using authenticated user:", jwtPayload.email);
+    console.log("🔍 [ONBOARDING_STATUS] Using authenticated user:", user.email);
 
     // 1) Try: organization where the user is the owner
     let organizationData: OrgRow | null = null;
@@ -66,7 +44,7 @@ export async function GET(req: NextRequest) {
     const { data: ownerOrg, error: ownerOrgError } = await supabaseAdmin
       .from("organizations")
       .select("id, name, subdomain, onboarding_completed, created_at, status")
-      .eq("owner_id", jwtPayload.userId)
+      .eq("owner_id", user.id)
       .single<OrgRow>();
 
     if (ownerOrgError && ownerOrgError.code !== "PGRST116") {
@@ -89,7 +67,7 @@ export async function GET(req: NextRequest) {
       const { data: membership, error: membershipError } = await supabaseAdmin
         .from("organization_memberships")
         .select("organization_id, status")
-        .eq("user_id", jwtPayload.userId)
+        .eq("user_id", user.id)
         .eq("status", "active")
         .limit(1)
         .maybeSingle();

@@ -1,12 +1,10 @@
 // app/api/migrate/organizations/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
-import { jwtVerify, JWTPayload } from 'jose';
+import { getUserFromRequest } from '@/lib/auth/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-type RolePayload = JWTPayload & { role?: string };
 
 // --- Security helpers ---
 async function validateAdminAccess(request: NextRequest): Promise<boolean> {
@@ -18,15 +16,11 @@ async function validateAdminAccess(request: NextRequest): Promise<boolean> {
       return false;
     }
 
-    // 2) JWT role check (cookie)
-    const jwt = request.cookies.get('ghostcrm_jwt')?.value;
-    if (!jwt) return false;
+    // 2) Supabase SSR role check
+    const user = await getUserFromRequest(request);
+    if (!user) return false;
 
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || '');
-    const { payload } = await jwtVerify(jwt, secret);
-    const role = (payload as RolePayload).role;
-
-    return role === 'admin' || role === 'superuser';
+    return user.role === 'admin' || user.role === 'superuser';
   } catch {
     return false;
   }

@@ -169,45 +169,35 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Get authenticated user from JWT cookie (consistent with other APIs)
-    const token = req.cookies.get("ghostcrm_jwt")?.value;
-    if (!token) {
+    // Get authenticated user from Supabase SSR authentication
+    const user = await getUserFromRequest(req);
+    if (!user) {
       return new Response(
-        JSON.stringify({ error: "Authentication token required" }),
+        JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseAdmin.auth.getUser(token);
-
-    if (authError || !user) {
-      console.error('❌ [INVENTORY] Auth error in POST:', authError);
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    if (!user.organizationId) {
+      console.error('❌ [INVENTORY] No organization ID in POST');
+      return new Response(JSON.stringify({ error: "Organization not found" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
 
     // Get user's organization
-    const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from("user_organizations")
-      .select("organization_id")
-      .eq("user_id", user.id)
-      .single();
-
-    if (orgError || !userOrg) {
-      return new Response(JSON.stringify({ error: "No organization found" }), {
-        status: 403,
+    if (!user.organizationId) {
+      console.error('❌ [INVENTORY] No organization ID in POST');
+      return new Response(JSON.stringify({ error: "Organization not found" }), {
+        status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
 
     // Create inventory data
     const inventoryData = {
-      organization_id: userOrg.organization_id,
+      organization_id: user.organizationId,
       name: body.name,
       sku: body.sku,
       category: body.category,
@@ -259,7 +249,7 @@ export async function POST(req: NextRequest) {
 
     // Log audit event
     await supabaseAdmin.from("audit_events").insert({
-      organization_id: userOrg.organization_id,
+      organization_id: user.organizationId,
       entity: "inventory",
       entity_id: inventory.id,
       action: "create",
@@ -294,40 +284,13 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // Get authenticated user from JWT cookie (consistent with other APIs)
-    const token = req.cookies.get("ghostcrm_jwt")?.value;
-    if (!token) {
+    // Get authenticated user from Supabase SSR authentication
+    const user = await getUserFromRequest(req);
+    if (!user || !user.organizationId) {
       return new Response(
-        JSON.stringify({ error: "Authentication token required" }),
+        JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
-    }
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseAdmin.auth.getUser(token);
-
-    if (authError || !user) {
-      console.error('❌ [INVENTORY] Auth error in PUT:', authError);
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from("user_organizations")
-      .select("organization_id")
-      .eq("user_id", user.id)
-      .single();
-
-    if (orgError || !userOrg) {
-      return new Response(JSON.stringify({ error: "No organization found" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
     }
 
     // Update inventory item
@@ -370,7 +333,7 @@ export async function PUT(req: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
-      .eq("organization_id", userOrg.organization_id)
+      .eq("organization_id", user.organizationId)
       .select()
       .single();
 
@@ -384,7 +347,7 @@ export async function PUT(req: NextRequest) {
 
     // Log audit event
     await supabaseAdmin.from("audit_events").insert({
-      organization_id: userOrg.organization_id,
+      organization_id: user.organizationId,
       entity: "inventory",
       entity_id: id,
       action: "update",
@@ -419,40 +382,13 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Get authenticated user from JWT cookie (consistent with other APIs)
-    const token = req.cookies.get("ghostcrm_jwt")?.value;
-    if (!token) {
+    // Get authenticated user from Supabase SSR authentication
+    const user = await getUserFromRequest(req);
+    if (!user || !user.organizationId) {
       return new Response(
-        JSON.stringify({ error: "Authentication token required" }),
+        JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
-    }
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseAdmin.auth.getUser(token);
-
-    if (authError || !user) {
-      console.error('❌ [INVENTORY] Auth error in DELETE:', authError);
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Get user's organization
-    const { data: userOrg, error: orgError } = await supabaseAdmin
-      .from("user_organizations")
-      .select("organization_id")
-      .eq("user_id", user.id)
-      .single();
-
-    if (orgError || !userOrg) {
-      return new Response(JSON.stringify({ error: "No organization found" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
     }
 
     // Delete inventory item
@@ -460,7 +396,7 @@ export async function DELETE(req: NextRequest) {
       .from("inventory")
       .delete()
       .eq("id", id)
-      .eq("organization_id", userOrg.organization_id);
+      .eq("organization_id", user.organizationId);
 
     if (error) {
       console.error("Error deleting inventory item:", error);
@@ -472,7 +408,7 @@ export async function DELETE(req: NextRequest) {
 
     // Log audit event
     await supabaseAdmin.from("audit_events").insert({
-      organization_id: userOrg.organization_id,
+      organization_id: user.organizationId,
       entity: "inventory",
       entity_id: id,
       action: "delete",
