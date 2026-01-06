@@ -204,7 +204,8 @@
 
 /* AI Assistant Insights Section */
 .tenant-owner-leads-ai-insights-section {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+  margin-top: 0;
 }
 
 .tenant-owner-leads-ai-insights-section .tenant-owner-leads-ai-assistant {
@@ -1048,7 +1049,7 @@
 }
 
 .tenant-owner-leads-ai-assistant > div {
-  min-height: 240px !important;
+  min-height: 120px !important;
   display: flex !important;
   flex-direction: column !important;
 }
@@ -1056,7 +1057,7 @@
 /* Ensure AI Assistant content stretches properly on larger screens */
 @media (min-width: 1201px) {
   .tenant-owner-leads-ai-assistant .bg-white {
-    min-height: 240px !important;
+    min-height: 120px !important;
     display: flex !important;
     flex-direction: column !important;
   }
