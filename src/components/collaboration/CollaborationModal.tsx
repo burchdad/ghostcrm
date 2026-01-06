@@ -565,17 +565,17 @@ export default function CollaborationModal({ isOpen, onClose, onExpandMode }: Co
   );
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Backdrop */}
+    <>
+      {/* Modal Backdrop */}
       <div 
-        className="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
         onClick={onClose}
-      />
-
-      {/* Modal - Centered and compact */}
-      <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 
-                     w-[480px] h-[500px] bg-white rounded-xl shadow-2xl 
-                     border border-gray-200 flex flex-col overflow-hidden">
+      >
+        {/* Modal Content - Click event stops propagation to prevent closing when clicking inside */}
+        <div 
+          className="bg-white rounded-xl shadow-2xl w-[480px] h-[500px] flex flex-col overflow-hidden border border-gray-200 m-4"
+          onClick={(e) => e.stopPropagation()}
+        >
         
         {/* Header */}
         <div className="p-3 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50 
@@ -708,7 +708,8 @@ export default function CollaborationModal({ isOpen, onClose, onExpandMode }: Co
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
