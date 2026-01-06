@@ -215,52 +215,17 @@ function PageAIAssistant({
             <Bot className="h-5 w-5 text-blue-600" />
             <h3 className="font-medium text-gray-900">AI Assistant</h3>
             <span className="text-sm text-gray-500">• {pageTitle}</span>
+            {lastUpdate && (
+              <span className="text-xs text-gray-400">• Last updated: {lastUpdate.toLocaleTimeString()}</span>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={analyzeEntity}
-              disabled={loading}
-              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-              title="Refresh insights"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-            <button
-              onClick={() => setCollapsed(true)}
-              className="p-1 text-gray-400 hover:text-gray-600"
-              title="Collapse"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-        {lastUpdate && (
-          <p className="text-xs text-gray-500 mt-1">
-            Last updated: {lastUpdate.toLocaleTimeString()}
-          </p>
-        )}
-      </div>
-
-      <div className="p-3">
-        {loading && insights.length === 0 ? (
-          <div className="text-center py-4">
-            <RefreshCw className="h-6 w-6 animate-spin mx-auto text-blue-600 mb-2" />
-            <p className="text-sm text-gray-600">Analyzing...</p>
-          </div>
-        ) : insights.length > 0 ? (
-          <div>
-            {/* Navigation Header */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mb-3 pb-2 border-b">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">
-                    Page {currentPage + 1} of {totalPages}
-                  </span>
-                  <span className="text-xs text-gray-400">•</span>
-                  <span className="text-xs text-gray-500">
-                    {insights.length} insights total
-                  </span>
-                </div>
+          <div className="flex items-center gap-3">
+            {/* Navigation for insights */}
+            {insights.length > 0 && totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">
+                  Page {currentPage + 1} of {totalPages} • {insights.length} insights
+                </span>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={goToPrevPage}
@@ -281,7 +246,33 @@ function PageAIAssistant({
                 </div>
               </div>
             )}
-            
+            <button
+              onClick={analyzeEntity}
+              disabled={loading}
+              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+              title="Refresh insights"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              onClick={() => setCollapsed(true)}
+              className="p-1 text-gray-400 hover:text-gray-600"
+              title="Collapse"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-2">
+        {loading && insights.length === 0 ? (
+          <div className="text-center py-4">
+            <RefreshCw className="h-6 w-6 animate-spin mx-auto text-blue-600 mb-2" />
+            <p className="text-sm text-gray-600">Analyzing...</p>
+          </div>
+        ) : insights.length > 0 ? (
+          <div>
             {/* 4-Column Insights Grid */}
             <div className="ai-insights-grid">
               {currentInsights.map((insight) => {
