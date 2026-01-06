@@ -481,21 +481,114 @@ ALTER TABLE promo_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subdomains ENABLE ROW LEVEL SECURITY;
 
 -- Service role policies (bypass RLS for service operations)
-CREATE POLICY IF NOT EXISTS "Service role access" ON collaboration_channels FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON collaboration_messages FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON collaboration_calls FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON collaboration_meetings FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON collaboration_files FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON organization_memberships FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON user_organizations FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON user_notification_preferences FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON workflow_triggers FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON subscriptions FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON tenant_subscriptions FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON billing_events FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON billing_sessions FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON promo_codes FOR ALL TO service_role USING (true);
-CREATE POLICY IF NOT EXISTS "Service role access" ON subdomains FOR ALL TO service_role USING (true);
+DO $$
+BEGIN
+  -- collaboration_channels policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'collaboration_channels' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON collaboration_channels FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- collaboration_messages policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'collaboration_messages' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON collaboration_messages FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- collaboration_calls policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'collaboration_calls' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON collaboration_calls FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- collaboration_meetings policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'collaboration_meetings' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON collaboration_meetings FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- collaboration_files policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'collaboration_files' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON collaboration_files FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- organization_memberships policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'organization_memberships' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON organization_memberships FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- user_organizations policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'user_organizations' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON user_organizations FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- user_notification_preferences policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'user_notification_preferences' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON user_notification_preferences FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- workflow_triggers policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'workflow_triggers' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON workflow_triggers FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- subscriptions policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'subscriptions' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON subscriptions FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- tenant_subscriptions policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'tenant_subscriptions' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON tenant_subscriptions FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- billing_events policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'billing_events' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON billing_events FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- billing_sessions policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'billing_sessions' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON billing_sessions FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- promo_codes policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'promo_codes' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON promo_codes FOR ALL TO service_role USING (true);
+  END IF;
+  
+  -- subdomains policies
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'subdomains' AND policyname = 'Service role access'
+  ) THEN
+    CREATE POLICY "Service role access" ON subdomains FOR ALL TO service_role USING (true);
+  END IF;
+END
+$$;
 
 -- ===================================================================
 -- FOREIGN KEY CONSTRAINTS
