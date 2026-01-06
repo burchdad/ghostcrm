@@ -233,10 +233,10 @@ function calculateMatchScore(
   }
 
   // Vehicle preference matching (30% weight)
-  const vehicleText = `${vehicle.make} ${vehicle.model}`.toLowerCase();
+  const vehicleText = `${vehicle.brand || vehicle.name} ${vehicle.model}`.toLowerCase();
   const interestText = vehicleInterest.toLowerCase();
   
-  if (interestText.includes(vehicle.make?.toLowerCase())) {
+  if (interestText.includes((vehicle.brand || vehicle.name)?.toLowerCase())) {
     score += 20;
     factors.push('Brand preference match');
   }
