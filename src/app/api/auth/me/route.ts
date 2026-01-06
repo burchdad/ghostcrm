@@ -35,9 +35,65 @@ export async function GET(req: NextRequest) {
       console.log('⚠️ [AUTH-ME] Could not fetch user profile:', profileError.message);
     }
 
-    // Get tenant info from user metadata
-    const tenantId = user.user_metadata?.tenant_id || userProfile?.organization_id || 'default-org';
-    const organizationId = user.user_metadata?.organization_id || userProfile?.organization_id || 'default-org';
+    // Get tenant info from user metadata - might be subdomain string
+    let tenantId = user.user_metadata?.tenant_id || userProfile?.organization_id || 'default-org';
+    let organizationId = user.user_metadata?.organization_id || userProfile?.organization_id || 'default-org';
+
+    // If tenantId is not a UUID (looks like a subdomain), resolve it to organization UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(organizationId)) {
+      console.log('🔍 [AUTH-ME] organizationId is not UUID, attempting subdomain lookup:', organizationId);
+      
+      try {
+        // Look up organization by subdomain
+        const { data: orgLookup, error: orgError } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('subdomain', organizationId)
+          .single();
+          
+        if (orgLookup && !orgError) {
+          console.log('✅ [AUTH-ME] Found organization UUID for subdomain:', {
+            subdomain: organizationId,
+            organizationUUID: orgLookup.id
+          });
+          organizationId = orgLookup.id;
+          tenantId = orgLookup.id; // Use UUID for both
+        } else {
+          console.log('⚠️ [AUTH-ME] No organization found for subdomain, creating:', organizationId);
+          
+          // Create organization for this subdomain
+          try {
+            const { data: newOrg, error: createError } = await supabase
+              .from('organizations')
+              .insert({
+                name: organizationId.charAt(0).toUpperCase() + organizationId.slice(1), // Capitalize first letter
+                subdomain: organizationId,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
+              .select('id')
+              .single();
+              
+            if (newOrg && !createError) {
+              console.log('✅ [AUTH-ME] Created new organization:', {
+                subdomain: organizationId,
+                organizationUUID: newOrg.id
+              });
+              organizationId = newOrg.id;
+              tenantId = newOrg.id;
+            } else {
+              console.log('❌ [AUTH-ME] Failed to create organization:', createError);
+            }
+          } catch (createErr) {
+            console.log('❌ [AUTH-ME] Error creating organization:', createErr);
+          }
+        }
+      } catch (error) {
+        console.log('❌ [AUTH-ME] Error looking up organization by subdomain:', error);
+      }
+    }
 
     console.log('✅ [AUTH-ME] Returning user data:', {
       id: user.id,
