@@ -209,7 +209,7 @@ function PageAIAssistant({
 
   return (
     <div className={`bg-white rounded-lg shadow-sm border ${className}`}>
-      <div className="p-3 border-b border-gray-200">
+      <div className="px-3 py-2 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bot className="h-5 w-5 text-blue-600" />
@@ -265,16 +265,15 @@ function PageAIAssistant({
         </div>
       </div>
 
-      <div className="p-1">
+      <div className="px-2 py-1">
         {loading && insights.length === 0 ? (
-          <div className="text-center py-4">
-            <RefreshCw className="h-6 w-6 animate-spin mx-auto text-blue-600 mb-2" />
-            <p className="text-sm text-gray-600">Analyzing...</p>
+          <div className="text-center py-2">
+            <RefreshCw className="h-5 w-5 animate-spin mx-auto text-blue-600 mb-1" />
+            <p className="text-xs text-gray-600">Analyzing...</p>
           </div>
         ) : insights.length > 0 ? (
-          <div>
-            {/* 4-Column Insights Grid */}
-            <div className="ai-insights-grid">
+          // 4-Column Insights Grid
+          <div className="ai-insights-grid">
               {currentInsights.map((insight) => {
                 const IconComponent = getTypeIcon(insight.type);
                 
@@ -321,7 +320,6 @@ function PageAIAssistant({
                 ))
               )}
             </div>
-          </div>
         ) : (
           <div className="text-center py-6">
             <Bot className="h-12 w-12 mx-auto text-gray-300 mb-3" />
