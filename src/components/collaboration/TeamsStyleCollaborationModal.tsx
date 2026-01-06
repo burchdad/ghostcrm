@@ -73,75 +73,36 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
   const [isUploading, setIsUploading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [notificationsMuted, setNotificationsMuted] = useState(false);
+  
+  // Device Management States
+  const [showDeviceSetup, setShowDeviceSetup] = useState(false);
+  const [callType, setCallType] = useState<'video' | 'audio' | null>(null);
+  const [availableDevices, setAvailableDevices] = useState({
+    cameras: [] as MediaDeviceInfo[],
+    microphones: [] as MediaDeviceInfo[],
+    speakers: [] as MediaDeviceInfo[]
+  });
+  const [selectedDevices, setSelectedDevices] = useState({
+    camera: '',
+    microphone: '',
+    speaker: ''
+  });
+  const [devicePermissions, setDevicePermissions] = useState({
+    camera: false,
+    microphone: false
+  });
+  const [isTestingDevices, setIsTestingDevices] = useState(false);
+  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
 
   // Handler functions for button functionality
   const handleVideoCall = async () => {
-    try {
-      console.log('Starting video call...');
-      
-      // Check for camera/microphone permissions
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: true 
-      });
-      
-      // Stop the test stream
-      stream.getTracks().forEach(track => track.stop());
-      
-      // In production, integrate with your video service:
-      // - WebRTC peer-to-peer connection
-      // - Twilio Video, Agora, or similar service
-      // - Microsoft Teams SDK integration
-      
-      // For now, open a new window for video call (replace with your service)
-      const videoWindow = window.open(
-        `/video-call?chat=${selectedChat}&participants=${encodeURIComponent(selectedChatData?.name || '')}`,
-        'videocall',
-        'width=1200,height=800,resizable=yes,scrollbars=no'
-      );
-      
-      if (!videoWindow) {
-        throw new Error('Popup blocked. Please allow popups for video calls.');
-      }
-      
-    } catch (error: any) {
-      console.error('Video call error:', error);
-      alert(`Video call failed: ${error.message}`);
-    }
+    setCallType('video');
+    setShowDeviceSetup(true);
   };
 
   const handleAudioCall = async () => {
-    try {
-      console.log('Starting audio call...');
-      
-      // Check for microphone permissions
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: true 
-      });
-      
-      // Stop the test stream
-      stream.getTracks().forEach(track => track.stop());
-      
-      // In production, integrate with your audio service:
-      // - WebRTC audio-only connection
-      // - Twilio Voice, Vonage, or similar
-      // - SIP.js for VoIP integration
-      
-      // For now, open audio call interface
-      const audioWindow = window.open(
-        `/audio-call?chat=${selectedChat}&participants=${encodeURIComponent(selectedChatData?.name || '')}&mode=audio`,
-        'audiocall',
-        'width=400,height=300,resizable=no,scrollbars=no'
-      );
-      
-      if (!audioWindow) {
-        throw new Error('Popup blocked. Please allow popups for audio calls.');
-      }
-      
-    } catch (error: any) {
-      console.error('Audio call error:', error);
-      alert(`Audio call failed: ${error.message}`);
-    }
+    setCallType('audio');
+    setShowDeviceSetup(true);
   };
 
   const handleMoreOptions = (option?: string) => {
@@ -431,12 +392,150 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
     ];
   };
 
-  const filteredChats = chats.filter(chat => 
+  const filteredChats = chats.filter(chat =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const selectedChatData = selectedChat ? chats.find(c => c.id === selectedChat) : null;
+  // Device Management Functions
+  const enumerateDevices = async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      
+      const cameras = devices.filter(device => device.kind === 'videoinput');
+      const microphones = devices.filter(device => device.kind === 'audioinput');
+      const speakers = devices.filter(device => device.kind === 'audiooutput');
+      
+      setAvailableDevices({ cameras, microphones, speakers });
+      
+      // Set default devices if not already selected
+      if (!selectedDevices.camera && cameras.length > 0) {
+        setSelectedDevices(prev => ({ ...prev, camera: cameras[0].deviceId }));
+      }
+      if (!selectedDevices.microphone && microphones.length > 0) {
+        setSelectedDevices(prev => ({ ...prev, microphone: microphones[0].deviceId }));
+      }
+      if (!selectedDevices.speaker && speakers.length > 0) {
+        setSelectedDevices(prev => ({ ...prev, speaker: speakers[0].deviceId }));
+      }
+      
+    } catch (error) {
+      console.error('Error enumerating devices:', error);
+    }
+  };
+  
+  const checkPermissions = async () => {
+    try {
+      // Check camera permission
+      const cameraPermission = await navigator.permissions.query({ name: 'camera' as PermissionName });
+      const micPermission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      
+      setDevicePermissions({
+        camera: cameraPermission.state === 'granted',
+        microphone: micPermission.state === 'granted'
+      });
+      
+    } catch (error) {
+      console.log('Permission API not supported, will check during device access');
+    }
+  };
+  
+  const requestDeviceAccess = async (type: 'video' | 'audio') => {
+    try {
+      const constraints: MediaStreamConstraints = {
+        audio: true,
+        video: type === 'video'
+      };
+      
+      if (selectedDevices.microphone) {
+        constraints.audio = { deviceId: selectedDevices.microphone };
+      }
+      
+      if (type === 'video' && selectedDevices.camera) {
+        constraints.video = { deviceId: selectedDevices.camera };
+      }
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      setDevicePermissions({
+        camera: type === 'video',
+        microphone: true
+      });
+      
+      return stream;
+    } catch (error: any) {
+      console.error('Device access error:', error);
+      throw new Error(`Failed to access ${type === 'video' ? 'camera and microphone' : 'microphone'}: ${error.message}`);
+    }
+  };
+  
+  const testDevices = async () => {
+    setIsTestingDevices(true);
+    
+    try {
+      // Stop any existing preview stream
+      if (previewStream) {
+        previewStream.getTracks().forEach(track => track.stop());
+      }
+      
+      const stream = await requestDeviceAccess(callType || 'video');
+      setPreviewStream(stream);
+      
+      // Show preview for 5 seconds then stop
+      setTimeout(() => {
+        stream.getTracks().forEach(track => track.stop());
+        setPreviewStream(null);
+        setIsTestingDevices(false);
+      }, 5000);
+      
+    } catch (error: any) {
+      alert(error.message);
+      setIsTestingDevices(false);
+    }
+  };
+  
+  const startCallWithDevices = async () => {
+    try {
+      const stream = await requestDeviceAccess(callType!);
+      
+      // Stop the test stream
+      stream.getTracks().forEach(track => track.stop());
+      
+      // Close device setup
+      setShowDeviceSetup(false);
+      
+      // Proceed with call
+      const callWindow = window.open(
+        `/${callType}-call?chat=${selectedChat}&participants=${encodeURIComponent(selectedChatData?.name || '')}&camera=${selectedDevices.camera}&microphone=${selectedDevices.microphone}`,
+        `${callType}call`,
+        callType === 'video' ? 'width=1200,height=800,resizable=yes,scrollbars=no' : 'width=400,height=300,resizable=no,scrollbars=no'
+      );
+      
+      if (!callWindow) {
+        throw new Error('Popup blocked. Please allow popups for calls.');
+      }
+      
+    } catch (error: any) {
+      console.error('Call start error:', error);
+      alert(`Failed to start ${callType} call: ${error.message}`);
+    }
+  };
+  
+  // Initialize devices on component mount
+  React.useEffect(() => {
+    enumerateDevices();
+    checkPermissions();
+    
+    // Listen for device changes
+    navigator.mediaDevices.addEventListener('devicechange', enumerateDevices);
+    
+    return () => {
+      navigator.mediaDevices.removeEventListener('devicechange', enumerateDevices);
+      if (previewStream) {
+        previewStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);  const selectedChatData = selectedChat ? chats.find(c => c.id === selectedChat) : null;
   const messages = selectedChat ? getMockMessages(selectedChat) : [];
 
   if (!isOpen) return null;
@@ -825,6 +924,167 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
                   </div>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Device Setup Modal */}
+      {showDeviceSetup && (
+        <div className="teams-modal-backdrop" onClick={() => setShowDeviceSetup(false)}>
+          <div className="teams-device-setup-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="teams-modal-header">
+              <h3>Setup {callType === 'video' ? 'Video' : 'Audio'} Call</h3>
+              <button 
+                className="teams-modal-close" 
+                onClick={() => setShowDeviceSetup(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="teams-modal-content">
+              <div className="teams-device-section">
+                <h4>📹 Camera</h4>
+                {callType === 'video' && (
+                  <>
+                    <select 
+                      value={selectedDevices.camera} 
+                      onChange={(e) => setSelectedDevices(prev => ({ ...prev, camera: e.target.value }))}
+                      className="teams-device-select"
+                      disabled={availableDevices.cameras.length === 0}
+                    >
+                      {availableDevices.cameras.length === 0 ? (
+                        <option>No cameras found</option>
+                      ) : (
+                        availableDevices.cameras.map(device => (
+                          <option key={device.deviceId} value={device.deviceId}>
+                            {device.label || `Camera ${device.deviceId.substring(0, 8)}`}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                    <div className="teams-permission-status">
+                      {devicePermissions.camera ? (
+                        <span className="teams-permission-granted">✅ Camera access granted</span>
+                      ) : (
+                        <span className="teams-permission-denied">❌ Camera access needed</span>
+                      )}
+                    </div>
+                  </>
+                )}
+                {callType === 'audio' && (
+                  <p className="teams-device-note">🔇 Camera disabled for audio-only call</p>
+                )}
+              </div>
+              
+              <div className="teams-device-section">
+                <h4>🎤 Microphone</h4>
+                <select 
+                  value={selectedDevices.microphone} 
+                  onChange={(e) => setSelectedDevices(prev => ({ ...prev, microphone: e.target.value }))}
+                  className="teams-device-select"
+                  disabled={availableDevices.microphones.length === 0}
+                >
+                  {availableDevices.microphones.length === 0 ? (
+                    <option>No microphones found</option>
+                  ) : (
+                    availableDevices.microphones.map(device => (
+                      <option key={device.deviceId} value={device.deviceId}>
+                        {device.label || `Microphone ${device.deviceId.substring(0, 8)}`}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <div className="teams-permission-status">
+                  {devicePermissions.microphone ? (
+                    <span className="teams-permission-granted">✅ Microphone access granted</span>
+                  ) : (
+                    <span className="teams-permission-denied">❌ Microphone access needed</span>
+                  )}
+                </div>
+              </div>
+              
+              <div className="teams-device-section">
+                <h4>🔊 Speaker</h4>
+                <select 
+                  value={selectedDevices.speaker} 
+                  onChange={(e) => setSelectedDevices(prev => ({ ...prev, speaker: e.target.value }))}
+                  className="teams-device-select"
+                  disabled={availableDevices.speakers.length === 0}
+                >
+                  {availableDevices.speakers.length === 0 ? (
+                    <option>Default speaker</option>
+                  ) : (
+                    availableDevices.speakers.map(device => (
+                      <option key={device.deviceId} value={device.deviceId}>
+                        {device.label || `Speaker ${device.deviceId.substring(0, 8)}`}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+              
+              {/* Device Preview */}
+              {callType === 'video' && previewStream && (
+                <div className="teams-device-preview">
+                  <h4>📺 Camera Preview</h4>
+                  <video 
+                    ref={(video) => {
+                      if (video && previewStream) {
+                        video.srcObject = previewStream;
+                      }
+                    }}
+                    autoPlay 
+                    muted 
+                    className="teams-video-preview"
+                  />
+                </div>
+              )}
+              
+              {/* Test Button */}
+              <div className="teams-device-test">
+                <button 
+                  className="teams-btn teams-btn-secondary"
+                  onClick={testDevices}
+                  disabled={isTestingDevices}
+                >
+                  {isTestingDevices ? 'Testing...' : `Test ${callType === 'video' ? 'Camera & Mic' : 'Microphone'}`}
+                </button>
+              </div>
+              
+              {/* Device Info */}
+              <div className="teams-device-info">
+                <p><strong>📋 Setup Instructions:</strong></p>
+                <ol>
+                  <li>Select your preferred camera, microphone, and speaker</li>
+                  <li>Click "Test" to verify your devices work correctly</li>
+                  <li>Grant permissions when prompted by your browser</li>
+                  <li>Click "Start Call" to begin your {callType} call</li>
+                </ol>
+                
+                {(!devicePermissions.camera && callType === 'video') || !devicePermissions.microphone ? (
+                  <div className="teams-permission-warning">
+                    ⚠️ <strong>Permission Required:</strong> Your browser will ask for camera/microphone access when you start the call.
+                  </div>
+                ) : null}
+              </div>
+            </div>
+            
+            <div className="teams-modal-footer">
+              <button 
+                className="teams-btn teams-btn-secondary" 
+                onClick={() => setShowDeviceSetup(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="teams-btn teams-btn-primary"
+                onClick={startCallWithDevices}
+                disabled={availableDevices.microphones.length === 0 || (callType === 'video' && availableDevices.cameras.length === 0)}
+              >
+                Start {callType === 'video' ? 'Video' : 'Audio'} Call
+              </button>
             </div>
           </div>
         </div>

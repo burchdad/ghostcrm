@@ -1043,3 +1043,212 @@
   50% { width: 80%; }
   100% { width: 10%; }
 }
+
+/* Device Setup Modal */
+.teams-device-setup-modal {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.teams-device-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.teams-device-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #323130;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.teams-device-select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d2d0ce;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  color: #323130;
+  margin-bottom: 8px;
+}
+
+.teams-device-select:focus {
+  outline: none;
+  border-color: #6264a7;
+  box-shadow: 0 0 0 2px rgba(98, 100, 167, 0.2);
+}
+
+.teams-device-select:disabled {
+  background: #f3f2f1;
+  color: #a19f9d;
+  cursor: not-allowed;
+}
+
+.teams-permission-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.teams-permission-granted {
+  color: #107c10;
+  font-weight: 500;
+}
+
+.teams-permission-denied {
+  color: #d13438;
+  font-weight: 500;
+}
+
+.teams-device-note {
+  margin: 0;
+  padding: 8px 12px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  color: #856404;
+  font-size: 14px;
+}
+
+.teams-device-preview {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.teams-device-preview h4 {
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #323130;
+}
+
+.teams-video-preview {
+  width: 100%;
+  max-width: 400px;
+  height: 225px;
+  border-radius: 8px;
+  border: 2px solid #6264a7;
+  background: #000;
+  object-fit: cover;
+}
+
+.teams-device-test {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.teams-device-info {
+  background: #f0f2f5;
+  border: 1px solid #d2d0ce;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 20px;
+}
+
+.teams-device-info p {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #323130;
+}
+
+.teams-device-info ol {
+  margin: 0 0 16px 0;
+  padding-left: 20px;
+  font-size: 14px;
+  color: #605e5c;
+}
+
+.teams-device-info li {
+  margin-bottom: 4px;
+}
+
+.teams-permission-warning {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #856404;
+}
+
+/* Device Access Animation */
+.teams-device-accessing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+.teams-device-accessing-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f2f1;
+  border-top: 2px solid #6264a7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Device Status Indicators */
+.teams-device-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.teams-device-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #92c353;
+  animation: pulse 2s infinite;
+}
+
+.teams-device-status-dot.offline {
+  background: #d2d0ce;
+  animation: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .teams-device-setup-modal {
+    width: 98%;
+    max-height: 95vh;
+  }
+  
+  .teams-video-preview {
+    max-width: 100%;
+    height: 180px;
+  }
+  
+  .teams-device-section {
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+}
