@@ -87,8 +87,7 @@ export async function GET(request: NextRequest) {
         message_type,
         created_at,
         user_id,
-        attachments,
-        users:user_id(email, first_name, last_name)
+        attachments
       `)
       .eq('channel_id', channelId)
       .eq('organization_id', tenantId)
@@ -103,19 +102,29 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get user details separately to avoid foreign key issues
+    const userIds = [...new Set((messages || []).map((m: any) => m.user_id))];
+    const { data: users } = await supabase
+      .from('users')
+      .select('id, email, first_name, last_name')
+      .in('id', userIds);
+
     // Transform to frontend format
-    const formattedMessages: Message[] = (messages || []).map((message: any) => ({
-      id: message.id,
-      senderId: message.user_id,
-      senderName: message.users && message.users[0] ? 
-        `${message.users[0].first_name || ''} ${message.users[0].last_name || ''}`.trim() || 
-        message.users[0].email?.split('@')[0] : 
-        'Unknown',
-      content: message.content,
-      timestamp: new Date(message.created_at),
-      type: message.message_type || 'text',
-      attachments: message.attachments || []
-    }));
+    const formattedMessages: Message[] = (messages || []).map((message: any) => {
+      const user = users?.find(u => u.id === message.user_id);
+      return {
+        id: message.id,
+        senderId: message.user_id,
+        senderName: user ? 
+          `${user.first_name || ''} ${user.last_name || ''}`.trim() || 
+          user.email?.split('@')[0] : 
+          'Unknown',
+        content: message.content,
+        timestamp: new Date(message.created_at),
+        type: message.message_type || 'text',
+        attachments: message.attachments || []
+      };
+    });
 
     return NextResponse.json({
       success: true,
@@ -202,8 +211,7 @@ export async function POST(request: NextRequest) {
         content,
         message_type,
         created_at,
-        user_id,
-        users:user_id(email, first_name, last_name)
+        user_id
       `)
       .single();
 
@@ -214,6 +222,13 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Get user details separately
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id, email, first_name, last_name')
+      .eq('id', userId)
+      .single();
 
     // Update channel's last message
     await supabase
@@ -228,9 +243,9 @@ export async function POST(request: NextRequest) {
     const formattedMessage: Message = {
       id: message.id,
       senderId: message.user_id,
-      senderName: message.users && message.users[0] ? 
-        `${message.users[0].first_name || ''} ${message.users[0].last_name || ''}`.trim() || 
-        message.users[0].email?.split('@')[0] : 
+      senderName: userData ? 
+        `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || 
+        userData.email?.split('@')[0] : 
         'Unknown',
       content: message.content,
       timestamp: new Date(message.created_at),

@@ -28,10 +28,12 @@ const supabase = createClient(
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get tenant ID from query params
+    // Get tenant ID and additional params from query
     const { searchParams } = new URL(request.url);
     let tenantId = searchParams.get('tenantId');
-
+    const presence = searchParams.get('presence'); // online, offline, etc.
+    const presenting = searchParams.get('presenting'); // true/false
+    
     // Get authenticated user from Supabase session
     const user = await getUserFromRequest(request);
     if (!user?.organizationId) {
@@ -76,6 +78,7 @@ export async function GET(request: NextRequest) {
     // Get last messages for channels that have them
     const channelIds = channels?.filter(c => c.last_message_id).map(c => c.last_message_id) || [];
     let lastMessages: any[] = [];
+    let messageUsers: any[] = [];
     
     if (channelIds.length > 0) {
       const { data: messages } = await supabase
@@ -84,17 +87,27 @@ export async function GET(request: NextRequest) {
           id,
           content,
           created_at,
-          user_id,
-          users:user_id(email, first_name, last_name)
+          user_id
         `)
         .in('id', channelIds);
       
       lastMessages = messages || [];
+      
+      // Get user details for message senders
+      if (lastMessages.length > 0) {
+        const userIds = [...new Set(lastMessages.map(m => m.user_id))];
+        const { data: users } = await supabase
+          .from('users')
+          .select('id, email, first_name, last_name')
+          .in('id', userIds);
+        messageUsers = users || [];
+      }
     }
 
     // Transform to frontend format
     const formattedChannels: Channel[] = (channels || []).map((channel: any) => {
       const lastMessage = lastMessages.find(m => m.id === channel.last_message_id);
+      const messageUser = lastMessage ? messageUsers.find(u => u.id === lastMessage.user_id) : null;
       return {
         id: channel.id,
         name: channel.name,
@@ -105,9 +118,9 @@ export async function GET(request: NextRequest) {
           id: lastMessage.id,
           content: lastMessage.content,
           timestamp: new Date(lastMessage.created_at),
-          senderName: lastMessage.users ? 
-            `${lastMessage.users.first_name || ''} ${lastMessage.users.last_name || ''}`.trim() || 
-            lastMessage.users.email?.split('@')[0] : 
+          senderName: messageUser ? 
+            `${messageUser.first_name || ''} ${messageUser.last_name || ''}`.trim() || 
+            messageUser.email?.split('@')[0] : 
             'Unknown'
         } : null,
         unreadCount: 0, // TODO: Implement unread message count
