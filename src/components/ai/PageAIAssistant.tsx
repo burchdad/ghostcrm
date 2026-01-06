@@ -265,7 +265,7 @@ function PageAIAssistant({
         </div>
       </div>
 
-      <div className="p-2">
+      <div className="p-1">
         {loading && insights.length === 0 ? (
           <div className="text-center py-4">
             <RefreshCw className="h-6 w-6 animate-spin mx-auto text-blue-600 mb-2" />
