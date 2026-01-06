@@ -47,15 +47,6 @@ export async function GET(request: NextRequest) {
         success: true,
         channels: [] // Return empty array instead of error
       });
-    }   hasUser: !!user,
-        organizationId: user?.organizationId,
-        userId: user?.id
-      });
-      
-      return NextResponse.json({
-        success: true,
-        channels: [] // Return empty array instead of error
-      });
     }
 
     // Use organization ID from user if not provided in query
