@@ -355,37 +355,109 @@ CREATE INDEX IF NOT EXISTS idx_subdomains_status ON subdomains(status);
 -- ===================================================================
 
 -- Add updated_at triggers where needed
-CREATE TRIGGER IF NOT EXISTS trigger_collaboration_channels_updated_at 
-    BEFORE UPDATE ON collaboration_channels 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.triggers 
+    WHERE trigger_name = 'trigger_collaboration_channels_updated_at'
+  ) THEN
+    CREATE TRIGGER trigger_collaboration_channels_updated_at 
+        BEFORE UPDATE ON collaboration_channels 
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END
+$$;
 
-CREATE TRIGGER IF NOT EXISTS trigger_organization_memberships_updated_at 
-    BEFORE UPDATE ON organization_memberships 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.triggers 
+    WHERE trigger_name = 'trigger_organization_memberships_updated_at'
+  ) THEN
+    CREATE TRIGGER trigger_organization_memberships_updated_at 
+        BEFORE UPDATE ON organization_memberships 
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END
+$$;
 
-CREATE TRIGGER IF NOT EXISTS trigger_user_notification_preferences_updated_at 
-    BEFORE UPDATE ON user_notification_preferences 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.triggers 
+    WHERE trigger_name = 'trigger_user_notification_preferences_updated_at'
+  ) THEN
+    CREATE TRIGGER trigger_user_notification_preferences_updated_at 
+        BEFORE UPDATE ON user_notification_preferences 
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END
+$$;
 
-CREATE TRIGGER IF NOT EXISTS trigger_workflow_triggers_updated_at 
-    BEFORE UPDATE ON workflow_triggers 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.triggers 
+    WHERE trigger_name = 'trigger_workflow_triggers_updated_at'
+  ) THEN
+    CREATE TRIGGER trigger_workflow_triggers_updated_at 
+        BEFORE UPDATE ON workflow_triggers 
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END
+$$;
 
-CREATE TRIGGER IF NOT EXISTS trigger_subscriptions_updated_at 
-    BEFORE UPDATE ON subscriptions 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.triggers 
+    WHERE trigger_name = 'trigger_subscriptions_updated_at'
+  ) THEN
+    CREATE TRIGGER trigger_subscriptions_updated_at 
+        BEFORE UPDATE ON subscriptions 
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END
+$$;
 
-CREATE TRIGGER IF NOT EXISTS trigger_tenant_subscriptions_updated_at 
-    BEFORE UPDATE ON tenant_subscriptions 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.triggers 
+    WHERE trigger_name = 'trigger_tenant_subscriptions_updated_at'
+  ) THEN
+    CREATE TRIGGER trigger_tenant_subscriptions_updated_at 
+        BEFORE UPDATE ON tenant_subscriptions 
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END
+$$;
 
-CREATE TRIGGER IF NOT EXISTS trigger_promo_codes_updated_at 
-    BEFORE UPDATE ON promo_codes 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.triggers 
+    WHERE trigger_name = 'trigger_promo_codes_updated_at'
+  ) THEN
+    CREATE TRIGGER trigger_promo_codes_updated_at 
+        BEFORE UPDATE ON promo_codes 
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END
+$$;
 
-CREATE TRIGGER IF NOT EXISTS trigger_subdomains_updated_at 
-    BEFORE UPDATE ON subdomains 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.triggers 
+    WHERE trigger_name = 'trigger_subdomains_updated_at'
+  ) THEN
+    CREATE TRIGGER trigger_subdomains_updated_at 
+        BEFORE UPDATE ON subdomains 
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END
+$$;
 
 -- ===================================================================
 -- ROW LEVEL SECURITY (RLS)
