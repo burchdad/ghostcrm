@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   try {
-    console.log('🔍 [AUTH-ME] Getting user session...');
+    console.log('🔍 [AUTH-ME] Getting user session... v2');
     
     const supabase = await createSupabaseServer();
     
