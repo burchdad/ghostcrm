@@ -669,83 +669,68 @@ export default function TenantOwnerCalendarPage() {
 
   return (
     <div className="tenant-owner-calendar-container">
-      {/* AI Assistant */}
-      <PageAIAssistant 
-        agentId="calendar"
-        pageTitle="Calendar Management"
-        entityData={{
-          totalEvents: events.length,
-          todayEvents: events.filter(event => {
-            const today = new Date();
-            return event.date === today.getDate() && 
-                   event.month === today.getMonth() && 
-                   event.year === today.getFullYear();
-          }).length,
-          currentMonth: `${currentMonth + 1}/${currentYear}`,
-          eventTypes: Array.from(new Set(events.map(e => e.type)))
-        }}
-        className="mb-6"
-      />
-
-      {/* Quick Stats */}
-      <div className="calendar-stats">
-        <Card className="stat-card">
-          <div className="stat-content">
-            <Calendar className="stat-icon" />
-            <div>
-              <h3>Today's Events</h3>
-              <p>{events.filter(event => {
-                const today = new Date();
-                return event.date === today.getDate() && 
-                       event.month === today.getMonth() && 
-                       event.year === today.getFullYear();
-              }).length} scheduled</p>
-            </div>
+      <div className="calendar-main-layout">
+        {/* Left Content Area */}
+        <div className="calendar-content-area">
+          {/* Quick Stats - 2x2 Grid */}
+          <div className="calendar-stats-grid">
+            <Card className="stat-card">
+              <div className="stat-content">
+                <Calendar className="stat-icon" />
+                <div>
+                  <h3>Today's Events</h3>
+                  <p>{events.filter(event => {
+                    const today = new Date();
+                    return event.date === today.getDate() && 
+                           event.month === today.getMonth() && 
+                           event.year === today.getFullYear();
+                  }).length} scheduled</p>
+                </div>
+              </div>
+            </Card>
+            <Card className="stat-card">
+              <div className="stat-content">
+                <Clock className="stat-icon" />
+                <div>
+                  <h3>This Week</h3>
+                  <p>{events.filter(event => {
+                    const today = new Date();
+                    const eventDate = new Date(event.year, event.month, event.date);
+                    const startOfWeek = new Date(today);
+                    startOfWeek.setDate(today.getDate() - today.getDay());
+                    startOfWeek.setHours(0, 0, 0, 0);
+                    const endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(startOfWeek.getDate() + 6);
+                    endOfWeek.setHours(23, 59, 59, 999);
+                    return eventDate >= startOfWeek && eventDate <= endOfWeek;
+                  }).length} meetings</p>
+                </div>
+              </div>
+            </Card>
+            <Card className="stat-card">
+              <div className="stat-content">
+                <Users className="stat-icon" />
+                <div>
+                  <h3>Team Availability</h3>
+                  <p>{mentionSuggestions.length} members</p>
+                </div>
+              </div>
+            </Card>
+            <Card className="stat-card action-card">
+              <div className="stat-content">
+                <div className="action-buttons">
+                  <Button className="btn-secondary" onClick={handleSyncCalendar}>
+                    <Calendar className="icon" />
+                    Sync Calendar
+                  </Button>
+                  <Button className="btn-primary" onClick={handleNewEvent}>
+                    <Plus className="icon" />
+                    New Event
+                  </Button>
+                </div>
+              </div>
+            </Card>
           </div>
-        </Card>
-        <Card className="stat-card">
-          <div className="stat-content">
-            <Clock className="stat-icon" />
-            <div>
-              <h3>This Week</h3>
-              <p>{events.filter(event => {
-                const today = new Date();
-                const eventDate = new Date(event.year, event.month, event.date);
-                const startOfWeek = new Date(today);
-                startOfWeek.setDate(today.getDate() - today.getDay());
-                startOfWeek.setHours(0, 0, 0, 0);
-                const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 6);
-                endOfWeek.setHours(23, 59, 59, 999);
-                return eventDate >= startOfWeek && eventDate <= endOfWeek;
-              }).length} meetings</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="stat-card">
-          <div className="stat-content">
-            <Users className="stat-icon" />
-            <div>
-              <h3>Team Availability</h3>
-              <p>{mentionSuggestions.length} members</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="stat-card action-card">
-          <div className="stat-content">
-            <div className="action-buttons">
-              <Button className="btn-secondary" onClick={handleSyncCalendar}>
-                <Calendar className="icon" />
-                Sync Calendar
-              </Button>
-              <Button className="btn-primary" onClick={handleNewEvent}>
-                <Plus className="icon" />
-                New Event
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </div>
 
       {/* Inline Event Creation Section (single, non-duplicated) */}
       {isNewEventInlineOpen && (
@@ -948,6 +933,28 @@ export default function TenantOwnerCalendarPage() {
           ))}
         </div>
       </Card>
+        </div>
+        
+        {/* Right Sidebar - AI Assistant */}
+        <div className="calendar-sidebar">
+          <PageAIAssistant 
+            agentId="calendar"
+            pageTitle="Calendar Management"
+            entityData={{
+              totalEvents: events.length,
+              todayEvents: events.filter(event => {
+                const today = new Date();
+                return event.date === today.getDate() && 
+                       event.month === today.getMonth() && 
+                       event.year === today.getFullYear();
+              }).length,
+              currentMonth: `${currentMonth + 1}/${currentYear}`,
+              eventTypes: Array.from(new Set(events.map(e => e.type)))
+            }}
+            className="calendar-ai-assistant"
+          />
+        </div>
+      </div>
     </div>
   );
 }

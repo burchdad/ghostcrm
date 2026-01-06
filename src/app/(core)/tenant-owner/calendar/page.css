@@ -16,6 +16,42 @@
   padding: 1.5rem;
 }
 
+/* Main Layout Structure */
+.calendar-main-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.calendar-content-area {
+  min-width: 0; /* Prevents grid blowout */
+}
+
+.calendar-sidebar {
+  position: sticky;
+  top: 1.5rem;
+  height: fit-content;
+}
+
+.calendar-ai-assistant {
+  margin: 0 !important;
+}
+
+@media (max-width: 1200px) {
+  .calendar-main-layout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .calendar-sidebar {
+    position: relative;
+    top: auto;
+    order: -1; /* Show AI assistant at top on mobile */
+  }
+}
+
 .tenant-owner-calendar-container::before {
   content: '';
   position: fixed;
@@ -126,14 +162,18 @@
   height: 1.125rem;
 }
 
-/* Stats Cards */
-.calendar-stats {
-  position: relative;
-  z-index: 2;
+/* Stats Cards - 2x2 Grid */
+.calendar-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
   margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .calendar-stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stat-card {
