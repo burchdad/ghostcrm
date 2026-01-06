@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import "./QuickAddButton.css";
 
 export default function QuickAddButton() {
+  console.log('🔵 QuickAddButton component loaded');
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const { t } = useI18n();
   const router = useRouter();
@@ -26,6 +27,7 @@ export default function QuickAddButton() {
     if (typeof window === 'undefined') return false; // SSR
     
     const pathname = window.location.pathname;
+    console.log('🔵 QuickAddButton pathname check:', pathname);
     
     // Don't show on marketing pages, auth pages, or billing pages
     if (pathname === '/' || 
@@ -36,17 +38,22 @@ export default function QuickAddButton() {
         pathname === '/reset-password' ||
         pathname === '/unauthorized' ||
         pathname.includes('/marketing')) {
+      console.log('🔵 QuickAddButton NOT showing due to excluded path');
       return false;
     }
     
+    console.log('🔵 QuickAddButton SHOULD show for this path');
     // Show on all other pages (leads, dashboard, etc.)
     return true;
   }, []);
 
   // Don't render if shouldn't show
   if (!shouldShowButton) {
+    console.log('🔵 QuickAddButton returning null, shouldShowButton:', shouldShowButton);
     return null;
   }
+
+  console.log('🔵 QuickAddButton rendering! shouldShowButton:', shouldShowButton);
 
   // Keyboard shortcuts
   React.useEffect(() => {
