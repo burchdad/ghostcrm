@@ -176,6 +176,7 @@ CREATE TABLE inventory (
   brand VARCHAR(100),
   model VARCHAR(100),
   year INTEGER,
+  vin VARCHAR(17) UNIQUE, -- Vehicle Identification Number (17 characters for standard VIN)
   condition VARCHAR(20) DEFAULT 'new' CHECK (condition IN ('new', 'used', 'certified', 'damaged')),
   status VARCHAR(20) DEFAULT 'available' CHECK (status IN ('available', 'reserved', 'sold', 'pending', 'maintenance')),
   
