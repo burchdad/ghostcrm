@@ -429,7 +429,10 @@ DO $$
 BEGIN
   IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'promo_codes') THEN
     CREATE INDEX IF NOT EXISTS idx_promo_codes_code ON promo_codes(code);
-    CREATE INDEX IF NOT EXISTS idx_promo_codes_active ON promo_codes(active);
+    -- Only create active index if column exists
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'promo_codes' AND column_name = 'active') THEN
+      CREATE INDEX IF NOT EXISTS idx_promo_codes_active ON promo_codes(active);
+    END IF;
   END IF;
 END
 $$;
