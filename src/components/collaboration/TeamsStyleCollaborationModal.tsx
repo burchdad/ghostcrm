@@ -51,6 +51,15 @@ interface Message {
   attachmentName?: string;
   reactions?: string[];
   reactionCount?: number;
+  aiResponse?: {
+    type: 'lead_info' | 'deal_info' | 'navigation' | 'error';
+    action?: string;
+    data?: any;
+    message?: string;
+    route?: string;
+    quickActions?: { label: string; action: string }[];
+    suggestions?: string[];
+  };
 }
 
 interface TeamsStyleCollaborationModalProps {
@@ -239,12 +248,16 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
     setIsSending(true);
     
     try {
+      // Check if this is an AI assistant command
+      const aiResponse = await processAICommand(messageText.trim());
+      
       const messageData = {
         chatId: selectedChat,
         text: messageText.trim(),
         attachments: attachedFiles.map(f => ({ name: f.name, size: f.size, type: f.type })),
         timestamp: new Date().toISOString(),
-        sender: user?.email || 'Unknown User'
+        sender: user?.email || 'Unknown User',
+        aiResponse: aiResponse
       };
       
       // In production, send to your API:
@@ -272,6 +285,184 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
       alert('Failed to send message. Please try again.');
     } finally {
       setIsSending(false);
+    }
+  };
+
+  // AI Assistant Command Processing
+  const processAICommand = async (message: string): Promise<any> => {
+    const lowerMessage = message.toLowerCase();
+    
+    // Lead lookup patterns
+    if (lowerMessage.includes('locate') || lowerMessage.includes('find') || lowerMessage.includes('search')) {
+      if (lowerMessage.includes('lead')) {
+        // Extract lead name
+        const leadNameMatch = message.match(/(?:locate|find|search).*?(?:lead|for)\s+([\w\s]+)/i);
+        if (leadNameMatch) {
+          const leadName = leadNameMatch[1].trim();
+          return await handleLeadLookup(leadName);
+        }
+      }
+    }
+    
+    // Deal lookup patterns
+    if (lowerMessage.includes('deal') && (lowerMessage.includes('show') || lowerMessage.includes('find'))) {
+      const dealMatch = message.match(/(?:show|find).*?deal\s+([\w\s]+)/i);
+      if (dealMatch) {
+        const dealName = dealMatch[1].trim();
+        return await handleDealLookup(dealName);
+      }
+    }
+    
+    // Navigation patterns
+    if (lowerMessage.includes('go to') || lowerMessage.includes('navigate to')) {
+      const navigationMatch = message.match(/(?:go to|navigate to)\s+([\w\s]+)/i);
+      if (navigationMatch) {
+        const destination = navigationMatch[1].trim();
+        return await handleNavigation(destination);
+      }
+    }
+    
+    return null;
+  };
+  
+  const handleLeadLookup = async (leadName: string) => {
+    // Mock lead data - in production, fetch from your API
+    const mockLeads = [
+      {
+        id: '1',
+        name: 'Kaisyn Burch',
+        email: 'kaisyn.burch@email.com',
+        phone: '(555) 123-4567',
+        status: 'New',
+        source: 'Website',
+        created: '2024-01-06',
+        assignedTo: 'Sales Rep',
+        value: '$45,000',
+        vehicle: '2024 Honda Accord'
+      },
+      {
+        id: '2', 
+        name: 'John Smith',
+        email: 'john.smith@email.com',
+        phone: '(555) 987-6543',
+        status: 'Qualified',
+        source: 'Referral',
+        created: '2024-01-05',
+        assignedTo: 'Sales Rep',
+        value: '$52,000',
+        vehicle: '2024 Toyota Camry'
+      }
+    ];
+    
+    const foundLead = mockLeads.find(lead => 
+      lead.name.toLowerCase().includes(leadName.toLowerCase())
+    );
+    
+    if (foundLead) {
+      // Option 1: Navigate to lead (simulate)
+      console.log('Navigating to lead:', foundLead.id);
+      // In production: window.location.href = `/leads/${foundLead.id}`;
+      
+      // Option 2: Return lead data for inline display
+      return {
+        type: 'lead_info',
+        action: 'Found and displaying lead information',
+        data: foundLead,
+        quickActions: [
+          { label: 'View Full Lead', action: `navigate:/leads/${foundLead.id}` },
+          { label: 'Send Email', action: `email:${foundLead.email}` },
+          { label: 'Call Lead', action: `call:${foundLead.phone}` },
+          { label: 'Schedule Meeting', action: `schedule:${foundLead.id}` }
+        ]
+      };
+    } else {
+      return {
+        type: 'error',
+        action: 'Lead not found',
+        message: `No lead found matching "${leadName}". Would you like me to search by partial name or create a new lead?`,
+        suggestions: [
+          'Search partial name',
+          'Show recent leads',
+          'Create new lead'
+        ]
+      };
+    }
+  };
+  
+  const handleDealLookup = async (dealName: string) => {
+    // Mock deal lookup
+    return {
+      type: 'deal_info',
+      action: 'Deal lookup functionality',
+      message: `Searching for deal: ${dealName}`,
+      data: {
+        name: dealName,
+        value: '$75,000',
+        stage: 'Negotiation',
+        closeDate: '2024-02-15'
+      }
+    };
+  };
+  
+  const handleNavigation = async (destination: string) => {
+    const routes: { [key: string]: string } = {
+      'leads': '/leads',
+      'deals': '/deals', 
+      'dashboard': '/dashboard',
+      'calendar': '/calendar',
+      'reports': '/reports',
+      'contacts': '/leads',
+      'inventory': '/inventory'
+    };
+    
+    const route = routes[destination.toLowerCase()];
+    if (route) {
+      console.log('Navigating to:', route);
+      // In production: window.location.href = route;
+      
+      return {
+        type: 'navigation',
+        action: `Navigating to ${destination}`,
+        route: route
+      };
+    }
+    
+    return {
+      type: 'error', 
+      action: 'Navigation failed',
+      message: `Unknown destination: ${destination}. Available: leads, deals, dashboard, calendar, reports, inventory`
+    };
+  };
+
+  // Handle quick action clicks from AI responses
+  const handleQuickAction = (action: string) => {
+    const [actionType, value] = action.split(':');
+    
+    switch (actionType) {
+      case 'navigate':
+        console.log('Navigating to:', value);
+        // In production: window.location.href = value;
+        alert(`Would navigate to: ${value}`);
+        break;
+        
+      case 'email':
+        console.log('Opening email to:', value);
+        window.open(`mailto:${value}`);
+        break;
+        
+      case 'call':
+        console.log('Calling:', value);
+        window.open(`tel:${value}`);
+        break;
+        
+      case 'schedule':
+        console.log('Scheduling meeting for lead:', value);
+        // In production: open calendar modal or navigate to scheduling
+        alert(`Would open scheduling for lead ID: ${value}`);
+        break;
+        
+      default:
+        console.log('Unknown action:', action);
     }
   };
 
@@ -367,27 +558,44 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
         id: "2", 
         sender: "You",
         avatar: "SB",
-        message: "That's fantastic news! Great work everyone. What's our next milestone?",
+        message: "Locate the new lead Kaisyn Burch",
         timestamp: "Today at 2:36 PM",
         isOwn: true
       },
       {
         id: "3",
-        sender: "Mike Johnson", 
-        avatar: "MJ",
-        message: "Thanks Sarah! The next big milestone is the product launch preparation. I'll share the timeline in our next meeting.",
-        timestamp: "Today at 2:38 PM",
-        isOwn: false
+        sender: "AI Assistant", 
+        avatar: "🤖",
+        message: "Found lead information for Kaisyn Burch:",
+        timestamp: "Today at 2:36 PM",
+        isOwn: false,
+        aiResponse: {
+          type: 'lead_info',
+          data: {
+            name: 'Kaisyn Burch',
+            email: 'kaisyn.burch@email.com',
+            phone: '(555) 123-4567',
+            status: 'New',
+            source: 'Website',
+            created: '2024-01-06',
+            value: '$45,000',
+            vehicle: '2024 Honda Accord'
+          },
+          quickActions: [
+            { label: 'View Full Lead', action: 'navigate:/leads/1' },
+            { label: 'Send Email', action: 'email:kaisyn.burch@email.com' },
+            { label: 'Call Lead', action: 'call:(555) 123-4567' },
+            { label: 'Schedule Meeting', action: 'schedule:1' }
+          ]
+        }
       },
       {
         id: "4",
-        sender: "Sarah Chen",
-        avatar: "SC", 
-        message: "Perfect! Looking forward to it. Also attaching the latest metrics report for everyone to review.",
-        timestamp: "Today at 2:40 PM",
-        isOwn: false,
-        hasAttachment: true,
-        attachmentName: "Q4_Metrics_Report.pdf"
+        sender: "Mike Johnson", 
+        avatar: "MJ",
+        message: "Thanks for the quick lookup! The AI assistant is really helpful.",
+        timestamp: "Today at 2:38 PM",
+        isOwn: false
       }
     ];
   };
@@ -535,7 +743,9 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
         previewStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);  const selectedChatData = selectedChat ? chats.find(c => c.id === selectedChat) : null;
+  }, []);
+  
+  const selectedChatData = selectedChat ? chats.find(c => c.id === selectedChat) : null;
   const messages = selectedChat ? getMockMessages(selectedChat) : [];
 
   if (!isOpen) return null;
@@ -628,6 +838,96 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
                           message.isOwn ? 'teams-message-bubble-own' : 'teams-message-bubble-other'
                         }`}>
                           <p className="teams-message-text">{message.message}</p>
+                          
+                          {/* AI Response Rendering */}
+                          {message.aiResponse && (
+                            <div className="teams-ai-response">
+                              {message.aiResponse.type === 'lead_info' && (
+                                <div className="teams-lead-card">
+                                  <div className="teams-lead-header">
+                                    <div className="teams-lead-avatar">
+                                      {message.aiResponse.data.name.split(' ').map((n: string) => n[0]).join('')}
+                                    </div>
+                                    <div className="teams-lead-info">
+                                      <h4>{message.aiResponse.data.name}</h4>
+                                      <p className="teams-lead-status">{message.aiResponse.data.status} • {message.aiResponse.data.source}</p>
+                                    </div>
+                                    <div className="teams-lead-value">{message.aiResponse.data.value}</div>
+                                  </div>
+                                  
+                                  <div className="teams-lead-details">
+                                    <div className="teams-lead-detail">
+                                      <span className="teams-detail-label">📧 Email:</span>
+                                      <span className="teams-detail-value">{message.aiResponse.data.email}</span>
+                                    </div>
+                                    <div className="teams-lead-detail">
+                                      <span className="teams-detail-label">📱 Phone:</span>
+                                      <span className="teams-detail-value">{message.aiResponse.data.phone}</span>
+                                    </div>
+                                    <div className="teams-lead-detail">
+                                      <span className="teams-detail-label">🚗 Vehicle:</span>
+                                      <span className="teams-detail-value">{message.aiResponse.data.vehicle}</span>
+                                    </div>
+                                    <div className="teams-lead-detail">
+                                      <span className="teams-detail-label">📅 Created:</span>
+                                      <span className="teams-detail-value">{message.aiResponse.data.created}</span>
+                                    </div>
+                                  </div>
+                                  
+                                  {message.aiResponse.quickActions && (
+                                    <div className="teams-quick-actions">
+                                      {message.aiResponse.quickActions.map((action, idx) => (
+                                        <button 
+                                          key={idx}
+                                          className="teams-quick-action-btn"
+                                          onClick={() => handleQuickAction(action.action)}
+                                        >
+                                          {action.label}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {message.aiResponse.type === 'error' && (
+                                <div className="teams-error-response">
+                                  <div className="teams-error-icon">❌</div>
+                                  <div className="teams-error-content">
+                                    <p>{message.aiResponse.message}</p>
+                                    {message.aiResponse.suggestions && (
+                                      <div className="teams-suggestions">
+                                        <p><strong>Try these instead:</strong></p>
+                                        {message.aiResponse.suggestions.map((suggestion, idx) => (
+                                          <button 
+                                            key={idx}
+                                            className="teams-suggestion-btn"
+                                            onClick={() => setMessageText(suggestion)}
+                                          >
+                                            {suggestion}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {message.aiResponse.type === 'navigation' && (
+                                <div className="teams-nav-response">
+                                  <div className="teams-nav-icon">🧭</div>
+                                  <p>{message.aiResponse.action}</p>
+                                  <button 
+                                    className="teams-nav-btn"
+                                    onClick={() => window.location.href = message.aiResponse?.route || '/'}
+                                  >
+                                    Go Now
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
                           {message.hasAttachment && (
                             <div className={`teams-message-attachment ${
                               message.isOwn ? 'teams-attachment-own' : 'teams-attachment-other'
