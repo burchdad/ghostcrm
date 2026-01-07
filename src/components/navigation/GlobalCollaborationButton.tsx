@@ -6,10 +6,11 @@ import "./GlobalCollaborationButton.css";
 
 export default function GlobalCollaborationButton() {
   const [showCollaboration, setShowCollaboration] = useState(false);
-  const [hasNotifications, setHasNotifications] = useState(true); // Mock notification state
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Safe auth that doesn't break on marketing pages
-  let user = null;
+  let user: any = null;
   try {
     const { useAuth } = require('@/context/SupabaseAuthContext');
     const auth = useAuth();
@@ -40,6 +41,33 @@ export default function GlobalCollaborationButton() {
     return true;
   }, []);
 
+  // Fetch notification count from API
+  React.useEffect(() => {
+    if (!user?.id || !shouldShowButton) return;
+    
+    const fetchNotificationCount = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/collaboration/activity');
+        if (response.ok) {
+          const data = await response.json();
+          setNotificationCount(data.unreadCount || 0);
+        }
+      } catch (error) {
+        console.error('Failed to fetch notification count:', error);
+        setNotificationCount(0);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNotificationCount();
+    
+    // Poll for updates every 30 seconds
+    const interval = setInterval(fetchNotificationCount, 30000);
+    return () => clearInterval(interval);
+  }, [user?.id, shouldShowButton]);
+
   // Don't render if shouldn't show
   if (!shouldShowButton) {
     return null;
@@ -57,9 +85,9 @@ export default function GlobalCollaborationButton() {
         <MessageSquare className="w-5 h-5" />
         
         {/* Notification Badge */}
-        {hasNotifications && (
+        {notificationCount > 0 && (
           <div className="global-collaboration-badge">
-            3
+            {notificationCount > 99 ? '99+' : notificationCount}
           </div>
         )}
       </button>

@@ -72,7 +72,9 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [chats, setChats] = useState<Chat[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showAddPeopleModal, setShowAddPeopleModal] = useState(false);
@@ -494,110 +496,79 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
     };
   }, [showMoreMenu]);
 
-  // Mock data
+  // Load real collaboration data from API
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setChats([
-        {
-          id: "1",
-          name: "Sales Team",
-          lastMessage: "Great job on the Q4 numbers everyone! 🎉",
-          timestamp: "2:45 PM",
-          unreadCount: 2,
-          isOnline: true,
-          type: "group"
-        },
-        {
-          id: "2", 
-          name: "Sarah Chen",
-          lastMessage: "The client meeting went really well, thanks for the prep!",
-          timestamp: "1:30 PM",
-          unreadCount: 0,
-          isOnline: true,
-          type: "direct"
-        },
-        {
-          id: "3",
-          name: "Marketing Updates",
-          lastMessage: "New campaign metrics are looking promising",
-          timestamp: "12:15 PM",
-          unreadCount: 1,
-          isOnline: false,
-          type: "channel"
-        },
-        {
-          id: "4",
-          name: "Mike Johnson",
-          lastMessage: "Thanks for the quick turnaround!",
-          timestamp: "11:30 AM",
-          unreadCount: 0,
-          isOnline: false,
-          type: "direct"
+    if (!user?.id) return;
+    
+    const loadCollaborationData = async () => {
+      try {
+        setIsLoadingData(true);
+        
+        // Fetch channels/chats from API
+        const channelsResponse = await fetch('/api/collaboration/channels');
+        if (channelsResponse.ok) {
+          const channelsData = await channelsResponse.json();
+          setChats(channelsData.channels || []);
+        } else {
+          console.warn('Failed to load channels:', channelsResponse.status);
+          setChats([]);
         }
-      ]);
-      setIsLoadingData(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Mock messages for selected chat
-  const getMockMessages = (chatId: string): Message[] => {
-    return [
-      {
-        id: "1",
-        sender: "Sarah Chen",
-        avatar: "SC",
-        message: "Hey team! Just wanted to update everyone on the Q4 progress. We're ahead of schedule by 15%! 🎉",
-        timestamp: "Today at 2:34 PM",
-        isOwn: false,
-        reactions: ["👏", "🎉"],
-        reactionCount: 3
-      },
-      {
-        id: "2", 
-        sender: "You",
-        avatar: "SB",
-        message: "Locate the new lead Kaisyn Burch",
-        timestamp: "Today at 2:36 PM",
-        isOwn: true
-      },
-      {
-        id: "3",
-        sender: "AI Assistant", 
-        avatar: "🤖",
-        message: "Found lead information for Kaisyn Burch:",
-        timestamp: "Today at 2:36 PM",
-        isOwn: false,
-        aiResponse: {
-          type: 'lead_info',
-          data: {
-            name: 'Kaisyn Burch',
-            email: 'kaisyn.burch@email.com',
-            phone: '(555) 123-4567',
-            status: 'New',
-            source: 'Website',
-            created: '2024-01-06',
-            value: '$45,000',
-            vehicle: '2024 Honda Accord'
-          },
-          quickActions: [
-            { label: 'View Full Lead', action: 'navigate:/leads/1' },
-            { label: 'Send Email', action: 'email:kaisyn.burch@email.com' },
-            { label: 'Call Lead', action: 'call:(555) 123-4567' },
-            { label: 'Schedule Meeting', action: 'schedule:1' }
-          ]
-        }
-      },
-      {
-        id: "4",
-        sender: "Mike Johnson", 
-        avatar: "MJ",
-        message: "Thanks for the quick lookup! The AI assistant is really helpful.",
-        timestamp: "Today at 2:38 PM",
-        isOwn: false
+      } catch (error) {
+        console.error('Error loading collaboration data:', error);
+        setChats([]);
+      } finally {
+        setIsLoadingData(false);
       }
-    ];
+    };
+
+    loadCollaborationData();
+  }, [user?.id]);
+
+  // Load messages when selectedChat changes
+  useEffect(() => {
+    if (selectedChat) {
+      loadMessages(selectedChat).then(setMessages);
+    } else {
+      setMessages([]);
+    }
+  }, [selectedChat]);
+
+  // Load messages for selected channel
+  const loadMessages = async (channelId: string): Promise<Message[]> => {
+    try {
+      setLoadingMessages(true);
+      const response = await fetch(`/api/collaboration/messages?channelId=${channelId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load messages: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Transform API response to frontend format
+      const transformedMessages: Message[] = (data.messages || []).map((msg: any) => ({
+        id: msg.id,
+        sender: msg.senderName || 'Unknown',
+        avatar: msg.senderName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2) || '??',
+        message: msg.content,
+        timestamp: new Date(msg.timestamp).toLocaleString(),
+        isOwn: msg.senderId === user?.id,
+        hasAttachment: msg.attachments && msg.attachments.length > 0,
+        attachmentName: msg.attachments?.[0]?.name
+      }));
+      
+      return transformedMessages;
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      return [];
+    } finally {
+      setLoadingMessages(false);
+    }
   };
 
   const filteredChats = chats.filter(chat =>
@@ -746,7 +717,6 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
   }, []);
   
   const selectedChatData = selectedChat ? chats.find(c => c.id === selectedChat) : null;
-  const messages = selectedChat ? getMockMessages(selectedChat) : [];
 
   if (!isOpen) return null;
 
@@ -820,7 +790,19 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
               {/* Messages Area */}
               <div className="teams-messages-area">
                 <div className="teams-messages-container">
-                  {messages.map((message) => (
+                  {loadingMessages ? (
+                    <div className="teams-loading-messages">
+                      <div className="teams-loading-spinner"></div>
+                      <p>Loading messages...</p>
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="teams-empty-messages">
+                      <MessageSquare size={48} />
+                      <p>No messages yet</p>
+                      <span>Start the conversation!</span>
+                    </div>
+                  ) : (
+                    messages.map((message) => (
                     <div key={message.id} className={`teams-message ${message.isOwn ? 'teams-message-own' : ''}`}>
                       {!message.isOwn && (
                         <div className="teams-message-avatar">
@@ -954,7 +936,8 @@ export default function TeamsStyleCollaborationModal({ isOpen, onClose }: TeamsS
                         )}
                       </div>
                     </div>
-                  ))}
+                  ))
+                  )}
                 </div>
               </div>
 
