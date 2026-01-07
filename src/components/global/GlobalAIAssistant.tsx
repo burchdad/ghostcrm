@@ -61,8 +61,8 @@ export default function GlobalAIAssistant() {
 
   return (
     <>
-      {/* Global AI Assistant floating button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      {/* Global AI Assistant floating button - Moved to left side above QuickAdd */}
+      <div className="fixed bottom-20 left-8 z-50">
         <button 
           onClick={() => setShowAIAssistant(true)}
           className="ai-assistant-fab"

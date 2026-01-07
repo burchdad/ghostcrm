@@ -21,20 +21,22 @@ export async function GET(req: NextRequest) {
   const status = url.searchParams.get("status") ?? undefined;
   const brand = url.searchParams.get("brand") ?? undefined;
   const condition = url.searchParams.get("condition") ?? undefined;
-  const page = parseInt(url.searchParams.get("page") || "1", 10);
-  const limit = parseInt(url.searchParams.get("limit") || "25", 10);
+  const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+  const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "25", 10)));
   const offset = (page - 1) * limit;
 
   try {
     // Get authenticated user using new Supabase auth
     const user = await getUserFromRequest(req);
     if (!user || !user.organizationId) {
-      console.log('❌ [INVENTORY API] Authentication failed or no organization');
+      console.log('❌ [INVENTORY GET] Authentication failed or no organization');
       return new Response(
-        JSON.stringify({ error: "Authentication required" }),
+        JSON.stringify({ error: "Authentication required", code: "AUTH_REQUIRED" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
+
+    console.log(`🔍 [INVENTORY GET] Fetching inventory for organization ${user.organizationId}, page ${page}, limit ${limit}`);
 
     // Build query for inventory using the user's organization
     let query = supabaseAdmin
@@ -80,9 +82,32 @@ export async function GET(req: NextRequest) {
       .range(offset, offset + limit - 1);
 
     if (error) {
-      console.error("Database error fetching inventory:", error);
-      return new Response(JSON.stringify({ error: "Database error" }), {
+      console.error("❌ [INVENTORY GET] Database error:", {
+        error: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        organization: user.organizationId
+      });
+      return new Response(JSON.stringify({ 
+        error: "Database error", 
+        code: "DB_ERROR",
+        message: "Unable to fetch inventory data" 
+      }), {
         status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (!inventory) {
+      console.warn(`⚠️ [INVENTORY GET] No inventory data returned for organization ${user.organizationId}`);
+      return new Response(JSON.stringify({
+        success: true,
+        data: [],
+        summary: { total_items: 0, total_value: 0, in_stock: 0, low_stock: 0, out_of_stock: 0 },
+        pagination: { page, limit, total: 0, totalPages: 0 },
+      }), {
+        status: 200,
         headers: { "Content-Type": "application/json" },
       });
     }
@@ -136,6 +161,8 @@ export async function GET(req: NextRequest) {
       ).length,
     };
 
+    console.log(`✅ [INVENTORY GET] Successfully fetched ${transformedInventory.length} items for organization ${user.organizationId}`);
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -154,9 +181,16 @@ export async function GET(req: NextRequest) {
       }
     );
   } catch (err) {
-    console.error("Inventory GET API error:", err);
+    console.error("❌ [INVENTORY GET] Unexpected error:", {
+      error: err instanceof Error ? err.message : err,
+      stack: err instanceof Error ? err.stack : undefined
+    });
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ 
+        error: "Internal server error", 
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred while fetching inventory" 
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
@@ -186,13 +220,12 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Get user's organization
-    if (!user.organizationId) {
-      console.error('❌ [INVENTORY] No organization ID in POST');
-      return new Response(JSON.stringify({ error: "Organization not found" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    // Validate required fields
+    if (!body.name || !body.sku || !body.category) {
+      return new Response(
+        JSON.stringify({ error: "Name, SKU, and category are required" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     // Create inventory data
@@ -204,31 +237,31 @@ export async function POST(req: NextRequest) {
       brand: body.brand || "",
       model: body.model || "",
       year: body.year || null,
+      vin: body.vin || null,
       condition: body.condition || "new",
       status: body.status || "available",
-      price_cost: body.price_cost || 0,
-      price_msrp: body.price_msrp || 0,
-      price_selling: body.price_selling,
+      price_cost: parseFloat(body.price_cost) || 0,
+      price_msrp: parseFloat(body.price_msrp) || 0,
+      price_selling: parseFloat(body.price_selling) || 0,
       price_currency: body.price_currency || "USD",
-      stock_on_hand: body.stock_on_hand || 0,
-      stock_reserved: body.stock_reserved || 0,
-      stock_available: body.stock_available || body.stock_on_hand || 0,
-      stock_reorder_level: body.stock_reorder_level || 0,
-      stock_reorder_qty: body.stock_reorder_qty || 0,
+      stock_on_hand: parseInt(body.stock_on_hand) || 0,
+      stock_reserved: parseInt(body.stock_reserved) || 0,
+      stock_available: parseInt(body.stock_available) || parseInt(body.stock_on_hand) || 0,
+      stock_reorder_level: parseInt(body.stock_reorder_level) || 0,
+      stock_reorder_qty: parseInt(body.stock_reorder_qty) || 0,
       loc_lot: body.loc_lot || "",
       loc_section: body.loc_section || "",
       loc_row: body.loc_row || "",
       loc_spot: body.loc_spot || "",
       loc_warehouse: body.loc_warehouse || "",
       description: body.description || "",
+      notes: body.notes || "",
       specifications: body.specifications || {},
-      features: body.features || [],
       images: body.images || [],
-      vendor_info: body.vendor_info || {},
-      warranty_info: body.warranty_info || {},
-      compliance_info: body.compliance_info || {},
       custom_fields: body.custom_fields || {},
     };
+
+    console.log('📦 [INVENTORY] Creating with data:', { ...inventoryData, organization_id: '[REDACTED]' });
 
     const {
       data: inventory,
@@ -240,30 +273,51 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Error creating inventory item:", error);
+      console.error("❌ [INVENTORY] Database error creating inventory:", {
+        error: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       return new Response(
-        JSON.stringify({ error: "Failed to create inventory item" }),
+        JSON.stringify({ 
+          error: "Failed to create inventory item",
+          details: error.message 
+        }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
 
+    console.log('✅ [INVENTORY] Created successfully:', inventory.id);
+
     // Log audit event
-    await supabaseAdmin.from("audit_events").insert({
-      organization_id: user.organizationId,
-      entity: "inventory",
-      entity_id: inventory.id,
-      action: "create",
-      user_id: user.id,
-    });
+    try {
+      await supabaseAdmin.from("audit_events").insert({
+        organization_id: user.organizationId,
+        entity: "inventory",
+        entity_id: inventory.id,
+        action: "create",
+        user_id: user.id,
+      });
+    } catch (auditError) {
+      console.warn('⚠️ [INVENTORY] Failed to log audit event:', auditError);
+      // Don't fail the request for audit logging issues
+    }
 
     return new Response(JSON.stringify({ success: true, data: inventory }), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Inventory creation error:", error);
+    console.error("❌ [INVENTORY] Inventory creation error:", {
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ 
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error" 
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },

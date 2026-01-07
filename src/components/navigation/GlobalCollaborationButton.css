@@ -8,10 +8,10 @@
 */
 
 .global-collaboration-btn {
-  /* Positioning - Next to QuickAdd button */
+  /* Positioning - Above AI Assistant button for better UX flow */
   position: fixed;
-  bottom: 1.5rem;
-  left: 5.5rem; /* Positioned after QuickAdd button (4rem + gap) */
+  bottom: 14rem;
+  left: 2rem; /* Aligned with QuickAdd and AI Assistant */
   z-index: 1000;
   
   /* Size and Shape */
