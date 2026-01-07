@@ -16,7 +16,7 @@ interface ParsedInventoryItem {
   brand?: string;
   model?: string;
   year?: number;
-  vin?: string;
+  vin?: string | null;
   condition?: string;
   status?: string;
   price_cost?: number;
@@ -143,7 +143,7 @@ function performAIFieldMapping(sampleItems: any[]): AIFieldMapping {
  * Calculate Levenshtein distance for fuzzy string matching
  */
 function levenshteinDistance(str1: string, str2: string): number {
-  const matrix = [];
+  const matrix: number[][] = [];
   
   for (let i = 0; i <= str2.length; i++) {
     matrix[i] = [i];
@@ -429,7 +429,7 @@ export async function POST(req: NextRequest) {
 
     // Process items in batches of 50 for better performance
     const batchSize = 50;
-    const batches = [];
+    const batches: any[][] = [];
     for (let i = 0; i < items.length; i += batchSize) {
       batches.push(items.slice(i, i + batchSize));
     }

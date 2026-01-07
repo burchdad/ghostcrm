@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
 
     // Transform data for export
     const exportData = inventory.map(item => {
-      const baseData = {
+      const baseData: any = {
         id: item.id,
         name: item.name,
         sku: item.sku,
