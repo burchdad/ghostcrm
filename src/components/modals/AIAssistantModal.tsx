@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { X, Send, Bot, User, Loader2, Mic, Volume2, VolumeX } from "lucide-react";
+import { X, Send, Bot, User, Loader2, Mic, Volume2, VolumeX, Settings, MoreVertical } from "lucide-react";
 import { useI18n } from "../utils/I18nProvider";
 import { useVoiceChat } from "@/hooks/useVoiceChat";
 
@@ -11,6 +11,16 @@ interface Message {
   role: "user" | "assistant";
   timestamp: Date;
   isVoiceMessage?: boolean;
+}
+
+interface VoiceSettings {
+  voice: string;
+  rate: number;
+  pitch: number;
+  volume: number;
+  language: string;
+  autoSpeak: boolean;
+  voiceGender: 'male' | 'female' | 'neutral';
 }
 
 interface AIAssistantModalProps {
@@ -62,10 +72,20 @@ ${t('ai_assistant.guest_help', 'features')}`;
   const [isLoading, setIsLoading] = useState(false);
   const [voiceInputMode, setVoiceInputMode] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>({
+    voice: 'default',
+    rate: 1,
+    pitch: 1,
+    volume: 1,
+    language: 'en-US',
+    autoSpeak: true,
+    voiceGender: 'female'
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Voice chat functionality
+  // Voice chat functionality with custom settings
   const {
     isListening,
     isSpeaking,
@@ -90,7 +110,9 @@ ${t('ai_assistant.guest_help', 'features')}`;
     onError: (error) => {
       console.error('Voice error:', error);
       setVoiceInputMode(false);
-    }
+    },
+    language: voiceSettings.language,
+    continuous: true
   });
 
   // Clear messages when modal opens - no default welcome message in production
@@ -203,8 +225,32 @@ ${t('ai_assistant.guest_help', 'features')}`;
     if (isSpeaking) {
       stopSpeaking();
     } else {
-      speak(content);
+      // Use custom voice settings with proper parameters
+      speak(content, {
+        rate: voiceSettings.rate,
+        pitch: voiceSettings.pitch
+        // Note: volume and language are handled differently in the Web Speech API
+      });
     }
+  };
+
+  // Settings handlers
+  const handleVoiceSettingsChange = (newSettings: Partial<VoiceSettings>) => {
+    setVoiceSettings(prev => ({ ...prev, ...newSettings }));
+    if (newSettings.autoSpeak !== undefined) {
+      setAutoSpeak(newSettings.autoSpeak);
+    }
+  };
+
+  const getAvailableVoices = () => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      return window.speechSynthesis.getVoices().filter(voice => {
+        if (voiceSettings.voiceGender === 'male') return voice.name.toLowerCase().includes('male') || voice.name.toLowerCase().includes('man');
+        if (voiceSettings.voiceGender === 'female') return voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman');
+        return true;
+      });
+    }
+    return [];
   };
 
   if (!isOpen) return null;
@@ -219,59 +265,51 @@ ${t('ai_assistant.guest_help', 'features')}`;
               <Bot className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold">
-                AI Assistant
+              <h2 className="text-xl font-semibold gradient-text">
+                ARIA
               </h2>
               <p className="text-sm text-gray-500">
-                {isAuthenticated 
-                  ? `Your intelligent CRM assistant for ${currentPage || 'business'} operations`
-                  : "Learn about Ghost Auto CRM features and capabilities"
-                }
+                Advanced Responsive Intelligence Assistant
               </p>
             </div>
           </div>
           
-          {/* Voice Controls */}
-          {isVoiceSupported && (
-            <div className="flex items-center space-x-3 mr-3">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="autoSpeak"
-                  checked={autoSpeak}
-                  onChange={(e) => setAutoSpeak(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label htmlFor="autoSpeak" className="text-sm text-gray-700">
-                  Auto-speak
-                </label>
+          {/* Settings and Controls */}
+          <div className="flex items-center space-x-2">
+            {/* Voice Status Indicator */}
+            {isVoiceSupported && (isListening || isSpeaking) && (
+              <div className="flex items-center space-x-2 text-sm mr-2">
+                {isListening && (
+                  <span className="flex items-center text-red-600">
+                    <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse mr-2"></div>
+                    Listening...
+                  </span>
+                )}
+                {isSpeaking && (
+                  <span className="flex items-center text-blue-600">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse mr-2"></div>
+                    Speaking...
+                  </span>
+                )}
               </div>
-              
-              {(isListening || isSpeaking) && (
-                <div className="flex items-center space-x-2 text-sm">
-                  {isListening && (
-                    <span className="flex items-center text-red-600">
-                      <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse mr-2"></div>
-                      Listening...
-                    </span>
-                  )}
-                  {isSpeaking && (
-                    <span className="flex items-center text-blue-600">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse mr-2"></div>
-                      Speaking...
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-          
-          <button
-            onClick={onClose}
-            className="modal-close"
-          >
-            <X className="w-5 h-5" />
-          </button>
+            )}
+            
+            {/* Settings Button */}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              title="AI Assistant Settings"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+            
+            <button
+              onClick={onClose}
+              className="modal-close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Messages */}
@@ -428,6 +466,207 @@ ${t('ai_assistant.guest_help', 'features')}`;
           )}
         </div>
       </div>
+      
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
+            {/* Settings Header */}
+            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <Settings className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">ARIA Settings</h3>
+                    <p className="text-sm text-gray-600">Customize your AI assistant</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white hover:bg-opacity-50 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Settings Content */}
+            <div className="px-6 py-4 space-y-6 max-h-96 overflow-y-auto">
+              {/* Voice Settings */}
+              <div className="space-y-4">
+                <h4 className="text-md font-semibold text-gray-900 flex items-center">
+                  <Mic className="w-4 h-4 mr-2 text-blue-600" />
+                  Voice & Speech
+                </h4>
+                
+                {/* Auto-speak Toggle */}
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">Auto-speak responses</label>
+                  <input
+                    type="checkbox"
+                    checked={voiceSettings.autoSpeak}
+                    onChange={(e) => handleVoiceSettingsChange({ autoSpeak: e.target.checked })}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </div>
+                
+                {/* Voice Gender */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Voice Gender</label>
+                  <select
+                    value={voiceSettings.voiceGender}
+                    onChange={(e) => handleVoiceSettingsChange({ voiceGender: e.target.value as 'male' | 'female' | 'neutral' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                    <option value="neutral">Neutral</option>
+                  </select>
+                </div>
+                
+                {/* Language */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
+                  <select
+                    value={voiceSettings.language}
+                    onChange={(e) => handleVoiceSettingsChange({ language: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="en-US">English (US)</option>
+                    <option value="en-GB">English (UK)</option>
+                    <option value="es-ES">Spanish (Spain)</option>
+                    <option value="es-MX">Spanish (Mexico)</option>
+                    <option value="fr-FR">French</option>
+                    <option value="de-DE">German</option>
+                    <option value="it-IT">Italian</option>
+                    <option value="pt-BR">Portuguese (Brazil)</option>
+                    <option value="zh-CN">Chinese (Mandarin)</option>
+                    <option value="ja-JP">Japanese</option>
+                    <option value="ko-KR">Korean</option>
+                  </select>
+                </div>
+                
+                {/* Speech Rate */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Speech Rate: {voiceSettings.rate.toFixed(1)}x
+                  </label>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2"
+                    step="0.1"
+                    value={voiceSettings.rate}
+                    onChange={(e) => handleVoiceSettingsChange({ rate: parseFloat(e.target.value) })}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>Slow</span>
+                    <span>Fast</span>
+                  </div>
+                </div>
+                
+                {/* Pitch */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Voice Pitch: {voiceSettings.pitch.toFixed(1)}
+                  </label>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2"
+                    step="0.1"
+                    value={voiceSettings.pitch}
+                    onChange={(e) => handleVoiceSettingsChange({ pitch: parseFloat(e.target.value) })}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>Low</span>
+                    <span>High</span>
+                  </div>
+                </div>
+                
+                {/* Volume */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Volume: {Math.round(voiceSettings.volume * 100)}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={voiceSettings.volume}
+                    onChange={(e) => handleVoiceSettingsChange({ volume: parseFloat(e.target.value) })}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>Quiet</span>
+                    <span>Loud</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* AI Behavior Settings */}
+              <div className="space-y-4 pt-4 border-t border-gray-200">
+                <h4 className="text-md font-semibold text-gray-900 flex items-center">
+                  <Bot className="w-4 h-4 mr-2 text-purple-600" />
+                  AI Behavior
+                </h4>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-700">Detailed responses</label>
+                    <input type="checkbox" defaultChecked className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-700">Proactive suggestions</label>
+                    <input type="checkbox" defaultChecked className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-700">Context memory</label>
+                    <input type="checkbox" defaultChecked className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Settings Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    // Reset to defaults
+                    setVoiceSettings({
+                      voice: 'default',
+                      rate: 1,
+                      pitch: 1,
+                      volume: 1,
+                      language: 'en-US',
+                      autoSpeak: true,
+                      voiceGender: 'female'
+                    });
+                  }}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Reset to Defaults
+                </button>
+                
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-blue-600 hover:to-purple-700 transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
