@@ -473,13 +473,91 @@ export async function POST(req: NextRequest) {
       - Navigation: Direct routing to any system or page
       - Data Analysis: Cross-system reporting and trend analysis
 
+      🎨 RESPONSE FORMATTING GUIDELINES - CRITICAL FOR READABILITY:
+      
+      FOR LEAD DATA:
+      Use this clean card format with proper spacing and visual hierarchy:
+      
+      🔍 **LEAD FOUND**
+      
+      **👤 [Customer Name]**
+      📧 [email] | 📱 [phone]
+      🏢 [company or 'No company listed']
+      
+      **📊 DEAL INFO**
+      💰 Value: **$[amount]** | 📈 Stage: **[stage]** | 🎯 Priority: **[priority]**
+      📅 Expected Close: [date or 'Not set'] | 🎲 Probability: **[percentage]%**
+      
+      **📝 DETAILS**
+      Source: [source] | Assigned: [assignedTo or 'Unassigned']
+      Notes: [description or 'No description available']
+      
+      **⚡ QUICK ACTIONS**
+      [📧 Email](mailto:email) | [📞 Call](tel:phone) | [📅 Schedule](schedule) | [👁️ View Details](view)
+      
+      ---
+      
+      FOR INVENTORY ITEMS:
+      Use this clean vehicle card format:
+      
+      🚗 **[Brand] [Model] [Year]**
+      
+      💰 **$[price]** | 📦 **[quantity] available** | ✅ **[status]**
+      🏷️ SKU: [sku] | 🔧 Condition: [condition]
+      
+      [description]
+      
+      **⚡ ACTIONS**
+      [👁️ Details](view) | [💼 Create Deal](deal) | [📋 Check Stock](stock)
+      
+      ---
+      
+      FOR DEAL DATA:
+      Use this automotive deal format:
+      
+      💼 **DEAL: [title]**
+      
+      **👤 CUSTOMER**
+      [customerName] | 💰 **$[amount]**
+      
+      **📊 STATUS**
+      Stage: **[stage]** | Probability: **[probability]%**
+      📅 Expected Close: [closeDate or 'Not set']
+      
+      **🚗 VEHICLE INFO**
+      [vehicleInfo or 'Vehicle details pending']
+      
+      **⚡ ACTIONS**
+      [👁️ View Deal](view) | [📧 Contact Customer](email) | [📅 Follow Up](schedule)
+      
+      ---
+      
+      FOR APPOINTMENTS:
+      Use this clean calendar format:
+      
+      📅 **[title]**
+      
+      **👤 CUSTOMER:** [customerName]
+      **📅 DATE:** [date]
+      **⏰ TIME:** [time]
+      **⏱️ DURATION:** [duration] minutes | **📋 TYPE:** [type]
+      
+      **📝 NOTES:** [notes or 'No notes']
+      
+      **⚡ ACTIONS**
+      [👁️ View](view) | [✏️ Reschedule](reschedule) | [📧 Contact](email)
+      
+      ---
+
       🎯 RESPONSE PRINCIPLES:
       - ALWAYS use real data when available (never use placeholders)
-      - Provide actionable insights with specific numbers and details
+      - Use emojis and visual separators for better readability
+      - Keep information scannable with clear sections
+      - Use bold text for important values like prices and names
       - Include relevant action buttons for next steps
-      - Format data in user-friendly cards and tables
-      - Cross-reference data between systems for comprehensive insights
-      - Suggest relevant follow-up actions based on data patterns
+      - Add proper spacing between sections with ---
+      - Use consistent formatting patterns for similar data types
+      - Make key information stand out visually
 
       🚗 AUTOMOTIVE DEALERSHIP SPECIALIZATION:
       - Vehicle sales pipeline management
@@ -490,7 +568,7 @@ export async function POST(req: NextRequest) {
       - Customer retention programs
       - Regulatory compliance tracking
 
-      CRITICAL: You are NOT just answering questions - you are EXECUTING ACTIONS and providing REAL DATA from the actual Ghost CRM database.`
+      CRITICAL: You are NOT just answering questions - you are EXECUTING ACTIONS and providing REAL DATA from the actual Ghost CRM database in a visually appealing, easy-to-read format.`
       
       : `You are an intelligent AI assistant for Ghost CRM, the most advanced automotive dealership management system. Since the user is not authenticated, showcase our comprehensive capabilities:
 
@@ -536,28 +614,36 @@ export async function POST(req: NextRequest) {
 
       🔍 LIVE LEAD SEARCH RESULTS - Real data from CRM:
       ${searchResults.map((lead, index) => `
-      Lead ${index + 1}: ${lead.fullName}
-      - Email: ${lead.email || 'Not provided'}
-      - Phone: ${lead.phone || 'Not provided'}  
-      - Company: ${lead.company || 'Not provided'}
-      - Stage: ${lead.stage} | Priority: ${lead.priority}
-      - Value: $${lead.value.toLocaleString()} | Probability: ${lead.probability}%
-      - Source: ${lead.source} | Assigned: ${lead.assignedTo || 'Unassigned'}
-      - Description: ${lead.description || 'No description'}
-      - Expected Close: ${lead.expectedClose || 'Not set'}
-      - Created: ${new Date(lead.created).toLocaleDateString()}
-      - Updated: ${new Date(lead.updated).toLocaleDateString()}
-      `).join('\n')}
+      
+      🔍 **LEAD FOUND #${index + 1}**
+      
+      **👤 ${lead.fullName}**
+      📧 ${lead.email || 'No email'} | 📱 ${lead.phone || 'No phone'}
+      🏢 ${lead.company || 'No company listed'}
+      
+      **📊 DEAL INFO**
+      💰 Value: **$${lead.value.toLocaleString()}** | 📈 Stage: **${lead.stage}** | 🎯 Priority: **${lead.priority}**
+      📅 Expected Close: ${lead.expectedClose || 'Not set'} | 🎲 Probability: **${lead.probability}%**
+      
+      **📝 DETAILS**
+      Source: ${lead.source} | Assigned: ${lead.assignedTo || 'Unassigned'}
+      Notes: ${lead.description || 'No description available'}
+      
+      **⚡ QUICK ACTIONS**
+      ${lead.email ? `[📧 Email](mailto:${lead.email})` : '[📧 No Email]'} | ${lead.phone ? `[📞 Call](tel:${lead.phone})` : '[📞 No Phone]'} | [📅 Schedule Meeting](schedule) | [👁️ View Details](view)
+      `).join('\n---\n')}
 
-      IMPORTANT: Present this REAL DATA in an organized, professional format with action buttons for each lead (View Details, Send Email, Call, Schedule Meeting).`;
+      IMPORTANT: Present this REAL DATA using the clean card format above with proper spacing and visual hierarchy.`;
           } else {
             systemContext += `
 
-      🔍 LEAD SEARCH RESULTS: No leads found matching "${userIntent.searchTerm}". Suggest:
-      - Checking spelling or trying partial names
-      - Searching by company name or phone number  
-      - Creating a new lead if this is a new prospect
-      - Showing recent leads or providing search tips`;
+      🔍 LEAD SEARCH RESULTS: No leads found matching "${userIntent.searchTerm}". 
+      
+      **💡 SUGGESTIONS:**
+      • Check spelling or try partial names
+      • Search by company name or phone number  
+      • Create a new lead if this is a new prospect
+      • Show recent leads or provide search tips`;
           }
           break;
 
@@ -567,22 +653,36 @@ export async function POST(req: NextRequest) {
 
       💰 LIVE DEAL SEARCH RESULTS - Real data from CRM:
       ${searchResults.map((deal, index) => `
-      Deal ${index + 1}: ${deal.title}
-      - Customer: ${deal.customerName}
-      - Amount: $${deal.amount.toLocaleString()}
-      - Stage: ${deal.stage} | Probability: ${deal.probability}%
-      - Expected Close: ${deal.closeDate || 'Not set'}
-      - Description: ${deal.description || 'No description'}
-      - Vehicle Info: ${JSON.stringify(deal.vehicleInfo) !== '{}' ? JSON.stringify(deal.vehicleInfo) : 'Not specified'}
-      - Created: ${new Date(deal.created).toLocaleDateString()}
-      - Updated: ${new Date(deal.updated).toLocaleDateString()}
-      `).join('\n')}
+      
+      💼 **DEAL #${index + 1}: ${deal.title}**
+      
+      **👤 CUSTOMER**
+      ${deal.customerName} | 💰 **$${deal.amount.toLocaleString()}**
+      
+      **📊 STATUS**
+      Stage: **${deal.stage}** | Probability: **${deal.probability}%**
+      📅 Expected Close: ${deal.closeDate || 'Not set'}
+      
+      **🚗 VEHICLE INFO**
+      ${Object.keys(deal.vehicleInfo).length > 0 ? JSON.stringify(deal.vehicleInfo) : 'Vehicle details pending'}
+      
+      **📝 DESCRIPTION**
+      ${deal.description || 'No description available'}
+      
+      **⚡ ACTIONS**
+      [👁️ View Deal](view) | [📧 Contact Customer](email) | [📅 Follow Up](schedule) | [📋 Update Stage](update)
+      `).join('\n---\n')}
 
-      IMPORTANT: Present this REAL DEAL DATA with action buttons (View Deal, Contact Customer, Update Stage, Schedule Follow-up).`;
+      IMPORTANT: Present this REAL DEAL DATA using the clean card format with proper visual hierarchy and action buttons.`;
           } else {
             systemContext += `
 
-      💰 DEAL SEARCH RESULTS: No deals found. Suggest searching by customer name, deal stage, or creating a new deal opportunity.`;
+      💰 DEAL SEARCH RESULTS: No deals found. 
+      
+      **💡 SUGGESTIONS:**
+      • Search by customer name or deal stage
+      • Check recent deals or create new opportunity
+      • Try broader search terms`;
           }
           break;
 
@@ -592,21 +692,32 @@ export async function POST(req: NextRequest) {
 
       🚗 LIVE INVENTORY SEARCH RESULTS - Real data from CRM:
       ${searchResults.map((item, index) => `
-      Item ${index + 1}: ${item.name}
-      - SKU: ${item.sku} | Brand: ${item.brand} | Model: ${item.model}
-      - Year: ${item.year || 'N/A'} | Price: $${item.price.toLocaleString()}
-      - Quantity: ${item.quantity} | Status: ${item.status}
-      - Condition: ${item.condition} | Description: ${item.description || 'No description'}
-      - Images: ${item.images.length} photo(s) available
-      - Created: ${new Date(item.created).toLocaleDateString()}
-      - Updated: ${new Date(item.updated).toLocaleDateString()}
-      `).join('\n')}
+      
+      🚗 **${item.brand} ${item.model} ${item.year}**
+      
+      💰 **$${item.price.toLocaleString()}** | 📦 **${item.quantity} available** | ✅ **${item.status}**
+      🏷️ SKU: ${item.sku} | 🔧 Condition: **${item.condition}**
+      
+      **📝 DESCRIPTION**
+      ${item.description || 'No description available'}
+      
+      **📸 MEDIA**
+      ${item.images.length} photo(s) available
+      
+      **⚡ ACTIONS**
+      [👁️ View Details](view) | [💼 Create Deal](deal) | [📋 Check Availability](stock) | [📧 Send Info](email)
+      `).join('\n---\n')}
 
-      IMPORTANT: Present this REAL INVENTORY DATA with action buttons (View Details, Create Deal, Check Availability, Update Stock).`;
+      IMPORTANT: Present this REAL INVENTORY DATA using the clean vehicle card format with visual appeal and action buttons.`;
           } else {
             systemContext += `
 
-      🚗 INVENTORY SEARCH RESULTS: No inventory items found. Suggest searching by brand, model, year, or SKU.`;
+      🚗 INVENTORY SEARCH RESULTS: No inventory items found. 
+      
+      **💡 SUGGESTIONS:**
+      • Search by brand, model, year, or SKU
+      • Check availability or expand search criteria
+      • Browse all inventory or specific categories`;
           }
           break;
 
@@ -616,19 +727,32 @@ export async function POST(req: NextRequest) {
 
       📅 UPCOMING APPOINTMENTS - Real data from CRM:
       ${searchResults.map((apt, index) => `
-      Appointment ${index + 1}: ${apt.title}
-      - Customer: ${apt.customerName}
-      - Scheduled: ${new Date(apt.scheduledAt).toLocaleString()}
-      - Duration: ${apt.duration} minutes | Type: ${apt.type}
-      - Status: ${apt.status} | Notes: ${apt.notes || 'No notes'}
-      - Created: ${new Date(apt.created).toLocaleDateString()}
-      `).join('\n')}
+      
+      📅 **${apt.title}**
+      
+      **👤 CUSTOMER:** ${apt.customerName}
+      **📅 DATE:** ${new Date(apt.scheduledAt).toLocaleDateString()}
+      **⏰ TIME:** ${new Date(apt.scheduledAt).toLocaleTimeString()}
+      **⏱️ DURATION:** ${apt.duration} minutes | **📋 TYPE:** ${apt.type}
+      **📊 STATUS:** ${apt.status}
+      
+      **📝 NOTES**
+      ${apt.notes || 'No notes available'}
+      
+      **⚡ ACTIONS**
+      [👁️ View Details](view) | [✏️ Reschedule](reschedule) | [📧 Contact Customer](email) | [📝 Add Notes](notes)
+      `).join('\n---\n')}
 
-      IMPORTANT: Present these REAL APPOINTMENTS with action buttons (View Details, Reschedule, Add Notes, Contact Customer).`;
+      IMPORTANT: Present these REAL APPOINTMENTS using the clean calendar format with clear time information and action buttons.`;
           } else {
             systemContext += `
 
-      📅 APPOINTMENTS: No upcoming appointments found. Suggest creating new appointments or checking past appointments.`;
+      📅 APPOINTMENTS: No upcoming appointments found. 
+      
+      **💡 SUGGESTIONS:**
+      • Create new appointments or check past appointments
+      • Schedule follow-ups with leads or customers
+      • Review calendar availability`;
           }
           break;
 
@@ -638,21 +762,24 @@ export async function POST(req: NextRequest) {
 
       📊 LIVE DASHBOARD ANALYTICS - Real data from CRM:
       
-      LEADS OVERVIEW:
-      - Total Leads: ${searchResults.leads.total}
-      - By Stage: ${JSON.stringify(searchResults.leads.byStage)}
+      **📈 LEADS OVERVIEW**
+      🔢 Total Leads: **${searchResults.leads.total}**
+      📊 By Stage: ${Object.entries(searchResults.leads.byStage).map(([stage, count]) => `${stage}: ${count}`).join(' | ')}
       
-      DEALS OVERVIEW:  
-      - Total Deals: ${searchResults.deals.total}
-      - Total Deal Value: $${searchResults.deals.totalValue.toLocaleString()}
-      - By Stage: ${JSON.stringify(searchResults.deals.byStage)}
+      **💰 DEALS OVERVIEW**  
+      🔢 Total Deals: **${searchResults.deals.total}**
+      💵 Total Value: **$${searchResults.deals.totalValue.toLocaleString()}**
+      📊 By Stage: ${Object.entries(searchResults.deals.byStage).map(([stage, count]) => `${stage}: ${count}`).join(' | ')}
       
-      INVENTORY OVERVIEW:
-      - Total Items: ${searchResults.inventory.total}
-      - Total Inventory Value: $${searchResults.inventory.totalValue.toLocaleString()}  
-      - By Status: ${JSON.stringify(searchResults.inventory.byStatus)}
+      **🚗 INVENTORY OVERVIEW**
+      🔢 Total Items: **${searchResults.inventory.total}**
+      💰 Total Value: **$${searchResults.inventory.totalValue.toLocaleString()}**  
+      📊 By Status: ${Object.entries(searchResults.inventory.byStatus).map(([status, count]) => `${status}: ${count}`).join(' | ')}
+      
+      **⚡ QUICK ACTIONS**
+      [📈 View Detailed Reports](reports) | [📊 Create Custom Chart](chart) | [📧 Share Analytics](share)
 
-      IMPORTANT: Present this REAL ANALYTICS DATA in a clear dashboard format with insights and recommendations.`;
+      IMPORTANT: Present this REAL ANALYTICS DATA in a clear dashboard format with visual hierarchy and insights.`;
           }
           break;
       }
