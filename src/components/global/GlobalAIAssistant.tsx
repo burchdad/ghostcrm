@@ -61,8 +61,13 @@ export default function GlobalAIAssistant() {
 
   return (
     <>
-      {/* Global AI Assistant floating button - Moved to left side above QuickAdd */}
-      <div className="fixed bottom-20 left-8 z-50">
+      {/* Global AI Assistant floating button - Positioned between QuickAdd and Collaboration */}
+      <div style={{ 
+        position: 'fixed', 
+        bottom: '8rem', 
+        left: '2rem', 
+        zIndex: 1000 
+      }}>
         <button 
           onClick={() => setShowAIAssistant(true)}
           className="ai-assistant-fab"
