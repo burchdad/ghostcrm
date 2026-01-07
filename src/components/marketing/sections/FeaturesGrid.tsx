@@ -83,7 +83,7 @@ export default function FeaturesGrid() {
         <div className="features-container">
           <div className="features-header">
             <h2 className="features-title">
-              Everything You Need to Dominate Auto Sales
+              Everything You Need to Dominate Automotive Sales
             </h2>
             <p className="features-subtitle">
               From lead capture to deal closing, our platform handles every aspect of your sales process.

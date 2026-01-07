@@ -3,7 +3,7 @@ import { Star } from "lucide-react";
 
 const testimonials = [
   {
-    quote: "Ghost Auto CRM transformed our dealership. We've seen a 45% increase in sales and our team is more organized than ever.",
+    quote: "Ghost CRM transformed our dealership. We've seen a 45% increase in sales and our team is more organized than ever.",
     name: "Sarah Mitchell",
     title: "Sales Manager, Premier Auto",
     initials: "SM",

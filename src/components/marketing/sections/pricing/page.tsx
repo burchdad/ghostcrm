@@ -151,7 +151,7 @@ export default function PricingPage() {
               margin: '0 auto 2rem auto',
               lineHeight: '1.6'
             }}>
-              Transform your dealership with Ghost Auto CRM. Choose the plan that fits your business size and watch your sales soar.
+              Transform your dealership with Ghost CRM. Choose the plan that fits your business size and watch your sales soar.
             </p>
 
             <div style={{

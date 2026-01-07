@@ -11,7 +11,7 @@ export default function CTASection() {
             Ready to Transform Your Dealership?
           </h2>
           <p className="cta-subtitle">
-            Join thousands of successful dealerships using Ghost Auto CRM. Start your free trial today - no credit card required.
+            Join thousands of successful dealerships using Ghost CRM. Start your free trial today - no credit card required.
           </p>
           
           <div className="cta-buttons">

@@ -12,7 +12,7 @@ export default function HeroSection() {
             Automotive Sales
           </span>
           <div className="hero-subtitle">
-            Streamline your dealership operations, boost sales by 40%, and deliver exceptional customer experiences with Ghost Auto CRM.
+            Streamline your dealership operations, boost sales by 40%, and deliver exceptional customer experiences with Ghost CRM.
           </div>
         </h1>
 
@@ -56,7 +56,7 @@ export default function HeroSection() {
               <div className="browser-dot bg-green-500" />
             </div>
             <div className="browser-url">
-              <span className="url-text">app.ghostautocrm.com</span>
+              <span className="url-text">app.ghostcrm.com</span>
             </div>
           </div>
 

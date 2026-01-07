@@ -99,7 +99,7 @@ export default function MarketingHeader() {
               transition: 'all 0.3s ease',
               letterSpacing: '-0.5px'
             }}>
-              Ghost Auto CRM
+              Ghost CRM
             </span>
             {/* Mobile: Abbreviated text */}
             <span className="sm:hidden" style={{

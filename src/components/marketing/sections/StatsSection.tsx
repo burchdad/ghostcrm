@@ -28,7 +28,7 @@ export default function StatsSection() {
             Trusted by Dealerships Worldwide
           </h2>
           <p className="stats-subtitle">
-            Join thousands of automotive professionals who have transformed their business with Ghost Auto CRM
+            Join thousands of automotive professionals who have transformed their business with Ghost CRM
           </p>
         </div>
 
