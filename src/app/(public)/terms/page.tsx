@@ -12,7 +12,7 @@ export default function TermsOfService() {
             
             <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Acceptance of Terms</h2>
             <p className="text-gray-700 mb-6">
-              By accessing and using Ghost Auto CRM, you accept and agree to be bound by the terms and provision of this agreement.
+              By accessing and using Ghost CRM, you accept and agree to be bound by the terms and provision of this agreement.
             </p>
             
             <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Use License</h2>

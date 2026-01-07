@@ -1,4 +1,4 @@
-// ElevenLabs Voice API Configuration for Ghost Auto CRM
+// ElevenLabs Voice API Configuration for Ghost CRM
 // Integration for high-quality AI voice synthesis
 
 export interface ElevenLabsVoice {
@@ -93,7 +93,7 @@ export async function getElevenLabsVoices() {
 }
 
 // Preview voice function for UI
-export function playVoicePreview(voiceId: string, sampleText = "Hello, this is a voice preview for Ghost Auto CRM.") {
+export function playVoicePreview(voiceId: string, sampleText = "Hello, this is a voice preview for Ghost CRM.") {
   const previewUrl = `${ELEVENLABS_CONFIG.baseUrl}/text-to-speech/${voiceId}/stream`;
   
   // Create audio element and play preview

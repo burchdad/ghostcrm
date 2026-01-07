@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       preferredContact,
       message,
       timestamp: new Date().toISOString(),
-      source: "Ghost Auto CRM - Landing Page Contact Form"
+      source: "Ghost CRM - Landing Page Contact Form"
     };
 
     // Here you can integrate with your preferred email service:
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     });
 
     const emailHtml = `
-      <h2>New Contact Form Submission - Ghost Auto CRM</h2>
+      <h2>New Contact Form Submission - Ghost CRM</h2>
       <p><strong>Name:</strong> ${name}</p>
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Dealership:</strong> ${dealership || 'Not provided'}</p>

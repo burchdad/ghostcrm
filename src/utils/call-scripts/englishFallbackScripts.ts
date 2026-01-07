@@ -3,7 +3,7 @@
 
 export const generateEnglishProfessionalFlow = (name: string, vehicle: string, budget?: string) => `
 🌍 LANGUAGE PREFERENCE OPENING:
-Hi ${name}! This is [AI Agent Name] from Ghost Auto CRM. I hope you're having a great day so far.
+Hi ${name}! This is [AI Agent Name] from Ghost CRM. I hope you're having a great day so far.
 
 Before we begin, I want to make sure you're comfortable - would you prefer to continue this conversation in English, or would you like to speak in a different language? I'm fluent in Spanish, and I can arrange for other languages if needed.
 
@@ -45,7 +45,7 @@ Perfect! Let me get that set up for you right now...
 
 export const generateEnglishAggressiveFlow = (name: string, vehicle: string, budget?: string) => `
 🌍 LANGUAGE CHECK OPENING:
-${name}! This is [AI Agent Name] from Ghost Auto CRM, and I have incredible news about your ${vehicle} inquiry!
+${name}! This is [AI Agent Name] from Ghost CRM, and I have incredible news about your ${vehicle} inquiry!
 
 Quick question before I share this exciting update - are you comfortable continuing in English, or would you prefer Spanish? I want to make sure you understand everything perfectly because this is important.
 
@@ -78,7 +78,7 @@ Perfect! I'm blocking out time right now, but ${name}, I need your word that you
 
 export const generateEnglishFriendlyFlow = (name: string, vehicle: string, budget?: string) => `
 🌍 WELCOMING LANGUAGE CHECK:
-Hi ${name}! This is [AI Agent Name] calling from Ghost Auto CRM. First, I hope you're having a wonderful day!
+Hi ${name}! This is [AI Agent Name] calling from Ghost CRM. First, I hope you're having a wonderful day!
 
 I want to make sure we have the best conversation possible - would you like to continue in English, or would you be more comfortable speaking in Spanish or another language? I'm here to help in whatever way works best for you!
 
@@ -126,7 +126,7 @@ export const generateEnglishConsultativeFlow = (name: string, vehicle: string, b
 
   return `
 🌍 PROFESSIONAL LANGUAGE ACCOMMODATION:
-Good ${getTimeOfDay()} ${name}, this is [AI Agent Name] from Ghost Auto CRM. Thank you for taking my call.
+Good ${getTimeOfDay()} ${name}, this is [AI Agent Name] from Ghost CRM. Thank you for taking my call.
 
 Before we proceed, I want to ensure clear communication - would you prefer to continue our conversation in English, or would Spanish or another language be more comfortable for you? I want to make sure you fully understand all the market insights I'll be sharing.
 

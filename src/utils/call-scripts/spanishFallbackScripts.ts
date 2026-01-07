@@ -3,7 +3,7 @@
 
 export const generateSpanishProfessionalFlow = (name: string, vehicle: string, budget?: string) => `
 🌍 CONFIRMACIÓN DE IDIOMA:
-¡Hola ${name}! Soy [Nombre del Agente] de Ghost Auto CRM. Espero que esté teniendo un día excelente.
+¡Hola ${name}! Soy [Nombre del Agente] de Ghost CRM. Espero que esté teniendo un día excelente.
 
 Antes de continuar, quiero asegurarme de que esté cómodo - ¿prefiere continuar nuestra conversación en español, o le gustaría hablar en inglés? También puedo conseguir asistencia en otros idiomas si lo prefiere.
 
@@ -45,7 +45,7 @@ ${name}, me encantaría mostrarle estas opciones en persona porque creo que qued
 
 export const generateSpanishFriendlyFlow = (name: string, vehicle: string, budget?: string) => `
 🌍 BIENVENIDA CON VERIFICACIÓN DE IDIOMA:
-¡Hola ${name}! Soy [Nombre del Agente] de Ghost Auto CRM. ¡Espero que esté teniendo un día maravilloso!
+¡Hola ${name}! Soy [Nombre del Agente] de Ghost CRM. ¡Espero que esté teniendo un día maravilloso!
 
 Quiero asegurarme de que tengamos la mejor conversación posible - ¿le gustaría continuar en español, o se sentiría más cómodo hablando en inglés u otro idioma? Estoy aquí para ayudarle de la manera que funcione mejor para usted.
 
@@ -84,7 +84,7 @@ ${name}, me encantaría conocerlo en persona y mostrarle algunas opciones. Creo 
 
 export const generateSpanishAggressiveFlow = (name: string, vehicle: string, budget?: string) => `
 🌍 VERIFICACIÓN DE IDIOMA URGENTE:
-¡${name}! Soy [Nombre del Agente] de Ghost Auto CRM, ¡y tengo noticias increíbles sobre su consulta de ${vehicle}!
+¡${name}! Soy [Nombre del Agente] de Ghost CRM, ¡y tengo noticias increíbles sobre su consulta de ${vehicle}!
 
 Pregunta rápida antes de compartir esta actualización emocionante - ¿se siente cómodo continuando en español, o prefiere inglés? Quiero asegurarme de que entienda todo perfectamente porque esto es importante.
 
@@ -126,7 +126,7 @@ export const generateSpanishConsultativeFlow = (name: string, vehicle: string, b
 
   return `
 🌍 ACOMODACIÓN PROFESIONAL DE IDIOMA:
-${getSpanishTimeOfDay()} ${name}, soy [Nombre del Agente] de Ghost Auto CRM. Gracias por atender mi llamada.
+${getSpanishTimeOfDay()} ${name}, soy [Nombre del Agente] de Ghost CRM. Gracias por atender mi llamada.
 
 Antes de proceder, quiero asegurar una comunicación clara - ¿prefiere continuar nuestra conversación en español, o se sentiría más cómodo con inglés u otro idioma? Quiero asegurarme de que comprenda completamente todos los análisis de mercado que compartiré.
 

@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     // Detected answering machine - leave appropriate message
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="Polly.Joanna">Hi, this is an automated message from Ghost Auto CRM. We'd love to speak with you about your vehicle inquiry. Please call us back at your earliest convenience. Thank you!</Say>
+  <Say voice="Polly.Joanna">Hi, this is an automated message from Ghost CRM. We'd love to speak with you about your vehicle inquiry. Please call us back at your earliest convenience. Thank you!</Say>
   <Hangup/>
 </Response>`;
     return new NextResponse(twiml, { headers: { "Content-Type": "text/xml" }});
@@ -102,10 +102,10 @@ function getAdaptiveGreeting(leadData: any, voiceConfig: any) {
   // Multilingual greeting
   if (voiceConfig.language === 'es') {
     const spanishTimeGreeting = hour < 12 ? 'Buenos días' : hour < 17 ? 'Buenas tardes' : 'Buenas noches';
-    return `${spanishTimeGreeting} ${leadName}, soy ${agentName} de Ghost Auto CRM. ¿Prefiere continuar en español o cambiar a inglés?`;
+    return `${spanishTimeGreeting} ${leadName}, soy ${agentName} de Ghost CRM. ¿Prefiere continuar en español o cambiar a inglés?`;
   }
   
-  return `${timeGreeting} ${leadName}! This is ${agentName} from Ghost Auto CRM. Before we begin, are you comfortable continuing in English, or would you prefer to speak in Spanish?`;
+  return `${timeGreeting} ${leadName}! This is ${agentName} from Ghost CRM. Before we begin, are you comfortable continuing in English, or would you prefer to speak in Spanish?`;
 }
 
 // Map voice configuration to Twilio TTS voices

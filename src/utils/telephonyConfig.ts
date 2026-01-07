@@ -12,7 +12,7 @@ export interface TelephonyProvider {
 export const BUSINESS_PHONE_CONFIG = {
   // Your business number (update this with your actual number)
   businessNumber: process.env.BUSINESS_PHONE_NUMBER || '+1234567890', // Update this!
-  displayName: process.env.BUSINESS_DISPLAY_NAME || 'Ghost Auto CRM',
+  displayName: process.env.BUSINESS_DISPLAY_NAME || 'Ghost CRM',
   
   // Preferred telephony providers (in order of preference)
   providers: {
@@ -230,7 +230,7 @@ TELEPHONY INTEGRATION SETUP:
 2. Environment Variables (.env.local):
    # Business Configuration
    BUSINESS_PHONE_NUMBER=+1234567890  # Your actual business number
-   BUSINESS_DISPLAY_NAME="Ghost Auto CRM"
+   BUSINESS_DISPLAY_NAME="Ghost CRM"
    
    # Twilio Configuration
    TWILIO_ACCOUNT_SID=your_account_sid
