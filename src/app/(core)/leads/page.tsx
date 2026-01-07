@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Search, Plus, Phone, MessageSquare, Mail, Download, X, Trash2 } from "lucide-react";
+import { Search, Plus, Phone, MessageSquare, Mail, Download, X, Trash2, Brain, TrendingUp, Clock, Target } from "lucide-react";
 import OptOutTable from "./OptOutTable";
 import EmptyStateComponent from "@/components/feedback/EmptyStateComponent";
 import { useI18n } from "@/components/utils/I18nProvider";
@@ -80,7 +80,77 @@ export default function Leads() {
   const [emailSending, setEmailSending] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [showNewLeadModal, setShowNewLeadModal] = useState(false);
+  const [aiInsights, setAiInsights] = useState<Record<string, any>>({});
+  const [loadingInsights, setLoadingInsights] = useState<Record<string, boolean>>({});
   const emailMessageRef = useRef<HTMLTextAreaElement>(null);
+
+  async function generateAIInsight(lead: any) {
+    if (aiInsights[lead.id] || loadingInsights[lead.id]) return;
+    
+    setLoadingInsights(prev => ({ ...prev, [lead.id]: true }));
+    
+    try {
+      const response = await fetch('/api/ai/assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Analyze this lead and provide actionable insights: Name: ${lead["Full Name"]}, Company: ${lead["Company"] || 'Not provided'}, Phone: ${lead["Phone Number"] || 'Not provided'}, Email: ${lead["Email Address"] || 'Not provided'}, Lead Score: ${lead.lead_score || 0}. Provide a brief insight about engagement strategy, priority level, and next best action.`,
+          context: 'lead_analysis',
+          leadData: lead
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.response) {
+        // Parse AI response for structured insights
+        const insight = {
+          priority: lead.lead_score >= 80 ? 'High' : lead.lead_score >= 60 ? 'Medium' : 'Low',
+          nextAction: extractNextAction(data.response),
+          engagement: extractEngagementStrategy(data.response),
+          timeframe: extractTimeframe(data.response),
+          summary: data.response.substring(0, 150) + '...'
+        };
+        
+        setAiInsights(prev => ({ ...prev, [lead.id]: insight }));
+      }
+    } catch (error) {
+      console.error('AI insight generation failed:', error);
+    } finally {
+      setLoadingInsights(prev => ({ ...prev, [lead.id]: false }));
+    }
+  }
+  
+  function extractNextAction(aiResponse: string): string {
+    const actionKeywords = {
+      'call': '📞 Call Now',
+      'email': '📧 Send Email', 
+      'follow': '🔄 Follow Up',
+      'meeting': '🤝 Schedule Meeting',
+      'nurture': '🌱 Nurture Lead'
+    };
+    
+    for (const [key, action] of Object.entries(actionKeywords)) {
+      if (aiResponse.toLowerCase().includes(key)) {
+        return action;
+      }
+    }
+    return '👋 Reach Out';
+  }
+  
+  function extractEngagementStrategy(aiResponse: string): string {
+    if (aiResponse.toLowerCase().includes('urgent') || aiResponse.toLowerCase().includes('hot')) return 'Immediate';
+    if (aiResponse.toLowerCase().includes('warm') || aiResponse.toLowerCase().includes('interested')) return 'Active';
+    if (aiResponse.toLowerCase().includes('cold') || aiResponse.toLowerCase().includes('low')) return 'Nurture';
+    return 'Standard';
+  }
+  
+  function extractTimeframe(aiResponse: string): string {
+    if (aiResponse.toLowerCase().includes('today') || aiResponse.toLowerCase().includes('now')) return 'Today';
+    if (aiResponse.toLowerCase().includes('week')) return 'This Week';
+    if (aiResponse.toLowerCase().includes('month')) return 'This Month';
+    return 'Soon';
+  }
 
   async function handleAction(lead: any, action: "call" | "message" | "email") {
     if (action === "email") {
@@ -530,8 +600,8 @@ export default function Leads() {
   });
 
   return (
-    <div className="space-y-6 min-h-full">
-      <Card className="p-4 sm:p-6">
+    <div className="space-y-6 min-h-full max-w-full px-2">
+      <Card className="p-4 sm:p-6 mx-auto max-w-[98%]">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
           <h1 className="text-xl sm:text-2xl font-bold">{t('leads.title', 'features')} {t('general.management', 'common')}</h1>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -553,14 +623,14 @@ export default function Leads() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="relative flex-1">
+        <div className="flex flex-col sm:flex-row gap-4 mb-4 w-full">
+          <div className="relative flex-1 max-w-none">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder={t('general.search_leads_placeholder', 'common')}
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="pl-10"
+              className="pl-10 w-full"
             />
           </div>
           <div className="flex gap-2">
@@ -620,8 +690,8 @@ export default function Leads() {
             className="py-12"
           />
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
+          <div className="overflow-x-auto w-full">
+            <Table className="w-full">
               <TableHeader>
                 <TableRow>
                   {bulkMode && (
@@ -646,112 +716,164 @@ export default function Leads() {
                   <TableHead className="hidden md:table-cell">{t('contacts.email_address', 'features')}</TableHead>
                   <TableHead className="hidden lg:table-cell">{t('contacts.company', 'features')}</TableHead>
                   <TableHead className="hidden sm:table-cell">{t('general.status', 'common')}</TableHead>
+                  <TableHead className="hidden xl:table-cell min-w-[200px]">🤖 AI Insights</TableHead>
                   <TableHead className="hidden md:table-cell">{t('general.created', 'common')}</TableHead>
-                  <TableHead className="min-w-[120px]">{t('general.actions', 'common')}</TableHead>
+                  <TableHead className="min-w-[140px]">{t('general.actions', 'common')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {sortedLeads.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                       No leads found. {filter ? t('general.try_adjusting_search', 'common') : t('general.create_first_lead', 'common')}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  sortedLeads.map((lead, idx) => (
-                    <TableRow key={lead.id} className="group">
-                      {bulkMode && (
-                        <TableCell>
-                          <input
-                            type="checkbox"
-                            checked={selectedIdxs.includes(idx)}
-                            onChange={() => {
-                              if (selectedIdxs.includes(idx)) {
-                                setSelectedIdxs(selectedIdxs.filter(i => i !== idx));
-                              } else {
-                                setSelectedIdxs([...selectedIdxs, idx]);
-                              }
-                            }}
-                            className="rounded border-gray-300"
-                          />
-                        </TableCell>
-                      )}
-                      <TableCell className="font-medium">
-                        <div>
-                          <div className="font-semibold">{lead["Full Name"]}</div>
-                          <div className="text-sm text-gray-500 sm:hidden">
-                            {lead["Phone Number"] && (
-                              <div>{lead["Phone Number"]}</div>
-                            )}
-                            {lead["Email Address"] && (
-                              <div className="truncate max-w-[150px]">{lead["Email Address"]}</div>
-                            )}
+                  sortedLeads.map((lead, idx) => {
+                    const insight = aiInsights[lead.id];
+                    const isLoadingInsight = loadingInsights[lead.id];
+                    
+                    return (
+                      <TableRow key={lead.id} className="group hover:bg-gray-50">
+                        {bulkMode && (
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedIdxs.includes(idx)}
+                              onChange={() => {
+                                if (selectedIdxs.includes(idx)) {
+                                  setSelectedIdxs(selectedIdxs.filter(i => i !== idx));
+                                } else {
+                                  setSelectedIdxs([...selectedIdxs, idx]);
+                                }
+                              }}
+                              className="rounded border-gray-300"
+                            />
+                          </TableCell>
+                        )}
+                        <TableCell className="font-medium">
+                          <div>
+                            <div className="font-semibold">{lead["Full Name"]}</div>
+                            <div className="text-sm text-gray-500 sm:hidden">
+                              {lead["Phone Number"] && (
+                                <div>{lead["Phone Number"]}</div>
+                              )}
+                              {lead["Email Address"] && (
+                                <div className="truncate max-w-[150px]">{lead["Email Address"]}</div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">{lead["Phone Number"] || "-"}</TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div className="truncate max-w-[200px]">{lead["Email Address"] || "-"}</div>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">{lead["Company"] || "-"}</TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          lead.lead_score >= 80 ? "bg-green-100 text-green-700" :
-                          lead.lead_score >= 60 ? "bg-yellow-100 text-yellow-700" :
-                          lead.lead_score >= 40 ? "bg-orange-100 text-orange-700" :
-                          "bg-gray-100 text-gray-600"
-                        }`}>
-                          {lead.lead_score || 0}
-                        </span>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {lead["Created Date"] ? new Date(lead["Created Date"]).toLocaleDateString() : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 flex-wrap">
-                          <Button
-                            variant="outline"
-                            onClick={() => handleAction(lead, "call")}
-                            disabled={!lead["Phone Number"]}
-                            title="Call Lead"
-                            className="flex items-center gap-1 text-xs px-2 py-1"
-                          >
-                            <Phone className="h-3 w-3" />
-                            <span className="hidden xl:inline">{t('leads.call', 'features')}</span>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => handleAction(lead, "message")}
-                            disabled={!lead["Phone Number"]}
-                            title="Send SMS"
-                            className="flex items-center gap-1 text-xs px-2 py-1"
-                          >
-                            <MessageSquare className="h-3 w-3" />
-                            <span className="hidden xl:inline">{t('general.sms', 'common')}</span>
-                          </Button>
-                          <Button
-                            variant="outline" 
-                            onClick={() => handleAction(lead, "email")}
-                            disabled={!lead["Email Address"]}
-                            title="Send Email"
-                            className="flex items-center gap-1 text-xs px-2 py-1"
-                          >
-                            <Mail className="h-3 w-3" />
-                            <span className="hidden xl:inline">{t('general.email', 'common')}</span>
-                          </Button>
-                          <Button
-                            variant={lead.opted_out ? "outline" : "ghost"}
-                            onClick={() => handleOptOutToggle(lead)}
-                            disabled={optOutLoading === lead.id}
-                            className={`text-xs px-2 py-1 ${lead.opted_out ? "text-green-600" : "text-red-600"}`}
-                            title={lead.opted_out ? "Opt back in" : "Opt out"}
-                          >
-                            {optOutLoading === lead.id ? "..." : lead.opted_out ? "✓" : "✕"}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">{lead["Phone Number"] || "-"}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <div className="truncate max-w-[200px]">{lead["Email Address"] || "-"}</div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">{lead["Company"] || "-"}</TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            lead.lead_score >= 80 ? "bg-green-100 text-green-700" :
+                            lead.lead_score >= 60 ? "bg-yellow-100 text-yellow-700" :
+                            lead.lead_score >= 40 ? "bg-orange-100 text-orange-700" :
+                            "bg-gray-100 text-gray-600"
+                          }`}>
+                            {lead.lead_score || 0}
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden xl:table-cell">
+                          {!insight && !isLoadingInsight ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => generateAIInsight(lead)}
+                              className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 flex items-center gap-1"
+                            >
+                              <Brain className="h-3 w-3" />
+                              Get AI Insight
+                            </Button>
+                          ) : isLoadingInsight ? (
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                              Analyzing...
+                            </div>
+                          ) : insight ? (
+                            <div className="space-y-1 text-xs">
+                              <div className="flex items-center gap-1">
+                                <Target className="h-3 w-3 text-blue-600" />
+                                <span className={`font-medium ${
+                                  insight.priority === 'High' ? 'text-red-600' :
+                                  insight.priority === 'Medium' ? 'text-yellow-600' : 'text-green-600'
+                                }`}>
+                                  {insight.priority} Priority
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 text-gray-600">
+                                <TrendingUp className="h-3 w-3" />
+                                <span>{insight.nextAction}</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-gray-500">
+                                <Clock className="h-3 w-3" />
+                                <span>{insight.timeframe}</span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => generateAIInsight(lead)}
+                                className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto"
+                              >
+                                Refresh
+                              </Button>
+                            </div>
+                          ) : null}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {lead["Created Date"] ? new Date(lead["Created Date"]).toLocaleDateString() : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            <Button
+                              variant="outline"
+                              onClick={() => handleAction(lead, "call")}
+                              disabled={!lead["Phone Number"]}
+                              title="Call Lead"
+                              className="flex items-center gap-1 text-xs px-2 py-1"
+                            >
+                              <Phone className="h-3 w-3" />
+                              <span className="hidden xl:inline">{t('leads.call', 'features')}</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => handleAction(lead, "message")}
+                              disabled={!lead["Phone Number"]}
+                              title="Send SMS"
+                              className="flex items-center gap-1 text-xs px-2 py-1"
+                            >
+                              <MessageSquare className="h-3 w-3" />
+                              <span className="hidden xl:inline">{t('general.sms', 'common')}</span>
+                            </Button>
+                            <Button
+                              variant="outline" 
+                              onClick={() => handleAction(lead, "email")}
+                              disabled={!lead["Email Address"]}
+                              title="Send Email"
+                              className="flex items-center gap-1 text-xs px-2 py-1"
+                            >
+                              <Mail className="h-3 w-3" />
+                              <span className="hidden xl:inline">{t('general.email', 'common')}</span>
+                            </Button>
+                            <Button
+                              variant={lead.opted_out ? "outline" : "ghost"}
+                              onClick={() => handleOptOutToggle(lead)}
+                              disabled={optOutLoading === lead.id}
+                              className={`text-xs px-2 py-1 ${lead.opted_out ? "text-green-600" : "text-red-600"}`}
+                              title={lead.opted_out ? "Opt back in" : "Opt out"}
+                            >
+                              {optOutLoading === lead.id ? "..." : lead.opted_out ? "✓" : "✕"}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
