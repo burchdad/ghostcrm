@@ -458,18 +458,44 @@ export default function Leads() {
         variant: "default"
       });
 
-      // TODO: Implement actual bulk delete API call
-      // For now, just show success message after delay
-      setTimeout(() => {
-        toast({
-          title: "Bulk Delete",
-          description: `Successfully deleted ${selectedLeads.length} leads. (Demo mode - no actual deletion performed)`,
-          variant: "success"
+      // Bulk delete API call
+      try {
+        const response = await fetch('/api/leads/bulk-delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ leadIds: selectedLeads.map(lead => lead.id) })
         });
-        setSelectedIdxs([]);
-        setBulkMode(false);
-        setBulkLoading(false);
-      }, 2000);
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Remove deleted leads from state
+          const deletedIds = selectedLeads.map(lead => lead.id);
+          setLeads(leads => leads.filter(lead => !deletedIds.includes(lead.id)));
+          
+          toast({
+            title: "Success",
+            description: `Successfully deleted ${selectedLeads.length} leads.`,
+            variant: "success"
+          });
+          
+          setSelectedIdxs([]);
+          setBulkMode(false);
+        } else {
+          toast({
+            title: "Error", 
+            description: data.error || "Failed to delete leads",
+            variant: "destructive"
+          });
+        }
+      } catch (deleteError) {
+        toast({
+          title: "Error",
+          description: "Failed to delete leads",
+          variant: "destructive"
+        });
+      }
+      setBulkLoading(false);
 
     } catch (error) {
       toast({
@@ -532,20 +558,15 @@ export default function Leads() {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 [FRONTEND] Loading leads...');
       const res = await fetch("/api/leads");
-      console.log('📊 [FRONTEND] Response status:', res.status, res.statusText);
       
       if (!res.ok) {
         throw new Error(`Failed to fetch leads: ${res.status} ${res.statusText}`);
       }
       
       const data = await res.json();
-      console.log('📦 [FRONTEND] API response:', data);
       
       if (data.records) {
-        console.log('✅ [FRONTEND] Setting leads with', data.records.length, 'records');
-        console.log('📋 [FRONTEND] Sample lead:', data.records[0]);
         setLeads(data.records);
         // No need to show success notification for basic page load
       } else {
@@ -579,15 +600,7 @@ export default function Leads() {
     );
   });
 
-  console.log('🔍 [FRONTEND] Debug filter chain:');
-  console.log('  - Total leads in state:', leads.length);
-  console.log('  - After filtering (no opted_out):', filteredLeads.length);
-  console.log('  - Current filter:', filter || 'none');
-  
-  if (leads.length > 0) {
-    console.log('📋 [FRONTEND] Sample lead from state:', leads[0]);
-    console.log('  - opted_out value:', leads[0].opted_out);
-  }
+
 
   const sortedLeads = [...filteredLeads].sort((a, b) => {
     const aVal = a[sortKey] || "";

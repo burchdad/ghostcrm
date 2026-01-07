@@ -2,16 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
 
+// Use Node.js runtime to avoid Edge Runtime issues with Supabase
+export const runtime = "nodejs";
+
 // Create a service role client for admin operations
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication using JWT
+    // Check authentication
     if (!(await isAuthenticated(req))) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
@@ -22,32 +24,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User organization not found" }, { status: 401 });
     }
 
-    const organizationId = user.organizationId;
-    const { lead_id, opt_out } = await req.json();
+    const { leadIds } = await req.json();
     
-    if (!lead_id || typeof opt_out !== "boolean") {
-      return NextResponse.json({ error: "missing fields" }, { status: 400 });
+    if (!Array.isArray(leadIds) || leadIds.length === 0) {
+      return NextResponse.json({ error: "No lead IDs provided" }, { status: 400 });
     }
 
-    // Update lead opt-out status in database
-    const { error } = await supabaseAdmin
+    // Delete leads belonging to the user's organization
+    const { error, count } = await supabaseAdmin
       .from("leads")
-      .update({ 
-        opted_out: opt_out,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", lead_id)
-      .eq("organization_id", organizationId);
+      .delete()
+      .in("id", leadIds)
+      .eq("organization_id", user.organizationId);
     
     if (error) {
-      console.error("Database update failed:", error);
-      return NextResponse.json({ error: "Failed to update lead opt-out status" }, { status: 500 });
+      console.error("Bulk delete error:", error);
+      return NextResponse.json({ error: "Failed to delete leads" }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ 
+      success: true, 
+      deletedCount: count,
+      message: `Successfully deleted ${count} leads` 
+    });
+    
   } catch (e: any) {
-    console.error("Opt-out API error:", e);
+    console.error("Bulk delete API error:", e);
     return NextResponse.json({ error: e.message || "Unknown error" }, { status: 500 });
   }
 }
-
