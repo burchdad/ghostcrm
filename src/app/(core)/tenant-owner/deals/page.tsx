@@ -164,7 +164,7 @@ export default function TenantOwnerDealsPage() {
 
   if (loading) {
     return (
-      <div className="tenant-owner-deals-container">
+      <div className="tenant-owner-deals-page">
         <div className="loading-skeleton">
           <div className="skeleton-header"></div>
           <div className="skeleton-cards">
@@ -180,243 +180,212 @@ export default function TenantOwnerDealsPage() {
   }
 
   return (
-    <div className="tenant-owner-deals-container">
-      <div className="page-header">
-        {/* Analytics Cards and AI Assistant Layout */}
-        <div className="analytics-section">
-          <div className="analytics-grid">
-            <Card className="analytics-card revenue">
-              <div className="card-content">
-                <div className="metric-info">
-                  <h3>Total Pipeline Value</h3>
-                  <p className="metric-value">{formatCurrency(analytics.totalValue)}</p>
-                  <p className={`metric-change ${analytics.valueChange >= 0 ? 'positive' : 'negative'}`}>
-                    {analytics.valueChange >= 0 ? '+' : ''}{analytics.valueChange.toFixed(1)}% this month
-                  </p>
+    <div className="tenant-owner-deals-page">
+      {/* Analytics Cards Grid with AI Assistant */}
+      <div className="tenant-owner-deals-header">
+        <div className="tenant-owner-deals-header-content">
+          {/* Metrics in 4-Column Header Layout */}
+          <div className="tenant-owner-deals-analytics-grid-header">
+            <div className="tenant-owner-deals-analytics-card revenue">
+              <div className="tenant-owner-deals-card-header">
+                <div className="tenant-owner-deals-card-title-row">
+                  <span className="tenant-owner-deals-card-label">PIPELINE VALUE</span>
+                  <span className="tenant-owner-deals-card-value">{formatCurrency(analytics.totalValue)}</span>
                 </div>
-                <div className="metric-icon">
+                <div className="tenant-owner-deals-card-icon revenue">
                   <DollarSign />
                 </div>
               </div>
-            </Card>
+              <div className="tenant-owner-deals-card-trend">
+                <TrendingUp />
+                {analytics.valueChange >= 0 ? '+' : ''}{analytics.valueChange.toFixed(1)}% this month
+              </div>
+            </div>
 
-            <Card className="analytics-card performance">
-              <div className="card-content">
-                <div className="metric-info">
-                  <h3>Win Rate</h3>
-                  <p className="metric-value">{analytics.winRate.toFixed(1)}%</p>
-                  <p className={`metric-change ${analytics.winRate >= 60 ? 'positive' : analytics.winRate >= 40 ? 'neutral' : 'negative'}`}>
-                    {analytics.performanceStatus}
-                  </p>
+            <div className="tenant-owner-deals-analytics-card performance">
+              <div className="tenant-owner-deals-card-header">
+                <div className="tenant-owner-deals-card-title-row">
+                  <span className="tenant-owner-deals-card-label">WIN RATE</span>
+                  <span className="tenant-owner-deals-card-value">{analytics.winRate.toFixed(1)}%</span>
                 </div>
-                <div className="metric-icon">
+                <div className="tenant-owner-deals-card-icon performance">
                   <Target />
                 </div>
               </div>
-            </Card>
+              <div className="tenant-owner-deals-card-trend">
+                <TrendingUp />
+                {analytics.performanceStatus}
+              </div>
+            </div>
 
-            <Card className="analytics-card deals">
-              <div className="card-content">
-                <div className="metric-info">
-                  <h3>Active Deals</h3>
-                  <p className="metric-value">{analytics.pipelineStage}</p>
-                  <p className="metric-change neutral">{analytics.totalDeals} total deals</p>
+            <div className="tenant-owner-deals-analytics-card deals">
+              <div className="tenant-owner-deals-card-header">
+                <div className="tenant-owner-deals-card-title-row">
+                  <span className="tenant-owner-deals-card-label">ACTIVE DEALS</span>
+                  <span className="tenant-owner-deals-card-value">{analytics.pipelineStage}</span>
                 </div>
-                <div className="metric-icon">
+                <div className="tenant-owner-deals-card-icon deals">
                   <BarChart3 />
                 </div>
               </div>
-            </Card>
+              <div className="tenant-owner-deals-card-trend">
+                <TrendingUp />
+                {analytics.totalDeals} total deals
+              </div>
+            </div>
 
-            <Card className="analytics-card average">
-              <div className="card-content">
-                <div className="metric-info">
-                  <h3>Avg Deal Size</h3>
-                  <p className="metric-value">{formatCurrency(analytics.avgDealSize)}</p>
-                  <p className={`metric-change ${analytics.valueChange >= 0 ? 'positive' : analytics.valueChange === 0 ? 'neutral' : 'negative'}`}>
-                    {analytics.dealTrend}
-                  </p>
+            <div className="tenant-owner-deals-analytics-card average">
+              <div className="tenant-owner-deals-card-header">
+                <div className="tenant-owner-deals-card-title-row">
+                  <span className="tenant-owner-deals-card-label">AVG DEAL SIZE</span>
+                  <span className="tenant-owner-deals-card-value">{formatCurrency(analytics.avgDealSize)}</span>
                 </div>
-                <div className="metric-icon">
+                <div className="tenant-owner-deals-card-icon average">
                   <TrendingUp />
                 </div>
               </div>
-            </Card>
-          </div>
-
-          {/* AI Assistant aligned to the right */}
-          <div className="ai-assistant-container">
-            <PageAIAssistant 
-              agentId="deals"
-              pageTitle="Deals Management"
-              entityData={{
-                totalDeals: deals.length,
-                totalValue: analytics.totalValue,
-                winRate: analytics.winRate,
-                averageDealSize: analytics.avgDealSize
-              }}
-              className="ai-assistant"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="deals-content">
-        {/* Controls */}
-        <div className="controls-section">
-          <div className="search-container">
-            <Search className="search-icon" />
-            <Input
-              placeholder="Search deals by name, company, or stage..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          </div>
-          <div className="control-actions">
-            <Button
-              variant={bulkMode ? "default" : "outline"}
-              onClick={() => setBulkMode(!bulkMode)}
-              className="bulk-mode-btn"
-            >
-              Bulk Actions
-            </Button>
-            
-            <Button 
-              className="btn-primary"
-              onClick={() => router.push('/tenant-owner/new-deal')}
-            >
-              <Plus className="icon" />
-              New Deal
-            </Button>
-          </div>
-        </div>
-
-        {/* AI Insights Section */}
-        {aiMatches.length > 0 && (
-          <div className="ai-insights-section">
-            <div className="ai-insights-header">
-              <div className="ai-badge">
-                <Bot className="ai-icon" />
-                <span>AI Deal Intelligence</span>
+              <div className="tenant-owner-deals-card-trend">
+                <TrendingUp />
+                {analytics.dealTrend}
               </div>
-              <p className="ai-description">Smart matching between leads and inventory • {aiMatches.length} recommendation{aiMatches.length > 1 ? 's' : ''} found</p>
-            </div>
-            
-            <div className="ai-suggestions-list">
-              {aiMatches.map((match, index) => {
-                const scoreClass = match.score >= 80 ? 'hot-match' : match.score >= 60 ? 'good-match' : 'potential-match';
-                const primaryTag = match.score >= 80 ? 'Hot Match' : match.score >= 60 ? 'Good Match' : 'Potential';
-                
-                return (
-                  <Card key={index} className={`ai-suggestion-card ${scoreClass}`}>
-                    <div className="suggestion-content-row">
-                      <div className="match-score">{match.score}%</div>
-                      <div className="match-info">
-                        <h4>{match.leadName} → {match.vehicleDesc}</h4>
-                        <p>Budget: {match.leadBudget} | Vehicle Price: ${match.vehiclePrice?.toLocaleString()}</p>
-                        <div className="match-tags">
-                          <span className={`tag ${scoreClass.split('-')[0]}`}>{primaryTag}</span>
-                          {match.matchTags?.includes('financing') && <span className="tag financing">Qualified</span>}
-                          {match.matchTags?.includes('new') && <span className="tag new">New Vehicle</span>}
-                          {match.matchTags?.includes('preference') && <span className="tag preference">Brand Match</span>}
-                        </div>
-                      </div>
-                      <Button 
-                        size="sm" 
-                        className="create-deal-btn"
-                        onClick={() => {
-                          toast({
-                            title: "Creating Deal",
-                            description: `Setting up deal for ${match.leadName} and ${match.vehicleDesc}`,
-                          });
-                        }}
-                      >
-                        Create Deal
-                      </Button>
-                    </div>
-                  </Card>
-                );
-              })}
             </div>
           </div>
-        )}
 
-        {/* Deals Table */}
-        <Card className="deals-table-card">
-        {filteredDeals.length === 0 ? (
-          <EmptyStateComponent
-            type="deals"
-            title="No deals found"
-            description="Get started by adding your first deal or adjust your search filters."
-            actionLabel="Add Deal"
-            onAction={() => router.push('/file/new-deal')}
-          />
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {bulkMode && <TableHead className="w-12">Select</TableHead>}
-                <TableHead>Deal Name</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Value</TableHead>
-                <TableHead>Stage</TableHead>
-                <TableHead>Probability</TableHead>
-                <TableHead>Owner</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredDeals.map((deal, index) => (
-                <TableRow key={deal.id || index} className="deal-row">
-                  {bulkMode && (
-                    <TableCell>
-                      <input
-                        type="checkbox"
-                        checked={selectedIdxs.includes(index)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedIdxs([...selectedIdxs, index]);
-                          } else {
-                            setSelectedIdxs(selectedIdxs.filter(i => i !== index));
-                          }
-                        }}
-                      />
-                    </TableCell>
-                  )}
-                  <TableCell className="font-medium">{deal.name || `Deal #${index + 1}`}</TableCell>
-                  <TableCell>{deal.company || 'Unknown Company'}</TableCell>
-                  <TableCell>{formatCurrency(deal.amount || 0)}</TableCell>
-                  <TableCell>
-                    <span className={`stage-badge ${deal.stage}`}>
-                      {deal.stage || 'new'}
-                    </span>
-                  </TableCell>
-                  <TableCell>{deal.probability || '50'}%</TableCell>
-                  <TableCell>{deal.owner || user?.email}</TableCell>
-                  <TableCell>{deal.created_at ? new Date(deal.created_at).toLocaleDateString() : 'Today'}</TableCell>
-                  <TableCell>
-                    <div className="action-buttons">
-                      <Button size="sm" variant="ghost">
-                        <Eye className="icon-sm" />
-                      </Button>
-                      <Button size="sm" variant="ghost">
-                        <Edit className="icon-sm" />
-                      </Button>
-                      <Button size="sm" variant="ghost">
-                        <Trash2 className="icon-sm" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-        </Card>
+          {/* AI Assistant Insights Section */}
+          <div className="tenant-owner-deals-ai-insights-section">
+            <PageAIAssistant 
+              agentId="deals" 
+              pageTitle="Deal Management"
+              className="tenant-owner-deals-ai-assistant"
+            />
+          </div>
+        </div>
       </div>
+
+      {/* Scrollable Content Container */}
+      <div className="tenant-owner-deals-content-wrapper">
+        <div className="tenant-owner-deals-content">
+
+        {/* Enhanced Search and Controls */}
+        <div className="tenant-owner-deals-controls">
+          <div className="tenant-owner-deals-search-row">
+            <div className="tenant-owner-deals-search-container">
+              <Search className="tenant-owner-deals-search-icon" />
+              <Input
+                placeholder="Search deals by name, company, or stage..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="tenant-owner-deals-search-input"
+              />
+            </div>
+            
+            <div className="tenant-owner-deals-filters">
+              <Button
+                onClick={() => setBulkMode(!bulkMode)}
+                variant={bulkMode ? "default" : "outline"}
+                className="tenant-owner-deals-filter-select"
+              >
+                {bulkMode ? "Exit Bulk Mode" : "Bulk Actions"}
+              </Button>
+              
+              <Button 
+                className="tenant-owner-deals-add-btn"
+                onClick={() => router.push('/tenant-owner/new-deal')}
+              >
+                <Plus />
+                New Deal
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Deals Table */}
+        <div className="tenant-owner-deals-table-container">
+          {deals.length === 0 ? (
+            <div className="tenant-owner-deals-empty-state">
+              <div className="tenant-owner-deals-empty-icon">
+                <BarChart3 />
+              </div>
+              <h3 className="tenant-owner-deals-empty-title">No deals found</h3>
+              <p className="tenant-owner-deals-empty-description">
+                Start building your sales pipeline by creating your first deal.
+              </p>
+              
+              {/* AI Assistant Badge */}
+              <div className="tenant-owner-deals-empty-ai-badge">
+                <Bot className="w-4 h-4" />
+                <span>AI-powered deal tracking available</span>
+              </div>
+            </div>
+          ) : (
+            <Table className="tenant-owner-deals-table">
+              <TableHeader className="tenant-owner-deals-table-header">
+                <TableRow>
+                  {bulkMode && <TableHead>Select</TableHead>}
+                  <TableHead>Deal Name</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Value</TableHead>
+                  <TableHead>Stage</TableHead>
+                  <TableHead>Close Date</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="tenant-owner-deals-table-body">
+                {deals.map((deal, idx) => (
+                  <TableRow 
+                    key={deal.id || idx}
+                    className="cursor-pointer hover:bg-gray-50"
+                  >
+                    {bulkMode && (
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          checked={selectedIdxs.includes(idx)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedIdxs([...selectedIdxs, idx]);
+                            } else {
+                              setSelectedIdxs(selectedIdxs.filter(i => i !== idx));
+                            }
+                          }}
+                        />
+                      </TableCell>
+                    )}
+                    <TableCell style={{ fontWeight: '500' }}>{deal.name}</TableCell>
+                    <TableCell>{deal.company}</TableCell>
+                    <TableCell>{formatCurrency(deal.value)}</TableCell>
+                    <TableCell>
+                      <span className="tenant-owner-deals-status-badge">
+                        {deal.stage}
+                      </span>
+                    </TableCell>
+                    <TableCell>{deal.close_date ? new Date(deal.close_date).toLocaleDateString() : 'Not set'}</TableCell>
+                    <TableCell>
+                      <div className="tenant-owner-deals-action-buttons">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="tenant-owner-deals-action-btn view"
+                        >
+                          <Eye />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="tenant-owner-deals-action-btn edit"
+                        >
+                          <Edit />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+        </div> {/* Close tenant-owner-deals-content */}
+      </div> {/* Close tenant-owner-deals-content-wrapper */}
     </div>
   );
 }
