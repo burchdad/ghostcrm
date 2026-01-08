@@ -153,6 +153,100 @@ export default function TenantOwnerCalendarPage() {
     }
   });
 
+  // Applied settings state (what's currently active in the UI)
+  const [appliedSettings, setAppliedSettings] = useState(calendarSettings);
+  const [hasUnappliedChanges, setHasUnappliedChanges] = useState(false);
+
+  // Apply CSS variables to document root
+  const applyCSSVariables = (settings: typeof calendarSettings) => {
+    const root = document.documentElement;
+    
+    // Apply color variables
+    root.style.setProperty('--calendar-primary', settings.colors.primary);
+    root.style.setProperty('--calendar-secondary', settings.colors.secondary);
+    root.style.setProperty('--calendar-accent', settings.colors.accent);
+    root.style.setProperty('--calendar-background', settings.colors.background);
+    root.style.setProperty('--calendar-text', settings.colors.text);
+    root.style.setProperty('--calendar-border', settings.colors.border);
+    root.style.setProperty('--calendar-today', settings.colors.todayHighlight);
+    
+    // Apply event color variables
+    Object.entries(settings.colors.eventColors).forEach(([eventType, color]) => {
+      root.style.setProperty(`--calendar-event-${eventType}`, color);
+    });
+    
+    // Apply preference-based classes to calendar container
+    const calendarContainer = document.querySelector('.calendar-card');
+    if (calendarContainer) {
+      calendarContainer.classList.toggle('compact-view', settings.preferences.compactView);
+      calendarContainer.classList.toggle('hide-event-icons', !settings.preferences.showEventIcons);
+      calendarContainer.classList.toggle('hide-all-day-events', !settings.preferences.showAllDayEvents);
+      calendarContainer.classList.toggle('show-week-numbers', settings.preferences.showWeekNumbers);
+    }
+  };
+
+  // Load settings from localStorage on component mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('calendar-settings');
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        setCalendarSettings(parsed);
+        setAppliedSettings(parsed);
+        applyCSSVariables(parsed);
+      } catch (error) {
+        console.error('Error loading calendar settings:', error);
+      }
+    } else {
+      // Apply default settings on first load
+      applyCSSVariables(calendarSettings);
+      setAppliedSettings(calendarSettings);
+    }
+  }, []);
+
+  // Watch for changes in calendar settings vs applied settings
+  useEffect(() => {
+    const hasChanges = JSON.stringify(calendarSettings) !== JSON.stringify(appliedSettings);
+    setHasUnappliedChanges(hasChanges);
+  }, [calendarSettings, appliedSettings]);
+
+  // Apply settings to UI (preview changes)
+  const applySettings = () => {
+    setAppliedSettings(calendarSettings);
+    applyCSSVariables(calendarSettings);
+    setHasUnappliedChanges(false);
+    toast({
+      title: "Settings Applied",
+      description: "Calendar settings have been applied. Click 'Save Settings' to make them permanent."
+    });
+  };
+
+  // Save settings to localStorage
+  const saveSettings = () => {
+    try {
+      localStorage.setItem('calendar-settings', JSON.stringify(appliedSettings));
+      toast({
+        title: "Settings Saved",
+        description: "Calendar settings have been saved successfully."
+      });
+      setIsSettingsModalOpen(false);
+    } catch (error) {
+      console.error('Error saving calendar settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save calendar settings. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Reset settings to applied state (cancel changes)
+  const cancelSettings = () => {
+    setCalendarSettings(appliedSettings);
+    setHasUnappliedChanges(false);
+    setIsSettingsModalOpen(false);
+  };
+
   // @-mention functionality state
   const [mentionSuggestions, setMentionSuggestions] = useState<
     Array<{ id: string; name: string; email: string }>
@@ -1050,9 +1144,21 @@ export default function TenantOwnerCalendarPage() {
                           {dayEvents.map((event) => (
                             <div
                               key={event.id}
-                              className={`event ${event.type}`}
+                              className={`event event-${event.type}`}
                               title={`${event.title} at ${event.time}`}
                             >
+                              {appliedSettings.preferences.showEventIcons && (
+                                <span className="event-icon">
+                                  {event.type === 'meeting' && '👥'}
+                                  {event.type === 'call' && '📞'}
+                                  {event.type === 'appointment' && '📅'}
+                                  {event.type === 'test-drive' && '🚗'}
+                                  {event.type === 'demo' && '🎯'}
+                                  {event.type === 'review' && '⭐'}
+                                  {event.type === 'todo' && '✅'}
+                                  {event.type === 'other' && '📋'}
+                                </span>
+                              )}
                               {event.title}
                             </div>
                           ))}
@@ -1352,28 +1458,35 @@ export default function TenantOwnerCalendarPage() {
             </div>
 
             <div className="settings-modal-footer">
-              <Button
-                variant="outline"
-                onClick={() => setIsSettingsModalOpen(false)}
-                className="cancel-btn"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  // TODO: Save settings to localStorage or API
-                  console.log('Saving calendar settings:', calendarSettings);
-                  toast({
-                    title: "Settings Saved",
-                    description: "Calendar settings have been updated successfully."
-                  });
-                  setIsSettingsModalOpen(false);
-                }}
-                className="save-btn"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save Settings
-              </Button>
+              <div className="footer-left">
+                {hasUnappliedChanges && (
+                  <Button
+                    onClick={applySettings}
+                    className="apply-btn"
+                    variant="outline"
+                  >
+                    Apply Preview
+                  </Button>
+                )}
+              </div>
+              
+              <div className="footer-right">
+                <Button
+                  variant="outline"
+                  onClick={cancelSettings}
+                  className="cancel-btn"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={saveSettings}
+                  className="save-btn"
+                  disabled={hasUnappliedChanges}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Settings
+                </Button>
+              </div>
             </div>
           </div>
         </div>
