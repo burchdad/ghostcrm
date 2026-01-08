@@ -1120,15 +1120,23 @@ export default function TenantOwnerCalendarPage() {
                   <div className="color-item">
                     <label>Primary Color</label>
                     <div className="color-input-wrapper">
-                      <input
-                        type="color"
-                        value={calendarSettings.colors.primary}
-                        onChange={(e) => setCalendarSettings(prev => ({
-                          ...prev,
-                          colors: { ...prev.colors, primary: e.target.value }
-                        }))}
-                        className="color-input"
-                      />
+                      <div className="color-picker-container">
+                        <input
+                          type="color"
+                          value={calendarSettings.colors.primary}
+                          onChange={(e) => setCalendarSettings(prev => ({
+                            ...prev,
+                            colors: { ...prev.colors, primary: e.target.value }
+                          }))}
+                          className="color-input"
+                          id="primary-color"
+                        />
+                        <div 
+                          className="color-preview"
+                          style={{ backgroundColor: calendarSettings.colors.primary }}
+                          onClick={() => document.getElementById('primary-color')?.click()}
+                        ></div>
+                      </div>
                       <span className="color-value">{calendarSettings.colors.primary}</span>
                     </div>
                   </div>
@@ -1136,15 +1144,23 @@ export default function TenantOwnerCalendarPage() {
                   <div className="color-item">
                     <label>Success Color</label>
                     <div className="color-input-wrapper">
-                      <input
-                        type="color"
-                        value={calendarSettings.colors.secondary}
-                        onChange={(e) => setCalendarSettings(prev => ({
-                          ...prev,
-                          colors: { ...prev.colors, secondary: e.target.value }
-                        }))}
-                        className="color-input"
-                      />
+                      <div className="color-picker-container">
+                        <input
+                          type="color"
+                          value={calendarSettings.colors.secondary}
+                          onChange={(e) => setCalendarSettings(prev => ({
+                            ...prev,
+                            colors: { ...prev.colors, secondary: e.target.value }
+                          }))}
+                          className="color-input"
+                          id="secondary-color"
+                        />
+                        <div 
+                          className="color-preview"
+                          style={{ backgroundColor: calendarSettings.colors.secondary }}
+                          onClick={() => document.getElementById('secondary-color')?.click()}
+                        ></div>
+                      </div>
                       <span className="color-value">{calendarSettings.colors.secondary}</span>
                     </div>
                   </div>
@@ -1152,15 +1168,23 @@ export default function TenantOwnerCalendarPage() {
                   <div className="color-item">
                     <label>Warning Color</label>
                     <div className="color-input-wrapper">
-                      <input
-                        type="color"
-                        value={calendarSettings.colors.accent}
-                        onChange={(e) => setCalendarSettings(prev => ({
-                          ...prev,
-                          colors: { ...prev.colors, accent: e.target.value }
-                        }))}
-                        className="color-input"
-                      />
+                      <div className="color-picker-container">
+                        <input
+                          type="color"
+                          value={calendarSettings.colors.accent}
+                          onChange={(e) => setCalendarSettings(prev => ({
+                            ...prev,
+                            colors: { ...prev.colors, accent: e.target.value }
+                          }))}
+                          className="color-input"
+                          id="accent-color"
+                        />
+                        <div 
+                          className="color-preview"
+                          style={{ backgroundColor: calendarSettings.colors.accent }}
+                          onClick={() => document.getElementById('accent-color')?.click()}
+                        ></div>
+                      </div>
                       <span className="color-value">{calendarSettings.colors.accent}</span>
                     </div>
                   </div>
@@ -1168,15 +1192,23 @@ export default function TenantOwnerCalendarPage() {
                   <div className="color-item">
                     <label>Today Highlight</label>
                     <div className="color-input-wrapper">
-                      <input
-                        type="color"
-                        value={calendarSettings.colors.todayHighlight}
-                        onChange={(e) => setCalendarSettings(prev => ({
-                          ...prev,
-                          colors: { ...prev.colors, todayHighlight: e.target.value }
-                        }))}
-                        className="color-input"
-                      />
+                      <div className="color-picker-container">
+                        <input
+                          type="color"
+                          value={calendarSettings.colors.todayHighlight}
+                          onChange={(e) => setCalendarSettings(prev => ({
+                            ...prev,
+                            colors: { ...prev.colors, todayHighlight: e.target.value }
+                          }))}
+                          className="color-input"
+                          id="today-color"
+                        />
+                        <div 
+                          className="color-preview"
+                          style={{ backgroundColor: calendarSettings.colors.todayHighlight }}
+                          onClick={() => document.getElementById('today-color')?.click()}
+                        ></div>
+                      </div>
                       <span className="color-value">{calendarSettings.colors.todayHighlight}</span>
                     </div>
                   </div>
@@ -1188,21 +1220,29 @@ export default function TenantOwnerCalendarPage() {
                     <div key={eventType} className="color-item">
                       <label>{eventType.charAt(0).toUpperCase() + eventType.slice(1)}</label>
                       <div className="color-input-wrapper">
-                        <input
-                          type="color"
-                          value={color}
-                          onChange={(e) => setCalendarSettings(prev => ({
-                            ...prev,
-                            colors: {
-                              ...prev.colors,
-                              eventColors: {
-                                ...prev.colors.eventColors,
-                                [eventType]: e.target.value
+                        <div className="color-picker-container">
+                          <input
+                            type="color"
+                            value={color}
+                            onChange={(e) => setCalendarSettings(prev => ({
+                              ...prev,
+                              colors: {
+                                ...prev.colors,
+                                eventColors: {
+                                  ...prev.colors.eventColors,
+                                  [eventType]: e.target.value
+                                }
                               }
-                            }
-                          }))}
-                          className="color-input"
-                        />
+                            }))}
+                            className="color-input"
+                            id={`${eventType}-color`}
+                          />
+                          <div 
+                            className="color-preview"
+                            style={{ backgroundColor: color }}
+                            onClick={() => document.getElementById(`${eventType}-color`)?.click()}
+                          ></div>
+                        </div>
                         <span className="color-value">{color}</span>
                       </div>
                     </div>
