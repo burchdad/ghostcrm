@@ -229,128 +229,123 @@ export default function TenantOwnerInventoryPage() {
 
   return (
     <div className="tenant-owner-inventory-page">
-      {/* Analytics Cards Grid with AI Assistant */}
+      {/* Header with Analytics Grid */}
       <div className="tenant-owner-inventory-header">
         <div className="tenant-owner-inventory-header-content">
-          <div className="tenant-owner-inventory-top-section">
-            {/* Metrics in 2x2 Grid */}
-            <div className="tenant-owner-inventory-metrics-container">
-              <div className="tenant-owner-inventory-analytics-grid">
-                <div className="tenant-owner-inventory-analytics-card total">
-                  <div className="tenant-owner-inventory-card-header">
-                    <span className="tenant-owner-inventory-card-label">TOTAL ITEMS</span>
-                    <div className="tenant-owner-inventory-card-icon total">
-                      <Package />
-                    </div>
-                  </div>
-                  <div className="tenant-owner-inventory-card-value">{analytics.totalItems}</div>
-                  <div className="tenant-owner-inventory-card-trend">
-                    <TrendingUp />
-                    {inventory.length} unique products
-                  </div>
+          {/* Analytics Grid Header with 4-column layout */}
+          <div className="tenant-owner-inventory-analytics-grid-header">
+            <div className="tenant-owner-inventory-analytics-card total">
+              <div className="tenant-owner-inventory-card-header">
+                <span className="tenant-owner-inventory-card-label">TOTAL ITEMS</span>
+                <div className="tenant-owner-inventory-card-icon total">
+                  <Package />
                 </div>
-
-                <div className="tenant-owner-inventory-analytics-card value">
-                  <div className="tenant-owner-inventory-card-header">
-                    <span className="tenant-owner-inventory-card-label">INVENTORY VALUE</span>
-                    <div className="tenant-owner-inventory-card-icon value">
-                      <TrendingUp />
-                    </div>
-                  </div>
-                  <div className="tenant-owner-inventory-card-value">{formatCurrency(analytics.totalValue)}</div>
-                  <div className="tenant-owner-inventory-card-trend">
-                    <TrendingUp />
-                    Total asset value
-                  </div>
-                </div>
-
-                <div className="tenant-owner-inventory-analytics-card low-stock">
-                  <div className="tenant-owner-inventory-card-header">
-                    <span className="tenant-owner-inventory-card-label">LOW STOCK</span>
-                    <div className="tenant-owner-inventory-card-icon low-stock">
-                      <AlertTriangle />
-                    </div>
-                  </div>
-                  <div className="tenant-owner-inventory-card-value">{analytics.lowStock}</div>
-                  <div className="tenant-owner-inventory-card-trend">
-                    <AlertTriangle />
-                    Needs attention
-                  </div>
-                </div>
-
-                <div className="tenant-owner-inventory-analytics-card out-stock">
-                  <div className="tenant-owner-inventory-card-header">
-                    <span className="tenant-owner-inventory-card-label">OUT OF STOCK</span>
-                    <div className="tenant-owner-inventory-card-icon out-stock">
-                      <AlertTriangle />
-                    </div>
-                  </div>
-                  <div className="tenant-owner-inventory-card-value">{analytics.outOfStock}</div>
-                  <div className="tenant-owner-inventory-card-trend">
-                    <AlertTriangle />
-                    Immediate action needed
-                  </div>
-                </div>
+              </div>
+              <div className="tenant-owner-inventory-card-value">{analytics.totalItems}</div>
+              <div className="tenant-owner-inventory-card-trend">
+                <TrendingUp />
+                {inventory.length} unique products
               </div>
             </div>
 
-            {/* AI Assistant aligned to the right */}
-            <div className="tenant-owner-inventory-ai-container">
-              <PageAIAssistant 
-                agentId="inventory"
-                pageTitle="Inventory Management"
-                entityData={{
-                  totalVehicles: inventory.length,
-                  totalValue: inventory.reduce((sum, v) => sum + (v.price || 0), 0),
-                  avgDaysOnLot: Math.round(inventory.reduce((sum, v) => sum + (v.daysOnLot || 0), 0) / Math.max(inventory.length, 1)),
-                  slowMovers: inventory.filter(v => (v.daysOnLot || 0) > 60).length
-                }}
-                className="tenant-owner-inventory-ai-assistant"
-              />
+            <div className="tenant-owner-inventory-analytics-card value">
+              <div className="tenant-owner-inventory-card-header">
+                <span className="tenant-owner-inventory-card-label">INVENTORY VALUE</span>
+                <div className="tenant-owner-inventory-card-icon value">
+                  <TrendingUp />
+                </div>
+              </div>
+              <div className="tenant-owner-inventory-card-value">{formatCurrency(analytics.totalValue)}</div>
+              <div className="tenant-owner-inventory-card-trend">
+                <TrendingUp />
+                Total asset value
+              </div>
             </div>
+
+            <div className="tenant-owner-inventory-analytics-card low-stock">
+              <div className="tenant-owner-inventory-card-header">
+                <span className="tenant-owner-inventory-card-label">LOW STOCK</span>
+                <div className="tenant-owner-inventory-card-icon low-stock">
+                  <AlertTriangle />
+                </div>
+              </div>
+              <div className="tenant-owner-inventory-card-value">{analytics.lowStock}</div>
+              <div className="tenant-owner-inventory-card-trend">
+                <AlertTriangle />
+                Needs attention
+              </div>
+            </div>
+
+            <div className="tenant-owner-inventory-analytics-card out-stock">
+              <div className="tenant-owner-inventory-card-header">
+                <span className="tenant-owner-inventory-card-label">OUT OF STOCK</span>
+                <div className="tenant-owner-inventory-card-icon out-stock">
+                  <AlertTriangle />
+                </div>
+              </div>
+              <div className="tenant-owner-inventory-card-value">{analytics.outOfStock}</div>
+              <div className="tenant-owner-inventory-card-trend">
+                <AlertTriangle />
+                Immediate action needed
+              </div>
+            </div>
+          </div>
+
+          {/* AI Assistant Section */}
+          <div className="tenant-owner-inventory-ai-assistant-section">
+            <PageAIAssistant 
+              agentId="inventory"
+              pageTitle="Inventory Management"
+              entityData={{
+                totalVehicles: inventory.length,
+                totalValue: inventory.reduce((sum, v) => sum + (v.price || 0), 0),
+                avgDaysOnLot: Math.round(inventory.reduce((sum, v) => sum + (v.daysOnLot || 0), 0) / Math.max(inventory.length, 1)),
+                slowMovers: inventory.filter(v => (v.daysOnLot || 0) > 60).length
+              }}
+              className="tenant-owner-inventory-ai-assistant"
+            />
           </div>
         </div>
       </div>
 
-      {/* Scrollable Content Container */}
+      {/* Content Wrapper */}
       <div className="tenant-owner-inventory-content-wrapper">
         <div className="tenant-owner-inventory-content">
-
-        {/* Enhanced Search and Controls */}
-        <div className="tenant-owner-inventory-controls">
-          <div className="tenant-owner-inventory-search-row">
-            <div className="tenant-owner-inventory-search-container">
-              <Search className="tenant-owner-inventory-search-icon" />
-              <Input
-                placeholder="Search inventory by name, SKU, or category..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="tenant-owner-inventory-search-input"
-              />
-            </div>
-            
-            <div className="tenant-owner-inventory-filters">
-              <Button
-                variant={bulkMode ? "default" : "outline"}
-                onClick={() => setBulkMode(!bulkMode)}
-                className="tenant-owner-inventory-bulk-mode-btn"
-              >
-                Bulk Actions
-              </Button>
-              <Button 
-                onClick={() => router.push('/tenant-owner/new-inventory')}
-                className="tenant-owner-inventory-add-btn"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Item
-              </Button>
+          {/* Enhanced Search and Controls */}
+          <div className="tenant-owner-inventory-controls">
+            <div className="tenant-owner-inventory-search-row">
+              <div className="tenant-owner-inventory-search-container">
+                <Search className="tenant-owner-inventory-search-icon" />
+                <Input
+                  placeholder="Search inventory by name, SKU, or category..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="tenant-owner-inventory-search-input"
+                />
+              </div>
+              
+              <div className="tenant-owner-inventory-filters">
+                <Button
+                  variant={bulkMode ? "default" : "outline"}
+                  onClick={() => setBulkMode(!bulkMode)}
+                  className="tenant-owner-inventory-bulk-mode-btn"
+                >
+                  Bulk Actions
+                </Button>
+                <Button 
+                  onClick={() => router.push('/tenant-owner/new-inventory')}
+                  className="tenant-owner-inventory-add-btn"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Inventory Table */}
-        <div className="tenant-owner-inventory-table-container">
-          <Card className="tenant-owner-inventory-table-card">
+          {/* Inventory Table */}
+          <div className="tenant-owner-inventory-table-container">
+            <Card className="tenant-owner-inventory-table-card">
           {filteredInventory.length === 0 ? (
             <EmptyStateComponent
               type="general"
@@ -433,14 +428,11 @@ export default function TenantOwnerInventoryPage() {
               })}
             </TableBody>
           </Table>
-        )}
-        </Card>
+            )}
+            </Card>
+          </div>
         </div>
-
-        </div>
-      </div>
-      
-      {/* QR Code Management Modal */}
+      </div>      {/* QR Code Management Modal */}
       <QRCodeModal 
         isOpen={qrModalOpen}
         onClose={() => {

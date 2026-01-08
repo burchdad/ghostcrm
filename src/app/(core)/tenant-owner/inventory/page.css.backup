@@ -1,18 +1,18 @@
 /* 
   ===========================================
-  📦 TENANT OWNER INVENTORY PAGE
+  📋 TENANT OWNER LEADS PAGE
   ===========================================
-  Component: /app/(core)/tenant-owner/inventory/page.tsx
-  Purpose: Inventory management page for tenant owners with analytics and management
-  Theme: Glass morphism with orange gradient backgrounds and interactive cards
+  Component: /app/(core)/tenant-owner/leads/page.tsx
+  Purpose: Lead management page for tenant owners with analytics and management
+  Theme: Glass morphism with gradient backgrounds and interactive cards
 */
 
 /* Page Container */
-.tenant-owner-inventory-page {
+.tenant-owner-leads-page {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: linear-gradient(135deg, #fef7ed 0%, #fff7ed 20%, #fed7aa 40%, #fdba74 60%, #fb923c 80%, #ea580c 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 30%, #e8eaf6 70%, #f1f5f9 100%);
   position: relative;
   overflow: hidden;
   margin-top: 20px;
@@ -20,13 +20,13 @@
 
 /* Mobile optimizations */
 @media (max-width: 639px) {
-  .tenant-owner-inventory-page {
+  .tenant-owner-leads-page {
     margin-top: 10px;
     padding: 0 var(--mobile-spacing-sm);
   }
 }
 
-.tenant-owner-inventory-page::before {
+.tenant-owner-leads-page::before {
   content: '';
   position: fixed;
   top: 0;
@@ -34,20 +34,20 @@
   right: 0;
   bottom: 0;
   background: 
-    radial-gradient(circle at 20% 20%, rgba(234, 88, 12, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(251, 146, 60, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
+    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
   pointer-events: none;
   z-index: 1;
 }
 
-.tenant-owner-inventory-page > * {
+.tenant-owner-leads-page > * {
   position: relative;
   z-index: 2;
 }
 
 /* Glass Header - Scrollable */
-.tenant-owner-inventory-header {
+.tenant-owner-leads-header {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
@@ -65,13 +65,13 @@
   transition: all 0.3s ease;
 }
 
-.tenant-owner-inventory-header-content {
+.tenant-owner-leads-header-content {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 1.5rem;
 }
 
-.tenant-owner-inventory-title-section {
+.tenant-owner-leads-title-section {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -80,7 +80,7 @@
   gap: 1rem;
 }
 
-.tenant-owner-inventory-title {
+.tenant-owner-leads-title {
   font-size: 2.5rem;
   font-weight: 900;
   background: linear-gradient(135deg, #1f2937 0%, #3b82f6 30%, #6366f1 60%, #9333ea 100%);
@@ -94,7 +94,7 @@
   position: relative;
 }
 
-.tenant-owner-inventory-title::after {
+.tenant-owner-leads-title::after {
   content: '';
   position: absolute;
   bottom: -8px;
@@ -106,7 +106,7 @@
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
-.tenant-owner-inventory-badge {
+.tenant-owner-leads-badge {
   display: flex;
   align-items: center;
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #f9d71c 100%);
@@ -129,7 +129,7 @@
   overflow: hidden;
 }
 
-.tenant-owner-inventory-badge::before {
+.tenant-owner-leads-badge::before {
   content: '';
   position: absolute;
   top: 0;
@@ -140,18 +140,18 @@
   transition: left 0.8s ease;
 }
 
-.tenant-owner-inventory-badge:hover::before {
+.tenant-owner-leads-badge:hover::before {
   left: 100%;
 }
 
-.tenant-owner-inventory-badge:hover {
+.tenant-owner-leads-badge:hover {
   transform: translateY(-2px) scale(1.02);
   box-shadow: 
     0 12px 35px rgba(245, 158, 11, 0.35),
     0 6px 20px rgba(245, 158, 11, 0.2);
 }
 
-.tenant-owner-inventory-status-icon {
+.tenant-owner-leads-status-icon {
   width: 1.5rem;
   height: 1.5rem;
   margin-right: 0.75rem;
@@ -160,7 +160,7 @@
 }
 
 /* Analytics Cards Grid */
-.tenant-owner-inventory-analytics-grid {
+.tenant-owner-leads-analytics-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(240px, 1fr));
   gap: 1.25rem;
@@ -168,20 +168,20 @@
 }
 
 /* New Top Section Layout with 2x2 Grid and AI Assistant */
-.tenant-owner-inventory-top-section {
+.tenant-owner-leads-top-section {
   display: flex;
   gap: 2rem;
   align-items: flex-start;
   margin-top: 1.5rem;
 }
 
-.tenant-owner-inventory-metrics-container {
+.tenant-owner-leads-metrics-container {
   flex: 1;
   min-width: 0;
 }
 
 /* Analytics Cards Grid - 4 Column Header Layout */
-.tenant-owner-inventory-analytics-grid-header {
+.tenant-owner-leads-analytics-grid-header {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
@@ -189,92 +189,92 @@
 }
 
 @media (max-width: 1200px) {
-  .tenant-owner-inventory-analytics-grid-header {
+  .tenant-owner-leads-analytics-grid-header {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
 }
 
 @media (max-width: 768px) {
-  .tenant-owner-inventory-analytics-grid-header {
+  .tenant-owner-leads-analytics-grid-header {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
 }
 
 /* AI Assistant Insights Section */
-.tenant-owner-inventory-ai-insights-section {
+.tenant-owner-leads-ai-insights-section {
   margin-bottom: 0.25rem;
   margin-top: 0;
 }
 
-.tenant-owner-inventory-ai-insights-section .tenant-owner-inventory-ai-assistant {
+.tenant-owner-leads-ai-insights-section .tenant-owner-leads-ai-assistant {
   width: 100%;
   max-width: none;
 }
 
 /* Remove old layout styles */
-.tenant-owner-inventory-analytics-grid-2x2 {
+.tenant-owner-leads-analytics-grid-2x2 {
   display: none;
 }
 
-.tenant-owner-inventory-top-section {
+.tenant-owner-leads-top-section {
   display: block;
 }
 
-.tenant-owner-inventory-metrics-container {
+.tenant-owner-leads-metrics-container {
   width: 100%;
 }
 
-.tenant-owner-inventory-ai-container {
+.tenant-owner-leads-ai-container {
   display: none;
 }
 
 @media (max-width: 768px) {
-  .tenant-owner-inventory-analytics-grid-2x2 {
+  .tenant-owner-leads-analytics-grid-2x2 {
     grid-template-columns: repeat(1, 1fr);
     gap: var(--mobile-spacing-md);
   }
   
-  .tenant-owner-inventory-ai-container {
+  .tenant-owner-leads-ai-container {
     flex: none;
     margin: 0 var(--mobile-spacing-sm);
   }
   
-  .tenant-owner-inventory-analytics-card {
+  .tenant-owner-leads-analytics-card {
     padding: var(--mobile-spacing-md) !important;
     min-height: 100px !important;
   }
 }
 
 @media (max-width: 640px) {
-  .tenant-owner-inventory-analytics-grid {
+  .tenant-owner-leads-analytics-grid {
     grid-template-columns: repeat(1, 1fr);
     gap: var(--mobile-spacing-md);
   }
   
-  .tenant-owner-inventory-analytics-grid-2x2 {
+  .tenant-owner-leads-analytics-grid-2x2 {
     grid-template-columns: repeat(1, 1fr);
     gap: var(--mobile-spacing-md);
     margin: 0 var(--mobile-spacing-sm);
   }
   
-  .tenant-owner-inventory-top-section {
+  .tenant-owner-leads-top-section {
     padding: 0 var(--mobile-spacing-sm);
     gap: var(--mobile-spacing-lg);
   }
   
-  .tenant-owner-inventory-header {
+  .tenant-owner-leads-header {
     padding: var(--mobile-spacing-md) !important;
   }
   
-  .tenant-owner-inventory-title {
+  .tenant-owner-leads-title {
     font-size: var(--mobile-text-2xl) !important;
   }
 }
 
 /* Analytics Cards - Compact Header Style */
-.tenant-owner-inventory-analytics-card {
+.tenant-owner-leads-analytics-card {
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -295,7 +295,7 @@
   justify-content: space-between;
 }
 
-.tenant-owner-inventory-analytics-card::before {
+.tenant-owner-leads-analytics-card::before {
   content: '';
   position: absolute;
   top: 0;
@@ -306,7 +306,7 @@
   opacity: 1;
 }
 
-.tenant-owner-inventory-analytics-card::after {
+.tenant-owner-leads-analytics-card::after {
   content: '';
   position: absolute;
   top: -50%;
@@ -321,28 +321,28 @@
   pointer-events: none;
 }
 
-.tenant-owner-inventory-analytics-card:hover::after {
+.tenant-owner-leads-analytics-card:hover::after {
   opacity: 1;
   transform: scale(1.1);
 }
 
-.tenant-owner-inventory-analytics-card.total::before {
-  background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+.tenant-owner-leads-analytics-card.total::before {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
 }
 
-.tenant-owner-inventory-analytics-card.value::before {
+.tenant-owner-leads-analytics-card.conversion::before {
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
 }
 
-.tenant-owner-inventory-analytics-card.low-stock::before {
+.tenant-owner-leads-analytics-card.new-today::before {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 }
 
-.tenant-owner-inventory-analytics-card.out-stock::before {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+.tenant-owner-leads-analytics-card.follow-ups::before {
+  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
 }
 
-.tenant-owner-inventory-analytics-card:hover {
+.tenant-owner-leads-analytics-card:hover {
   transform: translateY(-12px) scale(1.03);
   box-shadow: 
     0 25px 60px rgba(0, 0, 0, 0.15),
@@ -351,21 +351,21 @@
     0 0 50px rgba(59, 130, 246, 0.1);
 }
 
-.tenant-owner-inventory-card-header {
+.tenant-owner-leads-card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 0.75rem;
 }
 
-.tenant-owner-inventory-card-title-row {
+.tenant-owner-leads-card-title-row {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   flex: 1;
 }
 
-.tenant-owner-inventory-card-label {
+.tenant-owner-leads-card-label {
   font-size: 0.875rem;
   font-weight: 700;
   color: #4b5563;
@@ -374,7 +374,7 @@
   margin: 0;
 }
 
-.tenant-owner-inventory-card-icon {
+.tenant-owner-leads-card-icon {
   padding: 0.5rem;
   border-radius: 0.5rem;
   box-shadow: 
@@ -384,37 +384,37 @@
   flex-shrink: 0;
 }
 
-.tenant-owner-inventory-analytics-card:hover .tenant-owner-inventory-card-icon {
+.tenant-owner-leads-analytics-card:hover .tenant-owner-leads-card-icon {
   transform: scale(1.05) rotate(3deg);
   box-shadow: 
     0 4px 12px rgba(0, 0, 0, 0.15),
     0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.tenant-owner-inventory-card-icon.total {
+.tenant-owner-leads-card-icon.total {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
 }
 
-.tenant-owner-inventory-card-icon.conversion {
+.tenant-owner-leads-card-icon.conversion {
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
 }
 
-.tenant-owner-inventory-card-icon.new-today {
+.tenant-owner-leads-card-icon.new-today {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 }
 
-.tenant-owner-inventory-card-icon.follow-ups {
+.tenant-owner-leads-card-icon.follow-ups {
   background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
 }
 
-.tenant-owner-inventory-card-icon svg {
+.tenant-owner-leads-card-icon svg {
   width: 1.25rem;
   height: 1.25rem;
   color: white;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
-.tenant-owner-inventory-card-value {
+.tenant-owner-leads-card-value {
   font-size: 1.5rem;
   font-weight: 900;
   color: #1f2937;
@@ -428,7 +428,7 @@
   background-clip: text;
 }
 
-.tenant-owner-inventory-card-trend {
+.tenant-owner-leads-card-trend {
   display: flex;
   align-items: center;
   font-size: 0.6875rem;
@@ -443,7 +443,7 @@
   margin-top: auto;
 }
 
-.tenant-owner-inventory-card-trend svg {
+.tenant-owner-leads-card-trend svg {
   width: 0.75rem;
   height: 0.75rem;
   margin-right: 0.25rem;
@@ -451,7 +451,7 @@
 }
 
 /* Search and Controls */
-.tenant-owner-inventory-controls {
+.tenant-owner-leads-controls {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -466,14 +466,14 @@
   transition: all 0.3s ease;
 }
 
-.tenant-owner-inventory-controls:hover {
+.tenant-owner-leads-controls:hover {
   box-shadow: 
     0 12px 40px rgba(0, 0, 0, 0.12),
     0 6px 20px rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-.tenant-owner-inventory-search-row {
+.tenant-owner-leads-search-row {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -481,20 +481,20 @@
 }
 
 @media (min-width: 768px) {
-  .tenant-owner-inventory-search-row {
+  .tenant-owner-leads-search-row {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
   }
 }
 
-.tenant-owner-inventory-search-container {
+.tenant-owner-leads-search-container {
   position: relative;
   flex: 1;
   width: 100%;
 }
 
-.tenant-owner-inventory-search-input {
+.tenant-owner-leads-search-input {
   width: 100%;
   padding: 1rem 1.25rem 1rem 3.5rem;
   border: 2px solid rgba(229, 231, 235, 0.8);
@@ -509,7 +509,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-.tenant-owner-inventory-search-input:focus {
+.tenant-owner-leads-search-input:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 
@@ -518,7 +518,7 @@
   background: rgba(255, 255, 255, 1);
 }
 
-.tenant-owner-inventory-search-icon {
+.tenant-owner-leads-search-icon {
   position: absolute;
   left: 1rem;
   top: 50%;
@@ -528,13 +528,13 @@
   color: #6b7280;
 }
 
-.tenant-owner-inventory-filters {
+.tenant-owner-leads-filters {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
 }
 
-.tenant-owner-inventory-filter-select {
+.tenant-owner-leads-filter-select {
   padding: 0.75rem 1rem;
   border: 2px solid rgba(229, 231, 235, 0.8);
   border-radius: 0.75rem;
@@ -550,7 +550,7 @@
   cursor: pointer;
 }
 
-.tenant-owner-inventory-filter-select:focus {
+.tenant-owner-leads-filter-select:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 
@@ -559,7 +559,7 @@
   background: rgba(255, 255, 255, 1);
 }
 
-.tenant-owner-inventory-filter-select:hover {
+.tenant-owner-leads-filter-select:hover {
   border-color: rgba(59, 130, 246, 0.5);
   background: rgba(255, 255, 255, 1);
   transform: translateY(-1px);
@@ -568,7 +568,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-.tenant-owner-inventory-add-btn {
+.tenant-owner-leads-add-btn {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -588,7 +588,7 @@
   overflow: hidden;
 }
 
-.tenant-owner-inventory-add-btn::before {
+.tenant-owner-leads-add-btn::before {
   content: '';
   position: absolute;
   top: 0;
@@ -599,11 +599,11 @@
   transition: left 0.6s ease;
 }
 
-.tenant-owner-inventory-add-btn:hover::before {
+.tenant-owner-leads-add-btn:hover::before {
   left: 100%;
 }
 
-.tenant-owner-inventory-add-btn:hover {
+.tenant-owner-leads-add-btn:hover {
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
   transform: translateY(-3px);
   box-shadow: 
@@ -611,27 +611,27 @@
     0 8px 25px rgba(59, 130, 246, 0.3);
 }
 
-.tenant-owner-inventory-add-btn svg {
+.tenant-owner-leads-add-btn svg {
   width: 1.25rem;
   height: 1.25rem;
 }
 
 /* Content Container */
-.tenant-owner-inventory-content-wrapper {
+.tenant-owner-leads-content-wrapper {
   flex: 1;
   overflow: visible;
   padding-top: 0; /* No extra padding needed since header is not fixed */
   height: auto;
 }
 
-.tenant-owner-inventory-content {
+.tenant-owner-leads-content {
   max-width: 98%;
   margin: 0 auto;
   padding: 1.5rem 1rem;
 }
 
 /* Table Container */
-.tenant-owner-inventory-table-container {
+.tenant-owner-leads-table-container {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -645,24 +645,24 @@
   transition: all 0.3s ease;
 }
 
-.tenant-owner-inventory-table-container:hover {
+.tenant-owner-leads-table-container:hover {
   box-shadow: 
     0 15px 50px rgba(0, 0, 0, 0.12),
     0 6px 25px rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-.tenant-owner-inventory-table {
+.tenant-owner-leads-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.tenant-owner-inventory-table-header {
+.tenant-owner-leads-table-header {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   border-bottom: 1px solid #e5e7eb;
 }
 
-.tenant-owner-inventory-table-header th {
+.tenant-owner-leads-table-header th {
   padding: 1rem 1.5rem;
   text-align: left;
   font-size: 0.875rem;
@@ -672,16 +672,16 @@
   letter-spacing: 0.5px;
 }
 
-.tenant-owner-inventory-table-body tr {
+.tenant-owner-leads-table-body tr {
   border-bottom: 1px solid #f3f4f6;
   transition: all 0.2s ease;
 }
 
-.tenant-owner-inventory-table-body tr:hover {
+.tenant-owner-leads-table-body tr:hover {
   background: rgba(59, 130, 246, 0.02);
 }
 
-.tenant-owner-inventory-table-body td {
+.tenant-owner-leads-table-body td {
   padding: 1rem 1.5rem;
   font-size: 0.875rem;
   color: #374151;
@@ -689,7 +689,7 @@
 }
 
 /* Lead Status Badges */
-.tenant-owner-inventory-status-badge {
+.tenant-owner-leads-status-badge {
   display: inline-flex;
   align-items: center;
   padding: 0.25rem 0.75rem;
@@ -700,59 +700,59 @@
   letter-spacing: 0.5px;
 }
 
-.tenant-owner-inventory-status-badge.new {
+.tenant-owner-leads-status-badge.new {
   background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
   color: #1e40af;
 }
 
-.tenant-owner-inventory-status-badge.contacted {
+.tenant-owner-leads-status-badge.contacted {
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   color: #92400e;
 }
 
-.tenant-owner-inventory-status-badge.qualified {
+.tenant-owner-leads-status-badge.qualified {
   background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
   color: #065f46;
 }
 
-.tenant-owner-inventory-status-badge.unqualified {
+.tenant-owner-leads-status-badge.unqualified {
   background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
   color: #991b1b;
 }
 
 /* Priority Indicators */
-.tenant-owner-inventory-priority-indicator {
+.tenant-owner-leads-priority-indicator {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.tenant-owner-inventory-priority-dot {
+.tenant-owner-leads-priority-dot {
   width: 0.75rem;
   height: 0.75rem;
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.tenant-owner-inventory-priority-dot.high {
+.tenant-owner-leads-priority-dot.high {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
-.tenant-owner-inventory-priority-dot.medium {
+.tenant-owner-leads-priority-dot.medium {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 }
 
-.tenant-owner-inventory-priority-dot.low {
+.tenant-owner-leads-priority-dot.low {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
 /* Action Buttons */
-.tenant-owner-inventory-action-buttons {
+.tenant-owner-leads-action-buttons {
   display: flex;
   gap: 0.5rem;
 }
 
-.tenant-owner-inventory-action-btn {
+.tenant-owner-leads-action-btn {
   padding: 0.5rem;
   border: none;
   border-radius: 0.5rem;
@@ -763,39 +763,39 @@
   justify-content: center;
 }
 
-.tenant-owner-inventory-action-btn.view {
+.tenant-owner-leads-action-btn.view {
   background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
   color: #1e40af;
 }
 
-.tenant-owner-inventory-action-btn.edit {
+.tenant-owner-leads-action-btn.edit {
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   color: #92400e;
 }
 
-.tenant-owner-inventory-action-btn.delete {
+.tenant-owner-leads-action-btn.delete {
   background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
   color: #991b1b;
 }
 
-.tenant-owner-inventory-action-btn:hover {
+.tenant-owner-leads-action-btn:hover {
   transform: scale(1.1);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
-.tenant-owner-inventory-action-btn svg {
+.tenant-owner-leads-action-btn svg {
   width: 1rem;
   height: 1rem;
 }
 
 /* Empty State */
-.tenant-owner-inventory-empty-state {
+.tenant-owner-leads-empty-state {
   text-align: center;
   padding: 4rem 2rem;
   position: relative;
 }
 
-.tenant-owner-inventory-empty-state::before {
+.tenant-owner-leads-empty-state::before {
   content: '';
   position: absolute;
   top: 50%;
@@ -808,7 +808,7 @@
   pointer-events: none;
 }
 
-.tenant-owner-inventory-empty-icon {
+.tenant-owner-leads-empty-icon {
   width: 5rem;
   height: 5rem;
   margin: 0 auto 2rem;
@@ -823,7 +823,7 @@
   z-index: 1;
 }
 
-.tenant-owner-inventory-empty-title {
+.tenant-owner-leads-empty-title {
   font-size: 1.5rem;
   font-weight: 700;
   color: #1f2937;
@@ -832,7 +832,7 @@
   z-index: 1;
 }
 
-.tenant-owner-inventory-empty-description {
+.tenant-owner-leads-empty-description {
   color: #6b7280;
   margin-bottom: 2.5rem;
   font-size: 1.1rem;
@@ -844,7 +844,7 @@
   z-index: 1;
 }
 
-.tenant-owner-inventory-empty-action {
+.tenant-owner-leads-empty-action {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -859,7 +859,7 @@
   text-decoration: none;
 }
 
-.tenant-owner-inventory-empty-action:hover {
+.tenant-owner-leads-empty-action:hover {
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
@@ -867,7 +867,7 @@
 }
 
 /* Enhanced Empty State Actions */
-.tenant-owner-inventory-empty-actions {
+.tenant-owner-leads-empty-actions {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -876,32 +876,32 @@
 }
 
 @media (min-width: 640px) {
-  .tenant-owner-inventory-empty-actions {
+  .tenant-owner-leads-empty-actions {
     flex-direction: row;
     justify-content: center;
   }
 }
 
-.tenant-owner-inventory-empty-action.primary {
+.tenant-owner-leads-empty-action.primary {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
 }
 
-.tenant-owner-inventory-empty-action.primary:hover {
+.tenant-owner-leads-empty-action.primary:hover {
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
   color: white;
 }
 
-.tenant-owner-inventory-empty-action.secondary {
+.tenant-owner-leads-empty-action.secondary {
   background: white;
   color: #374151;
   border: 2px solid #e5e7eb;
 }
 
-.tenant-owner-inventory-empty-action.secondary:hover {
+.tenant-owner-leads-empty-action.secondary:hover {
   background: #f9fafb;
   border-color: #3b82f6;
   color: #3b82f6;
@@ -910,7 +910,7 @@
 }
 
 /* AI Assistant Badge */
-.tenant-owner-inventory-empty-ai-badge {
+.tenant-owner-leads-empty-ai-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -924,14 +924,14 @@
 }
 
 /* Loading State */
-.tenant-owner-inventory-loading {
+.tenant-owner-leads-loading {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 4rem 2rem;
 }
 
-.tenant-owner-inventory-spinner {
+.tenant-owner-leads-spinner {
   width: 2rem;
   height: 2rem;
   border: 3px solid #e5e7eb;
@@ -947,68 +947,68 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .tenant-owner-inventory-page {
+  .tenant-owner-leads-page {
     padding: 0.5rem;
     margin-left: 0; /* No sidebar margins on mobile */
     margin-right: 0; /* No sidebar margins on mobile */
   }
   
-  .tenant-owner-inventory-header {
+  .tenant-owner-leads-header {
     padding: 1.5rem 0;
     border-radius: 0 0 1rem 1rem;
     position: relative; /* Keep relative on mobile */
   }
   
-  .tenant-owner-inventory-header-content {
+  .tenant-owner-leads-header-content {
     padding: 0 1rem;
   }
 
-  .tenant-owner-inventory-title {
+  .tenant-owner-leads-title {
     font-size: 2rem;
   }
   
-  .tenant-owner-inventory-analytics-grid {
+  .tenant-owner-leads-analytics-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
 
-  .tenant-owner-inventory-analytics-card {
+  .tenant-owner-leads-analytics-card {
     padding: 1.5rem 1.25rem;
     min-height: 120px;
   }
 
-  .tenant-owner-inventory-card-value {
+  .tenant-owner-leads-card-value {
     font-size: 2.25rem;
   }
   
-  .tenant-owner-inventory-search-row {
+  .tenant-owner-leads-search-row {
     flex-direction: column;
     gap: 1rem;
   }
   
-  .tenant-owner-inventory-filters {
+  .tenant-owner-leads-filters {
     flex-direction: column;
   }
 
-  .tenant-owner-inventory-controls {
+  .tenant-owner-leads-controls {
     padding: 1.5rem;
     border-radius: 1rem;
   }
   
-  .tenant-owner-inventory-table-container {
+  .tenant-owner-leads-table-container {
     overflow-x: auto;
     border-radius: 1rem;
   }
   
-  .tenant-owner-inventory-table {
+  .tenant-owner-leads-table {
     min-width: 600px;
   }
 
-  .tenant-owner-inventory-search-input {
+  .tenant-owner-leads-search-input {
     padding: 0.875rem 1rem 0.875rem 3rem;
   }
 
-  .tenant-owner-inventory-add-btn {
+  .tenant-owner-leads-add-btn {
     padding: 0.875rem 1.5rem;
     font-size: 0.9rem;
   }
@@ -1026,29 +1026,29 @@
   }
 }
 
-.tenant-owner-inventory-analytics-card {
+.tenant-owner-leads-analytics-card {
   animation: fadeInUp 0.6s ease forwards;
 }
 
-.tenant-owner-inventory-analytics-card:nth-child(1) { animation-delay: 0.1s; }
-.tenant-owner-inventory-analytics-card:nth-child(2) { animation-delay: 0.2s; }
-.tenant-owner-inventory-analytics-card:nth-child(3) { animation-delay: 0.3s; }
-.tenant-owner-inventory-analytics-card:nth-child(4) { animation-delay: 0.4s; }
+.tenant-owner-leads-analytics-card:nth-child(1) { animation-delay: 0.1s; }
+.tenant-owner-leads-analytics-card:nth-child(2) { animation-delay: 0.2s; }
+.tenant-owner-leads-analytics-card:nth-child(3) { animation-delay: 0.3s; }
+.tenant-owner-leads-analytics-card:nth-child(4) { animation-delay: 0.4s; }
 
-.tenant-owner-inventory-controls {
+.tenant-owner-leads-controls {
   animation: fadeInUp 0.6s ease 0.5s forwards;
   opacity: 0;
 }
 
-.tenant-owner-inventory-table-container {
+.tenant-owner-leads-table-container {
   animation: fadeInUp 0.6s ease 0.6s forwards;
   opacity: 0;
 }/* Enhanced AI Assistant sizing to match metrics grid */
-.tenant-owner-inventory-ai-container {
+.tenant-owner-leads-ai-container {
   min-height: 240px !important;
 }
 
-.tenant-owner-inventory-ai-assistant > div {
+.tenant-owner-leads-ai-assistant > div {
   min-height: 120px !important;
   display: flex !important;
   flex-direction: column !important;
@@ -1056,13 +1056,13 @@
 
 /* Ensure AI Assistant content stretches properly on larger screens */
 @media (min-width: 1201px) {
-  .tenant-owner-inventory-ai-assistant .bg-white {
+  .tenant-owner-leads-ai-assistant .bg-white {
     min-height: 120px !important;
     display: flex !important;
     flex-direction: column !important;
   }
   
-  .tenant-owner-inventory-ai-assistant .p-4:last-child {
+  .tenant-owner-leads-ai-assistant .p-4:last-child {
     flex: 1 !important;
     display: flex !important;
     flex-direction: column !important;
@@ -1071,14 +1071,14 @@
 }
 
 /* AI Insights Column Styles */
-.tenant-owner-inventory-ai-insights {
+.tenant-owner-leads-ai-insights {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   min-width: 200px;
 }
 
-.tenant-owner-inventory-ai-loading {
+.tenant-owner-leads-ai-loading {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1086,14 +1086,14 @@
   font-size: 0.875rem;
 }
 
-.tenant-owner-inventory-ai-content {
+.tenant-owner-leads-ai-content {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   position: relative;
 }
 
-.tenant-owner-inventory-ai-priority {
+.tenant-owner-leads-ai-priority {
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -1101,28 +1101,28 @@
   font-weight: 600;
 }
 
-.tenant-owner-inventory-priority-high {
+.tenant-owner-leads-priority-high {
   color: #dc2626;
   background: rgba(220, 38, 38, 0.1);
   padding: 0.125rem 0.5rem;
   border-radius: 0.375rem;
 }
 
-.tenant-owner-inventory-priority-medium {
+.tenant-owner-leads-priority-medium {
   color: #d97706;
   background: rgba(217, 119, 6, 0.1);
   padding: 0.125rem 0.5rem;
   border-radius: 0.375rem;
 }
 
-.tenant-owner-inventory-priority-low {
+.tenant-owner-leads-priority-low {
   color: #059669;
   background: rgba(5, 150, 105, 0.1);
   padding: 0.125rem 0.5rem;
   border-radius: 0.375rem;
 }
 
-.tenant-owner-inventory-ai-action {
+.tenant-owner-leads-ai-action {
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -1131,7 +1131,7 @@
   line-height: 1.2;
 }
 
-.tenant-owner-inventory-ai-refresh {
+.tenant-owner-leads-ai-refresh {
   position: absolute;
   top: -0.25rem;
   right: -0.25rem;
@@ -1144,11 +1144,11 @@
   border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
-.tenant-owner-inventory-ai-refresh:hover {
+.tenant-owner-leads-ai-refresh:hover {
   background: rgba(59, 130, 246, 0.2);
 }
 
-.tenant-owner-inventory-ai-generate {
+.tenant-owner-leads-ai-generate {
   font-size: 0.75rem;
   padding: 0.375rem 0.75rem;
   height: auto;
@@ -1157,7 +1157,7 @@
   color: #7c3aed;
 }
 
-.tenant-owner-inventory-ai-generate:hover {
+.tenant-owner-leads-ai-generate:hover {
   background: rgba(147, 51, 234, 0.2);
 }
 
