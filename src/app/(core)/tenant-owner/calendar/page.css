@@ -579,6 +579,8 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   padding: 2rem;
   margin-bottom: 2rem;
+  width: 100%;
+  display: block;
 }
 
 .calendar-card::before {
@@ -640,18 +642,24 @@
 }
 
 /* Calendar Grid */
-.calendar-grid {
-  width: 100%;
+.calendar-card .calendar-grid {
+  width: 100% !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  position: relative !important;
 }
 
-.day-headers {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+.calendar-card .calendar-grid .day-headers {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  gap: 0.5rem !important;
+  margin-bottom: 1rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  position: relative !important;
 }
 
-.day-header {
+.calendar-card .calendar-grid .day-header {
   text-align: center;
   font-weight: 600;
   color: #374151;
@@ -659,64 +667,71 @@
   background: rgba(249, 250, 251, 0.8);
   border-radius: 0.5rem;
   border: 1px solid rgba(229, 231, 235, 0.5);
+  box-sizing: border-box;
 }
 
-.calendar-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
+.calendar-card .calendar-grid .calendar-days {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  position: relative !important;
 }
 
-.calendar-day {
-  min-height: 8rem;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(229, 231, 235, 0.4);
-  border-radius: 0.75rem;
-  padding: 0.75rem;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
+.calendar-card .calendar-grid .calendar-day {
+  min-height: 8rem !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(229, 231, 235, 0.4) !important;
+  border-radius: 0.75rem !important;
+  padding: 0.75rem !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  position: relative !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
 }
 
-.calendar-day:hover {
+.calendar-card .calendar-grid .calendar-day:hover {
   background: rgba(249, 250, 251, 0.8);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
-.calendar-day.current-month {
+.calendar-card .calendar-grid .calendar-day.current-month {
   background: rgba(255, 255, 255, 0.8);
 }
 
-.calendar-day.other-month {
+.calendar-card .calendar-grid .calendar-day.other-month {
   background: rgba(249, 250, 251, 0.5);
   opacity: 0.6;
 }
 
-.calendar-day.today {
+.calendar-card .calendar-grid .calendar-day.today {
   background: linear-gradient(135deg, rgba(219, 234, 254, 0.9), rgba(191, 219, 254, 0.7));
   border: 2px solid rgba(59, 130, 246, 0.4);
   box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
 }
 
-.calendar-day.today:hover {
+.calendar-card .calendar-grid .calendar-day.today:hover {
   background: linear-gradient(135deg, rgba(219, 234, 254, 1), rgba(191, 219, 254, 0.8));
   border-color: rgba(59, 130, 246, 0.6);
 }
 
-.day-number {
+.calendar-card .calendar-grid .day-number {
   font-size: 1rem;
   font-weight: 600;
   color: #1f2937;
   margin-bottom: 0.5rem;
 }
 
-.calendar-day.other-month .day-number {
+.calendar-card .calendar-grid .calendar-day.other-month .day-number {
   color: #9ca3af;
 }
 
-.calendar-day.today .day-number {
+.calendar-card .calendar-grid .calendar-day.today .day-number {
   color: #1d4ed8;
   font-weight: 700;
   font-size: 1.125rem;
@@ -1455,6 +1470,45 @@
 /* Enhanced Form Input for Mentions */
 .attendees-field .form-input {
   padding-right: 3rem;
+}
+
+/* EMERGENCY GRID FIX - High Priority Rules */
+div[class*="calendar-card"] div[class*="calendar-grid"] div[class*="day-headers"] {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+  margin-bottom: 1rem !important;
+}
+
+div[class*="calendar-card"] div[class*="calendar-grid"] div[class*="calendar-days"] {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+}
+
+div[class*="calendar-card"] div[class*="calendar-grid"] div[class*="calendar-day"] {
+  min-height: 8rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+/* Additional fallback selectors */
+.day-headers {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+}
+
+.calendar-days {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+}
+
+.calendar-day {
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .attendees-field .form-input:focus {
