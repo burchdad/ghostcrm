@@ -912,13 +912,17 @@ export default function TenantOwnerCalendarPage() {
 
             <div className="calendar-grid">
               <div 
+                id="calendar-day-headers-grid"
                 className="day-headers"
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(7, 1fr)',
                   gap: '0.5rem',
                   width: '100%',
-                  marginBottom: '1rem'
+                  marginBottom: '1rem',
+                  minWidth: '100%',
+                  maxWidth: 'none',
+                  overflow: 'visible'
                 }}
               >
                 {dayNames.map((day) => (
@@ -929,12 +933,16 @@ export default function TenantOwnerCalendarPage() {
               </div>
 
               <div 
+                id="calendar-days-grid"
                 className="calendar-days"
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(7, 1fr)',
                   gap: '0.5rem',
-                  width: '100%'
+                  width: '100%',
+                  minWidth: '100%',
+                  maxWidth: 'none',
+                  overflow: 'visible'
                 }}
               >
                 {calendarDays.map((day, index) => {
@@ -994,4 +1002,35 @@ export default function TenantOwnerCalendarPage() {
       </div>
     </div>
   );
+}
+
+// Debug function - run in browser console
+function debugCalendarGrid() {
+  console.log('=== Calendar Grid Debug ===');
+  
+  const headers = document.getElementById('calendar-day-headers-grid');
+  const days = document.getElementById('calendar-days-grid');
+  
+  if (headers) {
+    console.log('Headers element:', headers);
+    console.log('Headers computed styles:', window.getComputedStyle(headers));
+    console.log('Headers display:', window.getComputedStyle(headers).display);
+    console.log('Headers grid-template-columns:', window.getComputedStyle(headers).gridTemplateColumns);
+  }
+  
+  if (days) {
+    console.log('Days element:', days);
+    console.log('Days computed styles:', window.getComputedStyle(days));
+    console.log('Days display:', window.getComputedStyle(days).display);
+    console.log('Days grid-template-columns:', window.getComputedStyle(days).gridTemplateColumns);
+  }
+  
+  // Check for conflicting styles
+  const allElements = document.querySelectorAll('*');
+  const conflictingElements = Array.from(allElements).filter(el => {
+    const style = window.getComputedStyle(el);
+    return style.display === 'flex' && (el.contains(headers) || el.contains(days));
+  });
+  
+  console.log('Elements with display:flex that might conflict:', conflictingElements);
 }

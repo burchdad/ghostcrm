@@ -660,6 +660,42 @@
   margin: 0;
 }
 
+/* MAXIMUM SPECIFICITY ID-BASED GRID ENFORCEMENT */
+.calendar-card {
+  display: block !important;
+  width: 100% !important;
+  contain: layout !important;
+}
+
+.calendar-card .calendar-grid {
+  display: block !important;
+  width: 100% !important;
+  contain: layout !important;
+}
+
+#calendar-day-headers-grid {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: none !important;
+  overflow: visible !important;
+  margin-bottom: 1rem !important;
+  contain: layout !important;
+}
+
+#calendar-days-grid {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: none !important;
+  overflow: visible !important;
+  contain: layout !important;
+}
+
 /* ULTRA-HIGH PRIORITY GRID ENFORCEMENT */
 .calendar-card {
   display: block !important;
@@ -1642,4 +1678,44 @@ div[class*="calendar-card"] div[class*="calendar-grid"] div[class*="calendar-day
 .attendees-field .form-input:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* MAXIMUM SPECIFICITY: ID-based grid enforcement with debugging */
+#calendar-day-headers-grid {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  width: 100% !important;
+  gap: 1px !important;
+  contain: layout !important;
+  background: yellow !important; /* Debug color */
+  border: 2px solid red !important; /* Debug border */
+  min-height: 40px !important;
+}
+
+#calendar-days-grid {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  width: 100% !important;
+  gap: 1px !important;
+  contain: layout !important;
+  background: lightblue !important; /* Debug color */
+  border: 2px solid blue !important; /* Debug border */
+  min-height: 200px !important;
+}
+
+/* FORCE all children to respect grid */
+#calendar-day-headers-grid > * {
+  display: block !important;
+  width: auto !important;
+  grid-column: unset !important;
+  background: pink !important; /* Debug color */
+  border: 1px solid black !important;
+}
+
+#calendar-days-grid > * {
+  display: block !important;
+  width: auto !important;
+  grid-column: unset !important;
+  background: lightgreen !important; /* Debug color */
+  border: 1px solid black !important;
 } 
