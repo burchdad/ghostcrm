@@ -14,6 +14,10 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Settings,
+  Palette,
+  Eye,
+  Save,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PageAIAssistant from "@/components/ai/PageAIAssistant";
@@ -116,6 +120,38 @@ export default function TenantOwnerCalendarPage() {
 
   // Calendar view mode state
   const [viewMode, setViewMode] = useState<'monthly' | 'bi-weekly' | 'weekly' | 'daily'>('monthly');
+
+  // Calendar settings modal state
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [calendarSettings, setCalendarSettings] = useState({
+    colors: {
+      primary: '#3b82f6',
+      secondary: '#10b981',
+      accent: '#f59e0b',
+      background: '#f8fafc',
+      text: '#1f2937',
+      border: '#e5e7eb',
+      todayHighlight: '#ef4444',
+      eventColors: {
+        meeting: '#3b82f6',
+        call: '#10b981',
+        appointment: '#f59e0b',
+        'test-drive': '#8b5cf6',
+        demo: '#06b6d4',
+        review: '#f97316',
+        todo: '#6b7280',
+        other: '#ec4899'
+      }
+    },
+    preferences: {
+      showWeekNumbers: false,
+      startWeek: 'sunday' as 'sunday' | 'monday',
+      timeFormat: '12h' as '12h' | '24h',
+      showAllDayEvents: true,
+      compactView: false,
+      showEventIcons: true
+    }
+  });
 
   // @-mention functionality state
   const [mentionSuggestions, setMentionSuggestions] = useState<
@@ -947,6 +983,18 @@ export default function TenantOwnerCalendarPage() {
                 >
                   Daily
                 </Button>
+                
+                <div className="settings-divider"></div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsSettingsModalOpen(true)}
+                  className="settings-btn"
+                  title="Calendar Settings"
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
               </div>
             </div>
 
@@ -1040,6 +1088,256 @@ export default function TenantOwnerCalendarPage() {
           </Card>
         </div>
       </div>
+
+      {/* Calendar Settings Modal */}
+      {isSettingsModalOpen && (
+        <div className="settings-modal-overlay" onClick={() => setIsSettingsModalOpen(false)}>
+          <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="settings-modal-header">
+              <h3 className="settings-modal-title">
+                <Settings className="w-5 h-5" />
+                Calendar Settings
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSettingsModalOpen(false)}
+                className="close-btn"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="settings-modal-content">
+              {/* Color Customization Section */}
+              <div className="settings-section">
+                <h4 className="settings-section-title">
+                  <Palette className="w-4 h-4" />
+                  Color Scheme
+                </h4>
+                
+                <div className="color-grid">
+                  <div className="color-item">
+                    <label>Primary Color</label>
+                    <div className="color-input-wrapper">
+                      <input
+                        type="color"
+                        value={calendarSettings.colors.primary}
+                        onChange={(e) => setCalendarSettings(prev => ({
+                          ...prev,
+                          colors: { ...prev.colors, primary: e.target.value }
+                        }))}
+                        className="color-input"
+                      />
+                      <span className="color-value">{calendarSettings.colors.primary}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="color-item">
+                    <label>Success Color</label>
+                    <div className="color-input-wrapper">
+                      <input
+                        type="color"
+                        value={calendarSettings.colors.secondary}
+                        onChange={(e) => setCalendarSettings(prev => ({
+                          ...prev,
+                          colors: { ...prev.colors, secondary: e.target.value }
+                        }))}
+                        className="color-input"
+                      />
+                      <span className="color-value">{calendarSettings.colors.secondary}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="color-item">
+                    <label>Warning Color</label>
+                    <div className="color-input-wrapper">
+                      <input
+                        type="color"
+                        value={calendarSettings.colors.accent}
+                        onChange={(e) => setCalendarSettings(prev => ({
+                          ...prev,
+                          colors: { ...prev.colors, accent: e.target.value }
+                        }))}
+                        className="color-input"
+                      />
+                      <span className="color-value">{calendarSettings.colors.accent}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="color-item">
+                    <label>Today Highlight</label>
+                    <div className="color-input-wrapper">
+                      <input
+                        type="color"
+                        value={calendarSettings.colors.todayHighlight}
+                        onChange={(e) => setCalendarSettings(prev => ({
+                          ...prev,
+                          colors: { ...prev.colors, todayHighlight: e.target.value }
+                        }))}
+                        className="color-input"
+                      />
+                      <span className="color-value">{calendarSettings.colors.todayHighlight}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <h5 className="event-colors-title">Event Type Colors</h5>
+                <div className="event-colors-grid">
+                  {Object.entries(calendarSettings.colors.eventColors).map(([eventType, color]) => (
+                    <div key={eventType} className="color-item">
+                      <label>{eventType.charAt(0).toUpperCase() + eventType.slice(1)}</label>
+                      <div className="color-input-wrapper">
+                        <input
+                          type="color"
+                          value={color}
+                          onChange={(e) => setCalendarSettings(prev => ({
+                            ...prev,
+                            colors: {
+                              ...prev.colors,
+                              eventColors: {
+                                ...prev.colors.eventColors,
+                                [eventType]: e.target.value
+                              }
+                            }
+                          }))}
+                          className="color-input"
+                        />
+                        <span className="color-value">{color}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Display Preferences Section */}
+              <div className="settings-section">
+                <h4 className="settings-section-title">
+                  <Eye className="w-4 h-4" />
+                  Display Preferences
+                </h4>
+                
+                <div className="preferences-grid">
+                  <div className="preference-item">
+                    <label className="preference-label">
+                      <input
+                        type="checkbox"
+                        checked={calendarSettings.preferences.showWeekNumbers}
+                        onChange={(e) => setCalendarSettings(prev => ({
+                          ...prev,
+                          preferences: { ...prev.preferences, showWeekNumbers: e.target.checked }
+                        }))}
+                        className="preference-checkbox"
+                      />
+                      Show Week Numbers
+                    </label>
+                  </div>
+                  
+                  <div className="preference-item">
+                    <label className="preference-label">
+                      <input
+                        type="checkbox"
+                        checked={calendarSettings.preferences.showAllDayEvents}
+                        onChange={(e) => setCalendarSettings(prev => ({
+                          ...prev,
+                          preferences: { ...prev.preferences, showAllDayEvents: e.target.checked }
+                        }))}
+                        className="preference-checkbox"
+                      />
+                      Show All-Day Events
+                    </label>
+                  </div>
+                  
+                  <div className="preference-item">
+                    <label className="preference-label">
+                      <input
+                        type="checkbox"
+                        checked={calendarSettings.preferences.compactView}
+                        onChange={(e) => setCalendarSettings(prev => ({
+                          ...prev,
+                          preferences: { ...prev.preferences, compactView: e.target.checked }
+                        }))}
+                        className="preference-checkbox"
+                      />
+                      Compact View
+                    </label>
+                  </div>
+                  
+                  <div className="preference-item">
+                    <label className="preference-label">
+                      <input
+                        type="checkbox"
+                        checked={calendarSettings.preferences.showEventIcons}
+                        onChange={(e) => setCalendarSettings(prev => ({
+                          ...prev,
+                          preferences: { ...prev.preferences, showEventIcons: e.target.checked }
+                        }))}
+                        className="preference-checkbox"
+                      />
+                      Show Event Icons
+                    </label>
+                  </div>
+                  
+                  <div className="preference-item">
+                    <label>Week Starts On</label>
+                    <select
+                      value={calendarSettings.preferences.startWeek}
+                      onChange={(e) => setCalendarSettings(prev => ({
+                        ...prev,
+                        preferences: { ...prev.preferences, startWeek: e.target.value as 'sunday' | 'monday' }
+                      }))}
+                      className="preference-select"
+                    >
+                      <option value="sunday">Sunday</option>
+                      <option value="monday">Monday</option>
+                    </select>
+                  </div>
+                  
+                  <div className="preference-item">
+                    <label>Time Format</label>
+                    <select
+                      value={calendarSettings.preferences.timeFormat}
+                      onChange={(e) => setCalendarSettings(prev => ({
+                        ...prev,
+                        preferences: { ...prev.preferences, timeFormat: e.target.value as '12h' | '24h' }
+                      }))}
+                      className="preference-select"
+                    >
+                      <option value="12h">12 Hour (AM/PM)</option>
+                      <option value="24h">24 Hour</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="settings-modal-footer">
+              <Button
+                variant="outline"
+                onClick={() => setIsSettingsModalOpen(false)}
+                className="cancel-btn"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  // TODO: Save settings to localStorage or API
+                  console.log('Saving calendar settings:', calendarSettings);
+                  toast({
+                    title: "Settings Saved",
+                    description: "Calendar settings have been updated successfully."
+                  });
+                  setIsSettingsModalOpen(false);
+                }}
+                className="save-btn"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Save Settings
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
