@@ -2189,4 +2189,309 @@ div[class*="calendar-card"] div[class*="calendar-grid"] div[class*="calendar-day
   .settings-modal-footer {
     padding: 1rem;
   }
+}
+
+/* 
+  ===========================================
+  📅 CALENDAR VIEW MODE STYLES
+  ===========================================
+  Enhanced view-specific styling for different calendar views
+*/
+
+/* View-specific grid layouts */
+.calendar-grid.view-monthly {
+  /* Monthly view uses the default grid styling */
+}
+
+.calendar-grid.view-bi-weekly,
+.calendar-grid.view-weekly {
+  .biweekly-headers,
+  .weekly-headers {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .biweekly-grid,
+  .weekly-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    width: 100%;
+  }
+  
+  .biweekly-day,
+  .weekly-day {
+    min-height: 120px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--calendar-border);
+    border-radius: 8px;
+    padding: 0.5rem;
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  
+  .biweekly-day:hover,
+  .weekly-day:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: var(--calendar-primary);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+  }
+  
+  .month-indicator {
+    font-size: 0.7rem;
+    color: var(--calendar-secondary);
+    margin-left: 0.25rem;
+    font-weight: 500;
+  }
+}
+
+/* Bi-weekly specific styling */
+.calendar-grid.view-bi-weekly {
+  .biweekly-grid {
+    grid-template-rows: repeat(2, 1fr);
+  }
+}
+
+/* Daily view styling */
+.calendar-grid.view-daily {
+  .daily-view {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+  
+  .daily-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--calendar-border);
+  }
+  
+  .daily-header h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--calendar-text);
+    margin: 0;
+  }
+  
+  .daily-hours {
+    max-height: 600px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--calendar-primary) transparent;
+  }
+  
+  .daily-hours::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .daily-hours::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .daily-hours::-webkit-scrollbar-thumb {
+    background: var(--calendar-primary);
+    border-radius: 3px;
+  }
+  
+  .hour-slot {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    min-height: 60px;
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+    align-items: start;
+  }
+  
+  .hour-slot:last-child {
+    border-bottom: none;
+  }
+  
+  .hour-label {
+    padding: 0.5rem 0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--calendar-text);
+    text-align: right;
+    padding-right: 1rem;
+    border-right: 1px solid rgba(229, 231, 235, 0.3);
+  }
+  
+  .hour-events {
+    padding: 0.5rem 0 0.5rem 1rem;
+    position: relative;
+  }
+  
+  .empty-hour {
+    height: 40px;
+  }
+  
+  .daily-event {
+    margin-bottom: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--calendar-primary);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+  }
+  
+  .daily-event:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .daily-event .event-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .daily-event .event-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--calendar-text);
+  }
+  
+  .daily-event .event-time {
+    font-size: 0.8rem;
+    color: var(--calendar-secondary);
+    font-weight: 500;
+  }
+  
+  .daily-event .event-location {
+    font-size: 0.8rem;
+    color: #6b7280;
+    font-style: italic;
+  }
+  
+  .daily-event .event-icon {
+    margin-right: 0.5rem;
+    font-size: 1rem;
+  }
+  
+  /* Event type styling for daily view */
+  .daily-event.event-meeting {
+    border-left-color: var(--calendar-event-meeting);
+  }
+  
+  .daily-event.event-call {
+    border-left-color: var(--calendar-event-call);
+  }
+  
+  .daily-event.event-appointment {
+    border-left-color: var(--calendar-event-appointment);
+  }
+  
+  .daily-event.event-test-drive {
+    border-left-color: var(--calendar-event-test-drive);
+  }
+  
+  .daily-event.event-demo {
+    border-left-color: var(--calendar-event-demo);
+  }
+  
+  .daily-event.event-review {
+    border-left-color: var(--calendar-event-review);
+  }
+  
+  .daily-event.event-todo {
+    border-left-color: var(--calendar-event-todo);
+  }
+  
+  .daily-event.event-other {
+    border-left-color: var(--calendar-event-other);
+  }
+}
+
+/* Enhanced today highlighting for all views */
+.calendar-day.today {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border-color: var(--calendar-today) !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+}
+
+.calendar-day.today .day-number {
+  background: var(--calendar-today);
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+/* Responsive adjustments for different views */
+@media (max-width: 1024px) {
+  .calendar-grid.view-bi-weekly,
+  .calendar-grid.view-weekly {
+    .biweekly-day,
+    .weekly-day {
+      min-height: 100px;
+      padding: 0.375rem;
+    }
+  }
+  
+  .calendar-grid.view-daily {
+    .daily-view {
+      padding: 1rem;
+    }
+    
+    .hour-slot {
+      grid-template-columns: 70px 1fr;
+      min-height: 50px;
+    }
+    
+    .hour-label {
+      font-size: 0.8rem;
+      padding-right: 0.5rem;
+    }
+    
+    .daily-event {
+      padding: 0.5rem;
+    }
+    
+    .daily-event .event-title {
+      font-size: 0.85rem;
+    }
+    
+    .daily-event .event-time,
+    .daily-event .event-location {
+      font-size: 0.75rem;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-grid.view-bi-weekly .biweekly-grid,
+  .calendar-grid.view-weekly .weekly-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.375rem;
+  }
+  
+  .calendar-grid.view-bi-weekly .biweekly-headers,
+  .calendar-grid.view-weekly .weekly-headers {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.375rem;
+  }
+  
+  .calendar-grid.view-daily {
+    .hour-slot {
+      grid-template-columns: 60px 1fr;
+      min-height: 45px;
+    }
+    
+    .hour-label {
+      font-size: 0.75rem;
+    }
+    
+    .daily-event .event-icon {
+      margin-right: 0.25rem;
+      font-size: 0.9rem;
+    }
+  }
 } 

@@ -120,7 +120,10 @@ export default function TenantOwnerCalendarPage() {
 
   // Calendar view mode state
   const [viewMode, setViewMode] = useState<'monthly' | 'bi-weekly' | 'weekly' | 'daily'>('monthly');
-
+  
+  // View-specific date tracking
+  const [viewDate, setViewDate] = useState(new Date()); // For non-monthly views
+  
   // Calendar settings modal state
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [calendarSettings, setCalendarSettings] = useState({
@@ -398,22 +401,117 @@ export default function TenantOwnerCalendarPage() {
     });
   }
 
-  const getEventsForDate = (date: number) =>
-    events.filter(
+  // Helper function to get events for a specific date
+  const getEventsForDate = (date: number, month?: number, year?: number) => {
+    const targetMonth = month !== undefined ? month : currentMonth;
+    const targetYear = year !== undefined ? year : currentYear;
+    
+    return events.filter(
       (event) =>
         event.date === date &&
-        event.month === currentMonth &&
-        event.year === currentYear
+        event.month === targetMonth &&
+        event.year === targetYear
     );
+  };
 
+  // Helper function to get week dates
+  const getWeekDates = (startDate: Date): Date[] => {
+    const week: Date[] = [];
+    const start = new Date(startDate);
+    // Get to Sunday of the week
+    start.setDate(start.getDate() - start.getDay());
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(start);
+      date.setDate(start.getDate() + i);
+      week.push(date);
+    }
+    return week;
+  };
+
+  // Helper function to get bi-weekly dates (14 days)
+  const getBiWeeklyDates = (startDate: Date): Date[] => {
+    const biWeek: Date[] = [];
+    const start = new Date(startDate);
+    // Get to Sunday of the current week
+    start.setDate(start.getDate() - start.getDay());
+    
+    for (let i = 0; i < 14; i++) {
+      const date = new Date(start);
+      date.setDate(start.getDate() + i);
+      biWeek.push(date);
+    }
+    return biWeek;
+  };
+
+  // Helper function to get hours for daily view
+  const getDayHours = () => {
+    const hours: Array<{hour24: number; hour12: string; display: string}> = [];
+    for (let i = 0; i < 24; i++) {
+      const hour12 = i === 0 ? 12 : i > 12 ? i - 12 : i;
+      const ampm = i < 12 ? 'AM' : 'PM';
+      hours.push({
+        hour24: i,
+        hour12: `${hour12}:00 ${ampm}`,
+        display: appliedSettings.preferences.timeFormat === '24h' ? `${i.toString().padStart(2, '0')}:00` : `${hour12}:00 ${ampm}`
+      });
+    }
+    return hours;
+  };
+
+  // Get events for a specific date and hour
+  const getEventsForDateTime = (date: Date, hour?: number) => {
+    return events.filter((event) => {
+      const eventMatches = event.date === date.getDate() &&
+                          event.month === date.getMonth() &&
+                          event.year === date.getFullYear();
+      
+      if (!eventMatches) return false;
+      
+      if (hour !== undefined && !event.isAllDay) {
+        const eventHour = parseInt(event.time.split(':')[0]);
+        const eventAmPm = event.time.toLowerCase().includes('pm');
+        const event24Hour = eventAmPm && eventHour !== 12 ? eventHour + 12 : 
+                           !eventAmPm && eventHour === 12 ? 0 : eventHour;
+        return event24Hour === hour;
+      }
+      
+      return eventMatches;
+    });
+  };
+
+  // Navigation functions
   const navigateMonth = (direction: "prev" | "next") => {
     const newDate = new Date(currentDate);
-    if (direction === "prev") {
-      newDate.setMonth(currentMonth - 1);
-    } else {
-      newDate.setMonth(currentMonth + 1);
-    }
+    newDate.setMonth(currentDate.getMonth() + (direction === "next" ? 1 : -1));
     setCurrentDate(newDate);
+  };
+
+  const navigateView = (direction: "prev" | "next") => {
+    const newDate = new Date(viewDate);
+    
+    switch (viewMode) {
+      case 'monthly':
+        newDate.setMonth(newDate.getMonth() + (direction === "next" ? 1 : -1));
+        setCurrentDate(newDate);
+        break;
+      case 'bi-weekly':
+        newDate.setDate(newDate.getDate() + (direction === "next" ? 14 : -14));
+        break;
+      case 'weekly':
+        newDate.setDate(newDate.getDate() + (direction === "next" ? 7 : -7));
+        break;
+      case 'daily':
+        newDate.setDate(newDate.getDate() + (direction === "next" ? 1 : -1));
+        break;
+    }
+    
+    setViewDate(newDate);
+    
+    // Update currentDate for monthly view
+    if (viewMode === 'monthly') {
+      setCurrentDate(newDate);
+    }
   };
 
   const handleSyncCalendar = async () => {
@@ -1019,7 +1117,7 @@ export default function TenantOwnerCalendarPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigateMonth("prev")}
+                  onClick={() => navigateView("prev")}
                   className="nav-btn"
                 >
                   <ChevronLeft className="icon" />
@@ -1027,7 +1125,10 @@ export default function TenantOwnerCalendarPage() {
 
                 <div className="month-year">
                   <h2 className="month-title">
-                    {monthNames[currentMonth]} {currentYear}
+                    {viewMode === 'monthly' && `${monthNames[currentMonth]} ${currentYear}`}
+                    {viewMode === 'bi-weekly' && `${monthNames[viewDate.getMonth()]} ${viewDate.getDate()}, ${viewDate.getFullYear()}`}
+                    {viewMode === 'weekly' && `Week of ${monthNames[viewDate.getMonth()]} ${viewDate.getDate()}, ${viewDate.getFullYear()}`}
+                    {viewMode === 'daily' && `${monthNames[viewDate.getMonth()]} ${viewDate.getDate()}, ${viewDate.getFullYear()}`}
                   </h2>
                   <p className="today-indicator">
                     Today: {monthNames[todayMonth]} {todayDate}, {todayYear}
@@ -1037,7 +1138,7 @@ export default function TenantOwnerCalendarPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigateMonth("next")}
+                  onClick={() => navigateView("next")}
                   className="nav-btn"
                 >
                   <ChevronRight className="icon" />
@@ -1092,82 +1193,250 @@ export default function TenantOwnerCalendarPage() {
               </div>
             </div>
 
-            <div className="calendar-grid">
-              <div 
-                id="calendar-day-headers-grid"
-                className="day-headers"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(7, 1fr)',
-                  gap: '0.5rem',
-                  width: '100%',
-                  marginBottom: '1rem',
-                  minWidth: '100%',
-                  maxWidth: 'none',
-                  overflow: 'visible'
-                }}
-              >
-                {dayNames.map((day) => (
-                  <div key={day} className="day-header">
-                    {day}
+            <div className={`calendar-grid view-${viewMode}`}>
+              {/* Monthly View */}
+              {viewMode === 'monthly' && (
+                <>
+                  <div 
+                    id="calendar-day-headers-grid"
+                    className="day-headers"
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(7, 1fr)',
+                      gap: '0.5rem',
+                      width: '100%',
+                      marginBottom: '1rem',
+                      minWidth: '100%',
+                      maxWidth: 'none',
+                      overflow: 'visible'
+                    }}
+                  >
+                    {dayNames.map((day) => (
+                      <div key={day} className="day-header">
+                        {day}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
 
-              <div 
-                id="calendar-days-grid"
-                className="calendar-days"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(7, 1fr)',
-                  gap: '0.5rem',
-                  width: '100%',
-                  minWidth: '100%',
-                  maxWidth: 'none',
-                  overflow: 'visible'
-                }}
-              >
-                {calendarDays.map((day, index) => {
-                  const dayEvents = day.isCurrentMonth
-                    ? getEventsForDate(day.date)
-                    : [];
-                  return (
-                    <div
-                      key={index}
-                      className={`calendar-day ${
-                        day.isCurrentMonth ? "current-month" : "other-month"
-                      } ${day.isToday ? "today" : ""}`}
-                    >
-                      <div className="day-number">{day.date}</div>
-                      {dayEvents.length > 0 && (
-                        <div className="day-events">
-                          {dayEvents.map((event) => (
-                            <div
-                              key={event.id}
-                              className={`event event-${event.type}`}
-                              title={`${event.title} at ${event.time}`}
-                            >
-                              {appliedSettings.preferences.showEventIcons && (
-                                <span className="event-icon">
-                                  {event.type === 'meeting' && '👥'}
-                                  {event.type === 'call' && '📞'}
-                                  {event.type === 'appointment' && '📅'}
-                                  {event.type === 'test-drive' && '🚗'}
-                                  {event.type === 'demo' && '🎯'}
-                                  {event.type === 'review' && '⭐'}
-                                  {event.type === 'todo' && '✅'}
-                                  {event.type === 'other' && '📋'}
-                                </span>
-                              )}
-                              {event.title}
+                  <div 
+                    id="calendar-days-grid"
+                    className="calendar-days"
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(7, 1fr)',
+                      gap: '0.5rem',
+                      width: '100%',
+                      minWidth: '100%',
+                      maxWidth: 'none',
+                      overflow: 'visible'
+                    }}
+                  >
+                    {calendarDays.map((day, index) => {
+                      const dayEvents = day.isCurrentMonth
+                        ? getEventsForDate(day.date)
+                        : [];
+                      return (
+                        <div
+                          key={index}
+                          className={`calendar-day ${
+                            day.isCurrentMonth ? "current-month" : "other-month"
+                          } ${day.isToday ? "today" : ""}`}
+                        >
+                          <div className="day-number">{day.date}</div>
+                          {dayEvents.length > 0 && (
+                            <div className="day-events">
+                              {dayEvents.map((event) => (
+                                <div
+                                  key={event.id}
+                                  className={`event event-${event.type}`}
+                                  title={`${event.title} at ${event.time}`}
+                                >
+                                  {appliedSettings.preferences.showEventIcons && (
+                                    <span className="event-icon">
+                                      {event.type === 'meeting' && '👥'}
+                                      {event.type === 'call' && '📞'}
+                                      {event.type === 'appointment' && '📅'}
+                                      {event.type === 'test-drive' && '🚗'}
+                                      {event.type === 'demo' && '🎯'}
+                                      {event.type === 'review' && '⭐'}
+                                      {event.type === 'todo' && '✅'}
+                                      {event.type === 'other' && '📋'}
+                                    </span>
+                                  )}
+                                  {event.title}
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {/* Bi-Weekly View */}
+              {viewMode === 'bi-weekly' && (
+                <>
+                  <div className="biweekly-headers">
+                    {dayNames.map((day) => (
+                      <div key={day} className="day-header">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="biweekly-grid">
+                    {getBiWeeklyDates(viewDate).map((date, index) => {
+                      const dayEvents = getEventsForDateTime(date);
+                      const isToday = date.toDateString() === today.toDateString();
+                      return (
+                        <div
+                          key={index}
+                          className={`calendar-day biweekly-day ${isToday ? "today" : ""}`}
+                        >
+                          <div className="day-number">
+                            {date.getDate()}
+                            <span className="month-indicator">
+                              {date.getMonth() !== viewDate.getMonth() && monthNames[date.getMonth()].slice(0, 3)}
+                            </span>
+                          </div>
+                          {dayEvents.length > 0 && (
+                            <div className="day-events">
+                              {dayEvents.map((event) => (
+                                <div
+                                  key={event.id}
+                                  className={`event event-${event.type}`}
+                                  title={`${event.title} at ${event.time}`}
+                                >
+                                  {appliedSettings.preferences.showEventIcons && (
+                                    <span className="event-icon">
+                                      {event.type === 'meeting' && '👥'}
+                                      {event.type === 'call' && '📞'}
+                                      {event.type === 'appointment' && '📅'}
+                                      {event.type === 'test-drive' && '🚗'}
+                                      {event.type === 'demo' && '🎯'}
+                                      {event.type === 'review' && '⭐'}
+                                      {event.type === 'todo' && '✅'}
+                                      {event.type === 'other' && '📋'}
+                                    </span>
+                                  )}
+                                  {event.title}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {/* Weekly View */}
+              {viewMode === 'weekly' && (
+                <>
+                  <div className="weekly-headers">
+                    {dayNames.map((day) => (
+                      <div key={day} className="day-header">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="weekly-grid">
+                    {getWeekDates(viewDate).map((date, index) => {
+                      const dayEvents = getEventsForDateTime(date);
+                      const isToday = date.toDateString() === today.toDateString();
+                      return (
+                        <div
+                          key={index}
+                          className={`calendar-day weekly-day ${isToday ? "today" : ""}`}
+                        >
+                          <div className="day-number">
+                            {date.getDate()}
+                            <span className="month-indicator">
+                              {date.getMonth() !== viewDate.getMonth() && monthNames[date.getMonth()].slice(0, 3)}
+                            </span>
+                          </div>
+                          {dayEvents.length > 0 && (
+                            <div className="day-events">
+                              {dayEvents.map((event) => (
+                                <div
+                                  key={event.id}
+                                  className={`event event-${event.type}`}
+                                  title={`${event.title} at ${event.time}`}
+                                >
+                                  {appliedSettings.preferences.showEventIcons && (
+                                    <span className="event-icon">
+                                      {event.type === 'meeting' && '👥'}
+                                      {event.type === 'call' && '📞'}
+                                      {event.type === 'appointment' && '📅'}
+                                      {event.type === 'test-drive' && '🚗'}
+                                      {event.type === 'demo' && '🎯'}
+                                      {event.type === 'review' && '⭐'}
+                                      {event.type === 'todo' && '✅'}
+                                      {event.type === 'other' && '📋'}
+                                    </span>
+                                  )}
+                                  {event.title}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {/* Daily View */}
+              {viewMode === 'daily' && (
+                <div className="daily-view">
+                  <div className="daily-header">
+                    <h3>{dayNames[viewDate.getDay()]}, {monthNames[viewDate.getMonth()]} {viewDate.getDate()}</h3>
+                  </div>
+                  <div className="daily-hours">
+                    {getDayHours().map((hour) => {
+                      const hourEvents = getEventsForDateTime(viewDate, hour.hour24);
+                      return (
+                        <div key={hour.hour24} className="hour-slot">
+                          <div className="hour-label">{hour.display}</div>
+                          <div className="hour-events">
+                            {hourEvents.map((event) => (
+                              <div
+                                key={event.id}
+                                className={`event event-${event.type} daily-event`}
+                                title={`${event.title} - ${event.description || 'No description'}`}
+                              >
+                                {appliedSettings.preferences.showEventIcons && (
+                                  <span className="event-icon">
+                                    {event.type === 'meeting' && '👥'}
+                                    {event.type === 'call' && '📞'}
+                                    {event.type === 'appointment' && '📅'}
+                                    {event.type === 'test-drive' && '🚗'}
+                                    {event.type === 'demo' && '🎯'}
+                                    {event.type === 'review' && '⭐'}
+                                    {event.type === 'todo' && '✅'}
+                                    {event.type === 'other' && '📋'}
+                                  </span>
+                                )}
+                                <div className="event-content">
+                                  <div className="event-title">{event.title}</div>
+                                  <div className="event-time">{event.time}{event.endTime && ` - ${event.endTime}`}</div>
+                                  {event.location && <div className="event-location">📍 {event.location}</div>}
+                                </div>
+                              </div>
+                            ))}
+                            {hourEvents.length === 0 && (
+                              <div className="empty-hour"></div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
 
