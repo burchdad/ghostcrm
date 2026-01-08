@@ -165,9 +165,14 @@ export default function TenantOwnerCalendarPage() {
   }, [showMentions]);
 
   const loadEvents = async () => {
+    if (!user?.organizationId) {
+      console.log("No organization ID available for loading events");
+      return;
+    }
+    
     try {
-      // Load calendar events from database
-      const response = await fetch(`/api/calendar/events?month=${currentMonth}&year=${currentYear}&tenantId=${user?.tenantId}`);
+      // Load calendar events from database using organizationId
+      const response = await fetch(`/api/calendar/events?month=${currentMonth}&year=${currentYear}&organizationId=${user.organizationId}`);
       const result = await response.json();
       
       if (result.success) {
@@ -417,23 +422,35 @@ export default function TenantOwnerCalendarPage() {
     setIsSubmittingEvent(true);
 
     try {
-      // Convert date and time to proper format for API
+      // Validate required fields
+      if (!newEventData.title.trim() || !newEventData.date || !newEventData.time) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      // Convert date and time to proper ISO format for API
       const eventDate = new Date(newEventData.date);
-      const startTime = newEventData.isAllDay 
-        ? eventDate.toISOString().split('T')[0] + 'T00:00:00.000Z'
-        : `${newEventData.date}T${newEventData.time}:00.000Z`;
+      const [hours, minutes] = newEventData.time.split(':');
+      const startDateTime = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate(), parseInt(hours), parseInt(minutes));
       
-      const endTime = newEventData.endTime && !newEventData.isAllDay
-        ? `${newEventData.date}T${newEventData.endTime}:00.000Z`
-        : startTime;
+      let endDateTime = startDateTime;
+      if (newEventData.endTime) {
+        const [endHours, endMinutes] = newEventData.endTime.split(':');
+        endDateTime = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate(), parseInt(endHours), parseInt(endMinutes));
+      } else {
+        // Default to 1 hour if no end time specified
+        endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000);
+      }
 
       const eventPayload = {
         title: newEventData.title,
         description: newEventData.description,
-        start_time: startTime,
-        end_time: endTime,
+        date: newEventData.date,
+        time: newEventData.time,
+        endTime: newEventData.endTime || undefined,
         type: newEventData.type,
-        status: 'confirmed'
+        attendees: newEventData.attendees,
+        location: newEventData.location,
+        isAllDay: newEventData.isAllDay
       };
 
       // Send to API
@@ -451,26 +468,8 @@ export default function TenantOwnerCalendarPage() {
         throw new Error(result.error || 'Failed to create event');
       }
 
-      // Add the new event to local state with the API response
-      setEvents((prev) => [...prev, {
-        id: result.data.id,
-        title: result.data.title,
-        description: result.data.description,
-        date: eventDate.getDate(),
-        month: eventDate.getMonth(),
-        year: eventDate.getFullYear(),
-        time: newEventData.time,
-        endTime: newEventData.endTime,
-        type: result.data.type,
-        attendees: newEventData.attendees
-          .split(",")
-          .map((a) => a.trim())
-          .filter((a) => a),
-        location: newEventData.location,
-        isAllDay: newEventData.isAllDay,
-        createdBy: result.data.user_id || "",
-        tenantId: result.data.organization_id || "",
-      }]);
+      // Refresh events to get the latest data
+      await loadEvents();
 
       // Send calendar invitations if attendees are specified
       if (newEventData.attendees && newEventData.attendees.trim()) {
@@ -668,32 +667,38 @@ export default function TenantOwnerCalendarPage() {
   };
 
   return (
-    <div className="tenant-owner-calendar-container">
-      <div className="calendar-main-layout">
-        {/* Left Content Area */}
-        <div className="calendar-content-area">
-          {/* Quick Stats - 2x2 Grid */}
-          <div className="calendar-stats-grid">
-            <Card className="stat-card">
-              <div className="stat-content">
-                <Calendar className="stat-icon" />
-                <div>
-                  <h3>Today's Events</h3>
-                  <p>{events.filter(event => {
+    <div className="tenant-owner-calendar-page">
+      {/* Analytics Cards Grid with AI Assistant */}
+      <div className="tenant-owner-calendar-header">
+        <div className="tenant-owner-calendar-header-content">
+          {/* Metrics in 4-Column Header Layout */}
+          <div className="tenant-owner-calendar-analytics-grid-header">
+            <div className="tenant-owner-calendar-analytics-card today">
+              <div className="tenant-owner-calendar-card-header">
+                <div className="tenant-owner-calendar-card-title-row">
+                  <span className="tenant-owner-calendar-card-label">TODAY'S EVENTS</span>
+                  <span className="tenant-owner-calendar-card-value">{events.filter(event => {
                     const today = new Date();
                     return event.date === today.getDate() && 
                            event.month === today.getMonth() && 
                            event.year === today.getFullYear();
-                  }).length} scheduled</p>
+                  }).length}</span>
+                </div>
+                <div className="tenant-owner-calendar-card-icon today">
+                  <Calendar />
                 </div>
               </div>
-            </Card>
-            <Card className="stat-card">
-              <div className="stat-content">
-                <Clock className="stat-icon" />
-                <div>
-                  <h3>This Week</h3>
-                  <p>{events.filter(event => {
+              <div className="tenant-owner-calendar-card-trend">
+                <Clock />
+                scheduled
+              </div>
+            </div>
+
+            <div className="tenant-owner-calendar-analytics-card week">
+              <div className="tenant-owner-calendar-card-header">
+                <div className="tenant-owner-calendar-card-title-row">
+                  <span className="tenant-owner-calendar-card-label">THIS WEEK</span>
+                  <span className="tenant-owner-calendar-card-value">{events.filter(event => {
                     const today = new Date();
                     const eventDate = new Date(event.year, event.month, event.date);
                     const startOfWeek = new Date(today);
@@ -703,34 +708,70 @@ export default function TenantOwnerCalendarPage() {
                     endOfWeek.setDate(startOfWeek.getDate() + 6);
                     endOfWeek.setHours(23, 59, 59, 999);
                     return eventDate >= startOfWeek && eventDate <= endOfWeek;
-                  }).length} meetings</p>
+                  }).length}</span>
+                </div>
+                <div className="tenant-owner-calendar-card-icon week">
+                  <Clock />
                 </div>
               </div>
-            </Card>
-            <Card className="stat-card">
-              <div className="stat-content">
-                <Users className="stat-icon" />
-                <div>
-                  <h3>Team Availability</h3>
-                  <p>{mentionSuggestions.length} members</p>
+              <div className="tenant-owner-calendar-card-trend">
+                <Calendar />
+                meetings
+              </div>
+            </div>
+
+            <div className="tenant-owner-calendar-analytics-card availability">
+              <div className="tenant-owner-calendar-card-header">
+                <div className="tenant-owner-calendar-card-title-row">
+                  <span className="tenant-owner-calendar-card-label">TEAM AVAILABILITY</span>
+                  <span className="tenant-owner-calendar-card-value">{mentionSuggestions.length}</span>
+                </div>
+                <div className="tenant-owner-calendar-card-icon availability">
+                  <Users />
                 </div>
               </div>
-            </Card>
-            <Card className="stat-card action-card">
-              <div className="stat-content">
-                <div className="action-buttons">
-                  <Button className="btn-secondary" onClick={handleSyncCalendar}>
-                    <Calendar className="icon" />
-                    Sync Calendar
-                  </Button>
-                  <Button className="btn-primary" onClick={handleNewEvent}>
-                    <Plus className="icon" />
+              <div className="tenant-owner-calendar-card-trend">
+                <Users />
+                members
+              </div>
+            </div>
+
+            <div className="tenant-owner-calendar-analytics-card actions">
+              <div className="tenant-owner-calendar-card-header">
+                <div className="tenant-owner-calendar-card-actions">
+                  <Button 
+                    className="calendar-action-btn primary"
+                    onClick={handleNewEvent}
+                  >
+                    <Plus className="w-4 h-4" />
                     New Event
                   </Button>
+                  <Button 
+                    className="calendar-action-btn secondary"
+                    onClick={handleSyncCalendar}
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Sync Calendar
+                  </Button>
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
+
+          {/* AI Assistant Section */}
+          <div className="tenant-owner-calendar-ai-insights-section">
+            <PageAIAssistant 
+              agentId="calendar" 
+              pageTitle="Calendar Management"
+              className="tenant-owner-calendar-ai-assistant"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Scrollable Content Container */}
+      <div className="tenant-owner-calendar-content-wrapper">
+        <div className="tenant-owner-calendar-content">
 
       {/* Inline Event Creation Section (single, non-duplicated) */}
       {isNewEventInlineOpen && (
@@ -838,121 +879,100 @@ export default function TenantOwnerCalendarPage() {
         </Card>
       )}
 
-      {/* Calendar Grid */}
-      <Card className="calendar-card">
-        <div className="calendar-header">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigateMonth("prev")}
-            className="nav-btn"
-          >
-            <ChevronLeft className="icon" />
-          </Button>
+          {/* Calendar Grid */}
+          <Card className="calendar-card">
+            <div className="calendar-header">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigateMonth("prev")}
+                className="nav-btn"
+              >
+                <ChevronLeft className="icon" />
+              </Button>
 
-          <div className="month-year">
-            <h2 className="month-title">
-              {monthNames[currentMonth]} {currentYear}
-            </h2>
-            <p className="today-indicator">
-              Today: {monthNames[todayMonth]} {todayDate}, {todayYear}
-            </p>
-          </div>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigateMonth("next")}
-            className="nav-btn"
-          >
-            <ChevronRight className="icon" />
-          </Button>
-        </div>
-
-        <div className="calendar-grid">
-          <div className="day-headers">
-            {dayNames.map((day) => (
-              <div key={day} className="day-header">
-                {day}
+              <div className="month-year">
+                <h2 className="month-title">
+                  {monthNames[currentMonth]} {currentYear}
+                </h2>
+                <p className="today-indicator">
+                  Today: {monthNames[todayMonth]} {todayDate}, {todayYear}
+                </p>
               </div>
-            ))}
-          </div>
 
-          <div className="calendar-days">
-            {calendarDays.map((day, index) => {
-              const dayEvents = day.isCurrentMonth
-                ? getEventsForDate(day.date)
-                : [];
-              return (
-                <div
-                  key={index}
-                  className={`calendar-day ${
-                    day.isCurrentMonth ? "current-month" : "other-month"
-                  } ${day.isToday ? "today" : ""}`}
-                >
-                  <div className="day-number">{day.date}</div>
-                  {dayEvents.length > 0 && (
-                    <div className="day-events">
-                      {dayEvents.map((event) => (
-                        <div
-                          key={event.id}
-                          className={`event ${event.type}`}
-                          title={`${event.title} at ${event.time}`}
-                        >
-                          <span className="event-title">{event.title}</span>
-                          <span className="event-time">{event.time}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </Card>
-
-      {/* Upcoming Events */}
-      <Card className="upcoming-events">
-        <h3>Upcoming Events</h3>
-        <div className="events-list">
-          {events.map((event) => (
-            <div key={event.id} className="event-item">
-              <div className="event-date">
-                <span className="date">{event.date}</span>
-                <span className="month">
-                  {monthNames[event.month].slice(0, 3)}
-                </span>
-              </div>
-              <div className="event-details">
-                <h4>{event.title}</h4>
-                <p>{event.time}</p>
-              </div>
-              <div className={`event-type ${event.type}`}>{event.type}</div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigateMonth("next")}
+                className="nav-btn"
+              >
+                <ChevronRight className="icon" />
+              </Button>
             </div>
-          ))}
-        </div>
-      </Card>
-        </div>
-        
-        {/* Right Sidebar - AI Assistant */}
-        <div className="calendar-sidebar">
-          <PageAIAssistant 
-            agentId="calendar"
-            pageTitle="Calendar Management"
-            entityData={{
-              totalEvents: events.length,
-              todayEvents: events.filter(event => {
-                const today = new Date();
-                return event.date === today.getDate() && 
-                       event.month === today.getMonth() && 
-                       event.year === today.getFullYear();
-              }).length,
-              currentMonth: `${currentMonth + 1}/${currentYear}`,
-              eventTypes: Array.from(new Set(events.map(e => e.type)))
-            }}
-            className="calendar-ai-assistant"
-          />
+
+            <div className="calendar-grid">
+              <div className="day-headers">
+                {dayNames.map((day) => (
+                  <div key={day} className="day-header">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              <div className="calendar-days">
+                {calendarDays.map((day, index) => {
+                  const dayEvents = day.isCurrentMonth
+                    ? getEventsForDate(day.date)
+                    : [];
+                  return (
+                    <div
+                      key={index}
+                      className={`calendar-day ${
+                        day.isCurrentMonth ? "current-month" : "other-month"
+                      } ${day.isToday ? "today" : ""}`}
+                    >
+                      <div className="day-number">{day.date}</div>
+                      {dayEvents.length > 0 && (
+                        <div className="day-events">
+                          {dayEvents.map((event) => (
+                            <div
+                              key={event.id}
+                              className={`event ${event.type}`}
+                              title={`${event.title} at ${event.time}`}
+                            >
+                              {event.title}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </Card>
+
+          {/* Upcoming Events */}
+          <Card className="upcoming-events">
+            <h3>Upcoming Events</h3>
+            <div className="events-list">
+              {events.map((event) => (
+                <div key={event.id} className="event-item">
+                  <div className="event-date">
+                    <span className="date">{event.date}</span>
+                    <span className="month">
+                      {monthNames[event.month].slice(0, 3)}
+                    </span>
+                  </div>
+                  <div className="event-details">
+                    <h4>{event.title}</h4>
+                    <p>{event.time}</p>
+                  </div>
+                  <div className={`event-type ${event.type}`}>{event.type}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       </div>
     </div>

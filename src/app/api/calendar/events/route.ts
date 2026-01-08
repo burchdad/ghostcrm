@@ -36,14 +36,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const month = parseInt(searchParams.get('month') || '0');
     const year = parseInt(searchParams.get('year') || '0');
-    const tenantId = searchParams.get('tenantId');
-
-    if (!tenantId) {
-      return NextResponse.json(
-        { success: false, error: 'Tenant ID required' },
-        { status: 400 }
-      );
-    }
+    const organizationId = searchParams.get('organizationId');
 
     // Check authentication using centralized system
     if (!(await isAuthenticated(request))) {
@@ -61,11 +54,22 @@ export async function GET(request: NextRequest) {
         { status: 403 }
       );
     }
+
+    // Use organizationId from user context if not provided in query
+    const targetOrgId = organizationId || user.organizationId;
+
+    // Ensure user can only access their own organization's data
+    if (targetOrgId !== user.organizationId) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied to this organization' },
+        { status: 403 }
+      );
+    }
     // Build date filters for the specific month/year if provided
     let query = supabaseAdmin
       .from('calendar_events')
       .select('*')
-      .eq('organization_id', user.organizationId)
+      .eq('organization_id', targetOrgId)
       .order('start_time', { ascending: true });
 
     // Filter by month/year if provided
@@ -105,9 +109,9 @@ export async function GET(request: NextRequest) {
         type: event.type || 'meeting',
         attendees: [], // TODO: Implement attendees relationship
         location: undefined, // TODO: Add location field to schema
-        isAllDay: false, // TODO: Calculate from start/end times
+        isAllDay: event.end_time ? false : true, // If no end time, assume all day
         createdBy: event.user_id || '',
-        tenantId: user.organizationId
+        tenantId: targetOrgId
       };
     });
 

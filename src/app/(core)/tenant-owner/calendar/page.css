@@ -8,48 +8,163 @@
 */
 
 /* Page Container */
-.tenant-owner-calendar-container {
+.tenant-owner-calendar-page {
   background: linear-gradient(135deg, #f8fafc 0%, #ebf8ff 20%, #dbeafe 40%, #bfdbfe 60%, #93c5fd 80%, #3b82f6 100%);
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
-  padding: 1.5rem;
 }
 
-/* Main Layout Structure */
-.calendar-main-layout {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 2rem;
+/* Header Section */
+.tenant-owner-calendar-header {
+  padding: 2rem 2rem 0;
   position: relative;
   z-index: 2;
 }
 
-.calendar-content-area {
-  min-width: 0; /* Prevents grid blowout */
+.tenant-owner-calendar-header-content {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.calendar-sidebar {
-  position: sticky;
-  top: 1.5rem;
-  height: fit-content;
+.tenant-owner-calendar-analytics-grid-header {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
 }
 
-.calendar-ai-assistant {
-  margin: 0 !important;
+/* Analytics Cards */
+.tenant-owner-calendar-analytics-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(25px);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-@media (max-width: 1200px) {
-  .calendar-main-layout {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-  
-  .calendar-sidebar {
-    position: relative;
-    top: auto;
-    order: -1; /* Show AI assistant at top on mobile */
-  }
+.tenant-owner-calendar-analytics-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.tenant-owner-calendar-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.tenant-owner-calendar-card-title-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.tenant-owner-calendar-card-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tenant-owner-calendar-card-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1;
+}
+
+.tenant-owner-calendar-card-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tenant-owner-calendar-card-icon.today {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+}
+
+.tenant-owner-calendar-card-icon.week {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+}
+
+.tenant-owner-calendar-card-icon.availability {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+}
+
+.tenant-owner-calendar-card-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.tenant-owner-calendar-card-trend svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Action Card */
+.tenant-owner-calendar-analytics-card.actions {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.tenant-owner-calendar-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.calendar-action-btn {
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+}
+
+.calendar-action-btn.primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.calendar-action-btn.primary:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+}
+
+.calendar-action-btn.secondary {
+  background: rgba(255, 255, 255, 0.9);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.calendar-action-btn.secondary:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: #3b82f6;
 }
 
 .tenant-owner-calendar-container::before {
