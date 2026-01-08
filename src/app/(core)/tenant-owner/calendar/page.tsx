@@ -911,7 +911,16 @@ export default function TenantOwnerCalendarPage() {
             </div>
 
             <div className="calendar-grid">
-              <div className="day-headers">
+              <div 
+                className="day-headers"
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(7, 1fr)',
+                  gap: '0.5rem',
+                  width: '100%',
+                  marginBottom: '1rem'
+                }}
+              >
                 {dayNames.map((day) => (
                   <div key={day} className="day-header">
                     {day}
@@ -919,7 +928,15 @@ export default function TenantOwnerCalendarPage() {
                 ))}
               </div>
 
-              <div className="calendar-days">
+              <div 
+                className="calendar-days"
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(7, 1fr)',
+                  gap: '0.5rem',
+                  width: '100%'
+                }}
+              >
                 {calendarDays.map((day, index) => {
                   const dayEvents = day.isCurrentMonth
                     ? getEventsForDate(day.date)

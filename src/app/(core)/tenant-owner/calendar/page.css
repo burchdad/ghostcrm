@@ -660,12 +660,72 @@
   margin: 0;
 }
 
-/* Calendar Grid Container */
+/* ULTRA-HIGH PRIORITY GRID ENFORCEMENT */
 .calendar-card {
+  display: block !important;
+}
+
+.calendar-card > * {
+  display: block !important;
+}
+
+.calendar-card .calendar-grid {
+  display: block !important;
   width: 100% !important;
-  height: auto !important;
-  overflow: visible !important;
-  max-height: none !important;
+}
+
+.calendar-card .calendar-grid .day-headers {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  grid-gap: 0.5rem !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+  margin-bottom: 1rem !important;
+}
+
+.calendar-card .calendar-grid .calendar-days {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  grid-template-rows: repeat(auto, minmax(8rem, 1fr)) !important;
+  grid-gap: 0.5rem !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+}
+
+.calendar-card .calendar-grid .calendar-day {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 8rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Browser-specific grid enforcement */
+@supports (display: grid) {
+  .day-headers {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+  }
+  
+  .calendar-days {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+  }
+}
+
+/* Force grid even on flex containers */
+div[class*="card"][class*="calendar"] div[class*="day-headers"],
+div[class*="calendar-card"] div[class*="day-headers"] {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  width: 100% !important;
+}
+
+div[class*="card"][class*="calendar"] div[class*="calendar-days"],
+div[class*="calendar-card"] div[class*="calendar-days"] {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  width: 100% !important;
 }
 
 /* Calendar Grid */
