@@ -114,6 +114,9 @@ export default function TenantOwnerCalendarPage() {
     isAllDay: false,
   });
 
+  // Calendar view mode state
+  const [viewMode, setViewMode] = useState<'monthly' | 'bi-weekly' | 'weekly' | 'daily'>('monthly');
+
   // @-mention functionality state
   const [mentionSuggestions, setMentionSuggestions] = useState<
     Array<{ id: string; name: string; email: string }>
@@ -882,32 +885,69 @@ export default function TenantOwnerCalendarPage() {
           {/* Calendar Grid */}
           <Card className="calendar-card">
             <div className="calendar-header">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigateMonth("prev")}
-                className="nav-btn"
-              >
-                <ChevronLeft className="icon" />
-              </Button>
+              <div className="calendar-navigation">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigateMonth("prev")}
+                  className="nav-btn"
+                >
+                  <ChevronLeft className="icon" />
+                </Button>
 
-              <div className="month-year">
-                <h2 className="month-title">
-                  {monthNames[currentMonth]} {currentYear}
-                </h2>
-                <p className="today-indicator">
-                  Today: {monthNames[todayMonth]} {todayDate}, {todayYear}
-                </p>
+                <div className="month-year">
+                  <h2 className="month-title">
+                    {monthNames[currentMonth]} {currentYear}
+                  </h2>
+                  <p className="today-indicator">
+                    Today: {monthNames[todayMonth]} {todayDate}, {todayYear}
+                  </p>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigateMonth("next")}
+                  className="nav-btn"
+                >
+                  <ChevronRight className="icon" />
+                </Button>
               </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigateMonth("next")}
-                className="nav-btn"
-              >
-                <ChevronRight className="icon" />
-              </Button>
+              <div className="view-mode-buttons">
+                <Button
+                  variant={viewMode === 'monthly' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('monthly')}
+                  className="view-btn"
+                >
+                  Monthly
+                </Button>
+                <Button
+                  variant={viewMode === 'bi-weekly' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('bi-weekly')}
+                  className="view-btn"
+                >
+                  Bi-Weekly
+                </Button>
+                <Button
+                  variant={viewMode === 'weekly' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('weekly')}
+                  className="view-btn"
+                >
+                  Weekly
+                </Button>
+                <Button
+                  variant={viewMode === 'daily' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('daily')}
+                  className="view-btn"
+                >
+                  Daily
+                </Button>
+              </div>
             </div>
 
             <div className="calendar-grid">
@@ -1002,35 +1042,4 @@ export default function TenantOwnerCalendarPage() {
       </div>
     </div>
   );
-}
-
-// Debug function - run in browser console
-function debugCalendarGrid() {
-  console.log('=== Calendar Grid Debug ===');
-  
-  const headers = document.getElementById('calendar-day-headers-grid');
-  const days = document.getElementById('calendar-days-grid');
-  
-  if (headers) {
-    console.log('Headers element:', headers);
-    console.log('Headers computed styles:', window.getComputedStyle(headers));
-    console.log('Headers display:', window.getComputedStyle(headers).display);
-    console.log('Headers grid-template-columns:', window.getComputedStyle(headers).gridTemplateColumns);
-  }
-  
-  if (days) {
-    console.log('Days element:', days);
-    console.log('Days computed styles:', window.getComputedStyle(days));
-    console.log('Days display:', window.getComputedStyle(days).display);
-    console.log('Days grid-template-columns:', window.getComputedStyle(days).gridTemplateColumns);
-  }
-  
-  // Check for conflicting styles
-  const allElements = document.querySelectorAll('*');
-  const conflictingElements = Array.from(allElements).filter(el => {
-    const style = window.getComputedStyle(el);
-    return style.display === 'flex' && (el.contains(headers) || el.contains(days));
-  });
-  
-  console.log('Elements with display:flex that might conflict:', conflictingElements);
 }

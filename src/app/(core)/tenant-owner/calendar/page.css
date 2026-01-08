@@ -624,6 +624,33 @@
   border-bottom: 2px solid rgba(229, 231, 235, 0.3);
 }
 
+.calendar-navigation {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.view-mode-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.view-btn {
+  min-width: 80px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.view-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
 .nav-btn {
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -645,6 +672,7 @@
 .month-year {
   text-align: center;
   flex: 1;
+  min-width: 240px;
 }
 
 .month-title {
@@ -1680,15 +1708,13 @@ div[class*="calendar-card"] div[class*="calendar-grid"] div[class*="calendar-day
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* MAXIMUM SPECIFICITY: ID-based grid enforcement with debugging */
+/* MAXIMUM SPECIFICITY: ID-based grid enforcement */
 #calendar-day-headers-grid {
   display: grid !important;
   grid-template-columns: repeat(7, 1fr) !important;
   width: 100% !important;
   gap: 1px !important;
   contain: layout !important;
-  background: yellow !important; /* Debug color */
-  border: 2px solid red !important; /* Debug border */
   min-height: 40px !important;
 }
 
@@ -1698,8 +1724,6 @@ div[class*="calendar-card"] div[class*="calendar-grid"] div[class*="calendar-day
   width: 100% !important;
   gap: 1px !important;
   contain: layout !important;
-  background: lightblue !important; /* Debug color */
-  border: 2px solid blue !important; /* Debug border */
   min-height: 200px !important;
 }
 
@@ -1708,14 +1732,10 @@ div[class*="calendar-card"] div[class*="calendar-grid"] div[class*="calendar-day
   display: block !important;
   width: auto !important;
   grid-column: unset !important;
-  background: pink !important; /* Debug color */
-  border: 1px solid black !important;
 }
 
 #calendar-days-grid > * {
   display: block !important;
   width: auto !important;
   grid-column: unset !important;
-  background: lightgreen !important; /* Debug color */
-  border: 1px solid black !important;
 } 
