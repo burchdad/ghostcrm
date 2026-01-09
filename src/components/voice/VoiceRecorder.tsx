@@ -104,9 +104,19 @@ export default function VoiceRecorder({
     setupAudioAnalyser(stream);
     
     try {
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
+      // Try different MIME types for better compatibility
+      let mimeType = 'audio/webm;codecs=opus';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/webm';
+      }
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/mp4';
+      }
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = ''; // Let browser choose
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       
       mediaRecorderRef.current = mediaRecorder;
       
@@ -117,7 +127,9 @@ export default function VoiceRecorder({
       };
       
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, { 
+          type: mediaRecorder.mimeType || 'audio/webm' 
+        });
         recordedBlobRef.current = audioBlob;
         setHasRecording(true);
         setIsRecording(false);
@@ -125,7 +137,15 @@ export default function VoiceRecorder({
         
         // Create audio URL for playback
         if (audioRef.current) {
-          audioRef.current.src = URL.createObjectURL(audioBlob);
+          const audioUrl = URL.createObjectURL(audioBlob);
+          audioRef.current.src = audioUrl;
+          audioRef.current.load(); // Force reload the audio element
+          
+          console.log('Audio blob created:', {
+            size: audioBlob.size,
+            type: audioBlob.type,
+            url: audioUrl
+          });
         }
       };
       
@@ -198,10 +218,21 @@ export default function VoiceRecorder({
     }
   };
 
-  const playRecording = () => {
+  const playRecording = async () => {
     if (audioRef.current) {
-      audioRef.current.play();
-      setIsPlaying(true);
+      try {
+        console.log('Attempting to play audio:', {
+          src: audioRef.current.src,
+          readyState: audioRef.current.readyState,
+          duration: audioRef.current.duration
+        });
+        
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (error) {
+        console.error('Playback failed:', error);
+        setError('Playback failed. The recording may be corrupted.');
+      }
     }
   };
 
@@ -332,6 +363,14 @@ export default function VoiceRecorder({
               ref={audioRef}
               onEnded={() => setIsPlaying(false)}
               onPause={() => setIsPlaying(false)}
+              onError={(e) => {
+                console.error('Audio element error:', e);
+                setError('Audio playback error occurred.');
+              }}
+              onLoadedData={() => {
+                console.log('Audio loaded successfully');
+              }}
+              preload="metadata"
             />
             
             <div style={styles.playbackControls}>
@@ -346,6 +385,21 @@ export default function VoiceRecorder({
                   Pause
                 </button>
               )}
+              
+              <button 
+                onClick={() => {
+                  if (recordedBlobRef.current && audioRef.current) {
+                    // Force reload audio element as fallback
+                    const audioUrl = URL.createObjectURL(recordedBlobRef.current);
+                    audioRef.current.src = audioUrl;
+                    audioRef.current.load();
+                    console.log('Reloaded audio element');
+                  }
+                }}
+                style={{ ...styles.playButton, backgroundColor: '#6b7280', fontSize: '14px', padding: '8px 16px' }}
+              >
+                Reload Audio
+              </button>
             </div>
             
             <div style={styles.finalActions}>
