@@ -1,5 +1,6 @@
 // Telnyx AI Response Handler - Processes customer speech and continues conversation
 import { NextRequest, NextResponse } from "next/server";
+import { generateCustomVoiceAudio, createCustomVoiceCommand } from "@/lib/voice/customVoiceHelper";
 
 export const dynamic = 'force-dynamic';
 
@@ -110,13 +111,21 @@ export async function POST(req: NextRequest) {
     let commands: any[] = [];
     
     if (conversationState === 'interested') {
+      // Generate high-quality custom voice audio
+      const audioResult = await generateCustomVoiceAudio(aiResponse, {
+        tenantId: 'current_tenant', // TODO: Extract from call context
+        voiceType: 'sales',
+        language: isSpanish ? 'es-US' : 'en-US'
+      });
+      
+      const audioCommand = createCustomVoiceCommand(audioResult, {
+        tenantId: 'current_tenant',
+        voiceType: 'sales',
+        language: isSpanish ? 'es-US' : 'en-US'
+      }, aiResponse);
+      
       commands = [
-        {
-          command: 'speak',
-          text: aiResponse,
-          voice: 'female',
-          language: isSpanish ? 'es-US' : 'en-US'
-        },
+        audioCommand,
         {
           command: 'gather_using_speech', 
           speech_timeout: 15000,
@@ -126,25 +135,41 @@ export async function POST(req: NextRequest) {
         }
       ];
     } else if (conversationState === 'not_interested') {
+      // Generate custom voice audio for polite goodbye
+      const audioResult = await generateCustomVoiceAudio(aiResponse, {
+        tenantId: 'current_tenant',
+        voiceType: 'primary',
+        language: isSpanish ? 'es-US' : 'en-US'
+      });
+      
+      const audioCommand = createCustomVoiceCommand(audioResult, {
+        tenantId: 'current_tenant',
+        voiceType: 'primary',
+        language: isSpanish ? 'es-US' : 'en-US'
+      }, aiResponse);
+      
       commands = [
-        {
-          command: 'speak',
-          text: aiResponse,
-          voice: 'female',
-          language: isSpanish ? 'es-US' : 'en-US'
-        },
+        audioCommand,
         {
           command: 'hangup'
         }
       ];
     } else if (conversationState === 'schedule_callback') {
+      // Generate custom voice audio for callback scheduling
+      const audioResult = await generateCustomVoiceAudio(aiResponse, {
+        tenantId: 'current_tenant',
+        voiceType: 'support',
+        language: isSpanish ? 'es-US' : 'en-US'
+      });
+      
+      const audioCommand = createCustomVoiceCommand(audioResult, {
+        tenantId: 'current_tenant',
+        voiceType: 'support',
+        language: isSpanish ? 'es-US' : 'en-US'
+      }, aiResponse);
+      
       commands = [
-        {
-          command: 'speak', 
-          text: aiResponse,
-          voice: 'female',
-          language: isSpanish ? 'es-US' : 'en-US'
-        },
+        audioCommand,
         {
           command: 'gather_using_speech',
           speech_timeout: 10000,
@@ -154,14 +179,21 @@ export async function POST(req: NextRequest) {
         }
       ];
     } else {
-      // Continue conversation
+      // Continue conversation with tenant's custom voice
+      const audioResult = await generateCustomVoiceAudio(aiResponse, {
+        tenantId: 'current_tenant',
+        voiceType: isSpanish ? 'spanish' : 'primary',
+        language: isSpanish ? 'es-US' : 'en-US'
+      });
+      
+      const audioCommand = createCustomVoiceCommand(audioResult, {
+        tenantId: 'current_tenant',
+        voiceType: isSpanish ? 'spanish' : 'primary',
+        language: isSpanish ? 'es-US' : 'en-US'
+      }, aiResponse);
+      
       commands = [
-        {
-          command: 'speak',
-          text: aiResponse,
-          voice: 'female',
-          language: isSpanish ? 'es-US' : 'en-US'
-        },
+        audioCommand,
         {
           command: 'gather_using_speech',
           speech_timeout: 12000,

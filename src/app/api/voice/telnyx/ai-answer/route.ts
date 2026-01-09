@@ -1,5 +1,6 @@
 // Telnyx AI Call Answer Handler - Initiates AI conversation when call is answered
 import { NextRequest, NextResponse } from "next/server";
+import { generateCustomVoiceAudio, createCustomVoiceCommand } from "@/lib/voice/customVoiceHelper";
 
 export const dynamic = 'force-dynamic';
 
@@ -50,14 +51,22 @@ export async function POST(req: NextRequest) {
       const aiGreeting = await generateAIGreeting(leadPhone, voiceConfig);
       console.log(`🗣️ [TELNYX WEBHOOK] Generated greeting: "${aiGreeting}"`);
       
-      // Create Telnyx response commands
+      // Generate high-quality audio with tenant's custom voice (fallback to ElevenLabs/TTS)
+      const audioResult = await generateCustomVoiceAudio(aiGreeting, {
+        tenantId: event.tenant_id || 'default',
+        voiceType: voiceConfig.voice === 'maria' ? 'spanish' : 'primary',
+        language: voiceConfig.language || 'en-US'
+      });
+      
+      // Create Telnyx response commands with custom voice
+      const audioCommand = createCustomVoiceCommand(audioResult, {
+        tenantId: event.tenant_id || 'default',
+        voiceType: voiceConfig.voice === 'maria' ? 'spanish' : 'primary',
+        language: voiceConfig.language || 'en-US'
+      }, aiGreeting);
+      
       const commands = [
-        {
-          command: 'speak',
-          text: aiGreeting,
-          voice: mapVoiceToTelnyx(voiceConfig.voice),
-          language: voiceConfig.language || 'en-US'
-        },
+        audioCommand,
         {
           command: 'gather_using_speech',
           speech_timeout: 10000,
@@ -80,13 +89,21 @@ export async function POST(req: NextRequest) {
         
         const voicemailMessage = await generateVoicemailMessage(leadPhone, voiceConfig);
         
+        // Generate custom voice audio for voicemail
+        const audioResult = await generateCustomVoiceAudio(voicemailMessage, {
+          tenantId: event.tenant_id || 'default',
+          voiceType: 'primary',
+          language: voiceConfig.language || 'en-US'
+        });
+        const audioCommand = createCustomVoiceCommand(audioResult, {
+          tenantId: event.tenant_id || 'default',
+          voiceType: 'primary',
+          language: voiceConfig.language || 'en-US'
+        }, voicemailMessage);
+        
         return NextResponse.json({
           commands: [
-            {
-              command: 'speak',
-              text: voicemailMessage,
-              voice: mapVoiceToTelnyx(voiceConfig.voice)
-            },
+            audioCommand,
             {
               command: 'hangup'
             }

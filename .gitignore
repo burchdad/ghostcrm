@@ -29,3 +29,11 @@ STRIPE_PRODUCTION_KEYS.txt
 # TypeScript build info
 *.tsbuildinfo
 .vercel
+
+# Generated audio files from ElevenLabs (temporary files)
+/public/audio/*.mp3
+/public/audio/*.wav
+
+# Tenant custom voice files (contain personal recordings)
+/public/voices/*/
+!/public/voices/.gitkeep

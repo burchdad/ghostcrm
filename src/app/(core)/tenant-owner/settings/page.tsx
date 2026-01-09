@@ -8,6 +8,7 @@ import { I18nProvider } from "@/components/utils/I18nProvider";
 import { ToastProvider } from "@/components/utils/ToastProvider";
 import SettingsConfirmationDialog from "@/components/SettingsConfirmationDialog";
 import NotificationsSettingsSection from "@/components/settings/NotificationsSettingsSection";
+
 import { 
   Settings, 
   Building, 

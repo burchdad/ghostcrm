@@ -87,15 +87,16 @@ const DEFAULT_ITEMS: SidebarItem[] = [
     ]
   },
   { 
-    name: "More Options", 
+    name: "Management", 
     path: "#", 
-    icon: MoreHorizontal, 
+    icon: Settings, 
     role: ["owner"], 
     enabled: true, 
     section: "management", 
     tenantOwnerOnly: true,
-    isDropdown: true,
+    expandable: true,
     subItems: [
+      { name: "Voice OS™", path: "/tenant-owner/voice-os", icon: Bot, role: ["owner"], enabled: true, tenantOwnerOnly: true },
       { name: "Team Management", path: "/tenant-owner/team", icon: UserCog, role: ["owner"], enabled: true, tenantOwnerOnly: true },
       { name: "Business Settings", path: "/tenant-owner/settings", icon: Settings, role: ["owner"], enabled: true, tenantOwnerOnly: true },
       { name: "Financial Overview", path: "/tenant-owner/finance", icon: DollarSign, role: ["owner"], enabled: true, tenantOwnerOnly: true },
