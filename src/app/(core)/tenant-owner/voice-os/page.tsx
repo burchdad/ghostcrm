@@ -8,6 +8,7 @@ import { I18nProvider } from "@/components/utils/I18nProvider";
 import { ToastProvider } from "@/components/utils/ToastProvider";
 import VoicePersonaManager from "@/components/voice/VoicePersonaManager";
 import VoiceManager from "@/components/voice/VoiceManager";
+import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import { 
   FiMic, 
   FiUsers, 
@@ -29,8 +30,9 @@ import './voice-os.css';
 export default function VoiceOSPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState<'overview' | 'upload' | 'personas' | 'analytics' | 'wizard'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'upload' | 'personas' | 'analytics' | 'wizard' | 'record'>('overview');
   const [showWizard, setShowWizard] = useState(false);
+  const [showRecorder, setShowRecorder] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,6 +45,43 @@ export default function VoiceOSPage() {
   // Handle voice upload
   const handleUploadVoice = () => {
     fileInputRef.current?.click();
+  };
+
+  // Handle voice recording
+  const handleRecordVoice = () => {
+    setShowRecorder(true);
+  };
+
+  const handleRecordingComplete = async (audioBlob: Blob) => {
+    try {
+      const formData = new FormData();
+      formData.append('voice', audioBlob, 'recorded-voice.webm');
+      formData.append('tenantId', user?.organizationId || 'default');
+      formData.append('name', 'Recorded Voice');
+      formData.append('type', 'primary');
+
+      const response = await fetch('/api/voice/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('Voice recorded and uploaded successfully!');
+        setShowRecorder(false);
+        setActiveSection('upload');
+      } else {
+        alert('Upload failed: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Upload failed. Please try again.');
+    }
+  };
+
+  const handleRecordingCancel = () => {
+    setShowRecorder(false);
   };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,7 +195,7 @@ export default function VoiceOSPage() {
             <h3>Welcome to Voice OS Setup</h3>
             <p>Let's get your AI voice system configured in just a few simple steps. This wizard will guide you through uploading your voice and setting up your first voice persona.</p>
             <div className="voice-os-feature-grid">
-              <div className="voice-os-feature-card">
+              <div className="voice-os-feature-card voice-os-clickable-card" onClick={() => setWizardStep(2)}>
                 <div className="voice-os-feature-header">
                   <div className="voice-os-feature-icon-container blue">
                     <FiMic className="voice-os-feature-icon blue" />
@@ -165,7 +204,7 @@ export default function VoiceOSPage() {
                 </div>
                 <p className="voice-os-feature-description">Record a 30-60 second sample of your voice</p>
               </div>
-              <div className="voice-os-feature-card">
+              <div className="voice-os-feature-card voice-os-clickable-card" onClick={() => setWizardStep(3)}>
                 <div className="voice-os-feature-header">
                   <div className="voice-os-feature-icon-container green">
                     <FiUsers className="voice-os-feature-icon green" />
@@ -182,10 +221,16 @@ export default function VoiceOSPage() {
           <div className="voice-os-wizard-content">
             <h3>Upload Your Voice Sample</h3>
             <p>Upload a clear recording of your voice. The better the quality, the more authentic your AI voice will sound.</p>
-            <button onClick={handleUploadVoice} className="voice-os-btn-primary">
-              <FiUpload className="voice-os-btn-icon" />
-              Choose Voice File
-            </button>
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+              <button onClick={handleRecordVoice} className="voice-os-btn-primary">
+                <FiMic className="voice-os-btn-icon" />
+                Record Voice
+              </button>
+              <button onClick={handleUploadVoice} className="voice-os-btn-outline">
+                <FiUpload className="voice-os-btn-icon" />
+                Upload File
+              </button>
+            </div>
             <input
               ref={fileInputRef}
               type="file"
@@ -257,11 +302,11 @@ export default function VoiceOSPage() {
               Quick Setup Wizard
             </button>
             <button 
-              onClick={handleUploadVoice}
+              onClick={handleRecordVoice}
               className="voice-os-btn-secondary"
             >
               <FiMic className="voice-os-btn-icon" />
-              Upload Voice Now
+              Record Voice Now
             </button>
           </div>
         </div>
@@ -398,13 +443,24 @@ export default function VoiceOSPage() {
         <h2 className="voice-os-quick-actions-title">Quick Actions</h2>
         <div className="voice-os-quick-actions-grid">
           <button 
+            onClick={handleRecordVoice}
+            className="voice-os-quick-action"
+          >
+            <FiMic className="voice-os-quick-action-icon blue" />
+            <div className="voice-os-quick-action-content">
+              <div className="voice-os-quick-action-title">Record Voice</div>
+              <div className="voice-os-quick-action-desc">Record with microphone</div>
+            </div>
+          </button>
+          
+          <button 
             onClick={handleUploadVoice}
             className="voice-os-quick-action"
           >
             <FiUpload className="voice-os-quick-action-icon blue" />
             <div className="voice-os-quick-action-content">
               <div className="voice-os-quick-action-title">Upload Voice</div>
-              <div className="voice-os-quick-action-desc">Add new recording</div>
+              <div className="voice-os-quick-action-desc">Upload audio file</div>
             </div>
           </button>
           
@@ -450,7 +506,26 @@ export default function VoiceOSPage() {
       <ToastProvider>
         <div className="voice-os-container">
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-            {showWizard ? (
+            {showRecorder ? (
+              <div className="voice-os-modal-overlay">
+                <div className="voice-os-modal">
+                  <div className="voice-os-modal-header">
+                    <h2 className="voice-os-modal-title">Record Your Voice</h2>
+                    <button 
+                      onClick={handleRecordingCancel}
+                      className="voice-os-modal-close"
+                    >
+                      <FiX className="voice-os-modal-close-icon" />
+                    </button>
+                  </div>
+                  <VoiceRecorder
+                    onRecordingComplete={handleRecordingComplete}
+                    onCancel={handleRecordingCancel}
+                    maxDuration={60}
+                  />
+                </div>
+              </div>
+            ) : showWizard ? (
               <div className="voice-os-modal-overlay">
                 <div className="voice-os-modal">
                   <div className="voice-os-modal-header">

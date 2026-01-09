@@ -647,11 +647,18 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .voice-os-btn-outline:hover {
   border-color: #d1d5db;
   background-color: #f9fafb;
+}
+
+.voice-os-btn-outline .voice-os-btn-icon {
+  margin-right: 8px;
 }
 
 /* Responsive Design */
@@ -718,4 +725,20 @@
 .voice-os-section-subtitle {
   color: #6b7280;
   margin: 0;
+}
+
+/* Clickable Cards */
+.voice-os-clickable-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.voice-os-clickable-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: #d1d5db;
+}
+
+.voice-os-clickable-card:active {
+  transform: translateY(-2px);
 }
