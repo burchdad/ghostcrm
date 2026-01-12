@@ -50,20 +50,34 @@ export default function VoiceRecorder({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const recordedBlobRef = useRef<Blob | null>(null);
+  const lastUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Create/update URL whenever recording blob changes
+    const el = audioRef.current;
+
     if (!recordedBlobRef.current) {
       setAudioUrl(null);
+      if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
+      lastUrlRef.current = null;
+      if (el) el.src = "";
       return;
     }
 
+    if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
+
     const url = URL.createObjectURL(recordedBlobRef.current);
+    lastUrlRef.current = url;
     setAudioUrl(url);
     console.log('🔗 Audio URL created:', url);
 
+    if (el) {
+      el.src = url;
+      el.load();
+    }
+
     return () => {
-      URL.revokeObjectURL(url);
+      if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
+      lastUrlRef.current = null;
       console.log('🗑️ Audio URL revoked:', url);
     };
   }, [hasRecording]); // Trigger when hasRecording changes (new recording available)
@@ -341,11 +355,15 @@ export default function VoiceRecorder({
           paused: audioEl.paused
         });
         
-        // Non-blocking setSinkId
+        // Non-blocking setSinkId with validation
         try {
-          if (selectedSpeakerId && (audioEl as any).setSinkId) {
+          const isValidSpeaker = speakers.some(s => s.deviceId === selectedSpeakerId);
+          
+          if (selectedSpeakerId && isValidSpeaker && (audioEl as any).setSinkId) {
             await (audioEl as any).setSinkId(selectedSpeakerId);
-            console.log('✅ Audio output set to:', selectedSpeakerId);
+            console.log('✅ setSinkId OK:', selectedSpeakerId);
+          } else {
+            console.log('ℹ️ Skipping setSinkId (invalid or default):', selectedSpeakerId);
           }
         } catch (e) {
           console.warn('⚠️ setSinkId failed, using default output:', e);
@@ -393,8 +411,18 @@ export default function VoiceRecorder({
 
   const playRecording = async () => {
     console.log('🟢 Play Recording button clicked - starting playback...');
+    const el = audioRef.current;
+    if (!el) {
+      console.error('❌ No audio element available');
+      return;
+    }
+
     try {
-      await playAudio('ui');
+      el.muted = false;
+      el.volume = 1;
+      el.currentTime = 0;
+
+      await el.play();
       console.log('🎵 Play Recording completed successfully');
     } catch (error) {
       console.error('❌ Play Recording failed:', error);
@@ -756,7 +784,7 @@ export default function VoiceRecorder({
                   Play Recording
                 </button>
               ) : (
-                <button type="button" onClick={pauseRecording} style={styles.playButton}>
+                <button type="button" onClick={pausePlayback} style={styles.playButton}>
                   <FiPause style={styles.buttonIcon} />
                   Pause
                 </button>
