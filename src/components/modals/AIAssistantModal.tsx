@@ -5,6 +5,7 @@ import { X, Send, Bot, User, Loader2, Mic, Volume2, VolumeX, Settings, MoreVerti
 import { useI18n } from "../utils/I18nProvider";
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { useRealtimeVoice } from '@/hooks/useRealtimeVoice';
+import { useAuth } from '@/context/SupabaseAuthContext';
 
 interface Message {
   id: string;
@@ -12,6 +13,15 @@ interface Message {
   role: "user" | "assistant";
   timestamp: Date;
   isVoiceMessage?: boolean;
+}
+
+interface CustomVoice {
+  id: string;
+  name: string;
+  type: 'primary' | 'sales' | 'support' | 'spanish' | 'custom';
+  isActive: boolean;
+  url: string;
+  uploadedAt: string;
 }
 
 interface VoiceSettings {
@@ -22,6 +32,8 @@ interface VoiceSettings {
   language: string;
   autoSpeak: boolean;
   voiceGender: 'male' | 'female' | 'neutral';
+  customVoiceId: string | null;
+  useCustomVoice: boolean;
 }
 
 interface AIAssistantModalProps {
@@ -76,6 +88,9 @@ ${t('ai_assistant.guest_help', 'features')}`;
   const [showSettings, setShowSettings] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [isRealtimeMode, setIsRealtimeMode] = useState(false); // Toggle between modes
+  const [customVoices, setCustomVoices] = useState<CustomVoice[]>([]);
+  const [loadingVoices, setLoadingVoices] = useState(false);
+  const { user } = useAuth();
   const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>({
     voice: 'default',
     rate: 1,
@@ -83,7 +98,9 @@ ${t('ai_assistant.guest_help', 'features')}`;
     volume: 1,
     language: 'en-US',
     autoSpeak: true,
-    voiceGender: 'female'
+    voiceGender: 'female',
+    customVoiceId: null,
+    useCustomVoice: false
   });
   const [shouldBeListening, setShouldBeListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -221,8 +238,30 @@ ${t('ai_assistant.guest_help', 'features')}`;
   useEffect(() => {
     if (isOpen) {
       setMessages([]);
+      // Fetch tenant's custom voices
+      if (user?.organizationId) {
+        fetchTenantVoices();
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, user?.organizationId]);
+
+  // Fetch tenant's uploaded voices
+  const fetchTenantVoices = async () => {
+    if (!user?.organizationId) return;
+    
+    setLoadingVoices(true);
+    try {
+      const response = await fetch(`/api/voice/upload?tenantId=${user.organizationId}`);
+      const data = await response.json();
+      if (response.ok && data.voices) {
+        setCustomVoices(data.voices);
+      }
+    } catch (error) {
+      console.error('Failed to fetch tenant voices:', error);
+    } finally {
+      setLoadingVoices(false);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -296,9 +335,26 @@ ${t('ai_assistant.guest_help', 'features')}`;
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Auto-speak response if voice mode is enabled and user used voice input
+      // Auto-speak response if voice mode is enabled and user used voice input - try custom voice first
       if (autoSpeak && (isVoiceMessage || voiceInputMode)) {
-        speak(assistantMessage.content);
+        setTimeout(async () => {
+          if (voiceSettings.useCustomVoice) {
+            const customVoiceSuccess = await speakWithCustomVoice(assistantMessage.content);
+            if (!customVoiceSuccess) {
+              // Fall back to browser voice
+              speak(assistantMessage.content, {
+                rate: voiceSettings.rate,
+                pitch: voiceSettings.pitch
+              });
+            }
+          } else {
+            // Use browser voice
+            speak(assistantMessage.content, {
+              rate: voiceSettings.rate,
+              pitch: voiceSettings.pitch
+            });
+          }
+        }, 100);
       }
     } catch (error) {
       console.error("AI Assistant error:", error);
@@ -326,11 +382,17 @@ ${t('ai_assistant.guest_help', 'features')}`;
     await handleStartVoice();
   };
 
-  const handleSpeakMessage = (content: string) => {
+  const handleSpeakMessage = async (content: string) => {
     if (isSpeaking) {
       stopSpeaking();
     } else {
-      // Use custom voice settings with proper parameters
+      // Try custom voice first if enabled
+      if (voiceSettings.useCustomVoice) {
+        const customVoiceSuccess = await speakWithCustomVoice(content);
+        if (customVoiceSuccess) return;
+      }
+      
+      // Fall back to browser voice
       speak(content, {
         rate: voiceSettings.rate,
         pitch: voiceSettings.pitch
@@ -345,6 +407,43 @@ ${t('ai_assistant.guest_help', 'features')}`;
     if (newSettings.autoSpeak !== undefined) {
       setAutoSpeak(newSettings.autoSpeak);
     }
+  };
+
+  // Custom voice synthesis
+  const speakWithCustomVoice = async (text: string) => {
+    if (!voiceSettings.useCustomVoice || !voiceSettings.customVoiceId || !user?.organizationId) {
+      return false;
+    }
+
+    try {
+      const selectedVoice = customVoices.find(v => v.id === voiceSettings.customVoiceId);
+      if (!selectedVoice) return false;
+
+      const response = await fetch('/api/voice/synthesize-custom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: text,
+          tenantId: user.organizationId,
+          voiceType: selectedVoice.type,
+          language: voiceSettings.language
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.audioUrl) {
+        // Play the custom voice audio
+        const audio = new Audio(result.audioUrl);
+        audio.volume = voiceSettings.volume;
+        await audio.play();
+        return true;
+      }
+    } catch (error) {
+      console.error('Custom voice synthesis failed:', error);
+    }
+    
+    return false;
   };
 
   const getAvailableVoices = () => {
@@ -703,6 +802,86 @@ ${t('ai_assistant.guest_help', 'features')}`;
                     }
                   </p>
                 </div>
+
+                {/* Custom Voice Selection */}
+                {!isRealtimeMode && isAuthenticated && (
+                  <>
+                    <div className="aria-settings-item">
+                      <div className="aria-settings-toggle">
+                        <label className="aria-settings-label">
+                          Use Custom Voice
+                          <span className="aria-settings-badge">🎭 YOUR VOICE</span>
+                        </label>
+                        <div className="aria-voice-mode-toggle">
+                          <input
+                            type="checkbox"
+                            checked={voiceSettings.useCustomVoice}
+                            onChange={(e) => handleVoiceSettingsChange({ useCustomVoice: e.target.checked })}
+                            className="aria-settings-checkbox"
+                            disabled={customVoices.length === 0}
+                          />
+                          <div className="aria-voice-mode-status">
+                            {voiceSettings.useCustomVoice ? (
+                              <span className="aria-status-realtime">
+                                🎯 Custom Voice Active
+                              </span>
+                            ) : (
+                              <span className="aria-status-browser">🤖 Standard Voice</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <p className="aria-settings-description">
+                        {customVoices.length > 0 
+                          ? "Use your own uploaded voice from Voice OS™ for personalized responses."
+                          : "No custom voices available. Upload voices in Voice OS™ to use your own voice."
+                        }
+                      </p>
+                    </div>
+
+                    {/* Voice Selection Dropdown */}
+                    {voiceSettings.useCustomVoice && customVoices.length > 0 && (
+                      <div className="aria-settings-item">
+                        <label className="aria-settings-label">Select Voice</label>
+                        <select
+                          value={voiceSettings.customVoiceId || ''}
+                          onChange={(e) => handleVoiceSettingsChange({ customVoiceId: e.target.value || null })}
+                          className="aria-settings-select"
+                          disabled={loadingVoices}
+                        >
+                          <option value="">Choose a custom voice...</option>
+                          {customVoices.map((voice) => (
+                            <option key={voice.id} value={voice.id}>
+                              🎤 {voice.name} ({voice.type})
+                            </option>
+                          ))}
+                        </select>
+                        {loadingVoices && (
+                          <p className="text-xs text-gray-500 mt-1">Loading your voices...</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Voice OS Link */}
+                    {customVoices.length === 0 && (
+                      <div className="aria-settings-item">
+                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <h5 className="font-medium text-blue-900 mb-2">🎭 Want to use your own voice?</h5>
+                          <p className="text-sm text-blue-800 mb-3">
+                            Upload voice recordings in Voice OS™ and they'll appear here automatically.
+                          </p>
+                          <a 
+                            href="/tenant-owner/voice-os" 
+                            target="_blank"
+                            className="inline-flex items-center text-sm bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition-colors"
+                          >
+                            📤 Go to Voice OS™
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
                 
                 {/* Auto-speak Toggle */}
                 <div className="aria-settings-item">
@@ -862,7 +1041,9 @@ ${t('ai_assistant.guest_help', 'features')}`;
                     volume: 1,
                     language: 'en-US',
                     autoSpeak: true,
-                    voiceGender: 'female'
+                    voiceGender: 'female',
+                    customVoiceId: null,
+                    useCustomVoice: false
                   });
                 }}
                 className="aria-settings-reset"
