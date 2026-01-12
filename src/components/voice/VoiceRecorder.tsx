@@ -430,16 +430,6 @@ export default function VoiceRecorder({
     }
   };
 
-  const debugPlayback = async () => {
-    console.log('🧪 Debug Playback button clicked - starting direct audio...');
-    try {
-      await playAudio('debug');
-      console.log('🎵 Debug Playback completed successfully');
-    } catch (error) {
-      console.error('❌ Debug Playback failed:', error);
-    }
-  };
-
   const pausePlayback = () => {
     console.log('⏸️ Pause button clicked');
     const el = audioRef.current;
@@ -789,26 +779,6 @@ export default function VoiceRecorder({
                   Pause
                 </button>
               )}
-              
-              <button type="button" onClick={debugPlayback} style={{ ...styles.playButton, backgroundColor: '#10b981', fontSize: '14px', padding: '8px 16px' }}>
-                🧪 Debug Playback
-              </button>
-              
-              <button 
-                type="button"
-                onClick={() => {
-                  if (recordedBlobRef.current && audioRef.current) {
-                    // Force reload audio element as fallback
-                    const audioUrl = URL.createObjectURL(recordedBlobRef.current);
-                    audioRef.current.src = audioUrl;
-                    audioRef.current.load();
-                    console.log('Reloaded audio element');
-                  }
-                }}
-                style={{ ...styles.playButton, backgroundColor: '#6b7280', fontSize: '14px', padding: '8px 16px' }}
-              >
-                Reload Audio
-              </button>
             </div>
             
             <div style={styles.finalActions}>
