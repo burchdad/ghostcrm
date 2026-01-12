@@ -150,17 +150,16 @@ export default function VoiceRecorder({
     setupAudioAnalyser(stream);
     
     try {
-      // Try different MIME types for better compatibility
-      let mimeType = 'audio/webm;codecs=opus';
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'audio/webm';
-      }
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'audio/mp4';
-      }
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = ''; // Let browser choose
-      }
+      // ChatGPT's bulletproof MIME type detection
+      const preferredTypes = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+      ];
+
+      const mimeType = preferredTypes.find(t => MediaRecorder.isTypeSupported(t)) || "";
+      
+      console.log('🎵 Selected MIME type:', mimeType);
       
       const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       
@@ -174,23 +173,25 @@ export default function VoiceRecorder({
       
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { 
-          type: mediaRecorder.mimeType || 'audio/webm' 
+          type: mimeType || "audio/webm" 
         });
         recordedBlobRef.current = audioBlob;
         setHasRecording(true);
         setIsRecording(false);
         setAudioLevel(0);
         
-        // Create audio URL for playback
+        // ChatGPT's bulletproof audio setup
         if (audioRef.current) {
           const audioUrl = URL.createObjectURL(audioBlob);
           audioRef.current.src = audioUrl;
-          audioRef.current.load(); // Force reload the audio element
+          audioRef.current.currentTime = 0;
+          audioRef.current.load();
           
-          console.log('Audio blob created:', {
-            size: audioBlob.size,
-            type: audioBlob.type,
-            url: audioUrl
+          console.log('🎵 Audio Recording Complete:', {
+            recorderMimeType: mediaRecorder.mimeType,
+            blobType: audioBlob.type,
+            blobSize: audioBlob.size,
+            audioSrc: audioUrl
           });
         }
       };
@@ -265,26 +266,36 @@ export default function VoiceRecorder({
   };
 
   const playRecording = async () => {
-    if (audioRef.current) {
-      try {
-        // Set speaker output if selected
-        if (selectedSpeakerId) {
-          await setAudioOutputDevice(audioRef.current, selectedSpeakerId);
-        }
-        
-        console.log('Attempting to play audio:', {
-          src: audioRef.current.src,
-          readyState: audioRef.current.readyState,
-          duration: audioRef.current.duration,
-          speaker: selectedSpeakerId || 'default'
-        });
-        
-        await audioRef.current.play();
-        setIsPlaying(true);
-      } catch (error) {
-        console.error('Playback failed:', error);
-        setError('Playback failed. The recording may be corrupted.');
+    const audioEl = audioRef.current;
+    if (!audioEl || !recordedBlobRef.current) {
+      console.error('❌ No audio element or recording blob available');
+      return;
+    }
+
+    try {
+      // Set speaker output if selected
+      if (selectedSpeakerId) {
+        await setAudioOutputDevice(audioEl, selectedSpeakerId);
       }
+      
+      // ChatGPT's bulletproof playback setup
+      const url = URL.createObjectURL(recordedBlobRef.current);
+      audioEl.src = url;
+      audioEl.currentTime = 0;
+      audioEl.load();
+      
+      console.log('🔊 About to play:', {
+        audioSrc: audioEl.src,
+        readyState: audioEl.readyState,
+        blobSize: recordedBlobRef.current.size,
+        blobType: recordedBlobRef.current.type
+      });
+      
+      await audioEl.play();
+      setIsPlaying(true);
+    } catch (error) {
+      console.error('❌ Playback failed:', error);
+      setError(`Playback failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -342,6 +353,34 @@ export default function VoiceRecorder({
   const refreshDevicesHandler = async () => {
     console.log('🔄 User requested device refresh');
     await forceRefreshDevices();
+  };
+
+  // ChatGPT's bulletproof playback debug function
+  const debugPlayback = async () => {
+    if (!recordedBlobRef.current) {
+      console.log('❌ No recording blob available for debug');
+      return;
+    }
+
+    console.log('🧪 Playback Debug:', {
+      size: recordedBlobRef.current?.size,
+      type: recordedBlobRef.current?.type,
+    });
+
+    const url = URL.createObjectURL(recordedBlobRef.current);
+    console.log('🔗 Blob URL:', url);
+
+    const test = new Audio(url);
+    test.onplay = () => console.log('✅ Audio started');
+    test.onerror = (e) => console.error('❌ Audio error', e);
+    test.onended = () => console.log('✅ Audio ended');
+
+    try {
+      await test.play();
+      console.log('✅ Direct audio play successful');
+    } catch (e) {
+      console.error('❌ Direct audio play failed:', e);
+    }
   };
 
   const getSelectedDeviceLabel = (type: 'mic' | 'speaker') => {
@@ -620,6 +659,10 @@ export default function VoiceRecorder({
                   Pause
                 </button>
               )}
+              
+              <button onClick={debugPlayback} style={{ ...styles.playButton, backgroundColor: '#10b981', fontSize: '14px', padding: '8px 16px' }}>
+                🧪 Debug Playback
+              </button>
               
               <button 
                 onClick={() => {
