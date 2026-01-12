@@ -1,19 +1,29 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
+interface AudioDevice {
+  deviceId: string;
+  label: string;
+  kind: 'audioinput' | 'audiooutput';
+}
+
 interface VoiceState {
   isListening: boolean;
   isSpeaking: boolean;
   isSupported: boolean;
   transcript: string;
   confidence: number;
+  availableDevices: AudioDevice[];
+  selectedDeviceId: string;
 }
 
 interface UseVoiceChatOptions {
   onTranscriptChange?: (transcript: string) => void;
   onSpeechEnd?: (finalTranscript: string) => void;
   onError?: (error: any) => void;
+  onDevicesChanged?: (devices: AudioDevice[]) => void;
   language?: string;
   continuous?: boolean;
+  preferredDeviceId?: string;
 }
 
 export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
@@ -21,8 +31,10 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
     onTranscriptChange,
     onSpeechEnd,
     onError,
+    onDevicesChanged,
     language = 'en-US',
-    continuous = true
+    continuous = true,
+    preferredDeviceId
   } = options;
 
   const [voiceState, setVoiceState] = useState<VoiceState>({
@@ -30,7 +42,9 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
     isSpeaking: false,
     isSupported: typeof window !== 'undefined' && 'webkitSpeechRecognition' in window,
     transcript: '',
-    confidence: 0
+    confidence: 0,
+    availableDevices: [],
+    selectedDeviceId: preferredDeviceId || 'default'
   });
 
   const recognitionRef = useRef<any>(null);
@@ -40,7 +54,50 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       synthesisRef.current = window.speechSynthesis;
+      enumerateDevices();
     }
+  }, []);
+
+  // Enumerate available audio devices
+  const enumerateDevices = useCallback(async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioInputs = devices
+        .filter(device => device.kind === 'audioinput')
+        .map(device => ({
+          deviceId: device.deviceId,
+          label: device.label || `Microphone ${device.deviceId.slice(0, 8)}`,
+          kind: 'audioinput' as const
+        }));
+      
+      setVoiceState(prev => ({ ...prev, availableDevices: audioInputs }));
+      onDevicesChanged?.(audioInputs);
+      
+      // Auto-select headset if available and no device is selected
+      if (!preferredDeviceId && audioInputs.length > 0) {
+        const headsetDevice = audioInputs.find(device => 
+          device.label.toLowerCase().includes('headset') ||
+          device.label.toLowerCase().includes('head') ||
+          device.label.toLowerCase().includes('usb') ||
+          device.label.toLowerCase().includes('gaming')
+        );
+        
+        if (headsetDevice) {
+          setVoiceState(prev => ({ ...prev, selectedDeviceId: headsetDevice.deviceId }));
+          console.log('Auto-selected headset device:', headsetDevice);
+        }
+      }
+      
+      console.log('Available audio devices:', audioInputs);
+    } catch (err) {
+      console.error('Failed to enumerate devices:', err);
+    }
+  }, [onDevicesChanged, preferredDeviceId]);
+
+  // Change selected device
+  const selectDevice = useCallback((deviceId: string) => {
+    setVoiceState(prev => ({ ...prev, selectedDeviceId: deviceId }));
+    console.log('Selected audio device:', deviceId);
   }, []);
 
   // Initialize speech recognition
@@ -138,15 +195,31 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
     try {
       console.log('🎤 Requesting microphone permission...');
       
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      const constraints = {
         audio: {
+          deviceId: voiceState.selectedDeviceId !== 'default' ? 
+                   { exact: voiceState.selectedDeviceId } : undefined,
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true
-        } 
-      });
+        }
+      };
+      
+      console.log('Using microphone constraints:', constraints);
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
       console.log('✅ Microphone permission granted');
+      
+      // Log which device is actually being used
+      const tracks = stream.getAudioTracks();
+      if (tracks.length > 0) {
+        console.log('Using audio device:', {
+          label: tracks[0].label,
+          deviceId: tracks[0].getSettings()?.deviceId,
+          settings: tracks[0].getSettings()
+        });
+      }
       
       // Stop the stream immediately - we just needed the permission
       stream.getTracks().forEach(track => {
@@ -280,6 +353,8 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
     toggleListening,
     speak,
     stopSpeaking,
-    getVoices
+    getVoices,
+    enumerateDevices,
+    selectDevice
   };
 };

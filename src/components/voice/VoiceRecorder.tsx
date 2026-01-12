@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { FiMic, FiSquare, FiPlay, FiPause, FiUpload, FiCheck, FiX } from 'react-icons/fi';
+import { FiMic, FiSquare, FiPlay, FiPause, FiUpload, FiCheck, FiX, FiSettings } from 'react-icons/fi';
+import { useAudioDevices } from '../../hooks/useAudioDevices';
+import { startMicStream, setAudioOutputDevice, stopMediaStream } from '../../utils/audioUtils';
 
 interface VoiceRecorderProps {
   onRecordingComplete: (audioBlob: Blob) => void;
@@ -21,6 +23,21 @@ export default function VoiceRecorder({
   const [audioLevel, setAudioLevel] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMicId, setSelectedMicId] = useState<string>('');
+  const [selectedSpeakerId, setSelectedSpeakerId] = useState<string>('');
+  const [showDeviceSelector, setShowDeviceSelector] = useState(false);
+  
+  // Use the comprehensive device management hook
+  const { 
+    hasPermission, 
+    mics, 
+    speakers, 
+    error: deviceError, 
+    requestMicPermission, 
+    refreshDevices,
+    getPreferredMic,
+    getPreferredSpeaker
+  } = useAudioDevices();
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -32,15 +49,41 @@ export default function VoiceRecorder({
   const recordedBlobRef = useRef<Blob | null>(null);
 
   useEffect(() => {
+    // Auto-select preferred devices when they become available
+    if (mics.length > 0 && !selectedMicId) {
+      const preferred = getPreferredMic();
+      if (preferred) {
+        setSelectedMicId(preferred.deviceId);
+        console.log('🎧 Auto-selected microphone:', preferred.label);
+      }
+    }
+    
+    if (speakers.length > 0 && !selectedSpeakerId) {
+      const preferred = getPreferredSpeaker();
+      if (preferred) {
+        setSelectedSpeakerId(preferred.deviceId);
+        console.log('🔊 Auto-selected speaker:', preferred.label);
+      }
+    }
+  }, [mics, speakers, selectedMicId, selectedSpeakerId, getPreferredMic, getPreferredSpeaker]);
+
+  useEffect(() => {
+    // Update error state from device hook
+    if (deviceError) {
+      setError(deviceError);
+    }
+  }, [deviceError]);
+
+  useEffect(() => {
     return () => {
       cleanup();
     };
   }, []);
 
   const cleanup = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-    }
+    stopMediaStream(streamRef.current);
+    streamRef.current = null;
+    
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -51,18 +94,19 @@ export default function VoiceRecorder({
 
   const requestMicrophoneAccess = async (): Promise<MediaStream | null> => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 44100
-        } 
-      });
+      // Ensure we have permission first
+      if (!hasPermission) {
+        await requestMicPermission();
+      }
+      
+      // Use the selected microphone or undefined for default
+      const deviceId = selectedMicId || undefined;
+      const stream = await startMicStream(deviceId);
+      
       return stream;
     } catch (err) {
-      console.error('Microphone access denied:', err);
-      setError('Microphone access is required to record your voice. Please allow microphone access and try again.');
+      console.error('Microphone access failed:', err);
+      setError('Failed to access microphone. Please check your device connections and permissions.');
       return null;
     }
   };
@@ -221,10 +265,16 @@ export default function VoiceRecorder({
   const playRecording = async () => {
     if (audioRef.current) {
       try {
+        // Set speaker output if selected
+        if (selectedSpeakerId) {
+          await setAudioOutputDevice(audioRef.current, selectedSpeakerId);
+        }
+        
         console.log('Attempting to play audio:', {
           src: audioRef.current.src,
           readyState: audioRef.current.readyState,
-          duration: audioRef.current.duration
+          duration: audioRef.current.duration,
+          speaker: selectedSpeakerId || 'default'
         });
         
         await audioRef.current.play();
@@ -271,6 +321,49 @@ export default function VoiceRecorder({
     return '#ef4444'; // red
   };
 
+  const handleDeviceChange = (deviceId: string, type: 'mic' | 'speaker') => {
+    if (type === 'mic') {
+      setSelectedMicId(deviceId);
+      console.log('🎤 Selected microphone:', deviceId);
+    } else {
+      setSelectedSpeakerId(deviceId);
+      console.log('🔊 Selected speaker:', deviceId);
+      
+      // Apply speaker change to audio element if available
+      if (audioRef.current && deviceId) {
+        setAudioOutputDevice(audioRef.current, deviceId);
+      }
+    }
+    setShowDeviceSelector(false);
+  };
+
+  const refreshDevicesHandler = async () => {
+    await refreshDevices();
+  };
+
+  const getSelectedDeviceLabel = (type: 'mic' | 'speaker') => {
+    if (type === 'mic') {
+      const selected = mics.find(d => d.deviceId === selectedMicId);
+      return selected ? selected.label : 'Default Microphone';
+    } else {
+      const selected = speakers.find(d => d.deviceId === selectedSpeakerId);
+      return selected ? selected.label : 'Default Speaker';
+    }
+  };
+
+  const hasHeadsetConnected = () => {
+    const headsetKeywords = ['headset', 'head', 'usb', 'gaming', 'wireless', 'bluetooth'];
+    return mics.some(mic => 
+      headsetKeywords.some(keyword => 
+        mic.label.toLowerCase().includes(keyword)
+      )
+    ) || speakers.some(speaker => 
+      headsetKeywords.some(keyword => 
+        speaker.label.toLowerCase().includes(keyword)
+      )
+    );
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.recorder}>
@@ -288,6 +381,110 @@ export default function VoiceRecorder({
             </div>
             <h3>Record Your Voice</h3>
             <p>Click the button below to start recording. Speak clearly for 30-60 seconds.</p>
+            
+            {/* Device Selector */}
+            <div style={styles.deviceSection}>
+              <div style={styles.deviceSectionHeader}>
+                <h4 style={styles.deviceSectionTitle}>
+                  <FiSettings style={styles.settingsIcon} />
+                  Audio Devices
+                </h4>
+                {!hasPermission && (
+                  <button onClick={requestMicPermission} style={styles.permissionButton}>
+                    Enable Devices
+                  </button>
+                )}
+              </div>
+              
+              {/* Microphone Selection */}
+              <div style={styles.deviceInfo}>
+                <label style={styles.deviceLabel}>Microphone:</label>
+                <div style={styles.deviceSelector}>
+                  <button 
+                    onClick={() => setShowDeviceSelector(!showDeviceSelector)}
+                    style={styles.deviceButton}
+                    disabled={!hasPermission}
+                  >
+                    {getSelectedDeviceLabel('mic')}
+                    <span style={styles.dropdownArrow}>▼</span>
+                  </button>
+                  
+                  {showDeviceSelector && hasPermission && (
+                    <div style={styles.deviceDropdown}>
+                      {mics.length === 0 ? (
+                        <div style={styles.noDevices}>
+                          <p>No microphones detected</p>
+                          <button onClick={refreshDevicesHandler} style={styles.refreshButton}>
+                            Refresh Devices
+                          </button>
+                        </div>
+                      ) : (
+                        mics.map(device => (
+                          <button
+                            key={device.deviceId}
+                            onClick={() => handleDeviceChange(device.deviceId, 'mic')}
+                            style={{
+                              ...styles.deviceOption,
+                              backgroundColor: device.deviceId === selectedMicId ? '#e3f2fd' : 'transparent'
+                            }}
+                          >
+                            {device.label}
+                            {device.label.toLowerCase().includes('headset') && (
+                              <span style={styles.deviceType}>🎧</span>
+                            )}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Speaker Selection */}
+              {speakers.length > 0 && (
+                <div style={styles.deviceInfo}>
+                  <label style={styles.deviceLabel}>Speaker:</label>
+                  <div style={styles.deviceSelector}>
+                    <select 
+                      value={selectedSpeakerId} 
+                      onChange={(e) => handleDeviceChange(e.target.value, 'speaker')}
+                      style={styles.deviceSelect}
+                    >
+                      <option value="">Default Speaker</option>
+                      {speakers.map(device => (
+                        <option key={device.deviceId} value={device.deviceId}>
+                          {device.label}
+                          {device.label.toLowerCase().includes('headset') ? ' 🎧' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+              
+              {/* Device Status */}
+              <div style={styles.deviceStatus}>
+                {hasPermission ? (
+                  <div style={styles.statusItem}>
+                    <span style={styles.statusIndicator}>✅</span>
+                    {hasHeadsetConnected() 
+                      ? `Headset detected (${mics.length} mics, ${speakers.length} speakers)`
+                      : `${mics.length} microphones, ${speakers.length} speakers available`
+                    }
+                  </div>
+                ) : (
+                  <div style={styles.statusItem}>
+                    <span style={styles.statusIndicator}>🔒</span>
+                    Click "Enable Devices" to detect your headset
+                  </div>
+                )}
+                
+                <button onClick={refreshDevicesHandler} style={styles.refreshSmallButton}>
+                  🔄 Refresh
+                </button>
+              </div>
+            </div>
+            
             <button 
               onClick={startRecording}
               style={styles.startButton}
@@ -613,5 +810,163 @@ const styles = {
     fontSize: '16px',
     fontWeight: '600',
     cursor: 'pointer'
-  }
+  },
+  deviceSection: {
+    marginBottom: '24px',
+    padding: '20px',
+    backgroundColor: '#f8fafc',
+    borderRadius: '12px',
+    border: '1px solid #e2e8f0'
+  },
+  deviceSectionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '16px'
+  },
+  deviceSectionTitle: {
+    display: 'flex',
+    alignItems: 'center',
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1e293b',
+    margin: 0
+  },
+  settingsIcon: {
+    marginRight: '8px',
+    fontSize: '18px'
+  },
+  permissionButton: {
+    padding: '8px 16px',
+    backgroundColor: '#3b82f6',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s'
+  },
+  deviceInfo: {
+    marginBottom: '12px'
+  },
+  deviceLabel: {
+    display: 'block',
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: '8px'
+  },
+  deviceSelector: {
+    position: 'relative' as const,
+    display: 'inline-block',
+    width: '100%'
+  },
+  deviceButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    padding: '12px 16px',
+    backgroundColor: 'white',
+    border: '1px solid #d1d5db',
+    borderRadius: '6px',
+    fontSize: '14px',
+    cursor: 'pointer',
+    transition: 'border-color 0.2s'
+  },
+  deviceSelect: {
+    width: '100%',
+    padding: '12px 16px',
+    backgroundColor: 'white',
+    border: '1px solid #d1d5db',
+    borderRadius: '6px',
+    fontSize: '14px',
+    cursor: 'pointer'
+  },
+  deviceStatus: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '12px',
+    backgroundColor: '#ffffff',
+    borderRadius: '6px',
+    fontSize: '13px',
+    color: '#6b7280'
+  },
+  statusItem: {
+    display: 'flex',
+    alignItems: 'center'
+  },
+  statusIndicator: {
+    marginRight: '8px',
+    fontSize: '14px'
+  },
+  refreshSmallButton: {
+    padding: '4px 8px',
+    backgroundColor: 'transparent',
+    border: '1px solid #d1d5db',
+    borderRadius: '4px',
+    fontSize: '12px',
+    cursor: 'pointer',
+    color: '#6b7280'
+  },
+  dropdownArrow: {
+    fontSize: '12px',
+    color: '#6b7280'
+  },
+  deviceDropdown: {
+    position: 'absolute' as const,
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: 'white',
+    border: '1px solid #d1d5db',
+    borderRadius: '6px',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    zIndex: 10,
+    maxHeight: '200px',
+    overflowY: 'auto' as const
+  },
+  deviceOption: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    padding: '12px 16px',
+    border: 'none',
+    fontSize: '14px',
+    cursor: 'pointer',
+    textAlign: 'left' as const,
+    transition: 'background-color 0.2s'
+  },
+  deviceType: {
+    fontSize: '16px',
+    marginLeft: '8px'
+  },
+  deviceActions: {
+    borderTop: '1px solid #e5e7eb',
+    padding: '8px'
+  },
+  refreshButton: {
+    width: '100%',
+    padding: '8px 16px',
+    backgroundColor: '#f3f4f6',
+    border: '1px solid #d1d5db',
+    borderRadius: '4px',
+    fontSize: '12px',
+    cursor: 'pointer',
+    color: '#374151'
+  },
+  noDevices: {
+    padding: '16px',
+    textAlign: 'center' as const,
+    color: '#6b7280'
+  },
+  deviceHint: {
+    fontSize: '12px',
+    color: '#6b7280',
+    textAlign: 'center' as const,
+    margin: '8px 0 0 0'
+  },
 };
