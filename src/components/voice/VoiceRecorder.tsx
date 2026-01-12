@@ -351,9 +351,25 @@ export default function VoiceRecorder({
     }
   };
 
-  const playRecording = () => {
-    console.log('🟢 Play Recording button clicked');
-    playAudio('ui');
+  const playRecording = async () => {
+    console.log('🟢 Play Recording button clicked - starting playback...');
+    try {
+      await playAudio('ui');
+      console.log('🎵 Play Recording completed successfully');
+    } catch (error) {
+      console.error('❌ Play Recording failed:', error);
+      setError(`Play Recording failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const debugPlayback = async () => {
+    console.log('🧪 Debug Playback button clicked - starting direct audio...');
+    try {
+      await playAudio('debug');
+      console.log('🎵 Debug Playback completed successfully');
+    } catch (error) {
+      console.error('❌ Debug Playback failed:', error);
+    }
   };
 
   const pausePlayback = () => {
@@ -410,11 +426,6 @@ export default function VoiceRecorder({
   const refreshDevicesHandler = async () => {
     console.log('🔄 User requested device refresh');
     await forceRefreshDevices();
-  };
-
-  const debugPlayback = () => {
-    console.log('🧪 Debug Playback button clicked');
-    playAudio('debug');
   };
 
   const getSelectedDeviceLabel = (type: 'mic' | 'speaker') => {
