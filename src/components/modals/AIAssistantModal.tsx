@@ -3,7 +3,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { X, Send, Bot, User, Loader2, Mic, Volume2, VolumeX, Settings, MoreVertical } from "lucide-react";
 import { useI18n } from "../utils/I18nProvider";
-import { useVoiceChat } from "@/hooks/useVoiceChat";
+import { useVoiceChat } from '@/hooks/useVoiceChat';
+import { useRealtimeVoice } from '@/hooks/useRealtimeVoice';
 
 interface Message {
   id: string;
@@ -74,6 +75,7 @@ ${t('ai_assistant.guest_help', 'features')}`;
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [isRealtimeMode, setIsRealtimeMode] = useState(false); // Toggle between modes
   const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>({
     voice: 'default',
     rate: 1,
@@ -83,59 +85,139 @@ ${t('ai_assistant.guest_help', 'features')}`;
     autoSpeak: true,
     voiceGender: 'female'
   });
+  const [shouldBeListening, setShouldBeListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const voiceSubmitLock = useRef(false);
+  const shouldBeListeningRef = useRef(false);
 
-  // Voice chat functionality with custom settings
+  // Browser voice chat functionality (legacy mode)
   const {
-    isListening,
-    isSpeaking,
+    isListening: isBrowserListening,
+    isSpeaking: isBrowserSpeaking,
     isSupported: isVoiceSupported,
-    transcript,
-    startListening,
-    stopListening,
+    transcript: browserTranscript,
+    startListening: startBrowserListening,
+    stopListening: stopBrowserListening,
     speak,
     stopSpeaking
   } = useVoiceChat({
     onTranscriptChange: (transcript) => {
-      if (voiceInputMode) {
+      if (voiceInputMode && !isRealtimeMode) {
         setInputMessage(transcript);
       }
     },
     onSpeechEnd: (finalTranscript) => {
-      console.log('🎤 PAGE onSpeechEnd:', finalTranscript, 'voiceInputMode:', voiceInputMode);
+      console.log('🎤 BROWSER onSpeechEnd:', finalTranscript, 'voiceInputMode:', voiceInputMode);
       
-      if (!finalTranscript.trim()) return;
-      if (voiceSubmitLock.current) {
-        console.log('🔒 Voice submit locked, ignoring duplicate');
-        return;
+      // Don't auto-send on first final result - accumulate text instead
+      if (voiceInputMode && !isRealtimeMode && finalTranscript.trim()) {
+        setInputMessage(prev => (prev ? prev + " " : "") + finalTranscript);
       }
-      if (!voiceInputMode) {
-        console.log('⚠️ Not in voice input mode, ignoring');
-        return;
-      }
-
-      voiceSubmitLock.current = true;
-      sendMessage(finalTranscript, true).finally(() => {
-        voiceSubmitLock.current = false;
-      });
-      
-      setVoiceInputMode(false);
-      stopListening(); // Clean stop after submission
     },
     onError: (error) => {
-      console.error('Voice error:', error);
+      console.error('Browser voice error:', error);
       setVoiceError(typeof error === 'string' ? error : 'Voice input failed. Please try again.');
       setVoiceInputMode(false);
-      // Clear error after 5 seconds
+      setShouldBeListening(false);
+      shouldBeListeningRef.current = false;
       setTimeout(() => setVoiceError(null), 5000);
     },
     language: voiceSettings.language,
-    continuous: true
+    continuous: true,
+    shouldBeListeningRef // Pass ref for auto-restart
   });
 
+  // Voice control handlers
+  const handleStartVoice = async () => {
+    if (isRealtimeMode) {
+      // Realtime mode
+      if (!isRealtimeConnected) {
+        const connected = await connectRealtime();
+        if (!connected) return;
+      }
+      setVoiceInputMode(true);
+      startRealtimeListening();
+    } else {
+      // Browser mode - fixed implementation
+      setVoiceInputMode(true);
+      setShouldBeListening(true);
+      shouldBeListeningRef.current = true;
+      startBrowserListening();
+    }
+  };
+
+  const handleStopVoice = () => {
+    if (isRealtimeMode) {
+      stopRealtimeListening();
+      setVoiceInputMode(false);
+    } else {
+      // Browser mode - send accumulated message
+      setShouldBeListening(false);
+      shouldBeListeningRef.current = false;
+      stopBrowserListening();
+      setVoiceInputMode(false);
+      
+      // Send the accumulated message
+      if (inputMessage.trim()) {
+        if (voiceSubmitLock.current) return;
+        
+        voiceSubmitLock.current = true;
+        sendMessage(inputMessage, true).finally(() => {
+          voiceSubmitLock.current = false;
+        });
+      }
+    }
+  };
+
+  const handleToggleVoiceMode = () => {
+    if (isRealtimeMode && isRealtimeConnected) {
+      disconnectRealtime();
+    }
+    setIsRealtimeMode(!isRealtimeMode);
+    setVoiceInputMode(false);
+  };
+
+  // Determine current voice state
+  const isListening = isRealtimeMode ? isRealtimeListening : isBrowserListening;
+  const isSpeaking = isRealtimeMode ? isRealtimeSpeaking : isBrowserSpeaking;
+  const currentTranscript = isRealtimeMode ? realtimeTranscript : browserTranscript;
+  const currentError = realtimeError || voiceError;
+
   // Clear messages when modal opens - no default welcome message in production
+  const {
+    isConnected: isRealtimeConnected,
+    isListening: isRealtimeListening,
+    isSpeaking: isRealtimeSpeaking,
+    isSupported: isRealtimeSupported,
+    transcript: realtimeTranscript,
+    connectionStatus,
+    error: realtimeError,
+    connect: connectRealtime,
+    disconnect: disconnectRealtime,
+    startListening: startRealtimeListening,
+    stopListening: stopRealtimeListening,
+    sendMessage: sendRealtimeMessage,
+    interrupt: interruptRealtime
+  } = useRealtimeVoice({
+    onTranscriptChange: (transcript) => {
+      if (isRealtimeMode) {
+        setInputMessage(transcript);
+      }
+    },
+    onResponse: (response) => {
+      // Handle streaming response from realtime API
+      console.log('🚀 Realtime response:', response);
+    },
+    onError: (error) => {
+      console.error('Realtime voice error:', error);
+      setVoiceError(error);
+      setTimeout(() => setVoiceError(null), 5000);
+    },
+    onConnectionChange: (status) => {
+      console.log('🔗 Connection status:', status);
+    }
+  });
   useEffect(() => {
     if (isOpen) {
       setMessages([]);
@@ -168,9 +250,21 @@ ${t('ai_assistant.guest_help', 'features')}`;
       isVoiceMessage
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    // Fix: Build history from next state, not stale state
+    setMessages(prev => {
+      const nextMessages = [...prev, userMessage];
+      
+      // Use nextMessages for API call to avoid stale state
+      handleApiCall(messageContent, nextMessages.slice(-10), isVoiceMessage);
+      
+      return nextMessages;
+    });
+    
     setInputMessage("");
     setIsLoading(true);
+  };
+  
+  const handleApiCall = async (messageContent: string, conversationHistory: Message[], isVoiceMessage: boolean) => {
 
     try {
       const response = await fetch("/api/ai/assistant", {
@@ -183,7 +277,7 @@ ${t('ai_assistant.guest_help', 'features')}`;
           isAuthenticated,
           currentPage,
           pageContext: getPageSpecificHelp(currentPage),
-          conversationHistory: messages.slice(-10) // Last 10 messages for context
+          conversationHistory: conversationHistory // Use passed history, not stale state
         })
       });
 
@@ -227,25 +321,9 @@ ${t('ai_assistant.guest_help', 'features')}`;
     }
   };
 
-  // Voice control handlers
+  // Legacy handler for backward compatibility - now uses new handleStartVoice
   const handleVoiceInput = async () => {
-    if (isSpeaking) {
-      stopSpeaking();
-    }
-    setVoiceError(null);
-    setVoiceInputMode(true);
-    try {
-      await startListening();
-    } catch (error) {
-      console.error('Failed to start voice input:', error);
-      setVoiceError('Failed to start voice input. Please check your microphone permissions.');
-      setVoiceInputMode(false);
-    }
-  };
-
-  const handleStopVoice = () => {
-    setVoiceInputMode(false);
-    stopListening();
+    await handleStartVoice();
   };
 
   const handleSpeakMessage = (content: string) => {
@@ -442,39 +520,46 @@ ${t('ai_assistant.guest_help', 'features')}`;
         )}
 
         {/* Voice Error Alert */}
-        {voiceError && (
+        {currentError && (
           <div className="px-4 py-2 bg-red-50 border-t border-red-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-red-800">{voiceError}</p>
-                  {voiceError.includes('microphone') && (
+                  <p className="text-sm font-medium text-red-800">
+                    {isRealtimeMode && realtimeError ? `Realtime Voice: ${realtimeError}` : currentError}
+                  </p>
+                  {currentError.includes('microphone') && (
                     <div className="mt-2 text-xs text-red-700">
                       <p>💡 <strong>Troubleshooting:</strong></p>
                       <p>• Make sure your headset/microphone is connected</p>
                       <p>• Check browser permissions: Click the 🔒 icon in address bar → Allow microphone</p>
                       <p>• Try refreshing the page if no permission prompt appeared</p>
-                      <button
-                        onClick={async () => {
-                          try {
-                            setVoiceError(null);
-                            await navigator.mediaDevices.getUserMedia({ audio: true });
-                            alert('✅ Microphone permission granted! You can now try voice input again.');
-                          } catch (e: any) {
-                            setVoiceError(`Manual permission failed: ${e.message}`);
-                          }
-                        }}
-                        className="mt-1 px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
-                      >
-                        Request Permission Manually
-                      </button>
+                      {!isRealtimeMode && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              setVoiceError(null);
+                              await navigator.mediaDevices.getUserMedia({ audio: true });
+                              alert('✅ Microphone permission granted! You can now try voice input again.');
+                            } catch (e: any) {
+                              setVoiceError(`Manual permission failed: ${e.message}`);
+                            }
+                          }}
+                          className="mt-1 px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                        >
+                          Request Permission Manually
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
               <button
-                onClick={() => setVoiceError(null)}
+                onClick={() => {
+                  setVoiceError(null);
+                  // Clear realtime errors would need to be handled by the hook
+                }}
                 className="text-red-600 hover:text-red-800 p-1"
                 title="Dismiss error"
               >
@@ -507,18 +592,30 @@ ${t('ai_assistant.guest_help', 'features')}`;
             />
             
             {/* Voice Input Button */}
-            {isVoiceSupported && (
+            {(isVoiceSupported || isRealtimeSupported) && (
               <button
                 onClick={voiceInputMode ? handleStopVoice : handleVoiceInput}
-                disabled={isLoading}
+                disabled={isLoading || (isRealtimeMode && connectionStatus === 'connecting')}
                 className={`voice-input-btn ${
+                  isRealtimeMode ? 'realtime-mode' : ''
+                } ${
                   voiceInputMode || isListening
-                    ? "voice-input-active"
+                    ? "voice-input-active active"
                     : "voice-input-inactive"
                 }`}
-                title={voiceInputMode ? "Stop voice input" : "Start voice input"}
+                title={
+                  isRealtimeMode 
+                    ? (voiceInputMode ? "Stop realtime voice" : "Start realtime voice")
+                    : (voiceInputMode ? "Stop voice input" : "Start voice input")
+                }
               >
-                <Mic className={`w-4 h-4 ${voiceInputMode || isListening ? 'text-white' : 'text-gray-600'}`} />
+                <Mic className={`w-4 h-4 ${voiceInputMode || isListening ? 'text-white' : (isRealtimeMode ? 'text-white' : 'text-gray-600')}`} />
+                {isRealtimeMode && connectionStatus === 'connecting' && (
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                )}
+                {isRealtimeMode && connectionStatus === 'connected' && (
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full"></div>
+                )}
               </button>
             )}
             
@@ -572,6 +669,40 @@ ${t('ai_assistant.guest_help', 'features')}`;
                   <Mic className="aria-settings-section-icon" />
                   Voice & Speech
                 </h4>
+                
+                {/* Voice Mode Toggle */}
+                <div className="aria-settings-item">
+                  <div className="aria-settings-toggle">
+                    <label className="aria-settings-label">
+                      ChatGPT-Quality Voice
+                      <span className="aria-settings-badge">✨ PREMIUM</span>
+                    </label>
+                    <div className="aria-voice-mode-toggle">
+                      <input
+                        type="checkbox"
+                        checked={isRealtimeMode}
+                        onChange={handleToggleVoiceMode}
+                        className="aria-settings-checkbox"
+                        disabled={!isRealtimeSupported}
+                      />
+                      <div className="aria-voice-mode-status">
+                        {isRealtimeMode ? (
+                          <span className="aria-status-realtime">
+                            🚀 Realtime Mode {connectionStatus === 'connected' ? '(Connected)' : '(Disconnected)'}
+                          </span>
+                        ) : (
+                          <span className="aria-status-browser">🌐 Browser Mode</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="aria-settings-description">
+                    {isRealtimeMode 
+                      ? "Stream audio directly to/from OpenAI with barge-in capability, lower latency, and natural conversation flow."
+                      : "Use browser speech recognition and synthesis. Simple but may have delays and interruptions."
+                    }
+                  </p>
+                </div>
                 
                 {/* Auto-speak Toggle */}
                 <div className="aria-settings-item">

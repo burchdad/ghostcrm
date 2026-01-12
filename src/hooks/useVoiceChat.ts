@@ -24,6 +24,7 @@ interface UseVoiceChatOptions {
   language?: string;
   continuous?: boolean;
   preferredDeviceId?: string;
+  shouldBeListeningRef?: React.MutableRefObject<boolean>; // For auto-restart
 }
 
 export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
@@ -34,7 +35,8 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
     onDevicesChanged,
     language = 'en-US',
     continuous = true,
-    preferredDeviceId
+    preferredDeviceId,
+    shouldBeListeningRef
   } = options;
 
   const [voiceState, setVoiceState] = useState<VoiceState>({
@@ -168,6 +170,17 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
 
     recognition.onend = () => {
       setVoiceState(prev => ({ ...prev, isListening: false }));
+      
+      // Auto-restart if still in voice mode (webkit ends frequently)
+      if (shouldBeListeningRef?.current) {
+        try { 
+          console.log('🔄 [BROWSER VOICE] Auto-restarting recognition...');
+          recognition.start(); 
+        } catch (error) {
+          console.error('❌ [BROWSER VOICE] Auto-restart failed:', error);
+          onErrorRef.current?.('Voice recognition stopped unexpectedly');
+        }
+      }
     };
 
     return recognition;
