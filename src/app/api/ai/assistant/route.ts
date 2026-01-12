@@ -688,6 +688,258 @@ async function getAuctionPriceHistory(vehicle: any): Promise<any> {
   return { averageAuctionPrice: 22000, trend: 'stable' };
 }
 
+// VOICE LEAD CREATION: AI-powered lead parsing from voice conversations
+async function processVoiceLeadCreation(message: string, organizationId: string, conversationHistory?: any[]) {
+  try {
+    console.log(`🎤 [VOICE AI] Processing voice lead creation from conversation`);
+    
+    // Get full conversation context
+    const fullConversation = conversationHistory ? 
+      conversationHistory.map(msg => `${msg.role}: ${msg.content}`).join('\n') + `\nuser: ${message}` :
+      message;
+    
+    // Use OpenAI to extract lead information from conversation
+    const leadData = await extractLeadInfoFromConversation(fullConversation);
+    
+    if (leadData && (leadData.name || leadData.email || leadData.phone)) {
+      // Create the lead in database
+      const createdLead = await createLeadFromVoice(leadData, organizationId);
+      
+      if (createdLead) {
+        // Find matching inventory based on vehicle interest
+        let inventoryMatches: any = null;
+        if (leadData.vehicleInterest) {
+          inventoryMatches = await searchInventory(leadData.vehicleInterest, organizationId);
+        }
+        
+        return {
+          success: true,
+          lead: createdLead,
+          leadData: leadData,
+          inventoryMatches: inventoryMatches,
+          nextSteps: generateLeadFollowUpSteps(leadData),
+          conversationSuggestions: generateConversationSuggestions(leadData, inventoryMatches)
+        };
+      }
+    }
+    
+    return {
+      success: false,
+      error: 'Unable to extract sufficient lead information from conversation',
+      suggestion: 'Please provide at least a name and contact information (email or phone)'
+    };
+    
+  } catch (error) {
+    console.error("Voice lead creation error:", error);
+    return {
+      success: false,
+      error: 'Failed to process voice lead creation',
+      details: error
+    };
+  }
+}
+
+// Extract lead information from voice conversation using AI
+async function extractLeadInfoFromConversation(conversation: string): Promise<any> {
+  try {
+    const openai = getOpenAI();
+    
+    const extractionPrompt = `You are an expert AI lead qualifier for an automotive dealership. Analyze this conversation and extract lead information in JSON format.
+
+Extract ONLY information that is explicitly mentioned or clearly implied in the conversation. Do NOT make assumptions or add fictional data.
+
+CONVERSATION:
+${conversation}
+
+Extract and return ONLY the following information in valid JSON format:
+{
+  "name": "Full name if mentioned",
+  "firstName": "First name if extractable", 
+  "lastName": "Last name if extractable",
+  "email": "Email address if mentioned",
+  "phone": "Phone number if mentioned",
+  "company": "Company name if mentioned",
+  "vehicleInterest": "Specific vehicle they're interested in (year make model)",
+  "budget": "Budget amount if mentioned",
+  "budgetRange": "Budget range if mentioned", 
+  "timeframe": "When they need vehicle (urgent, this week, this month, etc)",
+  "tradeIn": "Vehicle they want to trade in",
+  "financingNeeds": "Financing preferences mentioned",
+  "notes": "Additional important details from conversation",
+  "source": "How they found you (walk-in, phone call, referral, etc)",
+  "priority": "high/medium/low based on urgency and budget",
+  "leadScore": "1-100 score based on qualification level"
+}
+
+Return ONLY valid JSON. If information is not mentioned, use null for that field.`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: extractionPrompt }
+      ],
+      max_tokens: 500,
+      temperature: 0.1
+    });
+
+    const responseText = completion.choices[0]?.message?.content?.trim();
+    if (responseText) {
+      try {
+        return JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("Failed to parse AI lead extraction response:", parseError);
+        // Try to extract JSON from response if it has extra text
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          return JSON.parse(jsonMatch[0]);
+        }
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Lead extraction error:", error);
+    return null;
+  }
+}
+
+// Create lead in database from extracted voice data
+async function createLeadFromVoice(leadData: any, organizationId: string): Promise<any> {
+  try {
+    // Prepare lead data for API
+    const leadPayload = {
+      organization_id: organizationId,
+      first_name: leadData.firstName || leadData.name?.split(' ')[0] || '',
+      last_name: leadData.lastName || leadData.name?.split(' ').slice(1).join(' ') || '',
+      email: leadData.email || null,
+      phone: leadData.phone || null,
+      company: leadData.company || null,
+      title: leadData.name || `${leadData.firstName || ''} ${leadData.lastName || ''}`.trim() || 'Voice Lead',
+      source: leadData.source || 'Voice Conversation',
+      status: 'new',
+      stage: 'prospect',
+      priority: leadData.priority || 'medium',
+      value: parseFloat(leadData.budget) || 0,
+      budget_range: leadData.budgetRange || leadData.budget || '',
+      vehicle_interest: leadData.vehicleInterest || '',
+      timeframe: leadData.timeframe || null,
+      financing_needs: leadData.financingNeeds || null,
+      trade_in_vehicle: leadData.tradeIn || null,
+      description: leadData.notes || 'Lead created from voice conversation',
+      lead_score: leadData.leadScore || 50,
+      tags: ['voice_created', 'ai_qualified'],
+      custom_fields: {
+        created_via: 'voice_ai_assistant',
+        conversation_processed: true,
+        ai_extraction_timestamp: new Date().toISOString()
+      }
+    };
+
+    // Create contact first if we have contact info
+    let contactId: string | null = null;
+    if (leadData.email || leadData.phone) {
+      const contactData = {
+        organization_id: organizationId,
+        first_name: leadPayload.first_name,
+        last_name: leadPayload.last_name,
+        email: leadData.email || null,
+        phone: leadData.phone || null,
+        company: leadData.company || null
+      };
+
+      const { data: contact, error: contactError } = await supabaseAdmin
+        .from("contacts")
+        .insert(contactData)
+        .select("id")
+        .single();
+
+      if (!contactError && contact) {
+        contactId = contact.id;
+      }
+    }
+
+    // Create the lead
+    const { data: lead, error } = await supabaseAdmin
+      .from("leads")
+      .insert({
+        ...leadPayload,
+        contact_id: contactId
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating lead from voice:", error);
+      return null;
+    }
+
+    console.log(`✅ [VOICE AI] Created lead: ${lead.id} - ${leadPayload.title}`);
+    return lead;
+
+  } catch (error) {
+    console.error("Create lead from voice error:", error);
+    return null;
+  }
+}
+
+// Generate follow-up steps for newly created voice lead
+function generateLeadFollowUpSteps(leadData: any): string[] {
+  const steps: string[] = [];
+  
+  if (!leadData.email && !leadData.phone) {
+    steps.push('📞 Collect contact information (email or phone)');
+  }
+  
+  if (!leadData.vehicleInterest) {
+    steps.push('🚗 Determine specific vehicle preferences');
+  } else {
+    steps.push(`🔍 Show inventory matching: ${leadData.vehicleInterest}`);
+  }
+  
+  if (!leadData.budget && !leadData.budgetRange) {
+    steps.push('💰 Discuss budget and financing options');
+  }
+  
+  if (!leadData.timeframe) {
+    steps.push('📅 Establish purchase timeline');
+  }
+  
+  if (leadData.tradeIn) {
+    steps.push(`🔄 Schedule trade-in appraisal for: ${leadData.tradeIn}`);
+  }
+  
+  steps.push('📋 Schedule in-person appointment or test drive');
+  
+  return steps;
+}
+
+// Generate conversation suggestions for voice AI
+function generateConversationSuggestions(leadData: any, inventoryMatches?: any): string[] {
+  const suggestions: string[] = [];
+  
+  if (inventoryMatches?.internal?.length > 0) {
+    suggestions.push(`"Great news! We have ${inventoryMatches.internal.length} ${leadData.vehicleInterest || 'vehicles'} in stock that match your criteria."`);
+    suggestions.push(`"Would you like me to tell you about our ${inventoryMatches.internal[0].name} that's priced at $${inventoryMatches.internal[0].price.toLocaleString()}?"`);
+  }
+  
+  if (inventoryMatches?.external?.length > 0) {
+    suggestions.push(`"I can also help you find similar vehicles from our network of dealers if you'd like more options."`);
+  }
+  
+  if (leadData.budget) {
+    suggestions.push(`"Based on your budget of ${leadData.budget}, I can show you several financing options that would work well."`);
+  }
+  
+  if (leadData.tradeIn) {
+    suggestions.push(`"For your ${leadData.tradeIn} trade-in, I can arrange a quick appraisal to give you an accurate value."`);
+  }
+  
+  suggestions.push(`"When would be the best time for you to come in for a test drive?"`);
+  suggestions.push(`"I'll make sure to have all the information ready for your visit."`);
+  
+  return suggestions;
+}
+
 // Helper function to parse vehicle information from text
 function parseVehicleInfo(text: string): any {
   const yearMatch = text.match(/(19|20)\d{2}/);
@@ -959,6 +1211,31 @@ function parseUserIntent(message: string): {
     }
   }
 
+  // VOICE LEAD CREATION: Lead creation from conversation patterns
+  const leadCreationPatterns = [
+    /(?:create|add|new)\s+lead\s+(?:for\s+)?([a-zA-Z\s]+)/i,
+    /(?:I\s+have\s+a\s+)?(?:customer|client|lead)\s+(?:named|called)?\s+([a-zA-Z\s]+)/i,
+    /(?:customer|client)\s+(?:is\s+)?interested\s+in\s+([a-zA-Z0-9\s]+)/i,
+    /(?:someone|customer)\s+(?:wants|needs|looking\s+for)\s+([a-zA-Z0-9\s]+)/i,
+    /(?:potential\s+buyer|prospect)\s+(?:for\s+)?([a-zA-Z\s]*)/i,
+    /(?:I\s+spoke\s+with|talked\s+to)\s+([a-zA-Z\s]+)\s+(?:about|regarding)/i,
+    /(?:phone\s+call|conversation)\s+(?:with|from)\s+([a-zA-Z\s]+)/i,
+    /(?:lead\s+from|inquiry\s+from)\s+([a-zA-Z\s]+)/i
+  ];
+
+  for (const pattern of leadCreationPatterns) {
+    const match = normalizedMessage.match(pattern);
+    if (match) {
+      return {
+        intent: 'voice_lead_creation',
+        searchTerm: match[1]?.trim() || '',
+        entityType: 'lead_creation',
+        requiresContext: true,
+        requiresExternal: false
+      };
+    }
+  }
+
   // Default to general query
   return {
     intent: 'general_query',
@@ -1059,6 +1336,12 @@ export async function POST(req: NextRequest) {
               searchResults = await getCustomerBehaviorAnalytics(customerSearch[0].id, user.organizationId);
             }
             break;
+
+          case 'voice_lead_creation':
+            console.log(`🎤 [VOICE AI] Processing lead creation from voice: "${message}"`);
+            // Parse lead information from voice conversation and create lead
+            searchResults = await processVoiceLeadCreation(message, user.organizationId, conversationHistory);
+            break;
         }
       }
     }
@@ -1081,6 +1364,7 @@ export async function POST(req: NextRequest) {
       - 🎯 PREMIUM: Predictive Deal Intelligence with close probability scoring
       - 🧠 PREMIUM: Customer Behavior Analytics with AI personality mapping
       - 🔍 PREMIUM: Competitive Market Intelligence with real-time pricing
+      - 🎤 NEW: Voice-Powered Lead Creation with AI conversation parsing
 
       📋 COMPREHENSIVE CRM ACCESS - You have direct access to:
       ✅ LEADS SYSTEM - Search, filter, analyze lead pipeline
@@ -1095,6 +1379,7 @@ export async function POST(req: NextRequest) {
       ✅ 🎯 PREMIUM: Deal Intelligence - Predictive scoring and risk assessment
       ✅ 🧠 PREMIUM: Behavior Analytics - Customer personality and buying patterns
       ✅ 🔍 PREMIUM: Market Intelligence - Competitive analysis and pricing strategy
+      ✅ 🎤 NEW: Voice Lead Creation - AI-powered conversation parsing and lead generation
 
       🌐 INTELLIGENT VEHICLE SOURCING - NEW CAPABILITIES:
       ✅ EXTERNAL INVENTORY SEARCH - Real-time web search for vehicles when internal inventory is limited
@@ -1105,9 +1390,10 @@ export async function POST(req: NextRequest) {
       ✅ REAL DEALERSHIP DATA - No more fake or hallucinated information
 
       ⚡ INTELLIGENT ACTION EXECUTION:
-      - Lead Management: Find, qualify, score, assign leads instantly
+      - Lead Management: Find, qualify, score, assign leads instantly + Voice lead creation
       - Deal Tracking: Monitor automotive sales pipeline, financing status
       - Inventory Control: Search vehicles, check availability, pricing (internal + external)
+      - Voice AI Lead Creation: Automatically create leads from voice conversations with customer information parsing
       - Vehicle Sourcing: Locate vehicles from external sources when needed
       - Market Analysis: Real-time automotive market data and trends
       - Appointment Scheduling: View, book, manage calendar events
@@ -1118,6 +1404,7 @@ export async function POST(req: NextRequest) {
       - 🎯 PREMIUM: Predictive Deal Intelligence with close probability and risk factors
       - 🧠 PREMIUM: Customer Behavior Analysis with personality mapping and buying patterns
       - 🔍 PREMIUM: Competitive Market Intelligence with pricing strategy recommendations
+      - 🎤 VOICE AI: Automatic Lead Creation from voice conversations with intelligent parsing
 
       🎨 RESPONSE FORMATTING GUIDELINES - CRITICAL FOR READABILITY:
       
@@ -1209,6 +1496,8 @@ export async function POST(req: NextRequest) {
       - ALWAYS use real data when available (never use placeholders or fake information)
       - When internal inventory is limited, automatically search external sources
       - Clearly distinguish between your dealership's inventory and external market options
+      - For VOICE LEAD CREATION: Automatically detect and parse customer information from conversations
+      - VOICE AI: Create leads immediately when customer details are mentioned in conversation
       - Use emojis and visual separators for better readability
       - Keep information scannable with clear sections
       - Use bold text for important values like prices and names
@@ -1217,6 +1506,15 @@ export async function POST(req: NextRequest) {
       - Use consistent formatting patterns for similar data types
       - Make key information stand out visually
       - Provide intelligent recommendations based on market data
+      - CELEBRATE successful lead creation and guide toward next steps
+
+      🎤 VOICE LEAD CREATION CAPABILITIES:
+      - Automatically detect when users mention customer information in conversation
+      - Parse names, phone numbers, emails, and vehicle preferences from natural speech
+      - Create leads in real-time from voice conversations without manual entry
+      - Suggest matching vehicles from inventory based on customer interests
+      - Generate follow-up conversation suggestions for better customer engagement
+      - Provide next steps for newly created leads (appointments, test drives, etc.)
 
       🚗 AUTOMOTIVE DEALERSHIP SPECIALIZATION:
       - Vehicle sales pipeline management with external sourcing
@@ -1227,8 +1525,9 @@ export async function POST(req: NextRequest) {
       - Customer retention programs
       - Regulatory compliance tracking
       - Real-time market intelligence and competitive analysis
+      - Voice-powered lead capture and qualification
 
-      CRITICAL: You are NOT just answering questions - you are EXECUTING ACTIONS and providing REAL DATA from both internal CRM systems AND external automotive market sources. Never hallucinate or make up dealership information - always use real search results or clearly indicate when data is not available.`
+      CRITICAL: You are NOT just answering questions - you are EXECUTING ACTIONS and providing REAL DATA from both internal CRM systems AND external automotive market sources. You can also CREATE LEADS automatically when customer information is mentioned in voice conversations. Never hallucinate or make up dealership information - always use real search results or clearly indicate when data is not available.`
       
       : `You are an intelligent AI assistant for Ghost CRM, the most advanced automotive dealership management system. Since the user is not authenticated, showcase our comprehensive capabilities:
 
@@ -1480,6 +1779,73 @@ export async function POST(req: NextRequest) {
       IMPORTANT: Present this REAL ANALYTICS DATA in a clear dashboard format with visual hierarchy and insights.`;
           }
           break;
+
+        case 'voice_lead_creation':
+          if (searchResults) {
+            if (searchResults.success && searchResults.lead) {
+              systemContext += `
+
+      🎤 VOICE LEAD CREATION SUCCESS - Real lead created from conversation:
+      
+      **✅ NEW LEAD CREATED**
+      
+      **👤 ${searchResults.lead.title}**
+      📧 ${searchResults.leadData.email || 'No email'} | 📱 ${searchResults.leadData.phone || 'No phone'}
+      🏢 ${searchResults.leadData.company || 'No company listed'}
+      
+      **📊 LEAD DETAILS**
+      💰 Budget: **${searchResults.leadData.budgetRange || searchResults.leadData.budget || 'Not specified'}**
+      🚗 Vehicle Interest: **${searchResults.leadData.vehicleInterest || 'Not specified'}**
+      ⏰ Timeframe: **${searchResults.leadData.timeframe || 'Not specified'}**
+      🎯 Priority: **${searchResults.leadData.priority || 'medium'}** | 📊 Score: **${searchResults.leadData.leadScore || 50}**
+      
+      **📝 NOTES**
+      ${searchResults.leadData.notes || 'Created from voice conversation'}
+      
+      **⚡ NEXT STEPS**
+      ${searchResults.nextSteps?.map((step: string) => step).join('\n') || ''}
+      
+      **💬 CONVERSATION SUGGESTIONS**
+      ${searchResults.conversationSuggestions?.map((suggestion: string) => `"${suggestion}"`).join('\n') || ''}`;
+
+              // Add inventory matches if available
+              if (searchResults.inventoryMatches?.internal?.length > 0) {
+                systemContext += `
+      
+      **🚗 MATCHING INVENTORY**
+      ${searchResults.inventoryMatches.internal.slice(0, 3).map((item: any, index: number) => `
+      🚗 **${item.brand} ${item.model} ${item.year}** - $${item.price.toLocaleString()}`).join('\n')}`;
+              }
+
+              systemContext += `
+
+      IMPORTANT: Present this SUCCESSFUL LEAD CREATION with celebration and next steps. Guide the conversation toward scheduling an appointment or providing more vehicle information.`;
+            } else {
+              systemContext += `
+
+      🎤 VOICE LEAD CREATION ATTEMPT - Need more information:
+      
+      **❌ LEAD CREATION INCOMPLETE**
+      
+      **⚠️ ISSUE:** ${searchResults.error || 'Unable to extract sufficient lead information'}
+      
+      **💡 SUGGESTION:** ${searchResults.suggestion || 'Please provide at least a name and contact information'}
+      
+      **🔍 WHAT I HEARD:**
+      • Raw conversation analyzed
+      • Attempted to extract lead data
+      • Need clearer customer information
+      
+      **⚡ NEXT ACTIONS**
+      • Ask for customer's full name
+      • Request email or phone number
+      • Clarify vehicle preferences
+      • Determine budget and timeline
+      
+      IMPORTANT: Politely ask for the missing information needed to create the lead. Be conversational and helpful.`;
+            }
+          }
+          break;
       }
     }
 
@@ -1596,6 +1962,14 @@ export async function POST(req: NextRequest) {
           if (searchResults) {
             responseData.behaviorResults = searchResults;
             responseData.hasBehaviorData = true;
+          }
+          break;
+
+        case 'voice_lead_creation':
+          if (searchResults) {
+            responseData.voiceLeadResults = searchResults;
+            responseData.hasVoiceLeadData = true;
+            responseData.leadCreated = searchResults.success || false;
           }
           break;
       }

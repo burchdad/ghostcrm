@@ -108,6 +108,41 @@ ${t('ai_assistant.guest_help', 'features')}`;
   const voiceSubmitLock = useRef(false);
   const shouldBeListeningRef = useRef(false);
 
+  // Realtime voice chat functionality (WebRTC mode) - MOVED UP
+  const {
+    isConnected: isRealtimeConnected,
+    isListening: isRealtimeListening,
+    isSpeaking: isRealtimeSpeaking,
+    isSupported: isRealtimeSupported,
+    transcript: realtimeTranscript,
+    connectionStatus,
+    error: realtimeError,
+    connect: connectRealtime,
+    disconnect: disconnectRealtime,
+    startListening: startRealtimeListening,
+    stopListening: stopRealtimeListening,
+    sendMessage: sendRealtimeMessage,
+    interrupt: interruptRealtime
+  } = useRealtimeVoice({
+    onTranscriptChange: (transcript) => {
+      if (isRealtimeMode) {
+        setInputMessage(transcript);
+      }
+    },
+    onResponse: (response) => {
+      // Handle streaming response from realtime API
+      console.log('🚀 Realtime response:', response);
+    },
+    onError: (error) => {
+      console.error('Realtime voice error:', error);
+      setVoiceError(error);
+      setTimeout(() => setVoiceError(null), 5000);
+    },
+    onConnectionChange: (status) => {
+      console.log('🔗 Connection status:', status);
+    }
+  });
+
   // Browser voice chat functionality (legacy mode)
   const {
     isListening: isBrowserListening,
@@ -202,39 +237,6 @@ ${t('ai_assistant.guest_help', 'features')}`;
   const currentError = realtimeError || voiceError;
 
   // Clear messages when modal opens - no default welcome message in production
-  const {
-    isConnected: isRealtimeConnected,
-    isListening: isRealtimeListening,
-    isSpeaking: isRealtimeSpeaking,
-    isSupported: isRealtimeSupported,
-    transcript: realtimeTranscript,
-    connectionStatus,
-    error: realtimeError,
-    connect: connectRealtime,
-    disconnect: disconnectRealtime,
-    startListening: startRealtimeListening,
-    stopListening: stopRealtimeListening,
-    sendMessage: sendRealtimeMessage,
-    interrupt: interruptRealtime
-  } = useRealtimeVoice({
-    onTranscriptChange: (transcript) => {
-      if (isRealtimeMode) {
-        setInputMessage(transcript);
-      }
-    },
-    onResponse: (response) => {
-      // Handle streaming response from realtime API
-      console.log('🚀 Realtime response:', response);
-    },
-    onError: (error) => {
-      console.error('Realtime voice error:', error);
-      setVoiceError(error);
-      setTimeout(() => setVoiceError(null), 5000);
-    },
-    onConnectionChange: (status) => {
-      console.log('🔗 Connection status:', status);
-    }
-  });
   useEffect(() => {
     if (isOpen) {
       setMessages([]);
@@ -602,8 +604,8 @@ ${t('ai_assistant.guest_help', 'features')}`;
                 <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-3"></div>
                 <div>
                   <p className="text-sm font-medium text-red-800">Listening for voice input...</p>
-                  {transcript && (
-                    <p className="text-xs text-red-600 mt-1">"{transcript}"</p>
+                  {currentTranscript && (
+                    <p className="text-xs text-red-600 mt-1">"{currentTranscript}"</p>
                   )}
                 </div>
               </div>
