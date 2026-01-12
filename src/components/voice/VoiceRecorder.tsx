@@ -265,62 +265,95 @@ export default function VoiceRecorder({
     }
   };
 
-  const playRecording = async () => {
-    const audioEl = audioRef.current;
-    if (!audioEl || !recordedBlobRef.current) {
-      console.error('❌ No audio element or recording blob available');
+  // ChatGPT's unified playback function - works for both UI and debug buttons
+  const playAudio = async (source: 'ui' | 'debug' = 'ui') => {
+    if (!recordedBlobRef.current) {
+      console.error('❌ No recording blob available');
       return;
     }
 
+    console.log(`🔊 ${source} playback started:`, {
+      blobSize: recordedBlobRef.current.size,
+      blobType: recordedBlobRef.current.type,
+      audioRef: !!audioRef.current
+    });
+
+    const url = URL.createObjectURL(recordedBlobRef.current);
+    console.log('🔗 Blob URL:', url);
+
     try {
-      // ChatGPT's bulletproof playback setup - Always refresh the src
-      const url = URL.createObjectURL(recordedBlobRef.current);
-      audioEl.src = url;
-      audioEl.currentTime = 0;
-      
-      // ChatGPT's Fix #5: Ensure audio element is not muted and has volume
-      audioEl.muted = false;
-      audioEl.volume = 1;
-      audioEl.load();
-      
-      console.log('🔊 About to play:', {
-        audioSrc: audioEl.src,
-        readyState: audioEl.readyState,
-        blobSize: recordedBlobRef.current.size,
-        blobType: recordedBlobRef.current.type,
-        muted: audioEl.muted,
-        volume: audioEl.volume,
-        paused: audioEl.paused
-      });
-      
-      // ChatGPT's Fix #4: Don't block playback on setSinkId failure
-      try {
-        if (selectedSpeakerId && (audioEl as any).setSinkId) {
-          await (audioEl as any).setSinkId(selectedSpeakerId);
-          console.log('✅ Audio output set to:', selectedSpeakerId);
+      // Try UI audio element first if available and requested
+      if (source === 'ui' && audioRef.current) {
+        const audioEl = audioRef.current;
+        
+        // ChatGPT's bulletproof setup
+        audioEl.src = url;
+        audioEl.currentTime = 0;
+        audioEl.muted = false;
+        audioEl.volume = 1;
+        audioEl.load();
+        
+        console.log('🔊 UI Audio Element State:', {
+          src: audioEl.src,
+          readyState: audioEl.readyState,
+          muted: audioEl.muted,
+          volume: audioEl.volume,
+          paused: audioEl.paused
+        });
+        
+        // Non-blocking setSinkId
+        try {
+          if (selectedSpeakerId && (audioEl as any).setSinkId) {
+            await (audioEl as any).setSinkId(selectedSpeakerId);
+            console.log('✅ Audio output set to:', selectedSpeakerId);
+          }
+        } catch (e) {
+          console.warn('⚠️ setSinkId failed, using default output:', e);
         }
-      } catch (e) {
-        console.warn('⚠️ setSinkId failed, using default output:', e);
+        
+        await audioEl.play();
+        setIsPlaying(true);
+        console.log('✅ UI audio playback started successfully');
+        return;
       }
       
-      await audioEl.play();
-      setIsPlaying(true);
-      console.log('✅ UI audio playback started successfully');
+      // Fallback: Direct Audio object (like debug button)
+      console.log('🔄 Using direct Audio fallback...');
+      const directAudio = new Audio(url);
+      directAudio.onplay = () => {
+        console.log('✅ Direct audio started');
+        setIsPlaying(true);
+      };
+      directAudio.onerror = (e) => console.error('❌ Direct audio error', e);
+      directAudio.onended = () => {
+        console.log('✅ Direct audio ended');
+        setIsPlaying(false);
+      };
+      
+      await directAudio.play();
+      console.log('✅ Direct audio play successful');
+      
     } catch (error) {
       console.error('❌ Playback failed:', error);
       setError(`Playback failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
-      // ChatGPT's fallback approach - use direct Audio like debug button
-      console.log('🔄 Attempting fallback playback...');
-      try {
-        const url = URL.createObjectURL(recordedBlobRef.current);
-        const fallbackAudio = new Audio(url);
-        await fallbackAudio.play();
-        console.log('✅ Fallback audio playback successful');
-      } catch (fallbackError) {
-        console.error('❌ Fallback playback also failed:', fallbackError);
+      // Ultimate fallback if UI method fails
+      if (source === 'ui') {
+        console.log('🔄 Retrying with direct Audio method...');
+        try {
+          const fallbackAudio = new Audio(url);
+          await fallbackAudio.play();
+          console.log('✅ Fallback direct audio successful');
+        } catch (fallbackError) {
+          console.error('❌ All playback methods failed:', fallbackError);
+        }
       }
     }
+  };
+
+  const playRecording = () => {
+    console.log('🟢 Play Recording button clicked');
+    playAudio('ui');
   };
 
   const pausePlayback = () => {
@@ -379,32 +412,9 @@ export default function VoiceRecorder({
     await forceRefreshDevices();
   };
 
-  // ChatGPT's bulletproof playback debug function
-  const debugPlayback = async () => {
-    if (!recordedBlobRef.current) {
-      console.log('❌ No recording blob available for debug');
-      return;
-    }
-
-    console.log('🧪 Playback Debug:', {
-      size: recordedBlobRef.current?.size,
-      type: recordedBlobRef.current?.type,
-    });
-
-    const url = URL.createObjectURL(recordedBlobRef.current);
-    console.log('🔗 Blob URL:', url);
-
-    const test = new Audio(url);
-    test.onplay = () => console.log('✅ Audio started');
-    test.onerror = (e) => console.error('❌ Audio error', e);
-    test.onended = () => console.log('✅ Audio ended');
-
-    try {
-      await test.play();
-      console.log('✅ Direct audio play successful');
-    } catch (e) {
-      console.error('❌ Direct audio play failed:', e);
-    }
+  const debugPlayback = () => {
+    console.log('🧪 Debug Playback button clicked');
+    playAudio('debug');
   };
 
   const getSelectedDeviceLabel = (type: 'mic' | 'speaker') => {
@@ -689,22 +699,23 @@ export default function VoiceRecorder({
             
             <div style={styles.playbackControls}>
               {!isPlaying ? (
-                <button onClick={playRecording} style={styles.playButton}>
+                <button type="button" onClick={playRecording} style={styles.playButton}>
                   <FiPlay style={styles.buttonIcon} />
                   Play Recording
                 </button>
               ) : (
-                <button onClick={pausePlayback} style={styles.playButton}>
+                <button type="button" onClick={pausePlayback} style={styles.playButton}>
                   <FiPause style={styles.buttonIcon} />
                   Pause
                 </button>
               )}
               
-              <button onClick={debugPlayback} style={{ ...styles.playButton, backgroundColor: '#10b981', fontSize: '14px', padding: '8px 16px' }}>
+              <button type="button" onClick={debugPlayback} style={{ ...styles.playButton, backgroundColor: '#10b981', fontSize: '14px', padding: '8px 16px' }}>
                 🧪 Debug Playback
               </button>
               
               <button 
+                type="button"
                 onClick={() => {
                   if (recordedBlobRef.current && audioRef.current) {
                     // Force reload audio element as fallback
