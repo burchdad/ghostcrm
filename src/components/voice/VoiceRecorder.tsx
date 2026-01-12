@@ -26,6 +26,7 @@ export default function VoiceRecorder({
   const [selectedMicId, setSelectedMicId] = useState<string>('');
   const [selectedSpeakerId, setSelectedSpeakerId] = useState<string>('');
   const [showDeviceSelector, setShowDeviceSelector] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   
   // Use the comprehensive device management hook
   const { 
@@ -49,6 +50,52 @@ export default function VoiceRecorder({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const recordedBlobRef = useRef<Blob | null>(null);
+
+  useEffect(() => {
+    // Create/update URL whenever recording blob changes
+    if (!recordedBlobRef.current) {
+      setAudioUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(recordedBlobRef.current);
+    setAudioUrl(url);
+    console.log('🔗 Audio URL created:', url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+      console.log('🗑️ Audio URL revoked:', url);
+    };
+  }, [hasRecording]); // Trigger when hasRecording changes (new recording available)
+
+  // Keep UI state in sync with actual playback
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+
+    const onPlay = () => {
+      console.log('▶️ Audio element play event');
+      setIsPlaying(true);
+    };
+    const onPause = () => {
+      console.log('⏸️ Audio element pause event');
+      setIsPlaying(false);
+    };
+    const onEnded = () => {
+      console.log('✅ Audio element ended event');
+      setIsPlaying(false);
+    };
+
+    el.addEventListener('play', onPlay);
+    el.addEventListener('pause', onPause);
+    el.addEventListener('ended', onEnded);
+
+    return () => {
+      el.removeEventListener('play', onPlay);
+      el.removeEventListener('pause', onPause);
+      el.removeEventListener('ended', onEnded);
+    };
+  }, []);
 
   useEffect(() => {
     // Auto-select preferred devices when they become available
@@ -180,20 +227,13 @@ export default function VoiceRecorder({
         setIsRecording(false);
         setAudioLevel(0);
         
-        // ChatGPT's bulletproof audio setup
-        if (audioRef.current) {
-          const audioUrl = URL.createObjectURL(audioBlob);
-          audioRef.current.src = audioUrl;
-          audioRef.current.currentTime = 0;
-          audioRef.current.load();
-          
-          console.log('🎵 Audio Recording Complete:', {
-            recorderMimeType: mediaRecorder.mimeType,
-            blobType: audioBlob.type,
-            blobSize: audioBlob.size,
-            audioSrc: audioUrl
-          });
-        }
+        console.log('🎵 Audio Recording Complete:', {
+          recorderMimeType: mediaRecorder.mimeType,
+          blobType: audioBlob.type,
+          blobSize: audioBlob.size
+        });
+        
+        // Note: audioUrl will be created by useEffect when hasRecording changes
       };
       
       mediaRecorder.start(100);
@@ -373,10 +413,11 @@ export default function VoiceRecorder({
   };
 
   const pausePlayback = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    }
+    console.log('⏸️ Pause button clicked');
+    const el = audioRef.current;
+    if (!el) return;
+    el.pause();
+    // Note: setIsPlaying will be handled by audio element event listener
   };
 
   const handleUpload = () => {
@@ -715,7 +756,7 @@ export default function VoiceRecorder({
                   Play Recording
                 </button>
               ) : (
-                <button type="button" onClick={pausePlayback} style={styles.playButton}>
+                <button type="button" onClick={pauseRecording} style={styles.playButton}>
                   <FiPause style={styles.buttonIcon} />
                   Pause
                 </button>
