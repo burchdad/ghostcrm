@@ -85,6 +85,7 @@ ${t('ai_assistant.guest_help', 'features')}`;
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const voiceSubmitLock = useRef(false);
 
   // Voice chat functionality with custom settings
   const {
@@ -103,10 +104,25 @@ ${t('ai_assistant.guest_help', 'features')}`;
       }
     },
     onSpeechEnd: (finalTranscript) => {
-      if (voiceInputMode && finalTranscript.trim()) {
-        sendMessage(finalTranscript, true);
-        setVoiceInputMode(false);
+      console.log('🎤 PAGE onSpeechEnd:', finalTranscript, 'voiceInputMode:', voiceInputMode);
+      
+      if (!finalTranscript.trim()) return;
+      if (voiceSubmitLock.current) {
+        console.log('🔒 Voice submit locked, ignoring duplicate');
+        return;
       }
+      if (!voiceInputMode) {
+        console.log('⚠️ Not in voice input mode, ignoring');
+        return;
+      }
+
+      voiceSubmitLock.current = true;
+      sendMessage(finalTranscript, true).finally(() => {
+        voiceSubmitLock.current = false;
+      });
+      
+      setVoiceInputMode(false);
+      stopListening(); // Clean stop after submission
     },
     onError: (error) => {
       console.error('Voice error:', error);
@@ -163,7 +179,7 @@ ${t('ai_assistant.guest_help', 'features')}`;
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          message: inputMessage,
+          message: messageContent, // Fixed: use messageContent instead of inputMessage
           isAuthenticated,
           currentPage,
           pageContext: getPageSpecificHelp(currentPage),

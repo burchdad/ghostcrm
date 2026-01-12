@@ -50,6 +50,16 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
   const recognitionRef = useRef<any>(null);
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  
+  // Refs to prevent stale closures
+  const onTranscriptChangeRef = useRef(onTranscriptChange);
+  const onSpeechEndRef = useRef(onSpeechEnd);
+  const onErrorRef = useRef(onError);
+
+  // Update callback refs to prevent stale closures
+  useEffect(() => { onTranscriptChangeRef.current = onTranscriptChange; }, [onTranscriptChange]);
+  useEffect(() => { onSpeechEndRef.current = onSpeechEnd; }, [onSpeechEnd]);
+  useEffect(() => { onErrorRef.current = onError; }, [onError]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -141,17 +151,18 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
         confidence: event.results[event.results.length - 1][0].confidence || 0
       }));
 
-      onTranscriptChange?.(currentTranscript);
+      onTranscriptChangeRef.current?.(currentTranscript);
 
       if (finalTranscript) {
-        onSpeechEnd?.(finalTranscript);
+        console.log('🎤 Final transcript received:', finalTranscript);
+        onSpeechEndRef.current?.(finalTranscript);
         setVoiceState(prev => ({ ...prev, transcript: '' }));
       }
     };
 
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error);
-      onError?.(event.error);
+      onErrorRef.current?.(event.error);
       setVoiceState(prev => ({ ...prev, isListening: false }));
     };
 
@@ -160,7 +171,7 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
     };
 
     return recognition;
-  }, [continuous, language, onTranscriptChange, onSpeechEnd, onError]);
+  }, [continuous, language]);
 
   // Start listening
   const startListening = useCallback(async () => {
@@ -248,18 +259,25 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
       return;
     }
 
-    if (!recognitionRef.current) {
-      recognitionRef.current = initializeRecognition();
+    // Always recreate recognition to capture latest callbacks/state
+    if (recognitionRef.current) {
+      try { 
+        recognitionRef.current.stop(); 
+        console.log('🔇 Stopped existing recognition');
+      } catch {}
+      recognitionRef.current = null;
     }
+    
+    recognitionRef.current = initializeRecognition();
 
     if (recognitionRef.current && !voiceState.isListening) {
       try {
-        console.log('🗣️ Starting speech recognition...');
+        console.log('🗣️ Starting speech recognition with fresh callbacks...');
         recognitionRef.current.start();
         console.log('✅ Speech recognition started');
       } catch (error: any) {
         console.error('❌ Failed to start recognition:', error);
-        onError?.(`Speech recognition failed: ${error.message}`);
+        onErrorRef.current?.(`Speech recognition failed: ${error.message}`);
       }
     }
   }, [voiceState.isSupported, voiceState.isListening, initializeRecognition, onError]);
