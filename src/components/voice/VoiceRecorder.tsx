@@ -36,6 +36,7 @@ export default function VoiceRecorder({
     requestMicPermission, 
     refreshDevices,
     forceRefreshDevices,
+    testBasicMicrophone,
     getPreferredMic,
     getPreferredSpeaker
   } = useAudioDevices();
@@ -379,7 +380,7 @@ export default function VoiceRecorder({
                   <button onClick={refreshDevicesHandler} style={styles.errorRetryButton}>
                     🔄 Force Scan Devices
                   </button>
-                  <button onClick={refreshDevicesHandler} style={{...styles.errorRetryButton, backgroundColor: '#10b981'}}>
+                  <button onClick={testBasicMicrophone} style={{...styles.errorRetryButton, backgroundColor: '#10b981'}}>
                     🧪 Test Direct Access
                   </button>
                   <div style={styles.errorHint}>
