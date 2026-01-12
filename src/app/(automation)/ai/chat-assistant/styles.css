@@ -79,6 +79,20 @@
   color: #2563eb;
 }
 
+.ai-voice-error {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 8px;
+}
+
+.ai-voice-error-text {
+  color: #dc2626;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
 .ai-voice-status-dot {
   width: 0.5rem;
   height: 0.5rem;

@@ -73,6 +73,7 @@ ${t('ai_assistant.guest_help', 'features')}`;
   const [voiceInputMode, setVoiceInputMode] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>({
     voice: 'default',
     rate: 1,
@@ -109,7 +110,10 @@ ${t('ai_assistant.guest_help', 'features')}`;
     },
     onError: (error) => {
       console.error('Voice error:', error);
+      setVoiceError(typeof error === 'string' ? error : 'Voice input failed. Please try again.');
       setVoiceInputMode(false);
+      // Clear error after 5 seconds
+      setTimeout(() => setVoiceError(null), 5000);
     },
     language: voiceSettings.language,
     continuous: true
@@ -208,12 +212,19 @@ ${t('ai_assistant.guest_help', 'features')}`;
   };
 
   // Voice control handlers
-  const handleVoiceInput = () => {
+  const handleVoiceInput = async () => {
     if (isSpeaking) {
       stopSpeaking();
     }
+    setVoiceError(null);
     setVoiceInputMode(true);
-    startListening();
+    try {
+      await startListening();
+    } catch (error) {
+      console.error('Failed to start voice input:', error);
+      setVoiceError('Failed to start voice input. Please check your microphone permissions.');
+      setVoiceInputMode(false);
+    }
   };
 
   const handleStopVoice = () => {
@@ -407,6 +418,25 @@ ${t('ai_assistant.guest_help', 'features')}`;
                 onClick={handleStopVoice}
                 className="text-red-600 hover:text-red-800 p-1"
                 title="Stop voice input"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Voice Error Alert */}
+        {voiceError && (
+          <div className="px-4 py-2 bg-red-50 border-t border-red-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+                <p className="text-sm font-medium text-red-800">{voiceError}</p>
+              </div>
+              <button
+                onClick={() => setVoiceError(null)}
+                className="text-red-600 hover:text-red-800 p-1"
+                title="Dismiss error"
               >
                 <X className="w-4 h-4" />
               </button>

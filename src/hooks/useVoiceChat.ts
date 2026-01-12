@@ -106,7 +106,7 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
   }, [continuous, language, onTranscriptChange, onSpeechEnd, onError]);
 
   // Start listening
-  const startListening = useCallback(() => {
+  const startListening = useCallback(async () => {
     if (!voiceState.isSupported) {
       onError?.('Speech recognition not supported');
       return;
@@ -118,6 +118,19 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
       setVoiceState(prev => ({ ...prev, isSpeaking: false }));
     }
 
+    // Request microphone permission first
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Stop the stream immediately - we just needed the permission
+      stream.getTracks().forEach(track => track.stop());
+      
+      console.log('Microphone permission granted for speech recognition');
+    } catch (error) {
+      console.error('Microphone permission denied:', error);
+      onError?.('Microphone permission is required for voice input. Please allow microphone access and try again.');
+      return;
+    }
+
     if (!recognitionRef.current) {
       recognitionRef.current = initializeRecognition();
     }
@@ -125,6 +138,7 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
     if (recognitionRef.current && !voiceState.isListening) {
       try {
         recognitionRef.current.start();
+        console.log('Speech recognition started');
       } catch (error) {
         console.error('Failed to start recognition:', error);
         onError?.(error);

@@ -18,6 +18,7 @@ export default function ChatAssistantPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [voiceInputMode, setVoiceInputMode] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Voice chat functionality
@@ -44,7 +45,10 @@ export default function ChatAssistantPage() {
     },
     onError: (error) => {
       console.error('Voice error:', error);
+      setVoiceError(typeof error === 'string' ? error : 'Voice input failed. Please try again.');
       setVoiceInputMode(false);
+      // Clear error after 5 seconds
+      setTimeout(() => setVoiceError(null), 5000);
     }
   });
 
@@ -118,12 +122,19 @@ export default function ChatAssistantPage() {
   };
 
   // Voice control handlers
-  const handleVoiceInput = () => {
+  const handleVoiceInput = async () => {
     if (isSpeaking) {
       stopSpeaking();
     }
+    setVoiceError(null);
     setVoiceInputMode(true);
-    startListening();
+    try {
+      await startListening();
+    } catch (error) {
+      console.error('Failed to start voice input:', error);
+      setVoiceError('Failed to start voice input. Please check your microphone permissions.');
+      setVoiceInputMode(false);
+    }
   };
 
   const handleStopVoice = () => {
@@ -164,6 +175,13 @@ export default function ChatAssistantPage() {
                   Auto-speak responses
                 </label>
               </div>
+              
+              {/* Voice Error Display */}
+              {voiceError && (
+                <div className="ai-voice-error">
+                  <span className="ai-voice-error-text">{voiceError}</span>
+                </div>
+              )}
               
               {(isListening || isSpeaking) && (
                 <div className="ai-voice-status">
