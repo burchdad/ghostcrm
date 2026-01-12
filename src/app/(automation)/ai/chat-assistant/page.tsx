@@ -179,7 +179,39 @@ export default function ChatAssistantPage() {
               {/* Voice Error Display */}
               {voiceError && (
                 <div className="ai-voice-error">
-                  <span className="ai-voice-error-text">{voiceError}</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <span className="ai-voice-error-text">{voiceError}</span>
+                      {voiceError.includes('microphone') && (
+                        <div className="mt-2 text-xs text-red-700">
+                          <p><strong>Troubleshooting:</strong></p>
+                          <p>• Check your headset/microphone connection</p>
+                          <p>• Allow microphone in browser permissions (🔒 icon in address bar)</p>
+                          <p>• Refresh page if no permission prompt appeared</p>
+                          <button
+                            onClick={async () => {
+                              try {
+                                setVoiceError(null);
+                                await navigator.mediaDevices.getUserMedia({ audio: true });
+                                alert('✅ Microphone permission granted! Try voice input again.');
+                              } catch (e: any) {
+                                setVoiceError(`Manual permission failed: ${e.message}`);
+                              }
+                            }}
+                            className="mt-1 px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                          >
+                            Request Permission
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setVoiceError(null)}
+                      className="ml-2 text-red-600 hover:text-red-800"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               )}
               

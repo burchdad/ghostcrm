@@ -431,7 +431,31 @@ ${t('ai_assistant.guest_help', 'features')}`;
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
-                <p className="text-sm font-medium text-red-800">{voiceError}</p>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-800">{voiceError}</p>
+                  {voiceError.includes('microphone') && (
+                    <div className="mt-2 text-xs text-red-700">
+                      <p>💡 <strong>Troubleshooting:</strong></p>
+                      <p>• Make sure your headset/microphone is connected</p>
+                      <p>• Check browser permissions: Click the 🔒 icon in address bar → Allow microphone</p>
+                      <p>• Try refreshing the page if no permission prompt appeared</p>
+                      <button
+                        onClick={async () => {
+                          try {
+                            setVoiceError(null);
+                            await navigator.mediaDevices.getUserMedia({ audio: true });
+                            alert('✅ Microphone permission granted! You can now try voice input again.');
+                          } catch (e: any) {
+                            setVoiceError(`Manual permission failed: ${e.message}`);
+                          }
+                        }}
+                        className="mt-1 px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                      >
+                        Request Permission Manually
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <button
                 onClick={() => setVoiceError(null)}

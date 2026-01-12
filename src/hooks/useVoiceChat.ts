@@ -108,7 +108,7 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
   // Start listening
   const startListening = useCallback(async () => {
     if (!voiceState.isSupported) {
-      onError?.('Speech recognition not supported');
+      onError?.('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
       return;
     }
 
@@ -118,16 +118,60 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
       setVoiceState(prev => ({ ...prev, isSpeaking: false }));
     }
 
-    // Request microphone permission first
+    // Check if we're on HTTPS or localhost
+    const isSecureContext = window.location.protocol === 'https:' || 
+                           window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1';
+    
+    if (!isSecureContext) {
+      onError?.('Microphone access requires a secure connection (HTTPS). Please use HTTPS or localhost for voice input.');
+      return;
+    }
+
+    // Check if getUserMedia is available
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      onError?.('Microphone access is not available in this browser. Please use a modern browser like Chrome or Firefox.');
+      return;
+    }
+
+    // Request microphone permission first with more specific error handling
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Stop the stream immediately - we just needed the permission
-      stream.getTracks().forEach(track => track.stop());
+      console.log('🎤 Requesting microphone permission...');
       
-      console.log('Microphone permission granted for speech recognition');
-    } catch (error) {
-      console.error('Microphone permission denied:', error);
-      onError?.('Microphone permission is required for voice input. Please allow microphone access and try again.');
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
+      
+      console.log('✅ Microphone permission granted');
+      
+      // Stop the stream immediately - we just needed the permission
+      stream.getTracks().forEach(track => {
+        track.stop();
+        console.log('🔇 Stopped microphone track');
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Microphone permission error:', error);
+      
+      let errorMessage = 'Microphone access denied. ';
+      
+      if (error.name === 'NotAllowedError') {
+        errorMessage += 'Please click "Allow" when your browser asks for microphone permission, or check your browser\'s site permissions.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage += 'No microphone found. Please check your headset/microphone connection.';
+      } else if (error.name === 'NotReadableError') {
+        errorMessage += 'Microphone is already in use by another application.';
+      } else if (error.name === 'ConstraintNotSatisfiedError') {
+        errorMessage += 'Microphone constraints could not be satisfied.';
+      } else {
+        errorMessage += `Error: ${error.message || 'Unknown microphone error'}`;
+      }
+      
+      onError?.(errorMessage);
       return;
     }
 
@@ -137,11 +181,12 @@ export const useVoiceChat = (options: UseVoiceChatOptions = {}) => {
 
     if (recognitionRef.current && !voiceState.isListening) {
       try {
+        console.log('🗣️ Starting speech recognition...');
         recognitionRef.current.start();
-        console.log('Speech recognition started');
-      } catch (error) {
-        console.error('Failed to start recognition:', error);
-        onError?.(error);
+        console.log('✅ Speech recognition started');
+      } catch (error: any) {
+        console.error('❌ Failed to start recognition:', error);
+        onError?.(`Speech recognition failed: ${error.message}`);
       }
     }
   }, [voiceState.isSupported, voiceState.isListening, initializeRecognition, onError]);
