@@ -20,14 +20,39 @@ export function useAudioDevices() {
       // Always get fresh device list
       let devices = await navigator.mediaDevices.enumerateDevices();
       
-      console.log('🔍 Raw devices found:', devices.length, devices.map(d => ({ kind: d.kind, label: d.label, deviceId: d.deviceId.slice(0, 20) + '...' })));
+      console.log('🔍 Raw devices found:', devices.length, devices.map(d => ({ 
+        kind: d.kind, 
+        label: d.label || '[empty]', 
+        deviceId: d.deviceId ? d.deviceId.slice(0, 20) + '...' : '[no id]',
+        groupId: d.groupId || '[no group]'
+      })));
       
-      // Filter audio inputs
+      // Log ALL devices by type
       const audioInputDevices = devices.filter(device => device.kind === 'audioinput');
+      const audioOutputDevices = devices.filter(device => device.kind === 'audiooutput');
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      
+      console.log('📊 Device breakdown:', {
+        totalDevices: devices.length,
+        audioInputs: audioInputDevices.length,
+        audioOutputs: audioOutputDevices.length,
+        videoInputs: videoDevices.length,
+        allAudioInputs: audioInputDevices.map(d => ({ label: d.label || '[no label]', id: d.deviceId.slice(0, 15) + '...' })),
+        allAudioOutputs: audioOutputDevices.map(d => ({ label: d.label || '[no label]', id: d.deviceId.slice(0, 15) + '...' }))
+      });
       
       // Check if we have any audio input devices at all
       if (audioInputDevices.length === 0) {
         console.log('❌ No audio input devices detected');
+        console.log('🔧 Browser capabilities:', {
+          mediaDevicesSupported: !!navigator.mediaDevices,
+          enumerateDevicesSupported: !!navigator.mediaDevices?.enumerateDevices,
+          getUserMediaSupported: !!navigator.mediaDevices?.getUserMedia,
+          isSecureContext: window.isSecureContext,
+          protocol: window.location.protocol,
+          hostname: window.location.hostname
+        });
+        
         setMics([]);
         setSpeakers([]);
         setError('No microphone devices detected. Please ensure your headset is connected and try refreshing.');
@@ -234,35 +259,55 @@ export function useAudioDevices() {
         throw new Error('Your browser does not support audio device enumeration');
       }
 
-      // Get initial device list
-      let devices = await navigator.mediaDevices.enumerateDevices();
-      console.log('📋 Raw device enumeration:', devices.map(d => ({
-        kind: d.kind,
-        label: d.label || '[empty]',
-        deviceId: d.deviceId ? 'present' : 'missing'
-      })));
-
-      const audioInputDevices = devices.filter(d => d.kind === 'audioinput');
+      console.log('🧪 Testing direct microphone access...');
       
-      if (audioInputDevices.length === 0) {
-        throw new Error('No audio input devices found. Please ensure your headset is connected and recognized by Windows.');
+      // Try to access microphone directly to test if it exists
+      try {
+        const testStream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          } 
+        });
+        
+        console.log('✅ Direct microphone access successful!');
+        console.log('🎵 Audio tracks found:', testStream.getAudioTracks().map(track => ({
+          label: track.label || '[no label]',
+          kind: track.kind,
+          enabled: track.enabled,
+          readyState: track.readyState,
+          settings: track.getSettings()
+        })));
+        
+        // Stop the test stream
+        testStream.getTracks().forEach(track => track.stop());
+        
+        // Now refresh devices after successful access
+        setHasPermission(true);
+        setTimeout(async () => {
+          await refreshDevices();
+        }, 1000); // Longer delay to allow device labels to populate
+        
+        return;
+        
+      } catch (accessError: any) {
+        console.log('❌ Direct microphone access failed:', accessError);
+        
+        if (accessError.name === 'NotFoundError') {
+          throw new Error('No microphone hardware detected. Please check:\n• Headset is properly connected\n• Device is recognized in Windows Sound Settings\n• Try a different USB port');
+        } else if (accessError.name === 'NotAllowedError') {
+          throw new Error('Microphone permission denied. Please allow microphone access when prompted.');
+        } else {
+          throw new Error(`Microphone access error: ${accessError.message}`);
+        }
       }
 
-      // If we don't have permission, request it to get detailed labels
-      if (!hasPermission) {
-        console.log('🔑 Requesting permission for detailed device labels...');
-        await requestMicPermission();
-        return; // requestMicPermission will trigger a refresh
-      }
-
-      // Regular refresh with current permission
-      await refreshDevices();
-      
     } catch (e: any) {
       console.error('❌ Force refresh failed:', e);
       setError(e.message || 'Failed to scan for devices');
     }
-  }, [hasPermission, requestMicPermission, refreshDevices]);
+  }, [hasPermission, refreshDevices]);
 
   return { 
     hasPermission, 

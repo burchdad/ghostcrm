@@ -374,17 +374,21 @@ export default function VoiceRecorder({
             <FiX style={styles.errorIcon} />
             <div>
               <p>{error}</p>
-              {(error.includes('No microphone') || error.includes('device not found')) && (
+              {(error.includes('No microphone') || error.includes('device not found') || error.includes('No audio input devices')) && (
                 <div style={styles.errorActions}>
                   <button onClick={refreshDevicesHandler} style={styles.errorRetryButton}>
-                    🔄 Scan for Devices
+                    🔄 Force Scan Devices
+                  </button>
+                  <button onClick={refreshDevicesHandler} style={{...styles.errorRetryButton, backgroundColor: '#10b981'}}>
+                    🧪 Test Direct Access
                   </button>
                   <div style={styles.errorHint}>
-                    <strong>Troubleshooting:</strong>
-                    <br/>• Ensure your headset is connected properly
+                    <strong>Your headset works with Spotify, so let's troubleshoot:</strong>
+                    <br/>• Click "🧪 Test Direct Access" to bypass device enumeration
                     <br/>• Check Windows Sound Settings → Recording → Set headset as default
-                    <br/>• Try unplugging and reconnecting your headset
-                    <br/>• Refresh this page after connecting
+                    <br/>• Try using Chrome/Edge browser (better device support)
+                    <br/>• Look at browser console (F12) for detailed device logs
+                    <br/>• Refresh page after connecting headset
                   </div>
                 </div>
               )}
