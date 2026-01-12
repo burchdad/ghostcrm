@@ -35,6 +35,7 @@ export default function VoiceRecorder({
     error: deviceError, 
     requestMicPermission, 
     refreshDevices,
+    forceRefreshDevices,
     getPreferredMic,
     getPreferredSpeaker
   } = useAudioDevices();
@@ -338,7 +339,8 @@ export default function VoiceRecorder({
   };
 
   const refreshDevicesHandler = async () => {
-    await refreshDevices();
+    console.log('🔄 User requested device refresh');
+    await forceRefreshDevices();
   };
 
   const getSelectedDeviceLabel = (type: 'mic' | 'speaker') => {
@@ -370,7 +372,23 @@ export default function VoiceRecorder({
         {error && (
           <div style={styles.error}>
             <FiX style={styles.errorIcon} />
-            <p>{error}</p>
+            <div>
+              <p>{error}</p>
+              {(error.includes('No microphone') || error.includes('device not found')) && (
+                <div style={styles.errorActions}>
+                  <button onClick={refreshDevicesHandler} style={styles.errorRetryButton}>
+                    🔄 Scan for Devices
+                  </button>
+                  <div style={styles.errorHint}>
+                    <strong>Troubleshooting:</strong>
+                    <br/>• Ensure your headset is connected properly
+                    <br/>• Check Windows Sound Settings → Recording → Set headset as default
+                    <br/>• Try unplugging and reconnecting your headset
+                    <br/>• Refresh this page after connecting
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
         
@@ -476,6 +494,21 @@ export default function VoiceRecorder({
                   <div style={styles.statusItem}>
                     <span style={styles.statusIndicator}>🔒</span>
                     Click "Enable Devices" to detect your headset
+                  </div>
+                )}
+                
+                {/* Troubleshooting for headset detection */}
+                {hasPermission && !hasHeadsetConnected() && (
+                  <div style={styles.troubleshootingHint}>
+                    <span style={styles.statusIndicator}>💡</span>
+                    <div>
+                      <div style={styles.hintText}>Headset not detected? Try:</div>
+                      <div style={styles.hintSteps}>
+                        • Unplug and reconnect your headset<br/>
+                        • Refresh devices after connecting<br/>
+                        • Check if headset is set as default recording device
+                      </div>
+                    </div>
                   </div>
                 )}
                 
@@ -968,5 +1001,47 @@ const styles = {
     color: '#6b7280',
     textAlign: 'center' as const,
     margin: '8px 0 0 0'
+  },
+  troubleshootingHint: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    padding: '8px',
+    backgroundColor: '#fef3c7',
+    borderRadius: '4px',
+    fontSize: '11px',
+    color: '#92400e',
+    marginTop: '8px'
+  },
+  hintText: {
+    fontWeight: '600',
+    marginBottom: '4px'
+  },
+  hintSteps: {
+    lineHeight: '1.4'
+  },
+  errorActions: {
+    marginTop: '12px',
+    padding: '12px',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '6px',
+    borderTop: '1px solid #e5e7eb'
+  },
+  errorRetryButton: {
+    display: 'block',
+    margin: '0 auto 12px auto',
+    padding: '8px 16px',
+    backgroundColor: '#3b82f6',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    fontSize: '14px',
+    cursor: 'pointer',
+    fontWeight: '500'
+  },
+  errorHint: {
+    fontSize: '12px',
+    color: '#6b7280',
+    lineHeight: '1.5',
+    textAlign: 'left' as const
   },
 };
