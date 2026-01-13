@@ -9,7 +9,6 @@ export function getBrowserSupabase() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         auth: {
-          storageKey: 'ghostcrm_auth',
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: true,

@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { FeatureId } from '@/lib/features/definitions';
-import { createClient } from '@/utils/supabase/client';
+import { getBrowserSupabase } from '@/utils/supabase/client';
 
 export interface FeatureAccessData {
   hasAccess: boolean;
@@ -92,7 +92,7 @@ export function useSubscription(tenantId?: string): SubscriptionData {
     }
 
     try {
-      const supabase = createClient();
+      const supabase = getBrowserSupabase();
       
       const { data: subscription, error } = await supabase
         .from('tenant_subscriptions')

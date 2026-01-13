@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import { getBrowserSupabase } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, Building2, Users2, Settings2, ArrowRight, Loader2 } from 'lucide-react';
 import './setup.css';
@@ -33,7 +33,7 @@ export default function SetupPage() {
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
   });
 
-  const supabase = createClient();
+  const supabase = getBrowserSupabase();
   const router = useRouter();
 
   useEffect(() => {

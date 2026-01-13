@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, createContext, useContext } from 'react'
-import { createClient } from '@/utils/supabase/client'
+import { getBrowserSupabase } from '@/utils/supabase/client';
 import { SYSTEM_ROLES, hasPermission, hasAnyPermission } from '@/lib/permissions'
 
 interface User {
@@ -34,7 +34,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
 
   const loadUserPermissions = async () => {
     try {
-      const supabase = createClient();
+      const supabase = getBrowserSupabase();
       const { data: authUser } = await supabase.auth.getUser()
       
       if (!authUser.user) {
@@ -102,7 +102,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
     loadUserPermissions()
 
     // Listen for auth state changes
-    const supabase = createClient();
+    const supabase = getBrowserSupabase();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
         loadUserPermissions()

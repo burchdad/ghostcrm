@@ -5,7 +5,7 @@ import { createSupabaseAdmin } from '@/utils/supabase/admin';
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
 
     let user: any = null;
 
@@ -58,14 +58,13 @@ export async function POST(request: Request) {
       .upsert(
         {
           id: user.id,
-          email: user.email ?? null,
-          role: user.user_metadata?.role ?? 'user',
-          tenant_id: user.user_metadata?.tenant_id ?? null,
-          organization_id: user.user_metadata?.organization_id ?? null,
-          requires_password_reset: false,
+          email: user.email,
+          role: user.user_metadata?.role || 'user',
+          tenant_id: user.user_metadata?.tenant_id || null,
+          organization_id: user.user_metadata?.organization_id || null,
+          requires_password_reset: Boolean(user.user_metadata?.requires_password_reset ?? false),
           status: 'active',
           updated_at: now,
-          // do NOT force created_at on upsert; let DB default handle inserts
         },
         { onConflict: 'id' }
       )
