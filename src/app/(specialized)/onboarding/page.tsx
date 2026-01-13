@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/SupabaseAuthContext";
+import { useAuth } from '@/contexts/auth-context';
 import OnboardingGuard from "@/components/onboarding/OnboardingGuard";
 import ClientOnboardingModal from "./client-onboarding";
 

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useAuth } from "@/context/SupabaseAuthContext";
+import { useAuth } from '@/contexts/auth-context';
 import { useToast } from "@/hooks/use-toast";
 import ChartPlaceholder from "@/components/charts/ChartPlaceholder";
 import BulkOperations from "@/components/charts/BulkOperations";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/context/SupabaseAuthContext";
+import { useAuth } from '@/contexts/auth-context';
 import { authenticatedFetch } from '@/lib/auth/client';
 import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";

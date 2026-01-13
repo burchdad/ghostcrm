@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/context/SupabaseAuthContext";
+import { useAuth } from '@/contexts/auth-context';
 import BrandPanel from "@/components/auth/BrandPanel";
 import AuthForm from "@/components/auth/AuthForm";
 

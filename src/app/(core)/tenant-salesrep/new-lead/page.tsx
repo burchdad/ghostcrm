@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/SupabaseAuthContext";
+import { useAuth } from "@/contexts/auth-context";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import "./page.css";

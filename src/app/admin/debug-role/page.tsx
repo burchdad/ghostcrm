@@ -1,7 +1,7 @@
 // Debug page to test role and billing access
 "use client";
 
-import { useAuth } from "@/context/SupabaseAuthContext";
+import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 
 export default function RoleDebugPage() {

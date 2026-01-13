@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useAuth } from "@/context/SupabaseAuthContext";
+import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
 import { I18nProvider } from "@/components/utils/I18nProvider";

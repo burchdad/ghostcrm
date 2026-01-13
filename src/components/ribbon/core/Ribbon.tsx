@@ -1,7 +1,7 @@
 "use client";
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@/context/SupabaseAuthContext";
+import { useAuth } from "@/contexts/auth-context";
 import { useRibbon } from "../providers/RibbonProvider";
 import { useContextualRibbon, prioritizeNotifications, getContextualShortcuts } from "../providers/ContextualRibbon";
 import { Menu, X, ChevronDown, ChevronRight, ChevronUp } from "lucide-react";

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useAuth } from "@/context/SupabaseAuthContext";
+import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
 import { Card } from "@/components/ui/card";

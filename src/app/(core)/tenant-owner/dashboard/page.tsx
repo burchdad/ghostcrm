@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAuth } from "@/context/SupabaseAuthContext";
+import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
 import PageAIAssistant from "@/components/ai/PageAIAssistant";

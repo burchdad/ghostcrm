@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
-import { useAuth } from "@/context/SupabaseAuthContext";
+import { useAuth } from "@/contexts/auth-context";
 import { FeatureGuard, usePermissionCheck } from "@/middleware/PermissionMiddleware";
 import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
