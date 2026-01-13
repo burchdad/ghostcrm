@@ -7,11 +7,11 @@ if (typeof window !== 'undefined') {
 
 // Get Supabase configuration with runtime validation
 function getSupabaseConfig() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error("Supabase configuration missing. NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.");
+    throw new Error("Supabase configuration missing. SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY must be set.");
   }
 
   // Allow placeholder values during build process
