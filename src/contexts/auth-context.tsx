@@ -234,6 +234,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Server successfully set cookies, now set client session
       if (result.session) {
+        console.log('✅ [Auth] Setting client session from server response');
         const { error: sessionError } = await supabaseClient.auth.setSession(result.session);
         
         if (sessionError) {
@@ -241,6 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return { success: false, message: 'Failed to initialize session' };
         }
 
+        console.log('✅ [Auth] Login successful - session set');
         // Session will trigger auth state change and fetchUserProfile
         return { success: true };
       }

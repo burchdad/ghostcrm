@@ -33,12 +33,12 @@ export async function POST(req: Request) {
   });
 
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 401 });
+    return NextResponse.json({ error: error.message }, { status: 401 });
   }
 
-  // Return session too so the browser client can set localStorage session (optional but recommended)
+  // Return session for client to set localStorage session
   return NextResponse.json({
-    ok: true,
+    success: true,
     user: data.user,
     session: data.session,
   });
