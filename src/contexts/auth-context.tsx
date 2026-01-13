@@ -129,14 +129,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             },
           });
 
+          console.log('📡 [BOOTSTRAP] Response status:', res.status, res.statusText);
+          
           // Make endpoint return 204 when it decides to noop
           if (!res.ok && res.status !== 204) {
-            console.warn('[BOOTSTRAP_PROFILE] failed', res.status, await res.text().catch(() => ''));
+            const errorText = await res.text().catch(() => 'Unable to read response');
+            console.warn('⚠️ [BOOTSTRAP] Failed with status', res.status, ':', errorText);
           } else {
             console.log('✅ [BOOTSTRAP] Profile bootstrap completed successfully');
           }
         } catch (e) {
-          console.warn('[BOOTSTRAP_PROFILE] error', e);
+          console.error('❌ [BOOTSTRAP] Network or parsing error:', e);
         }
       })().finally(() => {
         bootstrapPromiseRef.current = null;

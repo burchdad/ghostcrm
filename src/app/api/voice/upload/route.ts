@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseAdmin } from '@/utils/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
