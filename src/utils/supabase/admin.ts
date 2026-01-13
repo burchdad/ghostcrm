@@ -35,3 +35,13 @@ export const supabaseAdmin = createClient(
   config.supabaseServiceKey,
   { auth: { persistSession: false } }
 );
+
+// Function to create a new admin client instance
+export function createSupabaseAdmin() {
+  const config = getSupabaseConfig();
+  return createClient(
+    config.supabaseUrl,
+    config.supabaseServiceKey,
+    { auth: { persistSession: false } }
+  );
+}

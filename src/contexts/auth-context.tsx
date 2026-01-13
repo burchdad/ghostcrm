@@ -109,11 +109,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!supabaseClient) return;
 
     try {
+      // First, ensure the profile exists by calling bootstrap
+      await fetch("/api/auth/bootstrap-profile", { method: "POST" });
+
+      // Then fetch with maybeSingle to prevent 406 errors
       const { data: profile, error } = await supabaseClient
         .from('users')
         .select('id, email, role, organization_id, tenant_id, requires_password_reset')
         .eq('id', supabaseUser.id)
-        .single();
+        .maybeSingle(); // ✅ returns null if missing, no 406
 
       if (error) {
         console.error('❌ [Auth] Failed to fetch user profile:', error);
@@ -129,9 +133,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           tenantId: profile.tenant_id || '',
           requires_password_reset: profile.requires_password_reset || false,
         });
+      } else {
+        // Profile still null after bootstrap - create fallback
+        console.warn('⚠️ [Auth] Profile is null after bootstrap, creating fallback user');
+        setUser({
+          id: supabaseUser.id,
+          email: supabaseUser.email || '',
+          role: 'user',
+          organizationId: '',
+          tenantId: '',
+          requires_password_reset: false,
+        });
       }
     } catch (error) {
       console.error('❌ [Auth] Profile fetch error:', error);
+      // Create fallback user on any error
+      setUser({
+        id: supabaseUser.id,
+        email: supabaseUser.email || '',
+        role: 'user',
+        organizationId: '',
+        tenantId: '',
+        requires_password_reset: false,
+      });
     }
   };
 
