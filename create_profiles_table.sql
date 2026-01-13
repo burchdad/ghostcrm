@@ -12,6 +12,7 @@ CREATE TABLE public.profiles (
   tenant_id text,  -- Use text for subdomain slugs like 'burchmotors'
   organization_id text,  -- Use text for subdomain slugs like 'burchmotors'
   requires_password_reset boolean NOT NULL DEFAULT false,
+  status text DEFAULT 'active',
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
