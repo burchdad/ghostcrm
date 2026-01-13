@@ -1,5 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 
+// Prevent client-side usage 
+if (typeof window !== 'undefined') {
+  throw new Error('supabase/admin.ts should never be imported on the client side');
+}
+
 // Get Supabase configuration with runtime validation
 function getSupabaseConfig() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

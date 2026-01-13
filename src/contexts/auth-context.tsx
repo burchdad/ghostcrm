@@ -104,13 +104,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [supabaseClient]);
 
+  // Bootstrap profile promise for race condition protection
+  let bootstrapPromise: Promise<void> | null = null;
+
+  async function ensureProfileBootstrapped() {
+    if (!bootstrapPromise) {
+      bootstrapPromise = (async () => {
+        const res = await fetch("/api/auth/bootstrap-profile", { method: "POST" });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          console.error("[BOOTSTRAP_PROFILE] failed", res.status, body);
+          throw new Error(`Bootstrap failed: ${res.status}`);
+        }
+      })().finally(() => {
+        // allow retrigger later if needed
+        bootstrapPromise = null;
+      });
+    }
+    return bootstrapPromise;
+  }
+
   // Fetch user profile from database
   const fetchUserProfile = async (supabaseUser: User) => {
     if (!supabaseClient) return;
 
     try {
-      // First, ensure the profile exists by calling bootstrap
-      await fetch("/api/auth/bootstrap-profile", { method: "POST" });
+      // First, ensure the profile exists by calling bootstrap with race protection
+      await ensureProfileBootstrapped();
 
       // Then fetch with maybeSingle to prevent 406 errors
       const { data: profile, error } = await supabaseClient

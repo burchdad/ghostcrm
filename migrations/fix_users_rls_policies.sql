@@ -1,5 +1,5 @@
 -- Ensure RLS policies exist for users table to fix 406 profile errors
--- This fixes the "Failed to fetch user profile" 406 errors
+-- This fixes the "Failed to fetch user profile: 406" errors
 
 -- Enable RLS if not already enabled
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
@@ -11,24 +11,29 @@ DROP POLICY IF EXISTS "profiles_insert_own" ON public.users;
 DROP POLICY IF EXISTS "Users can view their own data" ON public.users;
 DROP POLICY IF EXISTS "Users can update their own data" ON public.users;
 DROP POLICY IF EXISTS "Allow registration" ON public.users;
+DROP POLICY IF EXISTS "service_role_full_access" ON public.users;
 
--- Create bulletproof RLS policies for users table
+-- Create bulletproof RLS policies for users table  
 CREATE POLICY "profiles_select_own" ON public.users
   FOR SELECT 
-  USING (auth.uid() = id);
+  USING (auth.uid() = id::uuid);
 
 CREATE POLICY "profiles_update_own" ON public.users
   FOR UPDATE 
-  USING (auth.uid() = id);
+  USING (auth.uid() = id::uuid);
 
 CREATE POLICY "profiles_insert_own" ON public.users
   FOR INSERT 
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK (auth.uid() = id::uuid);
 
 -- Service role can manage all users (for bootstrap API)
 CREATE POLICY "service_role_full_access" ON public.users
   FOR ALL 
   USING (auth.role() = 'service_role');
+
+-- Ensure required columns exist
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS tenant_id TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS requires_password_reset BOOLEAN DEFAULT false;
 
 -- Grant necessary permissions
 GRANT SELECT, UPDATE, INSERT ON public.users TO authenticated;

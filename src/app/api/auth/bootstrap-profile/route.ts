@@ -25,7 +25,11 @@ export async function POST() {
           // Default values for new profiles
           role: user.user_metadata?.role || 'user',
           requires_password_reset: false,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          // Add organization_id and tenant_id with proper defaults
+          organization_id: user.user_metadata?.organization_id || null,
+          tenant_id: user.user_metadata?.tenant_id || null,
+          status: 'active'
         },
         { onConflict: "id" }
       )
