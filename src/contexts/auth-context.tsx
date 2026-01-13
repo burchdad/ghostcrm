@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { getClient } from '@/utils/supabase/client';
+import { getBrowserSupabase } from '@/utils/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
 
 interface AuthUser {
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const client = await getClient();
+        const client = getBrowserSupabase();
         setSupabaseClient(client);
       } catch (error) {
         console.error('❌ [Auth] Failed to initialize Supabase client:', error);
@@ -110,11 +110,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function ensureProfileBootstrapped() {
     if (!bootstrapPromise) {
       bootstrapPromise = (async () => {
-        const res = await fetch("/api/auth/bootstrap-profile", { method: "POST" });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          console.error("[BOOTSTRAP_PROFILE] failed", res.status, body);
-          throw new Error(`Bootstrap failed: ${res.status}`);
+        try {
+          const res = await fetch('/api/auth/bootstrap-profile', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          if (!res.ok) {
+            // Don't block auth on bootstrap - just warn
+            console.warn('[BOOTSTRAP_PROFILE] failed', res.status, await res.json().catch(() => null));
+            return; // Don't throw - let profile fetch continue
+          }
+        } catch (e) {
+          console.warn('[BOOTSTRAP_PROFILE] error', e);
+          return; // Don't throw - let profile fetch continue
         }
       })().finally(() => {
         // allow retrigger later if needed
@@ -129,8 +139,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!supabaseClient) return;
 
     try {
-      // First, ensure the profile exists by calling bootstrap with race protection
-      await ensureProfileBootstrapped();
+      // Only call bootstrap after confirming session is ready to prevent transient 401s
+      const { data: { user: confirmedUser } } = await supabaseClient.auth.getUser();
+      if (confirmedUser) {
+        // Ensure the profile exists by calling bootstrap with race protection (non-blocking)
+        await ensureProfileBootstrapped();
+      }
 
       // Then fetch with maybeSingle to prevent 406 errors
       const { data: profile, error } = await supabaseClient

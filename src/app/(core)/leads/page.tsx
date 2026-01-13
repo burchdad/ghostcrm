@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useRibbonPage } from "@/components/ribbon";
-import { createClient } from '@/utils/supabase/client';
+import { getBrowserSupabase } from '@/utils/supabase/client';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,7 +67,7 @@ export default function Leads() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     throw new Error("NEXT_PUBLIC_SUPABASE_URL missing");
   }
-  const supabase = createClient();
+  const supabase = getBrowserSupabase();
 
   // ...existing state...
   const [selectedOrg, setSelectedOrg] = useState("");

@@ -1,15 +1,34 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServer } from "@/utils/supabase/server";
-import { createSupabaseAdmin } from "@/utils/supabase/admin";
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
+import { createSupabaseAdmin } from '@/utils/supabase/admin';
 
 export async function POST() {
   try {
-    // 1) Confirm the caller is logged in (cookie session)
-    const supabase = await createSupabaseServer();
+    const cookieStore = cookies();
+
+    // IMPORTANT: this must be the SSR server client wired to cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get: (name) => cookieStore.get(name)?.value,
+          set: (name, value, options) => {
+            // App Router: NextResponse handles sets; for route handlers, you can omit set/remove here
+          },
+          remove: (name, options) => {}
+        }
+      }
+    );
+
     const { data: { user }, error: userErr } = await supabase.auth.getUser();
 
     if (userErr || !user) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized', details: userErr?.message },
+        { status: 401 }
+      );
     }
 
     // 2) Upsert profile using admin client (bypasses RLS)
