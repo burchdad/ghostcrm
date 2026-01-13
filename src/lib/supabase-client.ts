@@ -1,9 +1,5 @@
-import { getClient } from '@/utils/supabase/client';
-
-// Use singleton Supabase client
-export async function createSafeSupabaseClient() {
-  return await getClient();
-}
+// DEPRECATED wrapper
+export { getBrowserSupabase, createClient, createSupabaseBrowser, getClient } from "@/utils/supabase/client";
 
 // Check if Supabase is properly configured
 export function isSupabaseConfigured(): boolean {

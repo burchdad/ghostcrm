@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAI } from "@/lib/openai";
 import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseAdmin } from "@/utils/supabase/admin";
 
 export const dynamic = 'force-dynamic';
 
 // Create a service role client for admin operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseAdmin = createSupabaseAdmin();
 
 // Helper function to search external vehicle inventory using web search
 async function searchExternalInventory(vehicleRequest: string, location: string = "", budget: string = "") {

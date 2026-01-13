@@ -1,5 +1,6 @@
-// DEPRECATED: Use @/utils/supabase/client instead to prevent multiple instances
-import { createClient } from '@/utils/supabase/client';
+// DEPRECATED wrapper — do not create clients here.
+// Keep only for backward compatibility while imports are migrated.
+export { getBrowserSupabase } from "@/utils/supabase/client";
 
-// Re-export the singleton client
-export const supabase = createClient();
+// legacy names (if old code expects them)
+export { createClient, createSupabaseBrowser, getClient } from "@/utils/supabase/client";

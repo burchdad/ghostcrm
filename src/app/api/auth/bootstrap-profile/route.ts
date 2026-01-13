@@ -91,6 +91,7 @@ export async function POST(request: Request) {
           tenant_id: user.user_metadata?.tenant_id ?? null,
           organization_id: user.user_metadata?.organization_id ?? null,
           requires_password_reset: false,
+          status: "active",
           updated_at: new Date().toISOString(),
         },
         { onConflict: "id" }

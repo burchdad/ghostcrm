@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/app/lib/supabaseClient';
+import { createSupabaseAdmin } from '@/utils/supabase/admin';
+
+const supabase = createSupabaseAdmin();
 
 
 export const dynamic = 'force-dynamic';
