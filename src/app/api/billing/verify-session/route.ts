@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic';
 // TODO: Install stripe package when implementing billing
 // import Stripe from 'stripe'
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { supabaseAdmin } from '@/utils/supabase/admin'
 
 export const runtime = 'nodejs'
 

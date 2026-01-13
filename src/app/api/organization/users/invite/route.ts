@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/utils/supabase/admin'
 import { getTierPricing } from '@/lib/pricing'
 
 

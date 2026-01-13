@@ -1,6 +1,6 @@
 import { BaseAgent } from '../core/BaseAgent';
 import { AgentConfig, AgentHealth } from '../core/types';
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { supabaseAdmin } from '@/utils/supabase/admin';
 import { stripe } from '@/lib/stripe';
 import OpenAI from 'openai';
 

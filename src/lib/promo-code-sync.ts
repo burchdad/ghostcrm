@@ -3,13 +3,10 @@
  * Functions for syncing promo codes with Stripe
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from './supabaseAdmin';
 import { createSafeStripeClient } from '@/lib/stripe-safe';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = supabaseAdmin;
 
 /**
  * Sync promo code with Stripe as a coupon

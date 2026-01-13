@@ -1,6 +1,6 @@
 import { BaseAgent } from '../core/BaseAgent';
 import { AgentConfig, AgentHealth } from '../core/types';
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { supabaseAdmin } from '@/utils/supabase/admin';
 import OpenAI from 'openai';
 
 interface SecurityEvent {

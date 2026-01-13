@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin as supabase } from '@/utils/supabase/admin';
 import { createSafeStripeClient, withStripe } from '@/lib/stripe-safe';
 
 

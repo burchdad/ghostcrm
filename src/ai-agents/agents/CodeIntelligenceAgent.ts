@@ -1,6 +1,6 @@
 import { BaseAgent } from '../core/BaseAgent';
 import { AgentConfig, AgentHealth, AgentMetrics } from '../core/types';
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { supabaseAdmin } from '@/utils/supabase/admin';
 import OpenAI from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';

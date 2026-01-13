@@ -1,6 +1,6 @@
 // app/api/migrate/organizations/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { supabaseAdmin } from '@/utils/supabase/admin';
 import { getUserFromRequest } from '@/lib/auth/server';
 
 export const runtime = 'nodejs';

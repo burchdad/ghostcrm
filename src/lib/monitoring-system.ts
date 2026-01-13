@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from './supabaseAdmin';
 
 // Metrics Types and Interfaces
 export interface Metric {
@@ -295,10 +295,8 @@ export class MonitoringSystem {
     };
 
     this.metrics = new MockPrometheusMetrics();
-    this.supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // Use existing admin client instead of creating new instance
+    this.supabase = null; // Will be initialized lazily
 
     this.initializeMetrics();
     this.loadAlerts();

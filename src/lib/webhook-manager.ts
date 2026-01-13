@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '../utils/supabase/admin';
 import crypto from 'crypto';
 
 // Mock Redis implementation for development
@@ -199,10 +199,7 @@ export class WebhookManager {
 
   constructor() {
     this.redis = new MockRedis();
-    this.supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    this.supabase = supabaseAdmin;
     
     this.startProcessing();
     this.startHealthChecking();

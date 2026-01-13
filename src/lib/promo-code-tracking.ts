@@ -3,12 +3,9 @@
  * Tracks when promo codes are used in successful checkouts
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from './supabaseAdmin';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = supabaseAdmin;
 
 /**
  * Track promo code usage when checkout session is completed
