@@ -160,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Then fetch with maybeSingle to prevent 406 errors
       const { data: profile, error } = await supabaseClient
-        .from('users')
+        .from('profiles')
         .select('id, email, role, organization_id, tenant_id, requires_password_reset')
         .eq('id', supabaseUser.id)
         .maybeSingle(); // ✅ returns null if missing, no 406

@@ -82,20 +82,16 @@ export async function POST(request: Request) {
     const admin = createSupabaseAdmin();
 
     const { data: profile, error: upsertErr } = await admin
-      .from("users")
+      .from("profiles")
       .upsert(
         {
           id: user.id,
-          email: user.email,
-          updated_at: new Date().toISOString(),
-          // Default values for new profiles
-          role: user.user_metadata?.role || 'user',
+          email: user.email ?? null,
+          role: user.user_metadata?.role ?? "user",
+          tenant_id: user.user_metadata?.tenant_id ?? null,
+          organization_id: user.user_metadata?.organization_id ?? null,
           requires_password_reset: false,
-          created_at: new Date().toISOString(),
-          // Add organization_id and tenant_id with proper defaults
-          organization_id: user.user_metadata?.organization_id || null,
-          tenant_id: user.user_metadata?.tenant_id || null,
-          status: 'active'
+          updated_at: new Date().toISOString(),
         },
         { onConflict: "id" }
       )
