@@ -208,32 +208,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Login function
+  // Login function - calls server route to set cookies properly
   const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     if (!supabaseClient) {
       return { success: false, message: 'Authentication service not available' };
     }
 
     try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password,
+      // Call server-side login route that sets cookies
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (error) {
-        console.error('❌ [Auth] Login failed:', error);
-        return { success: false, message: error.message };
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('❌ [Auth] Server login failed:', result.error);
+        return { success: false, message: result.error || 'Login failed' };
       }
 
-      if (data.user) {
-        await fetchUserProfile(data.user);
+      // Server successfully set cookies, now set client session
+      if (result.session) {
+        const { error: sessionError } = await supabaseClient.auth.setSession(result.session);
+        
+        if (sessionError) {
+          console.error('❌ [Auth] Failed to set client session:', sessionError);
+          return { success: false, message: 'Failed to initialize session' };
+        }
+
+        // Session will trigger auth state change and fetchUserProfile
         return { success: true };
       }
 
-      return { success: false, message: 'Login failed' };
+      return { success: false, message: 'No session returned from server' };
     } catch (error) {
       console.error('❌ [Auth] Login error:', error);
-      return { success: false, message: 'Login failed' };
+      return { success: false, message: 'Network error during login' };
     }
   };
 
