@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 // Safe auth hook that handles missing context
 function useSafeAuth() {
   try {
-    const { useAuth } = require('@/context/SupabaseAuthContext');
+    const { useAuth } = require('@/contexts/auth-context');
     return useAuth();
   } catch (error) {
     return { user: null, isLoading: false };

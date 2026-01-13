@@ -14,7 +14,7 @@ export default function QuickAddButton() {
   // Safe auth that doesn't break on marketing pages
   let user = null;
   try {
-    const { useAuth } = require('@/context/SupabaseAuthContext');
+    const { useAuth } = require('@/contexts/auth-context');
     const auth = useAuth();
     user = auth.user;
   } catch (error) {

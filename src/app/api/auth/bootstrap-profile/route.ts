@@ -36,15 +36,19 @@ export async function POST(request: Request) {
         const result = await supabaseWithToken.auth.getUser();
         user = result.data.user;
         userErr = result.error;
-        console.log('🔑 [BOOTSTRAP] Using Bearer token authentication');
+        
+        if (user) {
+          console.log('🔑 [BOOTSTRAP] Using Bearer token authentication for user:', user.id);
+        }
       } catch (tokenError) {
-        console.warn('⚠️ [BOOTSTRAP] Bearer token validation failed:', tokenError);
+        console.warn('⚠️ [BOOTSTRAP] Bearer token validation failed, will try cookies:', tokenError);
+        // Don't set userErr here - let it fall through to cookie auth
       }
     }
     
     // Fallback to cookie session if Bearer token didn't work
     if (!user && !userErr) {
-      console.log('🍪 [BOOTSTRAP] Falling back to cookie session');
+      console.log('🍪 [BOOTSTRAP] Falling back to cookie session authentication');
       const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -62,6 +66,10 @@ export async function POST(request: Request) {
       const result = await supabase.auth.getUser();
       user = result.data.user;
       userErr = result.error;
+      
+      if (user) {
+        console.log('🍪 [BOOTSTRAP] Cookie authentication successful for user:', user.id);
+      }
     }
     
     if (userErr || !user) {

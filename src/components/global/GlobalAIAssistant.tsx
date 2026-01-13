@@ -23,7 +23,7 @@ export default function GlobalAIAssistant() {
   let user = null;
   if (!isMarketingPage) {
     try {
-      const { useAuth } = require('@/context/SupabaseAuthContext');
+      const { useAuth } = require('@/contexts/auth-context');
       const auth = useAuth();
       user = auth.user;
     } catch (error) {

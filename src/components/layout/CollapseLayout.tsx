@@ -8,7 +8,7 @@ import Sidebar from "@/components/layout/Sidebar";
 // Safe auth hook that handles missing context gracefully
 function useSafeAuth() {
   try {
-    const { useAuth } = require('@/context/SupabaseAuthContext');
+    const { useAuth } = require('@/contexts/auth-context');
     return useAuth();
   } catch (error) {
     // Return default values when auth context is not available (marketing pages)

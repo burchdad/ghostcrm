@@ -22,7 +22,7 @@ import "./TeamsStyleCollaborationModal.css";
 function useSafeAuth() {
   try {
     // Import auth hook dynamically to avoid context errors
-    const { useAuth } = require('@/context/SupabaseAuthContext');
+    const { useAuth } = require('@/contexts/auth-context');
     return useAuth();
   } catch (error) {
     return { user: null, isLoading: false };
