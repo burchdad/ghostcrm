@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useRef } from 'react';
 import { getBrowserSupabase } from '@/utils/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
 
@@ -47,6 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [supabaseClient, setSupabaseClient] = useState<any>(null);
+  
+  // Guard to prevent multiple bootstrap calls
+  const bootstrapRanRef = useRef(false);
 
   // Initialize Supabase client
   useEffect(() => {
@@ -108,9 +111,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   let bootstrapPromise: Promise<void> | null = null;
 
   async function ensureProfileBootstrapped() {
+    // Prevent multiple calls (React strict mode / re-renders)
+    if (bootstrapRanRef.current) {
+      console.log('🔒 [BOOTSTRAP] Already ran, skipping duplicate call');
+      return;
+    }
+    
     if (!bootstrapPromise) {
       bootstrapPromise = (async () => {
         try {
+          // Only bootstrap AFTER a real session exists
+          const { data: { session } } = await supabaseClient.auth.getSession();
+          
+          if (!session?.user) {
+            console.log('🚫 [BOOTSTRAP] No session yet, skipping bootstrap');
+            return; // No signed-in user yet → do NOT bootstrap
+          }
+          
+          bootstrapRanRef.current = true;
+          console.log('🔄 [BOOTSTRAP] Starting profile bootstrap for user:', session.user.id);
+          
           const res = await fetch('/api/auth/bootstrap-profile', {
             method: 'POST',
             credentials: 'include',
@@ -122,12 +142,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.warn('[BOOTSTRAP_PROFILE] failed', res.status, await res.json().catch(() => null));
             return; // Don't throw - let profile fetch continue
           }
+          
+          console.log('✅ [BOOTSTRAP] Profile bootstrap completed successfully');
         } catch (e) {
           console.warn('[BOOTSTRAP_PROFILE] error', e);
           return; // Don't throw - let profile fetch continue
         }
       })().finally(() => {
-        // allow retrigger later if needed
+        // allow retrigger later if needed (but guard prevents immediate re-runs)
         bootstrapPromise = null;
       });
     }
@@ -139,12 +161,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!supabaseClient) return;
 
     try {
-      // Only call bootstrap after confirming session is ready to prevent transient 401s
-      const { data: { user: confirmedUser } } = await supabaseClient.auth.getUser();
-      if (confirmedUser) {
-        // Ensure the profile exists by calling bootstrap with race protection (non-blocking)
-        await ensureProfileBootstrapped();
-      }
+      // Ensure the profile exists by calling bootstrap with session protection (non-blocking)
+      await ensureProfileBootstrapped();
 
       // Then fetch with maybeSingle to prevent 406 errors
       const { data: profile, error } = await supabaseClient
@@ -232,11 +250,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: !!session?.user && !!user,
       signOut: async () => {
         if (supabaseClient) {
+          // Reset bootstrap guard when signing out
+          bootstrapRanRef.current = false;
+          bootstrapPromise = null;
           await supabaseClient.auth.signOut();
         }
       },
       refresh: async () => {
         if (supabaseClient) {
+          // Reset bootstrap guard on refresh
+          bootstrapRanRef.current = false;
+          bootstrapPromise = null;
           const { data } = await supabaseClient.auth.getSession();
           setSession(data.session ?? null);
           if (data.session?.user) {

@@ -5,7 +5,7 @@ import { createSupabaseAdmin } from '@/utils/supabase/admin';
 
 export async function POST() {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
 
     // IMPORTANT: this must be the SSR server client wired to cookies()
     const supabase = createServerClient(
@@ -23,12 +23,11 @@ export async function POST() {
     );
 
     const { data: { user }, error: userErr } = await supabase.auth.getUser();
-
+    
     if (userErr || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized', details: userErr?.message },
-        { status: 401 }
-      );
+      // Not signed in yet → do nothing (pre-login is normal)
+      console.log('🚫 [BOOTSTRAP] No session, returning 204 (pre-login is normal)');
+      return new NextResponse(null, { status: 204 });
     }
 
     // 2) Upsert profile using admin client (bypasses RLS)
