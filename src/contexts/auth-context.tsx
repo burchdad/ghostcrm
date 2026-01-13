@@ -48,8 +48,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [supabaseClient, setSupabaseClient] = useState<any>(null);
   
-  // Guard to prevent multiple bootstrap calls
+  // Guards to prevent multiple bootstrap calls - persistent across renders
   const bootstrapRanRef = useRef(false);
+  const bootstrapPromiseRef = useRef<Promise<void> | null>(null);
 
   // Initialize Supabase client
   useEffect(() => {
@@ -107,53 +108,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [supabaseClient]);
 
-  // Bootstrap profile promise for race condition protection
-  let bootstrapPromise: Promise<void> | null = null;
-
-  async function ensureProfileBootstrapped() {
-    // Prevent multiple calls (React strict mode / re-renders)
-    if (bootstrapRanRef.current) {
-      console.log('🔒 [BOOTSTRAP] Already ran, skipping duplicate call');
+  async function ensureProfileBootstrapped(accessToken?: string) {
+    // No token = no bootstrap attempt
+    if (!accessToken) {
+      console.log('🚫 [BOOTSTRAP] No access token, skipping bootstrap');
       return;
     }
     
-    if (!bootstrapPromise) {
-      bootstrapPromise = (async () => {
+    if (!bootstrapPromiseRef.current) {
+      bootstrapPromiseRef.current = (async () => {
         try {
-          // Only bootstrap AFTER a real session exists
-          const { data: { session } } = await supabaseClient.auth.getSession();
-          
-          if (!session?.user) {
-            console.log('🚫 [BOOTSTRAP] No session yet, skipping bootstrap');
-            return; // No signed-in user yet → do NOT bootstrap
-          }
-          
-          bootstrapRanRef.current = true;
-          console.log('🔄 [BOOTSTRAP] Starting profile bootstrap for user:', session.user.id);
+          console.log('🔄 [BOOTSTRAP] Starting profile bootstrap with Bearer token');
           
           const res = await fetch('/api/auth/bootstrap-profile', {
             method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' }
+            credentials: 'include', // keep cookies as fallback
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`, // ✅ bulletproof
+            },
           });
 
-          if (!res.ok) {
-            // Don't block auth on bootstrap - just warn
-            console.warn('[BOOTSTRAP_PROFILE] failed', res.status, await res.json().catch(() => null));
-            return; // Don't throw - let profile fetch continue
+          // Make endpoint return 204 when it decides to noop
+          if (!res.ok && res.status !== 204) {
+            console.warn('[BOOTSTRAP_PROFILE] failed', res.status, await res.text().catch(() => ''));
+          } else {
+            console.log('✅ [BOOTSTRAP] Profile bootstrap completed successfully');
           }
-          
-          console.log('✅ [BOOTSTRAP] Profile bootstrap completed successfully');
         } catch (e) {
           console.warn('[BOOTSTRAP_PROFILE] error', e);
-          return; // Don't throw - let profile fetch continue
         }
       })().finally(() => {
-        // allow retrigger later if needed (but guard prevents immediate re-runs)
-        bootstrapPromise = null;
+        bootstrapPromiseRef.current = null;
       });
     }
-    return bootstrapPromise;
+
+    return bootstrapPromiseRef.current;
   }
 
   // Fetch user profile from database
@@ -161,8 +151,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!supabaseClient) return;
 
     try {
-      // Ensure the profile exists by calling bootstrap with session protection (non-blocking)
-      await ensureProfileBootstrapped();
+      // Get session data with access token for bulletproof bootstrap
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      // Bootstrap only when we have a real token (prevents half-initialized session calls)
+      await ensureProfileBootstrapped(accessToken);
 
       // Then fetch with maybeSingle to prevent 406 errors
       const { data: profile, error } = await supabaseClient
@@ -250,17 +244,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: !!session?.user && !!user,
       signOut: async () => {
         if (supabaseClient) {
-          // Reset bootstrap guard when signing out
+          // Reset bootstrap guards when signing out
           bootstrapRanRef.current = false;
-          bootstrapPromise = null;
+          bootstrapPromiseRef.current = null;
           await supabaseClient.auth.signOut();
         }
       },
       refresh: async () => {
         if (supabaseClient) {
-          // Reset bootstrap guard on refresh
+          // Reset bootstrap guards on refresh
           bootstrapRanRef.current = false;
-          bootstrapPromise = null;
+          bootstrapPromiseRef.current = null;
           const { data } = await supabaseClient.auth.getSession();
           setSession(data.session ?? null);
           if (data.session?.user) {

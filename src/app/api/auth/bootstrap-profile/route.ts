@@ -3,26 +3,66 @@ import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { createSupabaseAdmin } from '@/utils/supabase/admin';
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
+    let user: any = null;
+    let userErr: any = null;
 
-    // IMPORTANT: this must be the SSR server client wired to cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get: (name) => cookieStore.get(name)?.value,
-          set: (name, value, options) => {
-            // App Router: NextResponse handles sets; for route handlers, you can omit set/remove here
-          },
-          remove: (name, options) => {}
-        }
+    // Try Bearer token first (bulletproof for subdomains)
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const accessToken = authHeader.substring(7);
+      
+      try {
+        // Create supabase client with access token for verification
+        const supabaseWithToken = createServerClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            cookies: {
+              get: () => undefined,
+              set: () => {},
+              remove: () => {}
+            },
+            global: {
+              headers: {
+                Authorization: `Bearer ${accessToken}`
+              }
+            }
+          }
+        );
+        
+        const result = await supabaseWithToken.auth.getUser();
+        user = result.data.user;
+        userErr = result.error;
+        console.log('🔑 [BOOTSTRAP] Using Bearer token authentication');
+      } catch (tokenError) {
+        console.warn('⚠️ [BOOTSTRAP] Bearer token validation failed:', tokenError);
       }
-    );
+    }
+    
+    // Fallback to cookie session if Bearer token didn't work
+    if (!user && !userErr) {
+      console.log('🍪 [BOOTSTRAP] Falling back to cookie session');
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get: (name) => cookieStore.get(name)?.value,
+            set: (name, value, options) => {
+              // App Router: NextResponse handles sets; for route handlers, you can omit set/remove here
+            },
+            remove: (name, options) => {}
+          }
+        }
+      );
 
-    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      const result = await supabase.auth.getUser();
+      user = result.data.user;
+      userErr = result.error;
+    }
     
     if (userErr || !user) {
       // Not signed in yet → do nothing (pre-login is normal)
