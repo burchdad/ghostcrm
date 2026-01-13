@@ -1,10 +1,7 @@
-import { RibbonProvider } from "@/components/ribbon";
+import { Providers } from "./providers";
 import GlobalErrorBoundary from "@/components/feedback/GlobalErrorBoundary";
 import CollapseLayout from "@/components/layout/CollapseLayout";
-import { ThemeProvider } from "@/lib/theme/ThemeProvider";
-import { ConditionalAuthProvider } from "@/components/auth/ConditionalAuthProvider";
 import { RouteGuard } from "@/middleware/PermissionMiddleware";
-import { I18nProvider } from "@/components/utils/I18nProvider";
 import GlobalAIAssistant from "@/components/global/GlobalAIAssistant";
 import QuickAddButton from "@/components/navigation/QuickAddButton";
 import GlobalCollaborationButton from "@/components/navigation/GlobalCollaborationButton";
@@ -34,25 +31,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="bg-gray-900" suppressHydrationWarning={true}>
         <GlobalErrorBoundary>
-          <I18nProvider>
-            <ConditionalAuthProvider>
-              {/* <ThemeProvider> */}
-              <RibbonProvider>
-                <CollapseLayout>
-                  <RouteGuard>
-                    {children}
-                  </RouteGuard>
-                </CollapseLayout>
-                {/* Global components that should work on ALL pages */}
-                <AIAgentInitializer />
-                <GlobalAIAssistant />
-                <QuickAddButton />
-                <GlobalCollaborationButton />
-                <Toaster />
-              </RibbonProvider>
-              {/* </ThemeProvider> */}
-            </ConditionalAuthProvider>
-          </I18nProvider>
+          <Providers>
+            <CollapseLayout>
+              <RouteGuard>
+                {children}
+              </RouteGuard>
+            </CollapseLayout>
+            {/* Global components that should work on ALL pages */}
+            <AIAgentInitializer />
+            <GlobalAIAssistant />
+            <QuickAddButton />
+            <GlobalCollaborationButton />
+            <Toaster />
+          </Providers>
         </GlobalErrorBoundary>
       </body>
     </html>

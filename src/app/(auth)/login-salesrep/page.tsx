@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/SupabaseAuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import BrandPanel from '@/components/auth/BrandPanel';
 import AuthForm from '@/components/auth/AuthForm';
 import { User } from 'lucide-react';
 
 export default function SalesRepLoginPage() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
   const [organizationInfo, setOrganizationInfo] = useState<any>(null);
   
   // Get invite parameter from URL
@@ -18,7 +18,7 @@ export default function SalesRepLoginPage() {
 
   // 🔐 Redirect if already authenticated (unless it's an invite flow)
   useEffect(() => {
-    if (user && !isLoading) {
+    if (user && !loading) {
       if (inviteToken) {
         // This is an invite flow - check if user needs profile setup
         const checkInviteStatus = async () => {
@@ -48,7 +48,7 @@ export default function SalesRepLoginPage() {
         router.push("/tenant-salesrep/leads");
       }
     }
-  }, [user, isLoading, router, inviteToken]);
+  }, [user, loading, router, inviteToken]);
 
   // 🌐 Fetch organization info from subdomain
   useEffect(() => {

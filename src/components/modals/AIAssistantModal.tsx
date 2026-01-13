@@ -5,7 +5,7 @@ import { X, Send, Bot, User, Loader2, Mic, Volume2, VolumeX, Settings, MoreVerti
 import { useI18n } from "../utils/I18nProvider";
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { useRealtimeVoice } from '@/hooks/useRealtimeVoice';
-import { useAuth } from '@/context/SupabaseAuthContext';
+import { useAuth } from '@/contexts/auth-context';
 
 interface Message {
   id: string;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/SupabaseAuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import TrialCountdown from './TrialCountdown';
 import BillingStatusIndicator from './BillingStatusIndicator';
 import PaymentMethodCollector from './PaymentMethodCollector';

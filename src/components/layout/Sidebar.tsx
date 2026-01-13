@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LucideHome, LucideUser, LucideBarChart2, LucideCar, LucideCalendar, Zap, Users, Shield, Activity, Settings, DollarSign, UserCog, TrendingUp, Building, CreditCard, FileText, ChevronDown, ChevronRight, MoreHorizontal, Palette, Bot } from "lucide-react";
-import { useAuth } from '@/context/SupabaseAuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import './Sidebar.css';
 

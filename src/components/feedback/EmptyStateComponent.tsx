@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { useAuth } from '@/context/SupabaseAuthContext'
+import { useAuth } from '@/contexts/auth-context'
 import { 
   Users, 
   TrendingUp, 
