@@ -1,6 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+// DEPRECATED: Use @/utils/supabase/client instead to prevent multiple instances
+import { createClient } from '@/utils/supabase/client';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Re-export the singleton client
+export const supabase = createClient();

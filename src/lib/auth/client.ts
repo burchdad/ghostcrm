@@ -1,10 +1,10 @@
 /**
- * Client-side authentication utilities for API calls
+ * Supabase-only client-side authentication utilities
  */
-import { createClient } from '@/utils/supabase/client';
+import { createClient, getClient } from '@/utils/supabase/client';
 
 // Cache for authentication data to avoid repeated calls
-let cachedAuthData: { token?: string; source: 'jwt' | 'supabase' | 'none' } = { source: 'none' };
+let cachedAuthData: { user?: any; session?: any; source: 'supabase' | 'none' } = { source: 'none' };
 let authCacheTime = 0;
 const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 
@@ -12,86 +12,47 @@ const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 let lastAuthCall = 0;
 const MIN_AUTH_INTERVAL = 1000; // 1 second minimum between auth calls
 
-// Singleton Supabase client to avoid "Multiple GoTrueClient instances" warning
-let supabaseClient: any = null;
-
-function getSupabaseClient() {
-  if (!supabaseClient) {
-    supabaseClient = createClient();
-  }
-  return supabaseClient;
+/**
+ * Get Supabase client singleton
+ */
+async function getSupabaseClient() {
+  return await getClient();
 }
 
 /**
- * Get JWT token from cookies
+ * Get current authenticated user from Supabase session
  */
-function getJwtFromCookie(): string | null {
-  if (typeof document === 'undefined') {
-    return null;
-  }
-  
+export async function getAuthenticatedUser() {
   try {
-    const cookies = document.cookie.split(';');
+    const supabase = await getSupabaseClient();
+    if (!supabase) return null;
+
+    const { data: { user }, error } = await supabase.auth.getUser();
     
-    for (let cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
-      if (name === 'ghostcrm_jwt' && value) {
-        return decodeURIComponent(value);
-      }
+    if (error) {
+      console.warn('[AUTH] Error getting user:', error.message);
+      return null;
     }
     
-    return null;
+    return user;
   } catch (error) {
-    console.error('Error extracting JWT from cookie:', error);
-    return null;
-  }
-}
-
-/**
- * Parse JWT payload without verification (for client-side use only)
- */
-function parseJwtPayload(token: string): any {
-  try {
-    const payload = token.split('.')[1];
-    const decoded = atob(payload);
-    return JSON.parse(decoded);
-  } catch (error) {
-    console.error('Error parsing JWT payload:', error);
+    console.error('[AUTH] Error in getAuthenticatedUser:', error);
     return null;
   }
 }
 
 /**
- * Check if JWT token is still valid (not expired)
- */
-function isJwtValid(token: string): boolean {
-  try {
-    const payload = parseJwtPayload(token);
-    
-    if (!payload || !payload.exp) {
-      return false;
-    }
-    
-    const currentTime = Math.floor(Date.now() / 1000);
-    return payload.exp > currentTime;
-  } catch (error) {
-    console.error('JWT validation error:', error);
-    return false;
-  }
-}
-
-/**
- * Get cached authentication data or fetch fresh data if cache is stale
+ * Get current session with caching
  */
 async function getCachedAuthData() {
   const now = Date.now();
   
-  // Return cached auth data if it's still fresh and valid
+  // Return cached auth data if it's still fresh
   if (cachedAuthData.source !== 'none' && (now - authCacheTime) < CACHE_DURATION) {
     return cachedAuthData;
   }
   
-  // Rate limiting - prevent excessive auth calls, but only if we have valid auth data
+  // Rate limiting - prevent excessive auth calls
   if (cachedAuthData.source !== 'none' && (now - lastAuthCall) < MIN_AUTH_INTERVAL) {
     return cachedAuthData;
   }
@@ -99,33 +60,27 @@ async function getCachedAuthData() {
   lastAuthCall = now;
   
   try {
-    // First, try JWT cookie authentication (primary method)
-    const jwtToken = getJwtFromCookie();
+    const supabase = await getSupabaseClient();
+    if (!supabase) {
+      cachedAuthData = { source: 'none' };
+      authCacheTime = now;
+      return cachedAuthData;
+    }
+
+    const { data: { session, user }, error } = await supabase.auth.getSession();
     
-    if (jwtToken && isJwtValid(jwtToken)) {
-      cachedAuthData = { token: jwtToken, source: 'jwt' };
+    if (!error && session && user) {
+      cachedAuthData = { user, session, source: 'supabase' };
       authCacheTime = now;
       return cachedAuthData;
     }
     
-    // Only try Supabase session if JWT is not available
-    // and we don't have fresh cache data
-    if (cachedAuthData.source === 'none' || (now - authCacheTime) > CACHE_DURATION) {
-      const supabase = getSupabaseClient();
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (!error && session?.access_token) {
-        cachedAuthData = { token: session.access_token, source: 'supabase' };
-        authCacheTime = now;
-        return cachedAuthData;
-      }
-    }
     cachedAuthData = { source: 'none' };
     authCacheTime = now;
     return cachedAuthData;
     
   } catch (error) {
-    console.error('[AUTH_DEBUG] Error fetching authentication data:', error);
+    console.error('[AUTH] Error fetching authentication data:', error);
     cachedAuthData = { source: 'none' };
     authCacheTime = now;
     return cachedAuthData;
@@ -133,7 +88,70 @@ async function getCachedAuthData() {
 }
 
 /**
- * Clear authentication cache (useful after logout)
+ * Check if user is currently authenticated
+ */
+export async function isAuthenticated(): Promise<boolean> {
+  const authData = await getCachedAuthData();
+  return authData.source === 'supabase' && !!authData.user;
+}
+
+/**
+ * Get authentication headers for API calls (optional - usually not needed with cookies)
+ */
+export async function getAuthHeaders(): Promise<Record<string, string>> {
+  try {
+    const authData = await getCachedAuthData();
+    
+    if (authData.source === 'supabase' && authData.session?.access_token) {
+      return {
+        'Authorization': `Bearer ${authData.session.access_token}`
+      };
+    }
+    
+    return {};
+  } catch (error) {
+    console.error('[AUTH] Error getting auth headers:', error);
+    return {};
+  }
+}
+
+/**
+ * Enhanced fetch with automatic authentication
+ * Uses cookies by default - headers are optional for external APIs
+ */
+export async function authenticatedFetch(url: string, options: RequestInit = {}) {
+  try {
+    // Ensure credentials are included for same-origin requests
+    const fetchOptions: RequestInit = {
+      ...options,
+      credentials: 'include', // This sends cookies automatically
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    };
+
+    // For external APIs, you might want to add Authorization header
+    // const authHeaders = await getAuthHeaders();
+    // fetchOptions.headers = { ...fetchOptions.headers, ...authHeaders };
+
+    const response = await fetch(url, fetchOptions);
+    
+    // Handle authentication errors
+    if (response.status === 401) {
+      console.warn('[AUTH] Unauthorized response, clearing cache');
+      clearAuthCache();
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('[AUTH] Error in authenticatedFetch:', error);
+    throw error;
+  }
+}
+
+/**
+ * Clear authentication cache
  */
 export function clearAuthCache() {
   cachedAuthData = { source: 'none' };
@@ -141,101 +159,16 @@ export function clearAuthCache() {
 }
 
 /**
- * Get the current authentication headers for API calls
- * @returns Headers object with Authorization bearer token if authenticated
+ * Sign out user
  */
-export async function getAuthHeaders(): Promise<Record<string, string>> {
+export async function signOut() {
   try {
-    const authData = await getCachedAuthData();
-    
-    if (authData.source === 'none') {
-      return {};
+    const supabase = await getSupabaseClient();
+    if (supabase) {
+      await supabase.auth.signOut();
     }
-    
-    if ((authData.source === 'jwt' || authData.source === 'supabase') && authData.token) {
-      return {
-        'Authorization': `Bearer ${authData.token}`,
-        'Content-Type': 'application/json'
-      };
-    }
-    
-    return {};
+    clearAuthCache();
   } catch (error) {
-    console.error('Error getting auth headers:', error);
-    return {};
-  }
-}
-
-/**
- * Make an authenticated API request
- * @param url - API endpoint URL
- * @param options - Fetch options (method, body, etc.)
- * @returns Fetch response
- */
-export async function authenticatedFetch(
-  url: string, 
-  options: RequestInit = {}
-): Promise<Response> {
-  try {
-    const authData = await getCachedAuthData();
-    const authHeaders = await getAuthHeaders();
-    
-    const response = await fetch(url, {
-      ...options,
-      credentials: 'include', // Always include cookies for JWT auth
-      headers: {
-        ...authHeaders,
-        ...options.headers
-      }
-    });
-    
-    // Clear auth cache on 401 to force re-authentication
-    if (response.status === 401) {
-      cachedAuthData = { source: 'none' };
-      authCacheTime = 0;
-    }
-    
-    return response;
-  } catch (error) {
-    console.error(`Error making authenticated request to ${url}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Check if user is currently authenticated
- * @returns Boolean indicating authentication status
- */
-export async function isAuthenticated(): Promise<boolean> {
-  try {
-    const authData = await getCachedAuthData();
-    return authData.source !== 'none';
-  } catch (error) {
-    console.error('Error checking authentication status:', error);
-    return false;
-  }
-}
-
-/**
- * Get the current user's access token
- * @returns Access token string or null if not authenticated
- */
-export async function getAccessToken(): Promise<string | null> {
-  try {
-    const authData = await getCachedAuthData();
-    
-    if (authData.source === 'supabase') {
-      return authData.token || null;
-    }
-    
-    if (authData.source === 'jwt') {
-      // For JWT, we don't expose the raw token, but indicate authentication
-      return 'jwt-authenticated';
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Error getting access token:', error);
-    return null;
+    console.error('[AUTH] Error during sign out:', error);
   }
 }

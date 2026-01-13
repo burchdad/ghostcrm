@@ -1,4 +1,5 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { getClient } from '@/utils/supabase/client';
 
 // Type definitions for returned data
 export interface User {
@@ -15,15 +16,10 @@ export interface Notification {
   created_at?: string;
 }
 
-// Organization type removed
-
-// Config validation
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Supabase configuration missing: Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY');
+// Get Supabase client using singleton pattern
+async function getSupabaseClient(): Promise<SupabaseClient | null> {
+  return await getClient();
 }
-const supabase: SupabaseClient = createClient(supabaseUrl, supabaseKey);
 
 // orgCache removed
 
@@ -76,6 +72,9 @@ export async function getNotifications(
 ): Promise<Notification[] | { error: true; message: string; context: string }> {
   if (!userId) return handleError(new Error('Missing userId'), 'getNotifications');
   try {
+    const supabase = await getSupabaseClient();
+    if (!supabase) return handleError(new Error('Supabase client unavailable'), 'getNotifications');
+    
     const { data, error } = await supabase
       .from('notifications')
       .select('id, message, read, created_at')

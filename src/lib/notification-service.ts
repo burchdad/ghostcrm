@@ -1,9 +1,8 @@
 import { EmailService } from './email-service';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from './supabaseAdmin';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Use existing admin client instead of creating a new one
+const supabase = supabaseAdmin;
 
 // Notification Types
 export type NotificationType = 

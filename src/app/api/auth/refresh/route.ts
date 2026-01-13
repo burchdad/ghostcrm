@@ -1,78 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
-
-const jwtSecret = process.env.JWT_SECRET!;
+import { createSupabaseServer } from "@/utils/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
-    // Get the expired or soon-to-expire JWT cookie
-    const jwtCookie = request.cookies.get('ghostcrm_jwt');
+    console.log('🔄 [Auth] Refresh token requested');
     
-    if (!jwtCookie) {
-      return NextResponse.json({ error: 'No token to refresh' }, { status: 401 });
-    }
-
-    // Decode the JWT without verification to get the payload
-    let payload;
-    try {
-      const parts = jwtCookie.value.split('.');
-      if (parts.length !== 3) {
-        throw new Error('Invalid JWT format');
-      }
-      
-      payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-    } catch (error) {
-      return NextResponse.json({ error: 'Invalid token format' }, { status: 400 });
-    }
-
-    // Check if token is expired (allow 5 minute buffer)
-    const now = Math.floor(Date.now() / 1000);
-    const expiryBuffer = 5 * 60; // 5 minutes
+    // Create Supabase server client
+    const supabase = await createSupabaseServer();
     
-    if (payload.exp && (now > payload.exp + expiryBuffer)) {
-      // Token is too old to refresh, force re-login
+    // Get current session from Supabase
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.log('❌ [Auth] Session error:', sessionError.message);
       return NextResponse.json({ 
-        error: 'Token too old to refresh',
-        requiresLogin: true 
+        error: "Invalid session", 
+        message: "Please log in again",
+        shouldReload: true,
+        requiresLogin: true
       }, { status: 401 });
     }
-
-    // Create a new JWT with updated expiry (2 hours from now)
-    const newPayload = {
-      userId: payload.userId,
-      email: payload.email,
-      role: payload.role,
-      organizationId: payload.organizationId,
-      tenantId: payload.tenantId
-    };
-
-    const newToken = jwt.sign(newPayload, jwtSecret, { expiresIn: "2h" });
-
-    // Set the new JWT cookie
-    const isProd = process.env.NODE_ENV === "production";
-    const cookieOptions = [
-      `ghostcrm_jwt=${newToken}`,
-      "HttpOnly",
-      isProd ? "Secure" : "",
-      "Path=/",
-      "Max-Age=7200", // 2 hours
-      "SameSite=Lax"
-    ].filter(Boolean).join("; ");
-
-    const response = NextResponse.json({ 
-      success: true,
-      message: 'Token refreshed successfully',
-      user: newPayload
-    });
     
-    response.headers.set("Set-Cookie", cookieOptions);
-    return response;
+    if (!session) {
+      console.log('ℹ️ [Auth] No session found');
+      return NextResponse.json({ 
+        error: "No session found", 
+        message: "Please log in again",
+        shouldReload: true,
+        requiresLogin: true
+      }, { status: 401 });
+    }
+    
+    // Try to refresh the Supabase session
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+    
+    if (refreshError || !refreshData.session) {
+      console.log('❌ [Auth] Supabase refresh failed:', refreshError?.message);
+      
+      // Sign out to clean up corrupted session
+      await supabase.auth.signOut();
+      
+      return NextResponse.json({ 
+        error: "Refresh failed", 
+        message: "Please log in again",
+        shouldReload: true,
+        shouldSignOut: true,
+        requiresLogin: true
+      }, { status: 401 });
+    }
+    
+    console.log('✅ [Auth] Supabase token refreshed successfully');
+    
+    return NextResponse.json({ 
+      success: true,
+      message: "Session refreshed successfully",
+      session: {
+        access_token: refreshData.session.access_token,
+        expires_at: refreshData.session.expires_at,
+        user: refreshData.session.user
+      }
+    });
 
   } catch (error) {
-    console.error('Token refresh error:', error);
+    console.error('❌ [Auth] Refresh error:', error);
+    
     return NextResponse.json({ 
-      error: 'Failed to refresh token',
-      requiresLogin: true 
+      error: "Internal server error",
+      message: "Please try again or log in",
+      shouldReload: true,
+      requiresLogin: true
     }, { status: 500 });
   }
 }

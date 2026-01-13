@@ -2,7 +2,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { compare, hash } from "bcryptjs";
-import { signJwtToken, hasJwtSecret } from "@/lib/jwt";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // simple in-memory limiter; replace with Redis if needed
@@ -48,15 +47,6 @@ export async function POST(req: Request) {
     if (!ok) return NextResponse.json({ error: "Invalid TOTP code" }, { status: 401 });
   }
 
-  // Check JWT secret availability
-  if (!hasJwtSecret()) {
-    console.error("❌ [DB-LOGIN] JWT_SECRET not configured in environment");
-    return NextResponse.json(
-      { error: "Server configuration error" },
-      { status: 500 }
-    );
-  }
-
   // Get tenant context from request headers (subdomain)
   const hostname = req.headers.get('host') || '';
   const subdomain = hostname.split('.')[0];
@@ -92,35 +82,16 @@ export async function POST(req: Request) {
     });
   }
 
-  const token = signJwtToken(
-    { 
-      userId: String(user.id), 
+  // Return user data - Supabase handles all session management
+  const res = NextResponse.json({ 
+    user: { 
+      id: user.id, 
       email: user.email, 
       role: user.role, 
-      organizationId: organizationId,
-      tenantId: tenantId
-    },
-    rememberMe ? "30d" : "2h"
-  );
-  const isProd = process.env.NODE_ENV === "production";
-  const res = NextResponse.json({ user: { id: user.id, email: user.email, role: user.role, org_id: organizationId } });
-  
-  // Build cookie options array
-  const cookieOptions = [
-    `ghostcrm_jwt=${token}`,
-    "HttpOnly",
-    isProd ? "Secure" : "", // Only secure in production
-    "Path=/",
-    "SameSite=Lax" // Changed from Strict to Lax for better redirect handling
-  ].filter(Boolean);
-  
-  // Only add Max-Age if Remember Me is checked
-  // Without Max-Age, cookie becomes a session cookie (expires on browser close)
-  if (rememberMe) {
-    cookieOptions.push(`Max-Age=${30 * 24 * 60 * 60}`); // 30 days
-  }
-  
-  res.headers.set("Set-Cookie", cookieOptions.join("; "));
+      org_id: organizationId 
+    } 
+  });
+
   // audit log
   const device = req.headers.get("user-agent") || "";
   await supabaseAdmin.from("audit_events").insert({

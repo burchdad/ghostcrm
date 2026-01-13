@@ -1,12 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from './supabaseAdmin';
 
-// Safe Supabase client initialization for API routes
+// Use existing admin client instead of creating new ones
 export function createSafeSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
   // During build time, return null if environment variables are not available
-  if (!supabaseUrl || !supabaseServiceKey) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     if (process.env.NODE_ENV === 'production') {
       console.warn('Supabase environment variables not available');
     }
@@ -14,9 +11,9 @@ export function createSafeSupabaseClient() {
   }
 
   try {
-    return createClient(supabaseUrl, supabaseServiceKey);
+    return supabaseAdmin;
   } catch (error) {
-    console.error('Failed to create Supabase client:', error);
+    console.error('Failed to get Supabase admin client:', error);
     return null;
   }
 }

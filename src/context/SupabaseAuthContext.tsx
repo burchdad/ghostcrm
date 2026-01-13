@@ -29,10 +29,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [processedUserId, setProcessedUserId] = useState<string | null>(null);
   const [authTimeoutId, setAuthTimeoutId] = useState<NodeJS.Timeout | null>(null);
   
-  // Memoize Supabase client to prevent multiple instances
-  const supabase = useMemo(() => createClient(), []);
+  // Memoize Supabase client to prevent multiple instances - FIXED
+  const supabase = useMemo(() => {
+    const client = createClient();
+    if (client instanceof Promise) {
+      // Handle async client creation
+      client.catch(error => {
+        console.error('❌ [AuthProvider] Client creation failed:', error);
+      });
+      return null; // Return null for promise case, will be handled in useEffect
+    }
+    return client;
+  }, []);
 
-  // Initialize auth state
+  // Initialize auth state with enhanced error handling
   useEffect(() => {
     let mounted = true;
     
@@ -47,37 +57,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     setAuthTimeoutId(timeoutId);
     
-    // Get initial session with better error handling
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (!mounted) return;
-      
-      clearTimeout(timeoutId);
-      setAuthTimeoutId(null);
-      
-      if (error) {
-        console.error('❌ [AuthProvider] Error getting session:', error);
-        setIsLoading(false);
-        return;
-      }
-      
-      if (session?.user) {
-        console.log('✅ [AuthProvider] Found existing session for:', session.user.email);
-        setProcessedUserId(session.user.id);
-        fetchUserProfile(session.user);
-      } else {
-        console.log('ℹ️ [AuthProvider] No existing session found');
-        setIsLoading(false);
-      }
-    }).catch((error) => {
-      console.error('❌ [AuthProvider] Session fetch failed:', error);
-      clearTimeout(timeoutId);
-      setAuthTimeoutId(null);
-      setIsLoading(false);
-    });
+    // Enhanced session handling
+    const initializeAuth = async () => {
+      try {
+        if (!supabase) {
+          console.warn('⚠️ [AuthProvider] Supabase client not ready');
+          setIsLoading(false);
+          return;
+        }
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        clearTimeout(timeoutId);
+        setAuthTimeoutId(null);
+        
+        if (error) {
+          console.error('❌ [AuthProvider] Error getting session:', error);
+          
+          // Handle specific refresh token errors
+          if (error.message?.includes('refresh') || error.message?.includes('token')) {
+            console.log('🧹 [AuthProvider] Refresh token error detected, cleaning up...');
+            await handleAuthError();
+          }
+          
+          setIsLoading(false);
+          return;
+        }
+        
+        if (session?.user) {
+          console.log('✅ [AuthProvider] Found existing session for:', session.user.email);
+          setProcessedUserId(session.user.id);
+          fetchUserProfile(session.user);
+        } else {
+          console.log('ℹ️ [AuthProvider] No existing session found');
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('❌ [AuthProvider] Session initialization failed:', error);
+        clearTimeout(timeoutId);
+        setAuthTimeoutId(null);
+        setIsLoading(false);
+      }
+    };
+    
+    initializeAuth();
+
+    // Enhanced auth state change listener
+    const { data: { subscription } } = supabase?.auth?.onAuthStateChange(
       async (event, session) => {
+        console.log('🔄 [AuthProvider] Auth state change:', event);
+        
         if (event === 'SIGNED_IN' && session?.user) {
           // Prevent duplicate fetches for the same user during rapid auth state changes
           if (processedUserId !== session.user.id && !isFetchingProfile) {
@@ -85,13 +116,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await fetchUserProfile(session.user);
           }
         } else if (event === 'SIGNED_OUT') {
+          console.log('🔓 [AuthProvider] User signed out');
           setUser(null);
           setIsLoading(false);
           setIsFetchingProfile(false);
           setProcessedUserId(null);
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('✅ [AuthProvider] Token refreshed successfully');
         }
       }
-    );
+    ) || { subscription: { unsubscribe: () => {} } };
 
     return () => {
       mounted = false;
@@ -296,12 +330,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Handle authentication errors (refresh token failures, etc.)
+  const handleAuthError = async () => {
+    try {
+      console.log('🧹 [AuthProvider] Handling auth error...');
+      
+      // Sign out to clear any corrupted session
+      if (supabase?.auth) {
+        await supabase.auth.signOut();
+      }
+      
+      // Clear user state
+      setUser(null);
+      setIsLoading(false);
+      setIsFetchingProfile(false);
+      setProcessedUserId(null);
+      
+      // Clear any cached auth data
+      if (typeof window !== 'undefined') {
+        // This will be handled by the client.ts refresh error handler
+      }
+    } catch (error) {
+      console.error('❌ [AuthProvider] Error during auth cleanup:', error);
+    }
+  };
+
   const logout = async (): Promise<void> => {
     try {
-      await supabase.auth.signOut();
+      console.log('🔓 [AuthProvider] Logging out...');
+      
+      // Sign out from Supabase
+      if (supabase?.auth) {
+        await supabase.auth.signOut();
+      }
+      
+      // Clear user state
       setUser(null);
+      setProcessedUserId(null);
+      setIsLoading(false);
+      setIsFetchingProfile(false);
+      
+      console.log('✅ [AuthProvider] Logout successful');
     } catch (error) {
-      // Silent logout errors
+      console.error('❌ [AuthProvider] Logout error:', error);
+      // Force clear state even if logout fails
+      setUser(null);
+      setProcessedUserId(null);
+      setIsLoading(false);
+      setIsFetchingProfile(false);
     }
   };
 

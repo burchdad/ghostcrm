@@ -4,7 +4,6 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
-import { signJwtToken, hasJwtSecret } from "@/lib/jwt";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { limitKey } from "@/lib/rateLimitEdge";
 import { withCORS } from "@/lib/cors";
@@ -362,23 +361,6 @@ async function registerHandler(req: Request) {
       console.warn("⚠️ [REGISTER] SendGrid error:", (e as any)?.message || e);
     }
 
-    // --- Create JWT (auto-login)
-    if (!hasJwtSecret()) {
-      console.error("❌ [REGISTER] JWT_SECRET not configured in environment");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
-    }
-    
-    const token = signJwtToken({
-      userId: user.id,
-      email: user.email,
-      role: "owner", // Always owner for registrations - don't rely on user.role which may not be updated yet
-      organizationId: organizationId || undefined,
-      tenantId: organizationId || undefined, // For backward compatibility
-    });
-
     // --- Create Supabase Auth user and establish session
     console.log("🔐 [REGISTER] Creating Supabase Auth user...");
     
@@ -441,37 +423,7 @@ async function registerHandler(req: Request) {
       }
     }
 
-    // --- Keep your ghostcrm_jwt too
-    console.log("🍪 [REGISTRATION] Setting JWT cookie:", {
-      tokenLength: token.length,
-      tokenPreview: token.substring(0, 50) + "...",
-      environment: process.env.NODE_ENV,
-      isSecure: process.env.NODE_ENV === "production",
-      cookieSettings: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24,
-        path: "/"
-      }
-    });
-    
-    res.cookies.set("ghostcrm_jwt", token, {
-      httpOnly: false, // Allow JavaScript access for client-side auth
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24, // 24h
-      path: "/",
-    });
-
-    console.log("� [REGISTER] JWT cookie set:", {
-      tokenLength: token.length,
-      domain: req.headers.get('host'),
-      secure: process.env.NODE_ENV === "production",
-      hasJwtSecret: !!process.env.JWT_SECRET
-    });
-
-    console.log("�🎉 [REGISTER] Registration completed:", user.id);
+    console.log("🎉 [REGISTER] Registration completed:", user.id);
     return res;
   } catch (e: any) {
     console.error("💥 [REGISTER] Unexpected error:", e);
