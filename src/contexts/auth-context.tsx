@@ -233,6 +233,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log('✅ [Auth] Server login successful - cookies set');
 
+      // Allow small delay for cookie propagation in browser
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // IMPORTANT: after server sets cookies, confirm user via supabase client
       const { data: userData, error: userError } = await supabaseClient.auth.getUser();
 
