@@ -20,13 +20,18 @@ export default function LoginPage() {
       
       switch (user.role) {
         case 'owner':
-          // Check if we're on a tenant subdomain
+          // Check if we're on a tenant subdomain or if this is a tenant owner
           const hostname = window.location.hostname;
           const isSubdomain = hostname !== 'localhost' && 
                               hostname !== '127.0.0.1' && 
                               (hostname.includes('.localhost') || hostname.includes('.ghostcrm.ai'));
           
-          if (isSubdomain) {
+          // For development: if user has tenant_id or is known tenant owner email, redirect to tenant dashboard
+          const isTenantOwner = user.tenant_id || user.email === 'burchsl4@gmail.com';
+          
+          console.log('🔍 [LoginPage] Owner detection:', { hostname, isSubdomain, isTenantOwner, tenantId: user.tenant_id });
+          
+          if (isSubdomain || isTenantOwner) {
             redirectPath = "/tenant-owner/dashboard";
           } else {
             redirectPath = "/owner/dashboard"; // Software owner

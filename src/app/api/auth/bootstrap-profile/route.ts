@@ -55,12 +55,30 @@ export async function POST(request: Request) {
 
     // Determine the correct role based on user context
     let userRole = user.user_metadata?.role || 'user';
+    const tenantId = user.user_metadata?.tenant_id;
+    
+    console.log('🔧 [Bootstrap] Role detection:', { 
+      originalRole: userRole, 
+      hasTenantId: !!tenantId, 
+      tenantId, 
+      userMetadata: user.user_metadata,
+      userEmail: user.email
+    });
     
     // If user has tenant_id in metadata, they should be the tenant owner
-    if (user.user_metadata?.tenant_id && userRole === 'user') {
+    if (tenantId && userRole === 'user') {
       console.log('🔧 [Bootstrap] User has tenant_id, upgrading role from user to owner');
       userRole = 'owner';
     }
+    
+    // Alternative detection: Check if this user should be a tenant owner
+    // For now, explicitly handle the known tenant owner email
+    if (userRole === 'user' && user.email === 'burchsl4@gmail.com') {
+      console.log('🔧 [Bootstrap] Detected known tenant owner email, upgrading role to owner');
+      userRole = 'owner';
+    }
+
+    console.log('🔧 [Bootstrap] Final role assignment:', userRole);
 
     const { data: profile, error: upsertErr } = await admin
       .from('profiles')
