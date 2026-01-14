@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getBrowserSupabase } from '@/utils/supabase/client';
 import { getEnvironmentConfig, getCurrentEnvironment } from '../environments/config';
 
 export interface FeatureFlag {
@@ -73,13 +73,9 @@ export class PersistentFeatureFlagService {
 
   constructor() {
     this.currentEnvironment = getCurrentEnvironment();
-    const config = getEnvironmentConfig(this.currentEnvironment as 'development' | 'staging' | 'production');
     
-    // Initialize Supabase client based on current environment
-    this.supabase = createClient(
-      config.database.supabaseUrl,
-      config.database.supabaseAnonKey
-    );
+    // Use singleton browser client to prevent multiple instances
+    this.supabase = getBrowserSupabase();
   }
 
   /**

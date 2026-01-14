@@ -1,7 +1,7 @@
 /**
  * Supabase-only client-side authentication utilities
  */
-import { createClient, getClient } from '@/utils/supabase/client';
+import { getBrowserSupabase } from '@/utils/supabase/client';
 
 // Cache for authentication data to avoid repeated calls
 let cachedAuthData: { user?: any; session?: any; source: 'supabase' | 'none' } = { source: 'none' };
@@ -16,7 +16,7 @@ const MIN_AUTH_INTERVAL = 1000; // 1 second minimum between auth calls
  * Get Supabase client singleton
  */
 async function getSupabaseClient() {
-  return await getClient();
+  return getBrowserSupabase();
 }
 
 /**
