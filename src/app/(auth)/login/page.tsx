@@ -27,9 +27,9 @@ export default function LoginPage() {
                               (hostname.includes('.localhost') || hostname.includes('.ghostcrm.ai'));
           
           // For development: if user has tenant_id or is known tenant owner email, redirect to tenant dashboard
-          const isTenantOwner = user.tenant_id || user.email === 'burchsl4@gmail.com';
+          const isTenantOwner = user.tenantId || user.email === 'burchsl4@gmail.com';
           
-          console.log('🔍 [LoginPage] Owner detection:', { hostname, isSubdomain, isTenantOwner, tenantId: user.tenant_id });
+          console.log('🔍 [LoginPage] Owner detection:', { hostname, isSubdomain, isTenantOwner, tenantId: user.tenantId });
           
           if (isSubdomain || isTenantOwner) {
             redirectPath = "/tenant-owner/dashboard";
