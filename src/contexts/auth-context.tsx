@@ -67,11 +67,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('🔍 [Auth] Getting initial session...');
         // Initial session load
         const { data } = await client.auth.getSession();
-        console.log('🔍 [Auth] Initial session result:', { 
+        const sessionResult = {
           hasSession: !!data.session, 
           hasUser: !!data.session?.user,
           userEmail: data.session?.user?.email 
-        });
+        };
+        console.log('🔍 [Auth] Initial session result:', sessionResult);
         
         setSession(data.session ?? null);
         
@@ -88,12 +89,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Subscribe to changes
         console.log('🔔 [Auth] Setting up auth state change listener');
         unsub = client.auth.onAuthStateChange(async (event, newSession) => {
-          console.log('🔔 [Auth] Auth state changed:', { 
+          const stateChange = {
             event, 
             hasSession: !!newSession, 
             hasUser: !!newSession?.user,
             userEmail: newSession?.user?.email 
-          });
+          };
+          console.log('🔔 [Auth] Auth state changed:', stateChange);
           
           setSession(newSession ?? null);
           
@@ -262,10 +264,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       const { data: userData, error: userError } = await client.auth.getUser();
 
-      console.log('🔍 [Auth] getUser result:', { 
+      const getUserResult = {
         user: userData?.user ? { id: userData.user.id, email: userData.user.email } : null, 
         error: userError 
-      });
+      };
+      console.log('🔍 [Auth] getUser result:', getUserResult);
 
       if (userError || !userData?.user) {
         console.error('❌ [Auth] Login cookie set, but session not available:', userError);
@@ -297,13 +300,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value: AuthState = useMemo(() => {
     const isAuthenticated = !!session?.user && !!user;
-    console.log('🧮 [Auth] Computing auth state:', { 
+    const authState = {
       hasSession: !!session, 
       hasSessionUser: !!session?.user, 
       hasUser: !!user, 
       isAuthenticated,
       userEmail: user?.email 
-    });
+    };
+    console.log('🧮 [Auth] Computing auth state:', authState);
     
     return {
       user,

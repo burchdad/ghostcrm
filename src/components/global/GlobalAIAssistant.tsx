@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
 import AIAssistantModal from "@/components/modals/AIAssistantModal";
 
 // Marketing routes that don't need auth
@@ -10,6 +11,7 @@ const MARKETING_ROUTES = ['/', '/marketing', '/demo', '/terms', '/privacy', '/ab
 export default function GlobalAIAssistant() {
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const pathname = usePathname();
+  const { user } = useAuth(); // Always call the hook
   
   // Check if we're on a marketing page
   const isMarketingPage = MARKETING_ROUTES.some(route => {
@@ -18,18 +20,6 @@ export default function GlobalAIAssistant() {
     }
     return pathname.startsWith(route);
   });
-
-  // Safe auth hook that handles missing context
-  let user = null;
-  if (!isMarketingPage) {
-    try {
-      const { useAuth } = require('@/contexts/auth-context');
-      const auth = useAuth();
-      user = auth.user;
-    } catch (error) {
-      // Auth context not available, user stays null
-    }
-  }
 
   // Convert pathname to readable page name
   const getCurrentPage = () => {
