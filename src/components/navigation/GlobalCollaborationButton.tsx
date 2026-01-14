@@ -11,13 +11,11 @@ export default function GlobalCollaborationButton() {
   const [isLoading, setIsLoading] = useState(false);
   const { shouldShowFloatingButtons } = useFloatingUI();
 
-  // Don't render if floating buttons should be hidden
-  if (!shouldShowFloatingButtons) {
-    return null;
-  }
-
-  // Fetch notification count from API
+  // Fetch notification count from API - always set up, but conditionally fetch
   React.useEffect(() => {
+    // Don't fetch if buttons shouldn't be visible
+    if (!shouldShowFloatingButtons) return;
+    
     const fetchNotificationCount = async () => {
       try {
         setIsLoading(true);
@@ -39,7 +37,12 @@ export default function GlobalCollaborationButton() {
     // Poll for updates every 30 seconds
     const interval = setInterval(fetchNotificationCount, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [shouldShowFloatingButtons]);
+
+  // Don't render if floating buttons should be hidden
+  if (!shouldShowFloatingButtons) {
+    return null;
+  }
 
 
 

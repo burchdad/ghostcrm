@@ -11,14 +11,12 @@ export default function QuickAddButton() {
   const { t } = useI18n();
   const { shouldShowFloatingButtons } = useFloatingUI();
 
-  // Don't render if floating buttons should be hidden
-  if (!shouldShowFloatingButtons) {
-    return null;
-  }
-
-  // Keyboard shortcuts
+  // Keyboard shortcuts - always set up, but conditionally handle
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle shortcuts if buttons should be visible
+      if (!shouldShowFloatingButtons) return;
+      
       // Ctrl+N or Cmd+N to toggle
       if ((event.ctrlKey || event.metaKey) && event.key === 'n') {
         event.preventDefault();
@@ -28,7 +26,12 @@ export default function QuickAddButton() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [shouldShowFloatingButtons]);
+
+  // Don't render if floating buttons should be hidden
+  if (!shouldShowFloatingButtons) {
+    return null;
+  }
 
   return (
     <>
