@@ -216,7 +216,12 @@ function TenantOwnerDashboard() {
 
   // Fetch owner-specific analytics
   useEffect(() => {
-    // Analytics fetch effect - silent mode
+    // Don't fetch analytics if user is not loaded or not an owner
+    if (!user || user.role !== 'owner') {
+      return;
+    }
+
+    console.log('🔍 [TENANT-DASHBOARD] Starting analytics fetch, user loaded:', !!user);
     
     async function fetchOwnerAnalytics() {
       try {
@@ -285,12 +290,13 @@ function TenantOwnerDashboard() {
       } catch (error) {
         console.error('Error fetching owner analytics:', error);
       } finally {
+        console.log('✅ [TENANT-DASHBOARD] Analytics fetch complete, setting loading to false');
         setLoading(false);
       }
     }
 
     fetchOwnerAnalytics();
-  }, [installedCharts.length]);
+  }, [user?.id]); // Only depend on user ID to avoid unnecessary refetches
 
   // Chart marketplace functions
   const handleInstallChart = (template: ChartTemplate) => {
@@ -412,6 +418,8 @@ function TenantOwnerDashboard() {
       return newCharts.map((chart, index) => ({ ...chart, position: index }));
     });
   };
+
+  console.log('🔍 [TENANT-DASHBOARD] Loading states:', { loading, onboardingLoading, hasUser: !!user });
 
   if (loading || onboardingLoading) {
     // Showing loading state - silent mode
