@@ -96,10 +96,9 @@ export function UserProfileDropdown() {
   const handleLogout = async () => {
     console.log('Logout clicked');
     setOpen(false);
-    if (window.confirm(t('Are you sure you want to logout?', 'ui'))) {
-      console.log('Logout confirmed');
-      
-      try {
+    console.log('Logout proceeding without confirmation');
+    
+    try {
         // Call logout API to clear server-side cookies
         await fetch('/api/auth/logout', {
           method: 'POST',
@@ -153,7 +152,6 @@ export function UserProfileDropdown() {
         // Still redirect even if API call fails
         window.location.href = '/login';
       }
-    }
   };
 
   return (

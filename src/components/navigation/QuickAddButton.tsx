@@ -12,16 +12,6 @@ export default function QuickAddButton() {
   const router = useRouter();
   const pathname = usePathname(); // Use Next.js hook for pathname
 
-  // Safe auth that doesn't break on marketing pages
-  let user = null;
-  try {
-    const { useAuth } = require('@/contexts/auth-context');
-    const auth = useAuth();
-    user = auth.user;
-  } catch (error) {
-    // Auth context not available (marketing page), user stays null
-  }
-
   // Simplified logic: show for most pages except marketing/auth/billing
   const shouldShowButton = React.useMemo(() => {
     if (typeof window === 'undefined') return false; // SSR
