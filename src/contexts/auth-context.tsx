@@ -208,7 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Login function - calls server route to set cookies properly
+  // Login function - bulletproof server + client verification
   const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     if (!supabaseClient) {
       return { success: false, message: 'Authentication service not available' };
@@ -225,29 +225,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       });
 
-      const result = await response.json();
-
       if (!response.ok) {
-        console.error('❌ [Auth] Server login failed:', result.error);
-        return { success: false, message: result.error || 'Login failed' };
+        const errorText = await response.text();
+        console.error('❌ [Auth] Server login failed:', errorText);
+        return { success: false, message: errorText || 'Login failed' };
       }
 
-      // Server successfully set cookies, now set client session
-      if (result.session) {
-        console.log('✅ [Auth] Setting client session from server response');
-        const { error: sessionError } = await supabaseClient.auth.setSession(result.session);
-        
-        if (sessionError) {
-          console.error('❌ [Auth] Failed to set client session:', sessionError);
-          return { success: false, message: 'Failed to initialize session' };
-        }
+      console.log('✅ [Auth] Server login successful - cookies set');
 
-        console.log('✅ [Auth] Login successful - session set');
-        // Session will trigger auth state change and fetchUserProfile
-        return { success: true };
+      // IMPORTANT: after server sets cookies, confirm user via supabase client
+      const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+
+      if (userError || !userData?.user) {
+        console.error('❌ [Auth] Login cookie set, but session not available:', userError);
+        return { success: false, message: 'Login cookie set, but session not available yet (auth.getUser returned null).' };
       }
 
-      return { success: false, message: 'No session returned from server' };
+      console.log('✅ [Auth] User verified via supabase client:', userData.user.email);
+      
+      // Fetch user profile to complete authentication
+      await fetchUserProfile(userData.user);
+      
+      console.log('✅ [Auth] Login complete - ready for redirect');
+      return { success: true };
     } catch (error) {
       console.error('❌ [Auth] Login error:', error);
       return { success: false, message: 'Network error during login' };
