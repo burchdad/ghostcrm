@@ -46,35 +46,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [supabaseClient, setSupabaseClient] = useState<any>(null);
   
   // Guards to prevent multiple bootstrap calls - persistent across renders
   const bootstrapRanRef = useRef(false);
   const bootstrapPromiseRef = useRef<Promise<void> | null>(null);
 
-  // Initialize Supabase client
+  // Initialize auth state on mount
   useEffect(() => {
-    (async () => {
-      try {
-        const client = getBrowserSupabase();
-        setSupabaseClient(client);
-      } catch (error) {
-        console.error('❌ [Auth] Failed to initialize Supabase client:', error);
-        setLoading(false);
-      }
-    })();
+    setLoading(true);
   }, []);
 
   // Handle auth state changes
   useEffect(() => {
-    if (!supabaseClient) return;
-
+    const client = getBrowserSupabase();
     let unsub: { data?: { subscription?: { unsubscribe: () => void } } } | null = null;
 
     (async () => {
       try {
         // Initial session load
-        const { data } = await supabaseClient.auth.getSession();
+        const { data } = await client.auth.getSession();
         setSession(data.session ?? null);
         
         if (data.session?.user) {
@@ -86,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
 
         // Subscribe to changes
-        unsub = supabaseClient.auth.onAuthStateChange(async (_event, newSession) => {
+        unsub = client.auth.onAuthStateChange(async (_event, newSession) => {
           setSession(newSession ?? null);
           
           if (newSession?.user) {
@@ -106,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       unsub?.data?.subscription?.unsubscribe?.();
     };
-  }, [supabaseClient]);
+  }, []); // No dependencies since we're using getBrowserSupabase() directly
 
   async function ensureProfileBootstrapped(accessToken?: string) {
     // No token = no bootstrap attempt
@@ -151,18 +141,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch user profile from database
   const fetchUserProfile = async (supabaseUser: User) => {
-    if (!supabaseClient) return;
+    const client = getBrowserSupabase();
 
     try {
       // Get session data with access token for bulletproof bootstrap
-      const { data: sessionData } = await supabaseClient.auth.getSession();
+      const { data: sessionData } = await client.auth.getSession();
       const accessToken = sessionData.session?.access_token;
 
       // Bootstrap only when we have a real token (prevents half-initialized session calls)
       await ensureProfileBootstrapped(accessToken);
 
       // Then fetch with maybeSingle to prevent 406 errors
-      const { data: profile, error } = await supabaseClient
+      const { data: profile, error } = await client
         .from('profiles')
         .select('id, email, role, organization_id, tenant_id, requires_password_reset')
         .eq('id', supabaseUser.id)
@@ -210,10 +200,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Login function - bulletproof server + client verification
   const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
-    if (!supabaseClient) {
-      return { success: false, message: 'Authentication service not available' };
-    }
-
     try {
       // Call server-side login route that sets cookies
       const response = await fetch('/api/auth/login', {
@@ -237,7 +223,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // IMPORTANT: after server sets cookies, confirm user via supabase client
-      const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+      const client = getBrowserSupabase();
+      const { data: userData, error: userError } = await client.auth.getUser();
 
       if (userError || !userData?.user) {
         console.error('❌ [Auth] Login cookie set, but session not available:', userError);
@@ -266,29 +253,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading: loading, // Backward compatibility alias
       isAuthenticated: !!session?.user && !!user,
       signOut: async () => {
-        if (supabaseClient) {
-          // Reset bootstrap guards when signing out
-          bootstrapRanRef.current = false;
-          bootstrapPromiseRef.current = null;
-          await supabaseClient.auth.signOut();
-        }
+        const client = getBrowserSupabase();
+        // Reset bootstrap guards when signing out
+        bootstrapRanRef.current = false;
+        bootstrapPromiseRef.current = null;
+        await client.auth.signOut();
       },
       refresh: async () => {
-        if (supabaseClient) {
-          // Reset bootstrap guards on refresh
-          bootstrapRanRef.current = false;
-          bootstrapPromiseRef.current = null;
-          const { data } = await supabaseClient.auth.getSession();
-          setSession(data.session ?? null);
-          if (data.session?.user) {
-            await fetchUserProfile(data.session.user);
-          }
+        const client = getBrowserSupabase();
+        // Reset bootstrap guards on refresh
+        bootstrapRanRef.current = false;
+        bootstrapPromiseRef.current = null;
+        const { data } = await client.auth.getSession();
+        setSession(data.session ?? null);
+        if (data.session?.user) {
+          await fetchUserProfile(data.session.user);
         }
       },
       login,
-      supabase: supabaseClient,
+      supabase: getBrowserSupabase(),
     };
-  }, [session, user, loading, supabaseClient]);
+  }, [session, user, loading]); // Removed supabaseClient dependency
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
