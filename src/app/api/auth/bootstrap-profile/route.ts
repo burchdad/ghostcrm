@@ -53,13 +53,22 @@ export async function POST(request: Request) {
 
     const now = new Date().toISOString();
 
+    // Determine the correct role based on user context
+    let userRole = user.user_metadata?.role || 'user';
+    
+    // If user has tenant_id in metadata, they should be the tenant owner
+    if (user.user_metadata?.tenant_id && userRole === 'user') {
+      console.log('🔧 [Bootstrap] User has tenant_id, upgrading role from user to owner');
+      userRole = 'owner';
+    }
+
     const { data: profile, error: upsertErr } = await admin
       .from('profiles')
       .upsert(
         {
           id: user.id,
           email: user.email,
-          role: user.user_metadata?.role || 'user',
+          role: userRole,
           tenant_id: user.user_metadata?.tenant_id || null,
           organization_id: user.user_metadata?.organization_id || null,
           requires_password_reset: Boolean(user.user_metadata?.requires_password_reset ?? false),

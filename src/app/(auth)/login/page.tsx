@@ -41,7 +41,12 @@ export default function LoginPage() {
         case 'sales_rep':
           redirectPath = "/tenant-salesrep/leads";
           break;
+        case 'user':
+          // Regular user role - redirect to main dashboard
+          redirectPath = "/dashboard";
+          break;
         default:
+          console.warn('🚨 [LoginPage] Unknown role:', user.role, '- defaulting to dashboard');
           redirectPath = "/dashboard";
       }
       
