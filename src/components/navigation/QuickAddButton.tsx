@@ -3,44 +3,11 @@ import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import QuickAddModal from "@/components/modals/QuickAddModal";
 import { useI18n } from "@/components/utils/I18nProvider";
-import { useRouter, usePathname } from "next/navigation";
 import "./QuickAddButton.css";
 
 export default function QuickAddButton() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const { t } = useI18n();
-  const router = useRouter();
-  const pathname = usePathname(); // Use Next.js hook for pathname
-
-  // Simplified logic: show for most pages except marketing/auth/billing
-  const shouldShowButton = React.useMemo(() => {
-    if (typeof window === 'undefined') return false; // SSR
-    
-    // Use pathname from hook instead of window.location.pathname
-    console.log('🔍 [QuickAddButton] Checking pathname:', pathname);
-    
-    // Don't show on marketing pages, auth pages, or billing pages
-    if (pathname === '/' || 
-        pathname === '/login' || 
-        pathname === '/register' || 
-        pathname === '/billing' ||
-        pathname.startsWith('/billing/') ||  // <- Include all billing subpages
-        pathname === '/reset-password' ||
-        pathname === '/unauthorized' ||
-        pathname.includes('/marketing')) {
-      console.log('🔍 [QuickAddButton] Should NOT show on:', pathname);
-      return false;
-    }
-    
-    // Show on all other pages (leads, dashboard, etc.)
-    console.log('🔍 [QuickAddButton] Should show on:', pathname);
-    return true;
-  }, [pathname]); // Add pathname as dependency
-
-  // Don't render if shouldn't show
-  if (!shouldShowButton) {
-    return null;
-  }
 
   // Keyboard shortcuts
   React.useEffect(() => {
