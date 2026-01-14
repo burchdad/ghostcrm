@@ -186,12 +186,30 @@ export default function Sidebar() {
   // Check if user has tenant/organization context (indicates tenant owner vs software owner)
   const hasOrganizationContext = user?.tenantId && user.tenantId.trim() !== '';
   
+  // Alternative detection for tenant owners: check if on tenant-owner path or known tenant owner email
+  const isOnTenantOwnerPath = pathname.startsWith('/tenant-owner');
+  const isKnownTenantOwner = user?.email === 'burchsl4@gmail.com';
+  const isTenantOwnerByPath = isOnTenantOwnerPath || isKnownTenantOwner;
+  
   // Role-based access determination
-  const isSoftwareOwner = user?.role === 'owner' && !hasOrganizationContext; // Platform owner
-  const isTenantOwner = user?.role === 'owner' && hasOrganizationContext; // Dealership owner
+  const isSoftwareOwner = user?.role === 'owner' && !hasOrganizationContext && !isTenantOwnerByPath; // Platform owner
+  const isTenantOwner = user?.role === 'owner' && (hasOrganizationContext || isTenantOwnerByPath); // Dealership owner
   const isTenantAdmin = user?.role === 'admin' && hasOrganizationContext; // Dealership admin
   const isSalesManager = user?.role === 'manager' && hasOrganizationContext; // Sales Manager
   const isSalesRep = user?.role === 'sales_rep' && hasOrganizationContext; // Sales Rep
+
+  // Debug logging for role detection
+  console.log('🔍 [Sidebar] Role detection:', {
+    userRole: user?.role,
+    tenantId: user?.tenantId,
+    hasOrganizationContext,
+    isOnTenantOwnerPath,
+    isKnownTenantOwner,
+    isTenantOwnerByPath,
+    isSoftwareOwner,
+    isTenantOwner,
+    pathname
+  });
 
   // Determine if sidebar should be blurred during onboarding
   const shouldBlurSidebar = isTenantOwner && !onboardingCompleted;
