@@ -3,18 +3,22 @@
 import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
+import { useFloatingUI } from "@/contexts/floating-ui-context";
 import AIAssistantModal from "@/components/modals/AIAssistantModal";
-
-// Marketing routes that don't need auth
-const MARKETING_ROUTES = ['/', '/marketing', '/demo', '/terms', '/privacy', '/about', '/careers', '/press', '/roadmap', '/help', '/contact'];
 
 export default function GlobalAIAssistant() {
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const pathname = usePathname();
   const { user } = useAuth(); // Always call the hook
+  const { shouldShowFloatingButtons } = useFloatingUI();
   
-  // Check if we're on a marketing page
-  const isMarketingPage = MARKETING_ROUTES.some(route => {
+  // Don't render if floating buttons should be hidden
+  if (!shouldShowFloatingButtons) {
+    return null;
+  }
+  
+  // Check if we're on a marketing page (for user context)
+  const isMarketingPage = ['/', '/marketing', '/demo', '/terms', '/privacy', '/about', '/careers', '/press', '/roadmap', '/help', '/contact'].some(route => {
     if (route === '/') {
       return pathname === '/';
     }

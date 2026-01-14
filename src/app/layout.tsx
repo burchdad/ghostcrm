@@ -5,6 +5,7 @@ import { RouteGuard } from "@/middleware/PermissionMiddleware";
 import GlobalAIAssistant from "@/components/global/GlobalAIAssistant";
 import QuickAddButton from "@/components/navigation/QuickAddButton";
 import GlobalCollaborationButton from "@/components/navigation/GlobalCollaborationButton";
+import { FloatingUIProvider } from "@/contexts/floating-ui-context";
 import AIAgentInitializer from "@/components/ai/AIAgentInitializer";
 import { Toaster } from "@/components/ui/toaster";
 import "../styles/globals.css";  // <— REQUIRED
@@ -32,17 +33,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-gray-900" suppressHydrationWarning={true}>
         <GlobalErrorBoundary>
           <Providers>
-            <CollapseLayout>
-              <RouteGuard>
-                {children}
-              </RouteGuard>
-            </CollapseLayout>
-            {/* Global components that should work on ALL pages */}
-            <AIAgentInitializer />
-            <GlobalAIAssistant />
-            <QuickAddButton />
-            <GlobalCollaborationButton />
-            <Toaster />
+            <FloatingUIProvider>
+              <CollapseLayout>
+                <RouteGuard>
+                  {children}
+                </RouteGuard>
+              </CollapseLayout>
+              {/* Global components that should work on ALL pages */}
+              <AIAgentInitializer />
+              <GlobalAIAssistant />
+              <QuickAddButton />
+              <GlobalCollaborationButton />
+              <Toaster />
+            </FloatingUIProvider>
           </Providers>
         </GlobalErrorBoundary>
       </body>

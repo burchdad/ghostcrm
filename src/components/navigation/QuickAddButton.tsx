@@ -3,11 +3,18 @@ import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import QuickAddModal from "@/components/modals/QuickAddModal";
 import { useI18n } from "@/components/utils/I18nProvider";
+import { useFloatingUI } from "@/contexts/floating-ui-context";
 import "./QuickAddButton.css";
 
 export default function QuickAddButton() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const { t } = useI18n();
+  const { shouldShowFloatingButtons } = useFloatingUI();
+
+  // Don't render if floating buttons should be hidden
+  if (!shouldShowFloatingButtons) {
+    return null;
+  }
 
   // Keyboard shortcuts
   React.useEffect(() => {
