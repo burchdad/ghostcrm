@@ -273,11 +273,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       console.log('✅ [Auth] User verified via supabase client:', userData.user.email);
+
+      // Get the full session to set both user and session state
+      const { data: sessionData } = await client.auth.getSession();
+      console.log('🔍 [Auth] Getting full session after login...');
       
+      if (sessionData.session) {
+        console.log('✅ [Auth] Session retrieved, setting session state');
+        setSession(sessionData.session);
+      }
+
       // Fetch user profile to complete authentication
       console.log('🔍 [Auth] Fetching user profile...');
       await fetchUserProfile(userData.user);
-      
+
       console.log('✅ [Auth] Login complete - ready for redirect');
       return { success: true };
     } catch (error) {

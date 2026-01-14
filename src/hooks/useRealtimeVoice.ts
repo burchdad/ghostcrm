@@ -262,7 +262,7 @@ export const useRealtimeVoice = (options: UseRealtimeVoiceOptions = {}) => {
     }));
 
     onConnectionChange?.('disconnected');
-  }, [onConnectionChange]);
+  }, []); // Remove onConnectionChange dependency to prevent infinite re-renders
 
   // Start listening (push-to-talk or voice activation)
   const startListening = useCallback(() => {
@@ -336,9 +336,32 @@ export const useRealtimeVoice = (options: UseRealtimeVoiceOptions = {}) => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      disconnect();
+      // Call disconnect directly to avoid circular dependency
+      console.log('🔌 [REALTIME] Disconnecting on cleanup...');
+
+      if (dataChannelRef.current) {
+        dataChannelRef.current.close();
+        dataChannelRef.current = null;
+      }
+
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+      }
+
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+
+      if (audioElementRef.current) {
+        audioElementRef.current.pause();
+        audioElementRef.current.srcObject = null;
+      }
+
+      sessionIdRef.current = null;
     };
-  }, [disconnect]);
+  }, []); // No dependencies to prevent infinite re-renders
 
   return {
     // State
