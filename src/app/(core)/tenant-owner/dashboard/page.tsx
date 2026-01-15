@@ -112,8 +112,28 @@ function TenantOwnerDashboard() {
   const [onboardingLoading, setOnboardingLoading] = useState(true);
   const [showMetricsModal, setShowMetricsModal] = useState(false);
   const [visibleMetrics, setVisibleMetrics] = useState([
-    'monthlyGross', 'unitsSold', 'avgLeadResponseTime', 'hotLeads', 'dealsInFinance'
+    'monthlyGross', 'unitsSold', 'avgLeadResponseTime', 'hotLeads'
   ]);
+  
+  // Load saved metric preferences on component mount
+  useEffect(() => {
+    const savedMetrics = localStorage.getItem('tenant-dashboard-visible-metrics');
+    if (savedMetrics) {
+      try {
+        const parsed = JSON.parse(savedMetrics);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setVisibleMetrics(parsed);
+        }
+      } catch (error) {
+        console.warn('Failed to parse saved metrics preferences:', error);
+      }
+    }
+  }, []);
+
+  // Save metric preferences whenever they change
+  useEffect(() => {
+    localStorage.setItem('tenant-dashboard-visible-metrics', JSON.stringify(visibleMetrics));
+  }, [visibleMetrics]);
   
   // Chart marketplace state
   const [showMarketplace, setShowMarketplace] = useState(false);
@@ -576,150 +596,230 @@ function TenantOwnerDashboard() {
           </div>
           
           <div className="gm-metrics-horizontal">
-              <div className="tenant-dashboard-metrics-grid">
-                {/* Monthly Gross Card */}
-                <div
-                  className="tenant-dashboard-metric-card revenue clickable"
-                  onClick={handleRevenueClick}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && handleRevenueClick()}
-                >
-                  <div className="tenant-dashboard-metric-header">
-                    <div>
-                      <div className="tenant-dashboard-metric-label revenue">
-                        💰 Monthly Gross
+            <div className="tenant-dashboard-metrics-grid">
+              {/* Dynamically render metrics based on visibleMetrics */}
+              {visibleMetrics.map((metricId) => {
+                switch (metricId) {
+                  case 'monthlyGross':
+                    return (
+                      <div
+                        key="monthlyGross"
+                        className="tenant-dashboard-metric-card revenue clickable"
+                        onClick={handleRevenueClick}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === "Enter" && handleRevenueClick()}
+                      >
+                        <div className="tenant-dashboard-metric-header">
+                          <div>
+                            <div className="tenant-dashboard-metric-label revenue">
+                              💰 Monthly Gross
+                            </div>
+                            <div className="tenant-dashboard-metric-value">
+                              ${analytics.monthlyGross.toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="tenant-dashboard-metric-icon revenue">
+                            <DollarSign />
+                          </div>
+                        </div>
+                        <div className="tenant-dashboard-metric-trend positive">
+                          <TrendingUp />
+                          +{analytics.monthlyGrowth}% this month
+                        </div>
                       </div>
-                      <div className="tenant-dashboard-metric-value">
-                        ${analytics.monthlyGross.toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="tenant-dashboard-metric-icon revenue">
-                      <DollarSign />
-                    </div>
-                  </div>
-                  <div className="tenant-dashboard-metric-trend positive">
-                    <TrendingUp />
-                    +{analytics.monthlyGrowth}% this month
-                  </div>
-                </div>
+                    );
 
-                {/* Units Sold Card */}
-                <div
-                  className="tenant-dashboard-metric-card performance clickable"
-                  onClick={handleTeamClick}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && handleTeamClick()}
-                >
-                  <div className="tenant-dashboard-metric-header">
-                    <div>
-                      <div className="tenant-dashboard-metric-label performance">
-                        🚗 Units Sold
+                  case 'unitsSold':
+                    return (
+                      <div
+                        key="unitsSold"
+                        className="tenant-dashboard-metric-card performance clickable"
+                        onClick={handleTeamClick}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === "Enter" && handleTeamClick()}
+                      >
+                        <div className="tenant-dashboard-metric-header">
+                          <div>
+                            <div className="tenant-dashboard-metric-label performance">
+                              🚗 Units Sold
+                            </div>
+                            <div className="tenant-dashboard-metric-value">
+                              {analytics.unitsSold}
+                            </div>
+                          </div>
+                          <div className="tenant-dashboard-metric-icon performance">
+                            <Users />
+                          </div>
+                        </div>
+                        <div className="tenant-dashboard-progress-bar">
+                          <div
+                            className="tenant-dashboard-progress-fill"
+                            style={{ width: `${Math.min((analytics.unitsSold / 50) * 100, 100)}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="tenant-dashboard-metric-value">
-                        {analytics.unitsSold}
-                      </div>
-                    </div>
-                    <div className="tenant-dashboard-metric-icon performance">
-                      <Users />
-                    </div>
-                  </div>
-                  <div className="tenant-dashboard-progress-bar">
-                    <div
-                      className="tenant-dashboard-progress-fill"
-                      style={{ width: `${Math.min((analytics.unitsSold / 50) * 100, 100)}%` }}
-                    />
-                  </div>
-                </div>
+                    );
 
-                {/* Avg Lead Response Time Card */}
-                <div
-                  className="tenant-dashboard-metric-card deals clickable"
-                  onClick={handleDealsClick}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && handleDealsClick()}
-                >
-                  <div className="tenant-dashboard-metric-header">
-                    <div>
-                      <div className="tenant-dashboard-metric-label deals">
-                        📞 Avg Lead Response
+                  case 'avgLeadResponseTime':
+                    return (
+                      <div
+                        key="avgLeadResponseTime"
+                        className="tenant-dashboard-metric-card deals clickable"
+                        onClick={handleDealsClick}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === "Enter" && handleDealsClick()}
+                      >
+                        <div className="tenant-dashboard-metric-header">
+                          <div>
+                            <div className="tenant-dashboard-metric-label deals">
+                              📞 Avg Lead Response
+                            </div>
+                            <div className="tenant-dashboard-metric-value">
+                              {analytics.avgLeadResponseTime}m
+                            </div>
+                          </div>
+                          <div className="tenant-dashboard-metric-icon deals">
+                            <Target />
+                          </div>
+                        </div>
+                        <div className={`tenant-dashboard-metric-trend ${
+                          analytics.avgLeadResponseTime <= 5 ? 'positive' : 
+                          analytics.avgLeadResponseTime <= 15 ? 'neutral' : 'negative'
+                        }`}>
+                          {analytics.avgLeadResponseTime <= 5 ? '🟢 Excellent' : 
+                           analytics.avgLeadResponseTime <= 15 ? '🟡 Good' : '🔴 Needs attention'}
+                        </div>
                       </div>
-                      <div className="tenant-dashboard-metric-value">
-                        {analytics.avgLeadResponseTime}m
-                      </div>
-                    </div>
-                    <div className="tenant-dashboard-metric-icon deals">
-                      <Target />
-                    </div>
-                  </div>
-                  <div className={`tenant-dashboard-metric-trend ${
-                    analytics.avgLeadResponseTime <= 5 ? 'positive' : 
-                    analytics.avgLeadResponseTime <= 15 ? 'neutral' : 'negative'
-                  }`}>
-                    {analytics.avgLeadResponseTime <= 5 ? '🟢 Excellent' : 
-                     analytics.avgLeadResponseTime <= 15 ? '🟡 Good' : '🔴 Needs attention'}
-                  </div>
-                </div>
+                    );
 
-                {/* Hot Leads Card */}
-                <div
-                  className="tenant-dashboard-metric-card satisfaction clickable"
-                  onClick={handleSatisfactionClick}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && handleSatisfactionClick()
-                  }
-                >
-                  <div className="tenant-dashboard-metric-header">
-                    <div>
-                      <div className="tenant-dashboard-metric-label satisfaction">
-                        🔥 Hot Leads
+                  case 'hotLeads':
+                    return (
+                      <div
+                        key="hotLeads"
+                        className="tenant-dashboard-metric-card satisfaction clickable"
+                        onClick={handleSatisfactionClick}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === "Enter" && handleSatisfactionClick()}
+                      >
+                        <div className="tenant-dashboard-metric-header">
+                          <div>
+                            <div className="tenant-dashboard-metric-label satisfaction">
+                              🔥 Hot Leads
+                            </div>
+                            <div className="tenant-dashboard-metric-value">
+                              {analytics.hotLeads}
+                            </div>
+                          </div>
+                          <div className="tenant-dashboard-metric-icon satisfaction">
+                            <BarChart3 />
+                          </div>
+                        </div>
+                        <div className={`tenant-dashboard-metric-trend ${
+                          analytics.hotLeads > 0 ? 'positive' : 'negative'
+                        }`}>
+                          {analytics.hotLeads > 0 ? 'Ready to close' : 'Need more leads'}
+                        </div>
                       </div>
-                      <div className="tenant-dashboard-metric-value">
-                        {analytics.hotLeads}
-                      </div>
-                    </div>
-                    <div className="tenant-dashboard-metric-icon satisfaction">
-                      <BarChart3 />
-                    </div>
-                  </div>
-                  <div className={`tenant-dashboard-metric-trend ${
-                    analytics.hotLeads > 0 ? 'positive' : 'negative'
-                  }`}>
-                    {analytics.hotLeads > 0 ? 'Ready to close' : 'Need more leads'}
-                  </div>
-                </div>
+                    );
 
-                {/* Deals in Finance Card */}
-                <div
-                  className="tenant-dashboard-metric-card finance clickable"
-                  onClick={handleRevenueClick}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && handleRevenueClick()}
-                >
-                  <div className="tenant-dashboard-metric-header">
-                    <div>
-                      <div className="tenant-dashboard-metric-label finance">
-                        💳 Deals in Finance
+                  case 'dealsInFinance':
+                    return (
+                      <div
+                        key="dealsInFinance"
+                        className="tenant-dashboard-metric-card finance clickable"
+                        onClick={handleRevenueClick}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === "Enter" && handleRevenueClick()}
+                      >
+                        <div className="tenant-dashboard-metric-header">
+                          <div>
+                            <div className="tenant-dashboard-metric-label finance">
+                              💳 Deals in Finance
+                            </div>
+                            <div className="tenant-dashboard-metric-value">
+                              {analytics.dealsInFinance}
+                            </div>
+                          </div>
+                          <div className="tenant-dashboard-metric-icon finance">
+                            <DollarSign />
+                          </div>
+                        </div>
+                        <div className={`tenant-dashboard-metric-trend ${
+                          analytics.dealsInFinance > 0 ? 'positive' : 'neutral'
+                        }`}>
+                          {analytics.dealsInFinance > 0 ? 'Closing soon' : 'Ready for new deals'}
+                        </div>
                       </div>
-                      <div className="tenant-dashboard-metric-value">
-                        {analytics.dealsInFinance}
+                    );
+
+                  case 'customerSatisfaction':
+                    return (
+                      <div
+                        key="customerSatisfaction"
+                        className="tenant-dashboard-metric-card satisfaction clickable"
+                        onClick={handleSatisfactionClick}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === "Enter" && handleSatisfactionClick()}
+                      >
+                        <div className="tenant-dashboard-metric-header">
+                          <div>
+                            <div className="tenant-dashboard-metric-label satisfaction">
+                              😊 Customer Satisfaction
+                            </div>
+                            <div className="tenant-dashboard-metric-value">
+                              {analytics.systemHealth}%
+                            </div>
+                          </div>
+                          <div className="tenant-dashboard-metric-icon satisfaction">
+                            <BarChart3 />
+                          </div>
+                        </div>
+                        <div className="tenant-dashboard-metric-trend positive">
+                          Excellent rating
+                        </div>
                       </div>
-                    </div>
-                    <div className="tenant-dashboard-metric-icon finance">
-                      <DollarSign />
-                    </div>
-                  </div>
-                  <div className={`tenant-dashboard-metric-trend ${
-                    analytics.dealsInFinance > 0 ? 'positive' : 'neutral'
-                  }`}>
-                    {analytics.dealsInFinance > 0 ? 'Closing soon' : 'Ready for new deals'}
-                  </div>
-                </div>
+                    );
+
+                  case 'totalCustomers':
+                    return (
+                      <div
+                        key="totalCustomers"
+                        className="tenant-dashboard-metric-card performance clickable"
+                        onClick={handleTeamClick}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === "Enter" && handleTeamClick()}
+                      >
+                        <div className="tenant-dashboard-metric-header">
+                          <div>
+                            <div className="tenant-dashboard-metric-label performance">
+                              👥 Total Customers
+                            </div>
+                            <div className="tenant-dashboard-metric-value">
+                              {analytics.totalCustomers}
+                            </div>
+                          </div>
+                          <div className="tenant-dashboard-metric-icon performance">
+                            <Users />
+                          </div>
+                        </div>
+                        <div className="tenant-dashboard-metric-trend positive">
+                          Growing customer base
+                        </div>
+                      </div>
+                    );
+
+                  default:
+                    return null;
+                }
+              })}
+            </div>
           </div>
         </div>
 

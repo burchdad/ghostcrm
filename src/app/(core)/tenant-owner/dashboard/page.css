@@ -276,27 +276,36 @@
   padding: 2.5rem 1.5rem;
 }
 
-/* Enhanced Metrics Grid - Single Row Layout */
+/* Enhanced Metrics - Horizontal Scrollable Layout */
 .tenant-dashboard-metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  display: flex;
   gap: 1.5rem;
   margin-bottom: 0;
   width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.5rem;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
-@media (min-width: 768px) {
-  .tenant-dashboard-metrics-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-  }
+/* Scrollbar styling */
+.tenant-dashboard-metrics-grid::-webkit-scrollbar {
+  height: 4px;
 }
 
-@media (min-width: 1024px) {
-  .tenant-dashboard-metrics-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 2rem;
-  }
+.tenant-dashboard-metrics-grid::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 2px;
+}
+
+.tenant-dashboard-metrics-grid::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+.tenant-dashboard-metrics-grid::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* Enhanced Metric Cards */
@@ -308,6 +317,9 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateY(0);
+  flex-shrink: 0;
+  width: 280px;
+  min-width: 280px;
 }
 
 /* Clickable card styles */
@@ -1279,8 +1291,13 @@
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .tenant-dashboard-metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
+  }
+  
+  .tenant-dashboard-metric-card {
+    width: 220px;
+    min-width: 220px;
+    padding: 1.5rem;
   }
   
   .gm-metric-card {
@@ -1317,10 +1334,11 @@
     padding: 1rem;
   }
 }
-/* Small mobile screens - single column */
+/* Small mobile screens - smaller cards */
 @media (max-width: 480px) {
-  .tenant-dashboard-metrics-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+  .tenant-dashboard-metric-card {
+    width: 180px;
+    min-width: 180px;
+    padding: 1rem;
   }
 }
