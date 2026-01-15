@@ -276,23 +276,26 @@
   padding: 2.5rem 1.5rem;
 }
 
-/* Enhanced Metrics Grid */
+/* Enhanced Metrics Grid - Single Row Layout */
 .tenant-dashboard-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
-  margin-bottom: 3rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 0;
+  width: 100%;
 }
 
 @media (min-width: 768px) {
   .tenant-dashboard-metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .tenant-dashboard-metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
   }
 }
 
@@ -879,35 +882,16 @@
   border-color: #cbd5e1;
 }
 
-/* Horizontal Metrics Layout */
+/* Horizontal Metrics Layout - Updated for Grid */
 .gm-metrics-horizontal {
-  display: flex;
-  gap: 1rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 0.5rem;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+  display: block;
+  width: 100%;
+  margin-bottom: 2rem;
 }
 
-/* Hide scrollbar but keep functionality */
-.gm-metrics-horizontal::-webkit-scrollbar {
-  height: 4px;
-}
+/* Remove horizontal scroll styles as we're using grid now */
 
-.gm-metrics-horizontal::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 2px;
-}
-
-.gm-metrics-horizontal::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 2px;
-}
-
-.gm-metrics-horizontal::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
+/* Grid-based metric cards */
 
 .gm-metric-card {
   background: white;
@@ -915,8 +899,7 @@
   padding: 1.25rem;
   border: 1px solid #e5e7eb;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  min-width: 220px;
-  max-width: 220px;
+  width: 100%;
   flex-shrink: 0;
   flex-grow: 0;
   cursor: pointer;
@@ -1295,15 +1278,12 @@
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  .gm-metrics-horizontal {
-    gap: 0.75rem;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+  .tenant-dashboard-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
   }
   
   .gm-metric-card {
-    min-width: 180px;
-    max-width: 180px;
     padding: 1rem;
   }
   
@@ -1335,5 +1315,12 @@
   
   .modal-footer {
     padding: 1rem;
+  }
+}
+/* Small mobile screens - single column */
+@media (max-width: 480px) {
+  .tenant-dashboard-metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 }
