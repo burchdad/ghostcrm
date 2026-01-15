@@ -110,6 +110,10 @@ function TenantOwnerDashboard() {
   const [organizationName, setOrganizationName] = useState('Your Organization');
   const [loading, setLoading] = useState(true);
   const [onboardingLoading, setOnboardingLoading] = useState(true);
+  const [showMetricsModal, setShowMetricsModal] = useState(false);
+  const [visibleMetrics, setVisibleMetrics] = useState([
+    'monthlyGross', 'unitsSold', 'avgLeadResponseTime', 'hotLeads', 'dealsInFinance'
+  ]);
   
   // Chart marketplace state
   const [showMarketplace, setShowMarketplace] = useState(false);
@@ -181,6 +185,46 @@ function TenantOwnerDashboard() {
 
   const handleSatisfactionClick = () => {
     router.push('/tenant-owner/analytics');
+  };
+
+  // Helper functions for real GM data
+  const calculateAverageResponseTime = async () => {
+    try {
+      const response = await fetch('/api/leads/response-time');
+      if (response.ok) {
+        const data = await response.json();
+        return data.averageResponseTime || 0;
+      }
+    } catch (error) {
+      console.error('Error calculating response time:', error);
+    }
+    return 0;
+  };
+
+  const getHotLeadsCount = async () => {
+    try {
+      const response = await fetch('/api/leads?status=hot&limit=100');
+      if (response.ok) {
+        const data = await response.json();
+        return data.leads?.length || 0;
+      }
+    } catch (error) {
+      console.error('Error fetching hot leads:', error);
+    }
+    return 0;
+  };
+
+  const getDealsInFinance = async () => {
+    try {
+      const response = await fetch('/api/deals?stage=finance&limit=100');
+      if (response.ok) {
+        const data = await response.json();
+        return data.deals?.length || 0;
+      }
+    } catch (error) {
+      console.error('Error fetching finance deals:', error);
+    }
+    return 0;
   };
 
   // Helper function to format relative time
@@ -255,12 +299,22 @@ function TenantOwnerDashboard() {
         const tasksData = tasksRes && tasksRes.ok ? await tasksRes.json() : { tasks: [], alerts: [] };
         const organizationData = organizationRes && organizationRes.ok ? await organizationRes.json() : null;
 
+        // Calculate real GM metrics from live data
+        const currentMonth = new Date().getMonth();
+        const monthlyGross = analyticsData?.revenue?.total || dashboardData?.monthlyRevenue || 0;
+        const unitsSold = dashboardData?.dealsCount || analyticsData?.deals?.closed || 0;
+        
+        // Calculate average lead response time from recent leads
+        const avgResponseTime = await calculateAverageResponseTime();
+        const hotLeadsCount = await getHotLeadsCount();
+        const dealsInFinanceCount = await getDealsInFinance();
+        
         setAnalytics({
-          monthlyGross: analyticsData?.revenue?.total || 0,
-          unitsSold: dashboardData?.todayDeals || analyticsData?.performance?.leadsGenerated || 0,
-          avgLeadResponseTime: Math.floor(Math.random() * 30) + 5, // Random 5-35 minutes
-          hotLeads: Math.floor(Math.random() * 8) + 2, // Random 2-10 hot leads
-          dealsInFinance: Math.floor(Math.random() * 5) + 1, // Random 1-6 deals in finance
+          monthlyGross,
+          unitsSold,
+          avgLeadResponseTime: avgResponseTime,
+          hotLeads: hotLeadsCount,
+          dealsInFinance: dealsInFinanceCount,
           monthlyGrowth: analyticsData?.revenue?.growth || 0,
           totalCustomers: analyticsData?.customers?.total || 0,
           systemHealth: dashboardData?.metrics?.customerSatisfaction || 0
@@ -419,6 +473,68 @@ function TenantOwnerDashboard() {
     });
   };
 
+  // Metrics customization modal component
+  const MetricsCustomizationModal = () => {
+    const availableMetrics = [
+      { id: 'monthlyGross', label: '💰 Monthly Gross', description: 'Total monthly revenue' },
+      { id: 'unitsSold', label: '🚗 Units Sold', description: 'Vehicles sold this month' },
+      { id: 'avgLeadResponseTime', label: '📞 Avg Lead Response', description: 'Average response time to leads' },
+      { id: 'hotLeads', label: '🔥 Hot Leads', description: 'High-priority leads ready to close' },
+      { id: 'dealsInFinance', label: '💳 Deals in Finance', description: 'Deals currently in financing' },
+      { id: 'customerSatisfaction', label: '😊 Customer Satisfaction', description: 'Customer satisfaction score' },
+      { id: 'totalCustomers', label: '👥 Total Customers', description: 'Total customer count' },
+    ];
+
+    const toggleMetric = (metricId: string) => {
+      setVisibleMetrics(prev => {
+        if (prev.includes(metricId)) {
+          return prev.filter(id => id !== metricId);
+        } else if (prev.length < 5) {
+          return [...prev, metricId];
+        }
+        return prev;
+      });
+    };
+
+    if (!showMetricsModal) return null;
+
+    return (
+      <div className="modal-overlay" onClick={() => setShowMetricsModal(false)}>
+        <div className="metrics-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h3>Customize Dashboard Metrics</h3>
+            <button onClick={() => setShowMetricsModal(false)} className="close-btn">×</button>
+          </div>
+          <div className="modal-content">
+            <p className="modal-description">Select up to 5 metrics to display on your GM dashboard</p>
+            <div className="metrics-list">
+              {availableMetrics.map(metric => (
+                <div key={metric.id} className="metric-option">
+                  <label className="metric-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={visibleMetrics.includes(metric.id)}
+                      onChange={() => toggleMetric(metric.id)}
+                      disabled={!visibleMetrics.includes(metric.id) && visibleMetrics.length >= 5}
+                    />
+                    <span className="metric-label">{metric.label}</span>
+                  </label>
+                  <span className="metric-description">{metric.description}</span>
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer">
+              <span className="metrics-count">{visibleMetrics.length}/5 metrics selected</span>
+              <button onClick={() => setShowMetricsModal(false)} className="save-btn">
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   console.log('🔍 [TENANT-DASHBOARD] Loading states:', { loading, onboardingLoading, hasUser: !!user });
 
   if (loading || onboardingLoading) {
@@ -446,26 +562,20 @@ function TenantOwnerDashboard() {
   return (
     <div className="tenant-dashboard-container">
       <div className="tenant-dashboard-content">
-        {/* Analytics Cards Grid with AI Assistant */}
-        <div className="tenant-dashboard-header-section">
-          <div className="tenant-dashboard-top-section">
-            {/* GM Metrics Header */}
-            <div className="gm-metrics-header">
-              <div className="gm-metrics-title">
-                <h2>📊 GM Command Metrics</h2>
-                <p>Real-time dealership performance indicators</p>
-              </div>
-              <button 
-                className="gm-metrics-customize-btn"
-                onClick={() => console.log('Customize metrics clicked')}
-                title="Customize Metrics"
-              >
-                <Settings size={20} />
-              </button>
-            </div>
-            
-            {/* Metrics in 2x2 Grid */}
-            <div className="tenant-dashboard-metrics-container">
+        {/* GM Metrics Cards - Horizontal Layout */}
+        <div className="gm-metrics-section">
+          <div className="gm-metrics-header">
+            <button 
+              className="gm-metrics-customize-btn"
+              onClick={() => setShowMetricsModal(true)}
+              title="Customize Dashboard Metrics"
+            >
+              <Settings size={18} />
+              Customize Metrics
+            </button>
+          </div>
+          
+          <div className="gm-metrics-horizontal">
               <div className="tenant-dashboard-metrics-grid">
                 {/* Monthly Gross Card */}
                 <div
@@ -610,59 +720,133 @@ function TenantOwnerDashboard() {
                     {analytics.dealsInFinance > 0 ? 'Closing soon' : 'Ready for new deals'}
                   </div>
                 </div>
+          </div>
+        </div>
+
+        {/* Virtual GM Assistant - Full Width Below Metrics */}
+        <div className="virtual-gm-section">
+          <div className="virtual-gm-assistant">
+            <div className="virtual-gm-header">
+              <div className="virtual-gm-title">
+                🎯 Virtual GM
+              </div>
+              <div className="virtual-gm-subtitle">
+                Your Daily Command Center - Live Status
               </div>
             </div>
-
-            {/* Virtual GM Assistant aligned to the right */}
-            <div className="tenant-dashboard-ai-container">
-              <div className="virtual-gm-assistant">
-                <div className="virtual-gm-header">
-                  <div className="virtual-gm-title">
-                    🎯 Virtual GM
-                  </div>
-                  <div className="virtual-gm-subtitle">
-                    Your Daily Command Center
-                  </div>
-                </div>
+            
+            <div className="virtual-gm-briefing">
+              <h4>Real-Time GM Briefing</h4>
+              {/* Virtual GM Briefing with Real Data */}
+              {(() => {
+                const alerts: Array<{
+                  level: string;
+                  message: string;
+                  action: string;
+                }> = [];
                 
-                <div className="virtual-gm-briefing">
-                  <h4>Daily Briefing</h4>
-                  {analytics.hotLeads > 0 ? (
-                    <div className="gm-alert priority-high">
-                      🔴 {analytics.hotLeads} hot leads need immediate attention
-                    </div>
-                  ) : null}
-                  
-                  {analytics.avgLeadResponseTime > 15 ? (
-                    <div className="gm-alert priority-medium">
-                      ⚠️ Lead response time is {analytics.avgLeadResponseTime}m (target: &lt;15m)
-                    </div>
-                  ) : null}
-                  
-                  {analytics.dealsInFinance > 0 ? (
-                    <div className="gm-alert priority-low">
-                      💰 {analytics.dealsInFinance} deals ready to close in finance
-                    </div>
-                  ) : null}
-                  
-                  {analytics.hotLeads === 0 && analytics.avgLeadResponseTime <= 15 && analytics.dealsInFinance === 0 ? (
-                    <div className="gm-alert priority-success">
-                      ✅ Operations running smoothly - focus on lead generation
-                    </div>
-                  ) : null}
-                </div>
+                // Critical alerts first
+                if (analytics.hotLeads > 5) {
+                  alerts.push({
+                    level: 'critical',
+                    message: `🚨 URGENT: ${analytics.hotLeads} hot leads require immediate follow-up!`,
+                    action: 'Review hot leads now'
+                  });
+                } else if (analytics.hotLeads > 0) {
+                  alerts.push({
+                    level: 'high',
+                    message: `🔴 ${analytics.hotLeads} hot leads need attention today`,
+                    action: 'Follow up within 2 hours'
+                  });
+                }
+                
+                // Response time alerts
+                if (analytics.avgLeadResponseTime > 30) {
+                  alerts.push({
+                    level: 'high',
+                    message: `⚠️ Response time critically high: ${analytics.avgLeadResponseTime}m (target: <15m)`,
+                    action: 'Review lead assignment process'
+                  });
+                } else if (analytics.avgLeadResponseTime > 15) {
+                  alerts.push({
+                    level: 'medium',
+                    message: `⚡ Response time above target: ${analytics.avgLeadResponseTime}m`,
+                    action: 'Optimize lead routing'
+                  });
+                }
+                
+                // Finance opportunities
+                if (analytics.dealsInFinance > 3) {
+                  alerts.push({
+                    level: 'opportunity',
+                    message: `💰 ${analytics.dealsInFinance} deals ready to close in finance`,
+                    action: 'Push for same-day closings'
+                  });
+                } else if (analytics.dealsInFinance > 0) {
+                  alerts.push({
+                    level: 'low',
+                    message: `💳 ${analytics.dealsInFinance} deals in finance department`,
+                    action: 'Monitor for quick closes'
+                  });
+                }
+                
+                // Performance insights
+                if (analytics.unitsSold >= 20) {
+                  alerts.push({
+                    level: 'success',
+                    message: `🎯 Strong month: ${analytics.unitsSold} units sold`,
+                    action: 'Maintain momentum'
+                  });
+                } else if (analytics.unitsSold < 10 && new Date().getDate() > 15) {
+                  alerts.push({
+                    level: 'medium',
+                    message: `📈 Units sold below target: ${analytics.unitsSold}`,
+                    action: 'Increase floor activity'
+                  });
+                }
+                
+                // Daily operational status
+                const currentHour = new Date().getHours();
+                if (currentHour >= 9 && currentHour <= 17 && alerts.length === 0) {
+                  alerts.push({
+                    level: 'success',
+                    message: '✅ Operations running smoothly - all metrics on target',
+                    action: 'Focus on lead generation and customer experience'
+                  });
+                } else if (alerts.length === 0) {
+                  alerts.push({
+                    level: 'neutral',
+                    message: '🌙 End of day summary - review tomorrow\'s priorities',
+                    action: 'Prepare for tomorrow\'s activities'
+                  });
+                }
+                
+                return (
+                  <div className="gm-briefing-alerts">
+                    {alerts.slice(0, 4).map((alert, index) => (
+                      <div key={index} className={`gm-alert priority-${alert.level}`}>
+                        <div className="alert-message">{alert.message}</div>
+                        <div className="alert-action">→ {alert.action}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
 
-                <div className="virtual-gm-actions">
-                  <button className="gm-action-btn" onClick={() => router.push('/leads')}>
-                    View All Leads
-                  </button>
-                  <button className="gm-action-btn" onClick={() => router.push('/deals')}>
-                    Manage Deals
-                  </button>
-                </div>
-              </div>
+            <div className="virtual-gm-actions">
+              <button className="gm-action-btn" onClick={() => router.push('/tenant-owner/leads')}>
+                View Leads ({analytics.hotLeads} hot)
+              </button>
+              <button className="gm-action-btn" onClick={() => router.push('/tenant-owner/deals')}>
+                Deals ({analytics.dealsInFinance} in finance)
+              </button>
+              <button className="gm-action-btn" onClick={() => router.push('/tenant-owner/inventory')}>
+                Inventory
+              </button>
             </div>
           </div>
+        </div>
         </div>
 
         {/* Enhanced Quick Actions for Owners */}
@@ -1005,6 +1189,9 @@ function TenantOwnerDashboard() {
         onClose={() => setShowMarketplace(false)}
         onInstall={handleInstallChart}
       />
+      
+      {/* Metrics Customization Modal */}
+      <MetricsCustomizationModal />
     </div>
   );
 }

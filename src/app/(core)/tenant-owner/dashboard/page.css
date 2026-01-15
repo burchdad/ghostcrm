@@ -839,47 +839,38 @@
 
 /* 
   ===========================================
-  🎯 GM COMMAND CENTER ENHANCEMENTS
+  🎯 GM COMMAND CENTER ENHANCEMENTS V2
   ===========================================
-  Added: GM-focused styling for dealership dashboard transformation
+  Updated: Horizontal metrics layout like leads/deals pages
 */
 
-/* GM Metrics Header */
+/* GM Metrics Section */
+.gm-metrics-section {
+  margin-bottom: 2rem;
+}
+
+/* GM Metrics Header - Simplified */
 .gm-metrics-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   padding: 0 0.5rem;
-}
-
-.gm-metrics-title h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.gm-metrics-title p {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin: 0.25rem 0 0 0;
 }
 
 .gm-metrics-customize-btn {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
-  padding: 0.5rem;
+  padding: 0.5rem 1rem;
   color: #64748b;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .gm-metrics-customize-btn:hover {
@@ -888,7 +879,113 @@
   border-color: #cbd5e1;
 }
 
-/* Virtual GM Assistant */
+/* Horizontal Metrics Layout */
+.gm-metrics-horizontal {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.gm-metric-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gm-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
+}
+
+.gm-metric-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.gm-metric-icon {
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gm-metric-icon.revenue { background: rgba(34, 197, 94, 0.1); color: #059669; }
+.gm-metric-icon.performance { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.gm-metric-icon.response { background: rgba(168, 85, 247, 0.1); color: #8b5cf6; }
+.gm-metric-icon.leads { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.gm-metric-icon.finance { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+
+.gm-metric-info {
+  flex: 1;
+}
+
+.gm-metric-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  margin-bottom: 0.25rem;
+}
+
+.gm-metric-value {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.gm-metric-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.gm-metric-trend.positive { color: #059669; }
+.gm-metric-trend.neutral { color: #d97706; }
+.gm-metric-trend.negative { color: #dc2626; }
+
+.gm-metric-status {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.gm-metric-status.excellent { color: #059669; }
+.gm-metric-status.good { color: #d97706; }
+.gm-metric-status.needs-attention { color: #dc2626; }
+.gm-metric-status.positive { color: #059669; }
+.gm-metric-status.neutral { color: #6b7280; }
+
+.gm-metric-progress {
+  background: #f3f4f6;
+  border-radius: 0.25rem;
+  height: 0.5rem;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+/* Virtual GM Section - Full Width */
+.virtual-gm-section {
+  margin-bottom: 2rem;
+}
+
 .virtual-gm-assistant {
   background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   border-radius: 1rem;
@@ -957,6 +1054,42 @@
   background: rgba(16, 185, 129, 0.1);
 }
 
+.gm-alert.priority-critical {
+  border-left-color: #dc2626;
+  background: rgba(220, 38, 38, 0.15);
+  animation: pulse 2s infinite;
+}
+
+.gm-alert.priority-opportunity {
+  border-left-color: #0ea5e9;
+  background: rgba(14, 165, 233, 0.1);
+}
+
+.gm-alert.priority-neutral {
+  border-left-color: #64748b;
+  background: rgba(100, 116, 139, 0.1);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.gm-briefing-alerts {
+  space-y: 0.5rem;
+}
+
+.alert-message {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.alert-action {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  font-style: italic;
+}
+
 .virtual-gm-actions {
   display: flex;
   gap: 0.75rem;
@@ -982,39 +1115,159 @@
   transform: translateY(-1px);
 }
 
-/* Enhanced metric cards for finance/dealership focus */
-.tenant-dashboard-metric-card.finance {
-  background: linear-gradient(135deg, #065f46 0%, #059669 100%);
+/* Metrics Customization Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.metrics-modal {
+  background: white;
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: #374151;
+}
+
+.modal-content {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.modal-description {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.metrics-list {
+  space-y: 1rem;
+}
+
+.metric-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.metric-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.metric-checkbox input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+}
+
+.metric-checkbox input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.metric-label {
+  font-weight: 500;
+  color: #111827;
+}
+
+.metric-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-left: 1.75rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.metrics-count {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.save-btn {
+  background: #3b82f6;
   color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-.tenant-dashboard-metric-label.finance {
-  color: rgba(255, 255, 255, 0.9);
+.save-btn:hover {
+  background: #2563eb;
 }
 
-.tenant-dashboard-metric-icon.finance {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Dealership-focused section styling */
-.tenant-dashboard-section h3:has-text("🏪 Dealership Command Center") {
-  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Mobile responsiveness for GM features */
+/* Mobile responsiveness */
 @media (max-width: 768px) {
-  .gm-metrics-header {
+  .gm-metrics-horizontal {
     flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
   }
   
-  .gm-metrics-customize-btn {
-    align-self: flex-end;
-    width: auto;
+  .gm-metric-card {
+    min-width: auto;
+  }
+  
+  .gm-metric-content {
+    align-items: center;
   }
   
   .virtual-gm-actions {
@@ -1023,5 +1276,10 @@
   
   .gm-action-btn {
     min-width: auto;
+  }
+  
+  .metrics-modal {
+    width: 95%;
+    margin: 1rem;
   }
 }
