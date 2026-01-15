@@ -26,6 +26,7 @@ import {
   Grid3X3
 } from "lucide-react";
 import ChartMarketplaceModal from "@/app/(core)/dashboard/components/marketplace/Modal/ChartMarketplaceModal";
+import VirtualGMBriefing from '@/components/dashboard/VirtualGMBriefing';
 import { 
   Chart as ChartJS,
   CategoryScale,
@@ -140,6 +141,7 @@ function TenantOwnerDashboard() {
   const [installedCharts, setInstalledCharts] = useState<InstalledChart[]>([]);
   const [chartSettings, setChartSettings] = useState<Record<string, any>>({});
   const [activeChartsView, setActiveChartsView] = useState<'grid' | 'marketplace'>('grid');
+  const [showAIModal, setShowAIModal] = useState(false);
 
   useRibbonPage({
     context: "dashboard",
@@ -580,7 +582,7 @@ function TenantOwnerDashboard() {
 
   // Main dashboard render
   return (
-    <React.Fragment>
+    <>
       <div className="tenant-dashboard-container">
       <div className="tenant-dashboard-content">
         {/* GM Metrics Cards - Horizontal Layout */}
@@ -832,122 +834,44 @@ function TenantOwnerDashboard() {
                 🎯 Virtual GM
               </div>
               <div className="virtual-gm-subtitle">
-                Your Daily Command Center - Live Status
+                AI-Powered Command Center - Live Intelligence
               </div>
             </div>
             
             <div className="virtual-gm-briefing">
-              <h4>Real-Time GM Briefing</h4>
-              {/* Virtual GM Briefing with Real Data */}
-              {(() => {
-                const alerts: Array<{
-                  level: string;
-                  message: string;
-                  action: string;
-                }> = [];
-                
-                // Critical alerts first
-                if (analytics.hotLeads > 5) {
-                  alerts.push({
-                    level: 'critical',
-                    message: `🚨 URGENT: ${analytics.hotLeads} hot leads require immediate follow-up!`,
-                    action: 'Review hot leads now'
-                  });
-                } else if (analytics.hotLeads > 0) {
-                  alerts.push({
-                    level: 'high',
-                    message: `🔴 ${analytics.hotLeads} hot leads need attention today`,
-                    action: 'Follow up within 2 hours'
-                  });
-                }
-                
-                // Response time alerts
-                if (analytics.avgLeadResponseTime > 30) {
-                  alerts.push({
-                    level: 'high',
-                    message: `⚠️ Response time critically high: ${analytics.avgLeadResponseTime}m (target: <15m)`,
-                    action: 'Review lead assignment process'
-                  });
-                } else if (analytics.avgLeadResponseTime > 15) {
-                  alerts.push({
-                    level: 'medium',
-                    message: `⚡ Response time above target: ${analytics.avgLeadResponseTime}m`,
-                    action: 'Optimize lead routing'
-                  });
-                }
-                
-                // Finance opportunities
-                if (analytics.dealsInFinance > 3) {
-                  alerts.push({
-                    level: 'opportunity',
-                    message: `💰 ${analytics.dealsInFinance} deals ready to close in finance`,
-                    action: 'Push for same-day closings'
-                  });
-                } else if (analytics.dealsInFinance > 0) {
-                  alerts.push({
-                    level: 'low',
-                    message: `💳 ${analytics.dealsInFinance} deals in finance department`,
-                    action: 'Monitor for quick closes'
-                  });
-                }
-                
-                // Performance insights
-                if (analytics.unitsSold >= 20) {
-                  alerts.push({
-                    level: 'success',
-                    message: `🎯 Strong month: ${analytics.unitsSold} units sold`,
-                    action: 'Maintain momentum'
-                  });
-                } else if (analytics.unitsSold < 10 && new Date().getDate() > 15) {
-                  alerts.push({
-                    level: 'medium',
-                    message: `📈 Units sold below target: ${analytics.unitsSold}`,
-                    action: 'Increase floor activity'
-                  });
-                }
-                
-                // Daily operational status
-                const currentHour = new Date().getHours();
-                if (currentHour >= 9 && currentHour <= 17 && alerts.length === 0) {
-                  alerts.push({
-                    level: 'success',
-                    message: '✅ Operations running smoothly - all metrics on target',
-                    action: 'Focus on lead generation and customer experience'
-                  });
-                } else if (alerts.length === 0) {
-                  alerts.push({
-                    level: 'neutral',
-                    message: '🌙 End of day summary - review tomorrow\'s priorities',
-                    action: 'Prepare for tomorrow\'s activities'
-                  });
-                }
-                
-                return (
-                  <div className="gm-briefing-alerts">
-                    {alerts.slice(0, 4).map((alert, index) => (
-                      <div key={index} className={`gm-alert priority-${alert.level}`}>
-                        <div className="alert-message">{alert.message}</div>
-                        <div className="alert-action">→ {alert.action}</div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
+              <h4>Real-Time AI Briefing</h4>
+              <VirtualGMBriefing organizationId={user?.organizationId} />
             </div>
 
             <div className="virtual-gm-actions">
-              <button className="gm-action-btn" onClick={() => router.push('/tenant-owner/leads')}>
-                View Leads ({analytics.hotLeads} hot)
-              </button>
-              <button className="gm-action-btn" onClick={() => router.push('/tenant-owner/deals')}>
-                Deals ({analytics.dealsInFinance} in finance)
-              </button>
-              <button className="gm-action-btn" onClick={() => router.push('/tenant-owner/inventory')}>
-                Inventory
-              </button>
+              <div className="virtual-gm-actions-grid">
+                <button 
+                  onClick={() => setShowAIModal(true)}
+                  className="virtual-gm-action-btn primary"
+                >
+                  💬 Ask AI Assistant
+                </button>
+                <button 
+                  onClick={() => window.location.href = '/leads'}
+                  className="virtual-gm-action-btn secondary"
+                >
+                  🎯 Manage Leads
+                </button>
+                <button 
+                  onClick={() => window.location.href = '/deals'}
+                  className="virtual-gm-action-btn secondary"
+                >
+                  💼 Review Deals
+                </button>
+                <button 
+                  onClick={() => window.location.href = '/inventory'}
+                  className="virtual-gm-action-btn secondary"
+                >
+                  🚗 Check Inventory
+                </button>
+              </div>
             </div>
           </div>
-        </div>
         </div>
 
         {/* Enhanced Quick Actions for Owners */}
@@ -1283,6 +1207,7 @@ function TenantOwnerDashboard() {
           )}
         </div>
       </div>
+      </div>
 
       {/* Chart Marketplace Modal */}
       <ChartMarketplaceModal
@@ -1293,7 +1218,7 @@ function TenantOwnerDashboard() {
       
       {/* Metrics Customization Modal */}
       <MetricsCustomizationModal />
-    </React.Fragment>
+    </>
   );
 }
 
