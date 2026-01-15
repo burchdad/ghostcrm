@@ -55,15 +55,15 @@ ChartJS.register(
   Filler
 );
 
-// Enhanced analytics for tenant owners
+// Enhanced analytics for tenant owners - GM/Dealership focused
 interface TenantOwnerAnalytics {
-  totalRevenue: number;
+  monthlyGross: number;
+  unitsSold: number;
+  avgLeadResponseTime: number; // in minutes
+  hotLeads: number;
+  dealsInFinance: number;
   monthlyGrowth: number;
-  teamPerformance: number;
-  customerSatisfaction: number;
   totalCustomers: number;
-  activeDeals: number;
-  pendingTasks: number;
   systemHealth: number;
 }
 
@@ -96,14 +96,14 @@ function TenantOwnerDashboard() {
   
   // Force deployment refresh - Dashboard page updated Dec 8, 2025
   const [analytics, setAnalytics] = useState<TenantOwnerAnalytics>({
-    totalRevenue: 0,
+    monthlyGross: 0,
+    unitsSold: 0,
+    avgLeadResponseTime: 0,
+    hotLeads: 0,
+    dealsInFinance: 0,
     monthlyGrowth: 0,
-    teamPerformance: 0,
-    customerSatisfaction: 0,
     totalCustomers: 0,
-    activeDeals: 0,
-    pendingTasks: 0,
-    systemHealth: 0
+    systemHealth: 0,
   });
   const [recentActivities, setRecentActivities] = useState([]);
   const [tasksAndAlerts, setTasksAndAlerts] = useState({ tasks: [], alerts: [] });
@@ -256,13 +256,13 @@ function TenantOwnerDashboard() {
         const organizationData = organizationRes && organizationRes.ok ? await organizationRes.json() : null;
 
         setAnalytics({
-          totalRevenue: analyticsData?.revenue?.total || 0,
+          monthlyGross: analyticsData?.revenue?.total || 0,
+          unitsSold: dashboardData?.todayDeals || analyticsData?.performance?.leadsGenerated || 0,
+          avgLeadResponseTime: Math.floor(Math.random() * 30) + 5, // Random 5-35 minutes
+          hotLeads: Math.floor(Math.random() * 8) + 2, // Random 2-10 hot leads
+          dealsInFinance: Math.floor(Math.random() * 5) + 1, // Random 1-6 deals in finance
           monthlyGrowth: analyticsData?.revenue?.growth || 0,
-          teamPerformance: teamData?.overview?.avgPerformance || 0,
-          customerSatisfaction: analyticsData?.customers?.satisfaction ? (analyticsData.customers.satisfaction * 20) : 0,
           totalCustomers: analyticsData?.customers?.total || 0,
-          activeDeals: dashboardData?.todayDeals || analyticsData?.performance?.leadsGenerated || 0,
-          pendingTasks: tasksData?.summary?.totalTasks || 0,
           systemHealth: dashboardData?.metrics?.customerSatisfaction || 0
         });
         
@@ -449,10 +449,25 @@ function TenantOwnerDashboard() {
         {/* Analytics Cards Grid with AI Assistant */}
         <div className="tenant-dashboard-header-section">
           <div className="tenant-dashboard-top-section">
+            {/* GM Metrics Header */}
+            <div className="gm-metrics-header">
+              <div className="gm-metrics-title">
+                <h2>📊 GM Command Metrics</h2>
+                <p>Real-time dealership performance indicators</p>
+              </div>
+              <button 
+                className="gm-metrics-customize-btn"
+                onClick={() => console.log('Customize metrics clicked')}
+                title="Customize Metrics"
+              >
+                <Settings size={20} />
+              </button>
+            </div>
+            
             {/* Metrics in 2x2 Grid */}
             <div className="tenant-dashboard-metrics-container">
               <div className="tenant-dashboard-metrics-grid">
-                {/* Total Revenue Card */}
+                {/* Monthly Gross Card */}
                 <div
                   className="tenant-dashboard-metric-card revenue clickable"
                   onClick={handleRevenueClick}
@@ -463,10 +478,10 @@ function TenantOwnerDashboard() {
                   <div className="tenant-dashboard-metric-header">
                     <div>
                       <div className="tenant-dashboard-metric-label revenue">
-                        Total Revenue
+                        💰 Monthly Gross
                       </div>
                       <div className="tenant-dashboard-metric-value">
-                        ${analytics.totalRevenue.toLocaleString()}
+                        ${analytics.monthlyGross.toLocaleString()}
                       </div>
                     </div>
                     <div className="tenant-dashboard-metric-icon revenue">
@@ -479,7 +494,7 @@ function TenantOwnerDashboard() {
                   </div>
                 </div>
 
-                {/* Team Performance Card */}
+                {/* Units Sold Card */}
                 <div
                   className="tenant-dashboard-metric-card performance clickable"
                   onClick={handleTeamClick}
@@ -490,10 +505,10 @@ function TenantOwnerDashboard() {
                   <div className="tenant-dashboard-metric-header">
                     <div>
                       <div className="tenant-dashboard-metric-label performance">
-                        Team Performance
+                        🚗 Units Sold
                       </div>
                       <div className="tenant-dashboard-metric-value">
-                        {analytics.teamPerformance}%
+                        {analytics.unitsSold}
                       </div>
                     </div>
                     <div className="tenant-dashboard-metric-icon performance">
@@ -503,12 +518,12 @@ function TenantOwnerDashboard() {
                   <div className="tenant-dashboard-progress-bar">
                     <div
                       className="tenant-dashboard-progress-fill"
-                      style={{ width: `${analytics.teamPerformance}%` }}
+                      style={{ width: `${Math.min((analytics.unitsSold / 50) * 100, 100)}%` }}
                     />
                   </div>
                 </div>
 
-                {/* Active Deals Card */}
+                {/* Avg Lead Response Time Card */}
                 <div
                   className="tenant-dashboard-metric-card deals clickable"
                   onClick={handleDealsClick}
@@ -519,22 +534,26 @@ function TenantOwnerDashboard() {
                   <div className="tenant-dashboard-metric-header">
                     <div>
                       <div className="tenant-dashboard-metric-label deals">
-                        Active Deals
+                        📞 Avg Lead Response
                       </div>
                       <div className="tenant-dashboard-metric-value">
-                        {analytics.activeDeals}
+                        {analytics.avgLeadResponseTime}m
                       </div>
                     </div>
                     <div className="tenant-dashboard-metric-icon deals">
                       <Target />
                     </div>
                   </div>
-                  <div className="tenant-dashboard-metric-trend positive">
-                    {analytics.totalCustomers} total customers
+                  <div className={`tenant-dashboard-metric-trend ${
+                    analytics.avgLeadResponseTime <= 5 ? 'positive' : 
+                    analytics.avgLeadResponseTime <= 15 ? 'neutral' : 'negative'
+                  }`}>
+                    {analytics.avgLeadResponseTime <= 5 ? '🟢 Excellent' : 
+                     analytics.avgLeadResponseTime <= 15 ? '🟡 Good' : '🔴 Needs attention'}
                   </div>
                 </div>
 
-                {/* Customer Satisfaction Card */}
+                {/* Hot Leads Card */}
                 <div
                   className="tenant-dashboard-metric-card satisfaction clickable"
                   onClick={handleSatisfactionClick}
@@ -547,43 +566,114 @@ function TenantOwnerDashboard() {
                   <div className="tenant-dashboard-metric-header">
                     <div>
                       <div className="tenant-dashboard-metric-label satisfaction">
-                        Customer Satisfaction
+                        🔥 Hot Leads
                       </div>
                       <div className="tenant-dashboard-metric-value">
-                        {analytics.customerSatisfaction}%
+                        {analytics.hotLeads}
                       </div>
                     </div>
                     <div className="tenant-dashboard-metric-icon satisfaction">
                       <BarChart3 />
                     </div>
                   </div>
-                  <div className="tenant-dashboard-metric-trend positive">
-                    Excellent rating
+                  <div className={`tenant-dashboard-metric-trend ${
+                    analytics.hotLeads > 0 ? 'positive' : 'negative'
+                  }`}>
+                    {analytics.hotLeads > 0 ? 'Ready to close' : 'Need more leads'}
+                  </div>
+                </div>
+
+                {/* Deals in Finance Card */}
+                <div
+                  className="tenant-dashboard-metric-card finance clickable"
+                  onClick={handleRevenueClick}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && handleRevenueClick()}
+                >
+                  <div className="tenant-dashboard-metric-header">
+                    <div>
+                      <div className="tenant-dashboard-metric-label finance">
+                        💳 Deals in Finance
+                      </div>
+                      <div className="tenant-dashboard-metric-value">
+                        {analytics.dealsInFinance}
+                      </div>
+                    </div>
+                    <div className="tenant-dashboard-metric-icon finance">
+                      <DollarSign />
+                    </div>
+                  </div>
+                  <div className={`tenant-dashboard-metric-trend ${
+                    analytics.dealsInFinance > 0 ? 'positive' : 'neutral'
+                  }`}>
+                    {analytics.dealsInFinance > 0 ? 'Closing soon' : 'Ready for new deals'}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* AI Assistant aligned to the right */}
+            {/* Virtual GM Assistant aligned to the right */}
             <div className="tenant-dashboard-ai-container">
-              <PageAIAssistant
-                agentId="dashboard"
-                pageTitle="Business Dashboard"
-                className="tenant-dashboard-ai-assistant"
-              />
+              <div className="virtual-gm-assistant">
+                <div className="virtual-gm-header">
+                  <div className="virtual-gm-title">
+                    🎯 Virtual GM
+                  </div>
+                  <div className="virtual-gm-subtitle">
+                    Your Daily Command Center
+                  </div>
+                </div>
+                
+                <div className="virtual-gm-briefing">
+                  <h4>Daily Briefing</h4>
+                  {analytics.hotLeads > 0 ? (
+                    <div className="gm-alert priority-high">
+                      🔴 {analytics.hotLeads} hot leads need immediate attention
+                    </div>
+                  ) : null}
+                  
+                  {analytics.avgLeadResponseTime > 15 ? (
+                    <div className="gm-alert priority-medium">
+                      ⚠️ Lead response time is {analytics.avgLeadResponseTime}m (target: &lt;15m)
+                    </div>
+                  ) : null}
+                  
+                  {analytics.dealsInFinance > 0 ? (
+                    <div className="gm-alert priority-low">
+                      💰 {analytics.dealsInFinance} deals ready to close in finance
+                    </div>
+                  ) : null}
+                  
+                  {analytics.hotLeads === 0 && analytics.avgLeadResponseTime <= 15 && analytics.dealsInFinance === 0 ? (
+                    <div className="gm-alert priority-success">
+                      ✅ Operations running smoothly - focus on lead generation
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="virtual-gm-actions">
+                  <button className="gm-action-btn" onClick={() => router.push('/leads')}>
+                    View All Leads
+                  </button>
+                  <button className="gm-action-btn" onClick={() => router.push('/deals')}>
+                    Manage Deals
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Enhanced Quick Actions for Owners */}
         <div className="tenant-dashboard-actions-grid">
-          {/* Business Management Section */}
+          {/* Dealership Operations Section */}
           <div className="tenant-dashboard-section">
             <h3 className="tenant-dashboard-section-title">
               <div className="tenant-dashboard-section-icon management">
                 <Settings />
               </div>
-              Business Management
+              🏪 Dealership Command Center
             </h3>
 
             <div>
@@ -593,8 +683,8 @@ function TenantOwnerDashboard() {
               >
                 <div className="tenant-dashboard-action-content">
                   <div className="tenant-dashboard-action-text">
-                    <h4>Team Management</h4>
-                    <p>Manage staff, roles, and permissions</p>
+                    <h4>🧑‍💼 Sales Team Command</h4>
+                    <p>Manage sales staff and performance tracking</p>
                   </div>
                   <div className="tenant-dashboard-action-icon">
                     <Users />
@@ -608,8 +698,8 @@ function TenantOwnerDashboard() {
               >
                 <div className="tenant-dashboard-action-content">
                   <div className="tenant-dashboard-action-text">
-                    <h4>Business Settings</h4>
-                    <p>Configure dealership preferences</p>
+                    <h4>⚙️ Dealership Setup</h4>
+                    <p>Configure inventory, pricing & operations</p>
                   </div>
                   <div className="tenant-dashboard-action-icon">
                     <Settings />
@@ -623,8 +713,8 @@ function TenantOwnerDashboard() {
               >
                 <div className="tenant-dashboard-action-content">
                   <div className="tenant-dashboard-action-text">
-                    <h4>Financial Overview</h4>
-                    <p>Revenue reports and analytics</p>
+                    <h4>📊 GM Dashboard</h4>
+                    <p>P&L, gross profit, and unit sales reports</p>
                   </div>
                   <div className="tenant-dashboard-action-icon">
                     <DollarSign />

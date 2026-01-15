@@ -836,3 +836,192 @@
 .clickable:hover::before {
   opacity: 1;
 }
+
+/* 
+  ===========================================
+  🎯 GM COMMAND CENTER ENHANCEMENTS
+  ===========================================
+  Added: GM-focused styling for dealership dashboard transformation
+*/
+
+/* GM Metrics Header */
+.gm-metrics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 0 0.5rem;
+}
+
+.gm-metrics-title h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gm-metrics-title p {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0.25rem 0 0 0;
+}
+
+.gm-metrics-customize-btn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gm-metrics-customize-btn:hover {
+  background: #e2e8f0;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+/* Virtual GM Assistant */
+.virtual-gm-assistant {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  color: white;
+  box-shadow: 0 4px 20px rgba(30, 41, 59, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.virtual-gm-header {
+  margin-bottom: 1rem;
+}
+
+.virtual-gm-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.virtual-gm-subtitle {
+  font-size: 0.875rem;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.virtual-gm-briefing {
+  margin-bottom: 1.5rem;
+}
+
+.virtual-gm-briefing h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #e2e8f0;
+}
+
+.gm-alert {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  border-left: 4px solid;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.gm-alert.priority-high {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.gm-alert.priority-medium {
+  border-left-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.gm-alert.priority-low {
+  border-left-color: #06b6d4;
+  background: rgba(6, 182, 212, 0.1);
+}
+
+.gm-alert.priority-success {
+  border-left-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.virtual-gm-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.gm-action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: white;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 120px;
+}
+
+.gm-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Enhanced metric cards for finance/dealership focus */
+.tenant-dashboard-metric-card.finance {
+  background: linear-gradient(135deg, #065f46 0%, #059669 100%);
+  color: white;
+}
+
+.tenant-dashboard-metric-label.finance {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.tenant-dashboard-metric-icon.finance {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Dealership-focused section styling */
+.tenant-dashboard-section h3:has-text("🏪 Dealership Command Center") {
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Mobile responsiveness for GM features */
+@media (max-width: 768px) {
+  .gm-metrics-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .gm-metrics-customize-btn {
+    align-self: flex-end;
+    width: auto;
+  }
+  
+  .virtual-gm-actions {
+    flex-direction: column;
+  }
+  
+  .gm-action-btn {
+    min-width: auto;
+  }
+}
