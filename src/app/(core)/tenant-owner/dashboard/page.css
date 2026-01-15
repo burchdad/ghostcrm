@@ -884,7 +884,29 @@
   display: flex;
   gap: 1rem;
   overflow-x: auto;
+  overflow-y: hidden;
   padding-bottom: 0.5rem;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar but keep functionality */
+.gm-metrics-horizontal::-webkit-scrollbar {
+  height: 4px;
+}
+
+.gm-metrics-horizontal::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 2px;
+}
+
+.gm-metrics-horizontal::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+.gm-metrics-horizontal::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .gm-metric-card {
@@ -893,8 +915,10 @@
   padding: 1.25rem;
   border: 1px solid #e5e7eb;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  min-width: 200px;
+  min-width: 220px;
+  max-width: 220px;
   flex-shrink: 0;
+  flex-grow: 0;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -1137,6 +1161,8 @@
   max-height: 80vh;
   overflow: hidden;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -1145,6 +1171,7 @@
   align-items: center;
   padding: 1.5rem;
   border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
 }
 
 .modal-header h3 {
@@ -1174,8 +1201,9 @@
 
 .modal-content {
   padding: 1.5rem;
-  max-height: 60vh;
+  flex: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .modal-description {
@@ -1185,7 +1213,9 @@
 }
 
 .metrics-list {
-  space-y: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .metric-option {
@@ -1195,7 +1225,11 @@
   padding: 0.75rem;
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
-  margin-bottom: 0.75rem;
+  transition: background-color 0.2s ease;
+}
+
+.metric-option:hover {
+  background-color: #f9fafb;
 }
 
 .metric-checkbox {
@@ -1208,6 +1242,7 @@
 .metric-checkbox input[type="checkbox"] {
   width: 1rem;
   height: 1rem;
+  cursor: pointer;
 }
 
 .metric-checkbox input[type="checkbox"]:disabled {
@@ -1218,6 +1253,7 @@
 .metric-label {
   font-weight: 500;
   color: #111827;
+  flex: 1;
 }
 
 .metric-description {
@@ -1233,6 +1269,7 @@
   padding: 1.5rem;
   border-top: 1px solid #e5e7eb;
   background: #f9fafb;
+  flex-shrink: 0;
 }
 
 .metrics-count {
@@ -1259,11 +1296,15 @@
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .gm-metrics-horizontal {
-    flex-direction: column;
+    gap: 0.75rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
   
   .gm-metric-card {
-    min-width: auto;
+    min-width: 180px;
+    max-width: 180px;
+    padding: 1rem;
   }
   
   .gm-metric-content {
@@ -1281,5 +1322,18 @@
   .metrics-modal {
     width: 95%;
     margin: 1rem;
+    max-height: 85vh;
+  }
+  
+  .modal-content {
+    padding: 1rem;
+  }
+  
+  .modal-header {
+    padding: 1rem;
+  }
+  
+  .modal-footer {
+    padding: 1rem;
   }
 }
