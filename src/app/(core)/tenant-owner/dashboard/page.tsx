@@ -580,7 +580,8 @@ function TenantOwnerDashboard() {
 
   // Main dashboard render
   return (
-    <div className="tenant-dashboard-container">
+    <React.Fragment>
+      <div className="tenant-dashboard-container">
       <div className="tenant-dashboard-content">
         {/* GM Metrics Cards - Horizontal Layout */}
         <div className="gm-metrics-section">
@@ -1292,7 +1293,7 @@ function TenantOwnerDashboard() {
       
       {/* Metrics Customization Modal */}
       <MetricsCustomizationModal />
-    </div>
+    </React.Fragment>
   );
 }
 
