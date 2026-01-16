@@ -21,8 +21,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import MobileNavigationButtons from '../mobile/MobileNavigationButtons';
-import MobileNavigationButtons from '../mobile/MobileNavigationButtons';
-import MobileNavigationButtons from '../mobile/MobileNavigationButtons';
 
 // =============================================================================
 // RESPONSIVE BREAKPOINT HOOK
