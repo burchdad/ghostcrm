@@ -37,19 +37,20 @@ const MobileNavigationButtons: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+  const [loadingItem, setLoadingItem] = useState<string | null>(null);
 
   const navigationItems: MobileNavButton[] = [
     {
       id: 'virtual-gm',
       label: 'Virtual GM',
-      icon: <Brain className="w-5 h-5" />,
+      icon: <Brain className="w-6 h-6" />,
       href: '/tenant-owner/dashboard',
       badge: 'Live',
       badgeColor: 'green',
       isActive: pathname === '/tenant-owner/dashboard',
       subItems: [
         {
-          label: 'Command Center',
+          label: 'AI Command Center',
           href: '/tenant-owner/dashboard',
           icon: <Activity className="w-4 h-4" />
         },
@@ -57,13 +58,18 @@ const MobileNavigationButtons: React.FC = () => {
           label: 'Daily Briefing',
           href: '/tenant-owner/briefing',
           icon: <FileText className="w-4 h-4" />
+        },
+        {
+          label: 'Performance Review',
+          href: '/tenant-owner/performance',
+          icon: <BarChart3 className="w-4 h-4" />
         }
       ]
     },
     {
       id: 'real-time-briefing',
-      label: 'Real-Time Briefing',
-      icon: <Zap className="w-5 h-5" />,
+      label: 'Real-Time GM Briefing',
+      icon: <Zap className="w-6 h-6" />,
       href: '/tenant-owner/briefing',
       badge: 'Active',
       badgeColor: 'blue',
@@ -72,7 +78,7 @@ const MobileNavigationButtons: React.FC = () => {
     {
       id: 'leads',
       label: 'View Leads',
-      icon: <Users className="w-5 h-5" />,
+      icon: <Users className="w-6 h-6" />,
       href: '/tenant-owner/leads',
       badge: '12',
       badgeColor: 'orange',
@@ -81,7 +87,7 @@ const MobileNavigationButtons: React.FC = () => {
     {
       id: 'deals',
       label: 'Deals',
-      icon: <FileText className="w-5 h-5" />,
+      icon: <FileText className="w-6 h-6" />,
       href: '/tenant-owner/deals',
       badge: '8',
       badgeColor: 'blue',
@@ -90,31 +96,31 @@ const MobileNavigationButtons: React.FC = () => {
     {
       id: 'inventory',
       label: 'Inventory',
-      icon: <Package className="w-5 h-5" />,
+      icon: <Package className="w-6 h-6" />,
       href: '/tenant-owner/inventory',
       isActive: pathname === '/tenant-owner/inventory'
     },
     {
       id: 'command-center',
       label: 'Dealership Command Center',
-      icon: <Building2 className="w-5 h-5" />,
+      icon: <Building2 className="w-6 h-6" />,
       href: '/tenant-owner/command-center',
       badge: 'New',
       badgeColor: 'red',
       isActive: pathname === '/tenant-owner/command-center',
       subItems: [
         {
-          label: 'Analytics',
+          label: 'Live Analytics',
           href: '/tenant-owner/analytics',
           icon: <BarChart3 className="w-4 h-4" />
         },
         {
-          label: 'Calendar',
+          label: 'Team Calendar',
           href: '/tenant-owner/calendar',
           icon: <Calendar className="w-4 h-4" />
         },
         {
-          label: 'Settings',
+          label: 'System Settings',
           href: '/tenant-owner/settings',
           icon: <Settings className="w-4 h-4" />
         }
@@ -122,11 +128,39 @@ const MobileNavigationButtons: React.FC = () => {
     }
   ];
 
-  const handleNavigation = (item: MobileNavButton) => {
+  const handleNavigation = async (item: MobileNavButton) => {
+    // Haptic feedback for mobile devices
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
+    
     if (item.subItems && item.subItems.length > 0) {
       setExpandedItem(expandedItem === item.id ? null : item.id);
     } else {
-      router.push(item.href);
+      setLoadingItem(item.id);
+      try {
+        router.push(item.href);
+      } catch (error) {
+        console.error('Navigation failed:', error);
+      } finally {
+        // Clear loading state after navigation attempt
+        setTimeout(() => setLoadingItem(null), 1000);
+      }
+    }
+  };
+  
+  const handleSubNavigation = async (href: string, parentId: string) => {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(30);
+    }
+    
+    setLoadingItem(parentId);
+    try {
+      router.push(href);
+    } catch (error) {
+      console.error('Sub-navigation failed:', error);
+    } finally {
+      setTimeout(() => setLoadingItem(null), 1000);
     }
   };
 
@@ -153,13 +187,29 @@ const MobileNavigationButtons: React.FC = () => {
           >
             <motion.button
               onClick={() => handleNavigation(item)}
-              className={`mobile-nav-button ${item.isActive ? 'active' : ''}`}
+              className={`mobile-nav-button ${
+                item.isActive ? 'active' : ''
+              } ${
+                loadingItem === item.id ? 'loading' : ''
+              }`}
               whileTap={{ scale: 0.95 }}
               whileHover={{ scale: 1.02 }}
+              disabled={loadingItem === item.id}
             >
               <div className="mobile-nav-button-content">
-                <div className="mobile-nav-icon">
-                  {item.icon}
+                <div className={`mobile-nav-icon ${
+                  loadingItem === item.id ? 'loading' : ''
+                }`}>
+                  {loadingItem === item.id ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    >
+                      <Activity className="w-6 h-6" />
+                    </motion.div>
+                  ) : (
+                    item.icon
+                  )}
                 </div>
                 
                 <div className="mobile-nav-text">
@@ -195,11 +245,14 @@ const MobileNavigationButtons: React.FC = () => {
                   {item.subItems.map((subItem, index) => (
                     <motion.button
                       key={index}
-                      onClick={() => router.push(subItem.href)}
-                      className="mobile-nav-subitem"
+                      onClick={() => handleSubNavigation(subItem.href, item.id)}
+                      className={`mobile-nav-subitem ${
+                        loadingItem === item.id ? 'loading' : ''
+                      }`}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
+                      disabled={loadingItem === item.id}
                     >
                       <div className="mobile-nav-subitem-icon">
                         {subItem.icon}
