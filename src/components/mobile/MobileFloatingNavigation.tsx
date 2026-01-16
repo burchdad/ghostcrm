@@ -38,7 +38,7 @@ const MobileFloatingNavigation: React.FC = () => {
     {
       id: 'virtual-gm',
       label: 'Virtual GM',
-      icon: <Brain className="w-5 h-5" />,
+      icon: <Brain style={{ width: '20px', height: '20px' }} />,
       href: '/tenant-owner/dashboard',
       color: '#8b5cf6',
       badge: 'Live',
@@ -47,7 +47,7 @@ const MobileFloatingNavigation: React.FC = () => {
     {
       id: 'briefing',
       label: 'GM Briefing',
-      icon: <Zap className="w-5 h-5" />,
+      icon: <Zap style={{ width: '20px', height: '20px' }} />,
       href: '/tenant-owner/briefing',
       color: '#3b82f6',
       badge: 'Active',
@@ -56,7 +56,7 @@ const MobileFloatingNavigation: React.FC = () => {
     {
       id: 'leads',
       label: 'Leads',
-      icon: <Users className="w-5 h-5" />,
+      icon: <Users style={{ width: '20px', height: '20px' }} />,
       href: '/tenant-owner/leads',
       color: '#f59e0b',
       badge: '12',
@@ -65,7 +65,7 @@ const MobileFloatingNavigation: React.FC = () => {
     {
       id: 'deals',
       label: 'Deals',
-      icon: <FileText className="w-5 h-5" />,
+      icon: <FileText style={{ width: '20px', height: '20px' }} />,
       href: '/tenant-owner/deals',
       color: '#10b981',
       badge: '8',
@@ -74,14 +74,14 @@ const MobileFloatingNavigation: React.FC = () => {
     {
       id: 'inventory',
       label: 'Inventory',
-      icon: <Package className="w-5 h-5" />,
+      icon: <Package style={{ width: '20px', height: '20px' }} />,
       href: '/tenant-owner/inventory',
       color: '#ef4444'
     },
     {
       id: 'command-center',
       label: 'Command Center',
-      icon: <Building2 className="w-5 h-5" />,
+      icon: <Building2 style={{ width: '20px', height: '20px' }} />,
       href: '/tenant-owner/command-center',
       color: '#6366f1',
       badge: 'New',
@@ -96,12 +96,12 @@ const MobileFloatingNavigation: React.FC = () => {
 
   const getBadgeStyles = (color: string) => {
     const styles = {
-      green: 'bg-green-500 text-white',
-      blue: 'bg-blue-500 text-white',
-      orange: 'bg-orange-500 text-white',
-      red: 'bg-red-500 text-white animate-pulse'
+      green: 'floating-badge-green',
+      blue: 'floating-badge-blue', 
+      orange: 'floating-badge-orange',
+      red: 'floating-badge-red'
     };
-    return styles[color as keyof typeof styles] || 'bg-gray-500 text-white';
+    return styles[color as keyof typeof styles] || 'floating-badge-default';
   };
 
   return (
@@ -127,7 +127,7 @@ const MobileFloatingNavigation: React.FC = () => {
               exit={{ opacity: 0, rotate: 90 }}
               transition={{ duration: 0.1 }}
             >
-              <X className="w-6 h-6" />
+              <X style={{ width: '24px', height: '24px' }} />
             </motion.div>
           ) : (
             <motion.div
@@ -137,7 +137,7 @@ const MobileFloatingNavigation: React.FC = () => {
               exit={{ opacity: 0, rotate: 90 }}
               transition={{ duration: 0.1 }}
             >
-              <Menu className="w-6 h-6" />
+              <Menu style={{ width: '24px', height: '24px' }} />
             </motion.div>
           )}
         </AnimatePresence>

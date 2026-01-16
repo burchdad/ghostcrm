@@ -115,6 +115,42 @@
   z-index: 1;
 }
 
+/* Badge color variations */
+.floating-badge-green {
+  background-color: #10b981;
+  color: white;
+}
+
+.floating-badge-blue {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.floating-badge-orange {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.floating-badge-red {
+  background-color: #ef4444;
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.floating-badge-default {
+  background-color: #6b7280;
+  color: white;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
 /* Tooltip */
 .floating-nav-tooltip {
   position: absolute;
