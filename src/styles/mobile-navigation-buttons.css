@@ -6,6 +6,7 @@
   Similar styling to AI chat and collaboration buttons
 */
 
+/* Mobile navigation should only appear on mobile within tenant dashboard context */
 .mobile-nav-buttons {
   display: none; /* Hidden by default, shown only on mobile */
   padding: 1.25rem;
@@ -283,17 +284,16 @@
     padding: 1rem;
   }
   
-  /* Hide traditional sidebar on mobile */
-  .desktop-sidebar,
-  .traditional-nav,
-  .sidebar-navigation {
-    display: none !important;
+  /* Only target specific mobile layouts - don't interfere with desktop sidebar */
+  .tenant-dashboard-container .desktop-sidebar,
+  .tenant-dashboard-container .traditional-nav {
+    display: none;
   }
   
-  /* Adjust main content area for mobile */
-  .main-content-area {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+  /* Adjust main content area for mobile only within tenant dashboard */
+  .tenant-dashboard-container .main-content-area {
+    padding-left: 0;
+    padding-right: 0;
   }
   
   /* Stack buttons on very small screens */
@@ -340,10 +340,16 @@
   }
 }
 
-/* Tablet view - keep desktop layout */
+/* Desktop and tablet - ensure mobile navigation is completely hidden */
 @media (min-width: 769px) {
   .mobile-nav-buttons {
     display: none !important;
+  }
+  
+  /* Ensure desktop sidebar functionality is preserved */
+  .tenant-dashboard-container .desktop-sidebar,
+  .tenant-dashboard-container .traditional-nav {
+    display: block; /* Restore any hidden sidebars */
   }
 }
 

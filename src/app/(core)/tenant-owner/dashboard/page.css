@@ -1463,88 +1463,94 @@
   ===========================================
   📱 MOBILE NAVIGATION ENHANCEMENTS
   ===========================================
-  Enhanced mobile navigation for tenant dashboard
+  Enhanced mobile navigation for tenant dashboard - scoped properly
 */
 
-/* Hide old mobile navigation on mobile - replaced with MobileNavigationButtons */
+/* Only affect tenant dashboard mobile layout */
 @media (max-width: 768px) {
-  .mobile-nav-bar {
-    display: none !important;
+  /* Only hide the old mobile nav bar that's specific to tenant dashboard */
+  .tenant-dashboard-container .mobile-nav-bar {
+    display: none;
   }
   
-  /* Adjust main container for mobile */
+  /* Tenant dashboard specific mobile adjustments */
   .tenant-dashboard-container {
     padding: 0;
-    background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
   }
   
   .tenant-dashboard-content {
     padding: 0.5rem;
     margin-top: 0;
+    padding-top: 0; /* Remove the 80px top padding since we're not using old mobile nav */
   }
   
-  /* Adjust metrics grid for mobile */
-  .tenant-dashboard-metrics-grid {
-    grid-template-columns: 1fr !important;
+  /* Adjust metrics grid for mobile within tenant dashboard */
+  .tenant-dashboard-container .tenant-dashboard-metrics-grid {
+    display: flex;
+    flex-direction: column;
     gap: 0.75rem;
     padding: 0 0.5rem;
   }
   
-  .tenant-dashboard-metric-card {
+  .tenant-dashboard-container .tenant-dashboard-metric-card {
+    width: 100%;
+    min-width: auto;
     min-height: 80px;
     padding: 1rem;
   }
   
   /* Improve section spacing on mobile */
-  .tenant-dashboard-section {
+  .tenant-dashboard-container .tenant-dashboard-section {
     margin-bottom: 1.5rem;
   }
   
-  .tenant-dashboard-section-header {
+  .tenant-dashboard-container .tenant-dashboard-section-header {
     padding: 0.75rem 1rem;
     margin-bottom: 1rem;
   }
   
-  .tenant-dashboard-section-title {
+  .tenant-dashboard-container .tenant-dashboard-section-title {
     font-size: 1.125rem;
   }
   
   /* Adjust Virtual GM Briefing for mobile */
-  .virtual-gm-briefing-container {
+  .tenant-dashboard-container .virtual-gm-briefing-container {
     margin: 0.5rem;
     border-radius: 0.75rem;
   }
   
-  /* Hide desktop-only elements on mobile */
-  .desktop-only {
-    display: none !important;
-  }
-  
-  /* Make sure mobile navigation buttons are shown */
-  .mobile-nav-buttons {
-    display: block !important;
+  /* Make sure mobile navigation buttons are shown within tenant dashboard */
+  .tenant-dashboard-container .mobile-nav-buttons {
+    display: block;
   }
 }
 
-/* Tablet adjustments */
+/* Tablet adjustments - scoped to tenant dashboard */
 @media (min-width: 769px) and (max-width: 1024px) {
-  .tenant-dashboard-metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .tenant-dashboard-container .tenant-dashboard-metrics-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .tenant-dashboard-container .tenant-dashboard-metric-card {
+    flex: 1;
+    min-width: 250px;
   }
   
   /* Hide mobile navigation on tablet - keep desktop layout */
-  .mobile-nav-buttons {
-    display: none !important;
+  .tenant-dashboard-container .mobile-nav-buttons {
+    display: none;
   }
 }
 
-/* Desktop - ensure mobile navigation is hidden */
+/* Desktop - ensure mobile navigation is hidden within tenant dashboard */
 @media (min-width: 1025px) {
-  .mobile-nav-buttons {
-    display: none !important;
+  .tenant-dashboard-container .mobile-nav-buttons {
+    display: none;
   }
   
-  .mobile-nav-bar {
-    display: none !important;
+  .tenant-dashboard-container .mobile-nav-bar {
+    display: none;
   }
 }
