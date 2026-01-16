@@ -9,7 +9,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { ToastProvider } from "@/components/utils/ToastProvider";
 import { I18nProvider, useI18n } from "@/components/utils/I18nProvider";
-import { MobileNavigationButtons } from "@/components/ui/mobile-components";
+import MobileFloatingNavigation from "@/components/mobile/MobileFloatingNavigation";
 import "./page.css";
 import { 
   Users, 
@@ -586,8 +586,8 @@ function TenantOwnerDashboard() {
   return (
     <>
       <div className="tenant-dashboard-container">
-        {/* Enhanced Mobile Navigation - Only shown on mobile */}
-        <MobileNavigationButtons />
+        {/* Mobile Floating Navigation - Only shown on mobile */}
+        <MobileFloatingNavigation />
 
       <div className="tenant-dashboard-content">
         {/* GM Metrics Cards - Horizontal Layout */}
