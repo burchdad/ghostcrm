@@ -20,6 +20,9 @@ import {
   StarIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import MobileNavigationButtons from '../mobile/MobileNavigationButtons';
+import MobileNavigationButtons from '../mobile/MobileNavigationButtons';
+import MobileNavigationButtons from '../mobile/MobileNavigationButtons';
 
 // =============================================================================
 // RESPONSIVE BREAKPOINT HOOK
@@ -702,5 +705,6 @@ export {
   FloatingActionButton,
   MobileTabs,
   PullToRefresh,
-  ResponsiveGrid
+  ResponsiveGrid,
+  MobileNavigationButtons
 };

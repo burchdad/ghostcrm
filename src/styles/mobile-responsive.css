@@ -6,6 +6,8 @@
   Breakpoints: Mobile (320px+), Tablet (640px+), Desktop (1024px+)
 */
 
+@import "./mobile-navigation-buttons.css";
+
 /* ========== BREAKPOINT VARIABLES ========== */
 :root {
   --mobile-min: 320px;

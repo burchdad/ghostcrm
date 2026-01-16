@@ -9,6 +9,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { ToastProvider } from "@/components/utils/ToastProvider";
 import { I18nProvider, useI18n } from "@/components/utils/I18nProvider";
+import { MobileNavigationButtons } from "@/components/ui/mobile-components";
 import "./page.css";
 import { 
   Users, 
@@ -142,6 +143,7 @@ function TenantOwnerDashboard() {
   const [chartSettings, setChartSettings] = useState<Record<string, any>>({});
   const [activeChartsView, setActiveChartsView] = useState<'grid' | 'marketplace'>('grid');
   const [showAIModal, setShowAIModal] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useRibbonPage({
     context: "dashboard",
@@ -584,6 +586,9 @@ function TenantOwnerDashboard() {
   return (
     <>
       <div className="tenant-dashboard-container">
+        {/* Enhanced Mobile Navigation - Only shown on mobile */}
+        <MobileNavigationButtons />
+
       <div className="tenant-dashboard-content">
         {/* GM Metrics Cards - Horizontal Layout */}
         <div className="gm-metrics-section">
