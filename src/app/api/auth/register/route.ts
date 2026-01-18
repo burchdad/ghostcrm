@@ -10,6 +10,7 @@ import { withCORS } from "@/lib/cors";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import speakeasy from "speakeasy";
+import crypto from "crypto";
 
 type RegisterBody = {
   email?: string;
@@ -244,7 +245,6 @@ async function registerHandler(req: Request) {
           subdomain: finalSubdomain,
           owner_id: user.id,
           status: "active",
-          onboarding_completed: false,
         })
         .select("id")
         .single();
@@ -297,9 +297,7 @@ async function registerHandler(req: Request) {
           .insert({
             subdomain: finalSubdomain,
             organization_id: organizationId,
-            organization_name: companyName || `${firstName}'s Organization`,
-            owner_email: emailNorm,
-            status: 'pending_payment', // Will be activated after payment
+            status: 'placeholder', // Will be activated after payment
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
