@@ -179,6 +179,14 @@ async function registerHandler(req: Request) {
 
     if (insertResult.error) {
       const { code, message } = insertResult.error;
+      console.error("❌ [REGISTER] Full database error details:", {
+        code,
+        message,
+        details: insertResult.error.details,
+        hint: insertResult.error.hint,
+        statusCode: insertResult.error.statusCode
+      });
+      
       if (code === "23505" || /duplicate/i.test(message)) {
         console.log("❌ [REGISTER] Duplicate email on insert:", emailNorm);
         return NextResponse.json({ error: "Email already registered" }, { status: 409 });
@@ -250,7 +258,13 @@ async function registerHandler(req: Request) {
         .single();
 
       if (orgResult.error) {
-        console.error("❌ [REGISTER] Failed to create organization:", orgResult.error);
+        console.error("❌ [REGISTER] Failed to create organization:", {
+          code: orgResult.error.code,
+          message: orgResult.error.message,
+          details: orgResult.error.details,
+          hint: orgResult.error.hint,
+          statusCode: orgResult.error.statusCode
+        });
         throw new Error(`Organization creation failed: ${orgResult.error.message}`);
       }
       
@@ -298,8 +312,6 @@ async function registerHandler(req: Request) {
             subdomain: finalSubdomain,
             organization_id: organizationId,
             status: 'placeholder', // Will be activated after payment
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
           });
           
         if (subdomainError) {
