@@ -183,8 +183,7 @@ async function registerHandler(req: Request) {
         code,
         message,
         details: insertResult.error.details,
-        hint: insertResult.error.hint,
-        statusCode: insertResult.error.statusCode
+        hint: insertResult.error.hint
       });
       
       if (code === "23505" || /duplicate/i.test(message)) {
@@ -262,8 +261,7 @@ async function registerHandler(req: Request) {
           code: orgResult.error.code,
           message: orgResult.error.message,
           details: orgResult.error.details,
-          hint: orgResult.error.hint,
-          statusCode: orgResult.error.statusCode
+          hint: orgResult.error.hint
         });
         throw new Error(`Organization creation failed: ${orgResult.error.message}`);
       }
