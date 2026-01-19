@@ -24,13 +24,6 @@ type RegisterBody = {
 
 async function registerHandler(req: Request) {
   console.log("🚀 [REGISTER] Starting registration process...");
-  
-  // 🔍 DIAGNOSTIC: Check which Supabase keys are available
-  console.log("🔑 [REGISTER] Environment check:");
-  console.log("SUPABASE URL present:", !!process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log("SERVICE ROLE present:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-  console.log("ANON present:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  console.log("Using supabaseAdmin client from:", "@/lib/supabaseAdmin");
 
   try {
     const {
@@ -99,11 +92,7 @@ async function registerHandler(req: Request) {
       return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
     }
 
-    // --- All registrations create company owners
-    const userRole = "owner"; // Simplified: only owners can register
-    
-    // All registered users create organizations
-    const isCreatingOrganization = true;
+    // --- All registrations create company owners (simplified flow)
 
     // --- Validate Supabase env
     if (
@@ -117,34 +106,19 @@ async function registerHandler(req: Request) {
       );
     }
 
-    // --- Check if user exists
-    console.log("🔍 [REGISTER] Checking if user already exists…");
-    let existing = null as { id: string; email: string } | null;
-    try {
-      const result = await supabaseAdmin
-        .from("users")
-        .select("id,email")
-        .eq("email", emailNorm)
-        .single();
-      existing = result.data ?? null;
+    // --- Check if auth user exists by attempting creation
+    console.log("🔍 [REGISTER] Attempting auth user creation to check existence…");
 
-      // If error is "no rows" (PGRST116), that's fine; else surface the error
-      if (result.error && result.error.code !== "PGRST116") {
-        console.error("❌ [REGISTER] Database error:", result.error);
-        return NextResponse.json(
-          { error: "Database connection error. Please try again." },
-          { status: 500 }
-        );
-      }
-    } catch (err) {
-      console.error("❌ [REGISTER] Supabase query failed:", err);
-      return NextResponse.json(
-        { error: "Database connection error. Please try again." },
-        { status: 500 }
-      );
-    }
+    // 🔧 FIX: Create Supabase Auth user FIRST to get canonical user ID
+    console.log("🔐 [REGISTER] Creating Supabase Auth user...");
+    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+      email: emailNorm,
+      password: password,
+      email_confirm: true // mark confirmed to avoid verify step
+    });
 
-    if (existing) {
+    // If user already exists (422), return 409 immediately
+    if (createErr?.status === 422) {
       console.log("❌ [REGISTER] User already exists:", emailNorm);
       return NextResponse.json(
         { error: "An account with this email already exists" },
@@ -152,35 +126,55 @@ async function registerHandler(req: Request) {
       );
     }
 
-    // --- Hash and insert
+    if (createErr) {
+      console.error("❌ [REGISTER] createUser failed:", createErr);
+      return NextResponse.json(
+        { error: "Authentication setup failed. Please try again." },
+        { status: 500 }
+      );
+    }
+
+    const authUserId = created?.user?.id;
+    if (!authUserId) {
+      console.error("❌ [REGISTER] No auth user ID returned");
+      return NextResponse.json(
+        { error: "Authentication setup failed. Please try again." },
+        { status: 500 }
+      );
+    }
+
+    console.log("✅ [REGISTER] Auth user established with ID:", authUserId);
+
+    // --- Hash password for public.users
     console.log("🔐 [REGISTER] Hashing password…");
     const password_hash = await hash(password, 10);
     
     // --- Generate security fields for complete user setup
-    console.log("� [REGISTER] Generating security fields...");
-    const tenant_id = crypto.randomUUID();
+    console.log("🔧 [REGISTER] Generating security fields...");
     const totp_secret = speakeasy.generateSecret({
       name: `GhostCRM (${emailNorm})`,
       issuer: 'GhostCRM'
     }).base32;
     const jwt_token = crypto.randomUUID(); // Placeholder token field
 
-    console.log("�💾 [REGISTER] Inserting new user into database…");
+    // 🔧 FIX: Insert into public.users using auth user ID (no tenant_id yet)
+    console.log("💾 [REGISTER] Inserting user into public.users with auth ID…");
     const insertResult = await supabaseAdmin
       .from("users")
-      .insert({
+      .upsert({
+        id: authUserId, // 🎯 KEY FIX: Use auth user ID to maintain consistency
         email: emailNorm,
         password_hash,
-        role: userRole,
+        role: "owner",
         first_name: firstName ?? "",
         last_name: lastName ?? "",
         company_name: companyName ?? "",
-        tenant_id: tenant_id,
         totp_secret: totp_secret,
         webauthn_credentials: [], // Empty array for new users (jsonb column)
         jwt_token: jwt_token,
-        organization_id: null // Will be set after organization creation
-      })
+        organization_id: null, // Will be set after organization creation
+        tenant_id: null // 🔧 FIX: Will be set to organization_id (not random UUID)
+      }, { onConflict: "id" })
       .select("id,email,role,tenant_id,totp_secret,webauthn_credentials,jwt_token")
       .single();
 
@@ -257,7 +251,7 @@ async function registerHandler(req: Request) {
         .insert({
           name: companyName || `${firstName}'s Organization`,
           subdomain: finalSubdomain,
-          owner_id: user.id,
+          owner_id: authUserId, // 🔧 FIX: Use authUserId consistently
           status: "active",
         })
         .select("id")
@@ -281,7 +275,7 @@ async function registerHandler(req: Request) {
         .from("organization_memberships")
         .insert({
           organization_id: organizationId,
-          user_id: user.id,
+          user_id: authUserId, // 🔧 FIX: Use authUserId consistently
           role: "owner", // All registrations are owners
           status: "active",
         });
@@ -293,14 +287,31 @@ async function registerHandler(req: Request) {
       
       console.log("✅ [REGISTER] Organization membership created");
 
+      // 🚨 CRITICAL FIX #1: Create tenant membership (what get_user_tenant_ids() relies on)
+      const { error: tenantMembershipErr } = await supabaseAdmin
+        .from("tenant_memberships")
+        .insert({
+          user_id: authUserId,
+          tenant_id: organizationId,
+          role: "owner",
+        });
+
+      if (tenantMembershipErr) {
+        console.error("❌ [REGISTER] Failed to create tenant_membership:", tenantMembershipErr);
+        throw new Error(`Tenant membership failed: ${tenantMembershipErr.message}`);
+      }
+      
+      console.log("✅ [REGISTER] Tenant membership created");
+
       // Update user record with organization info as owner
       const { error: updateError } = await supabaseAdmin
         .from("users")
         .update({ 
           organization_id: organizationId,
+          tenant_id: organizationId, // 🔧 FIX: Set tenant_id to organization_id (not random UUID)
           role: "owner" // Always owner for registrations
         })
-        .eq("id", user.id);
+        .eq("id", authUserId); // 🔧 FIX: Use authUserId consistently
         
       if (updateError) {
         console.error("❌ [REGISTER] Failed to update user with organization:", updateError);
@@ -316,14 +327,16 @@ async function registerHandler(req: Request) {
           .insert({
             subdomain: finalSubdomain,
             organization_id: organizationId,
-            status: 'placeholder', // Will be activated after payment
+            status: 'pending', // 🔧 FIX: Use 'pending' instead of 'placeholder' to match check constraint
+            organization_name: companyName || `${firstName}'s Organization`,
+            owner_email: emailNorm
           });
           
         if (subdomainError) {
-          console.error("❌ [REGISTER] Failed to create subdomain placeholder:", subdomainError);
+          console.error("❌ [REGISTER] Failed to create subdomain entry:", subdomainError);
           // Don't fail registration for this, but log the error
         } else {
-          console.log("✅ [REGISTER] Placeholder subdomain created:", finalSubdomain);
+          console.log("✅ [REGISTER] Subdomain entry created:", finalSubdomain, "(pending activation)");
         }
       } catch (subdomainError) {
         console.error("❌ [REGISTER] Subdomain creation error:", subdomainError);
@@ -331,11 +344,19 @@ async function registerHandler(req: Request) {
     } catch (orgError) {
       console.error("❌ [REGISTER] Organization setup failed:", orgError);
       
-      // Clean up the user record since org setup failed
+      // 🚨 CRITICAL FIX #2: Clean up both auth and public user records
       await supabaseAdmin
         .from("users")
         .delete()
-        .eq("id", user.id);
+        .eq("id", authUserId);
+      
+      // Also cleanup the auth user to prevent partial state on retry
+      try {
+        await supabaseAdmin.auth.admin.deleteUser(authUserId);
+        console.log("✅ [REGISTER] Auth user cleaned up");
+      } catch (e) {
+        console.warn("⚠️ [REGISTER] Failed to cleanup auth user:", e);
+      }
       
       return NextResponse.json(
         { error: "Account setup failed. Please try again with a different company name." },
@@ -377,20 +398,10 @@ async function registerHandler(req: Request) {
     }
 
     // --- Create Supabase Auth user and establish session
-    console.log("🔐 [REGISTER] Creating Supabase Auth user...");
+    console.log("🔐 [REGISTER] Auth user already created with ID:", authUserId);
     
-    // Create Supabase Auth user if not already existing
-    const { data: adminUser, error: adminErr } = await supabaseAdmin.auth.admin.createUser({
-      email: emailNorm,
-      password: password, // use the plaintext password the user posted
-      email_confirm: true // mark confirmed to avoid verify step
-    });
-    
-    if (adminErr && adminErr.status !== 422 /* user already exists */) {
-      console.warn("⚠️ [REGISTER] createUser failed:", adminErr);
-    } else {
-      console.log("✅ [REGISTER] Supabase Auth user created/exists");
-    }
+    // Auth user was already created at the beginning of registration process
+    console.log("✅ [REGISTER] Using existing Supabase Auth user");
 
     // Build a response that we can attach Supabase cookies to
     let res = NextResponse.json({
