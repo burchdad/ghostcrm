@@ -24,6 +24,13 @@ type RegisterBody = {
 
 async function registerHandler(req: Request) {
   console.log("🚀 [REGISTER] Starting registration process...");
+  
+  // 🔍 DIAGNOSTIC: Check which Supabase keys are available
+  console.log("🔑 [REGISTER] Environment check:");
+  console.log("SUPABASE URL present:", !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log("SERVICE ROLE present:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+  console.log("ANON present:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  console.log("Using supabaseAdmin client from:", "@/lib/supabaseAdmin");
 
   try {
     const {
