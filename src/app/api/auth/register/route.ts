@@ -170,7 +170,7 @@ async function registerHandler(req: Request) {
         company_name: companyName ?? "",
         tenant_id: tenant_id,
         totp_secret: totp_secret,
-        webauthn_credentials: JSON.stringify([]), // Empty array for new users
+        webauthn_credentials: [], // Empty array for new users (jsonb column)
         jwt_token: jwt_token,
         organization_id: null // Will be set after organization creation
       })
