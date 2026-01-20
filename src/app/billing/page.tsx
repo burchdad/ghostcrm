@@ -300,8 +300,8 @@ export default function BillingPage() {
           planId: selectedPlan,
           setupFee: selectedPlanData.setupFee,
           monthlyPrice: selectedPlanData.price,
-          successUrl: `${window.location.origin}/billing/success`,
-          cancelUrl: `${window.location.origin}/billing/cancel`,
+          successUrl: `https://ghostcrm.ai/billing/success`,
+          cancelUrl: `https://ghostcrm.ai/billing/cancel`,
           tenantId: 'current-tenant-id', // Get from auth context
           trialDays: 14,
           billing: isAnnual ? 'yearly' : 'monthly'

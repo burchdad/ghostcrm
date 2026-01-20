@@ -48,23 +48,30 @@ export async function POST(request: NextRequest) {
     // Create checkout session with Stripe
     const checkoutUrl = await withStripe(
       async (stripe) => {
-        // Use more reliable base URL construction
+        // Use hardcoded domain to avoid environment variable issues
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai';
         
-        // TEMP FIX: Go directly to success page to bypass payment gateway issues
-        const directSuccessUrl = `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}&direct=true`;
-        const defaultCancelUrl = `${baseUrl}/billing/cancel`;
+        // ROBUST FIX: Multiple fallback URLs
+        let finalSuccessUrl;
+        if (successUrl) {
+          finalSuccessUrl = successUrl;
+        } else {
+          // Try direct success page first
+          finalSuccessUrl = `https://ghostcrm.ai/billing/success?session_id={CHECKOUT_SESSION_ID}&direct=true`;
+        }
+        
+        const finalCancelUrl = cancelUrl || 'https://ghostcrm.ai/billing/cancel';
         
         console.log('🔍 [CREATE-CHECKOUT] Environment URL:', process.env.NEXT_PUBLIC_APP_URL);
-        console.log('🔍 [CREATE-CHECKOUT] Base URL:', baseUrl);
-        console.log('🔍 [CREATE-CHECKOUT] Direct Success URL:', successUrl || directSuccessUrl);
-        console.log('🔍 [CREATE-CHECKOUT] Cancel URL:', cancelUrl || defaultCancelUrl);
+        console.log('🔍 [CREATE-CHECKOUT] Base URL used:', baseUrl);
+        console.log('🔍 [CREATE-CHECKOUT] FINAL Success URL:', finalSuccessUrl);
+        console.log('🔍 [CREATE-CHECKOUT] FINAL Cancel URL:', finalCancelUrl);
         
         // Prepare session parameters
         const baseSessionParams: any = {
           mode: 'subscription',
-          success_url: successUrl || directSuccessUrl,
-          cancel_url: cancelUrl || defaultCancelUrl,
+          success_url: finalSuccessUrl,
+          cancel_url: finalCancelUrl,
           metadata: {
             planId,
             billing: billing || 'monthly',
