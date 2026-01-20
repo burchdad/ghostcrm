@@ -104,6 +104,18 @@ async function registerHandler(req: Request) {
       );
     }
 
+    // Test Supabase admin connection
+    try {
+      const { data: testConnection } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1 });
+      console.log("✅ [REGISTER] Supabase admin connection verified");
+    } catch (connectionError) {
+      console.error("❌ [REGISTER] Supabase admin connection failed:", connectionError);
+      return NextResponse.json(
+        { error: "Database connection error. Please contact support." },
+        { status: 500 }
+      );
+    }
+
     // --- Check if user already exists in public.users (authoritative check)
     console.log("🔍 [REGISTER] Checking if user exists in public.users...");
     const { data: existingUser, error: checkError } = await supabaseAdmin
@@ -137,6 +149,17 @@ async function registerHandler(req: Request) {
       email_confirm: true // mark confirmed to avoid verify step
     });
 
+    // Enhanced error logging for debugging
+    if (createErr) {
+      console.error("❌ [REGISTER] createUser detailed error:", {
+        status: createErr.status,
+        message: createErr.message,
+        name: createErr.name,
+        cause: createErr.cause,
+        email: emailNorm
+      });
+    }
+
     // If user already exists (422), return 409 immediately
     if (createErr?.status === 422) {
       console.log("❌ [REGISTER] User already exists:", emailNorm);
@@ -146,10 +169,28 @@ async function registerHandler(req: Request) {
       );
     }
 
+    // Handle other auth errors with more specific messaging
     if (createErr) {
       console.error("❌ [REGISTER] createUser failed:", createErr);
+      
+      // Check for common auth issues
+      if (createErr.message?.includes('Invalid email')) {
+        return NextResponse.json(
+          { error: "Invalid email format provided" },
+          { status: 400 }
+        );
+      }
+      
+      if (createErr.message?.includes('password')) {
+        return NextResponse.json(
+          { error: "Password does not meet requirements" },
+          { status: 400 }
+        );
+      }
+      
+      // Generic auth setup error
       return NextResponse.json(
-        { error: "Authentication setup failed. Please try again." },
+        { error: "Authentication setup failed. Please try again.", detail: createErr.message },
         { status: 500 }
       );
     }
