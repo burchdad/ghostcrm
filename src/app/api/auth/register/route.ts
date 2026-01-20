@@ -129,19 +129,6 @@ async function registerHandler(req: Request) {
       );
     }
 
-    // 🔧 FIX: Clean up any orphaned auth users first (from previous failed registrations)
-    console.log("🧹 [REGISTER] Checking for orphaned auth users...");
-    try {
-      const { data: existingAuth } = await supabaseAdmin.auth.admin.getUserByEmail(emailNorm);
-      if (existingAuth?.user) {
-        console.log("🧹 [REGISTER] Found orphaned auth user, cleaning up:", emailNorm);
-        await supabaseAdmin.auth.admin.deleteUser(existingAuth.user.id);
-        console.log("✅ [REGISTER] Orphaned auth user cleaned up");
-      }
-    } catch (cleanupError) {
-      console.warn("⚠️ [REGISTER] Auth cleanup failed (proceeding anyway):", cleanupError);
-    }
-
     // 🔧 FIX: Create Supabase Auth user FIRST to get canonical user ID
     console.log("🔐 [REGISTER] Creating Supabase Auth user...");
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
