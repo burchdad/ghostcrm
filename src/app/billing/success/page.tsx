@@ -141,38 +141,63 @@ function SuccessContent() {
           isSoftwareOwner: isSoftwareOwner || usedSoftwareOwnerPromo,
           shouldStartOnboarding,
           userSubdomain: userSubdomain || undefined,
-          processed: processed || isDirect, // Treat direct redirects as processed
+          processed: processed || isDirect || true, // Always consider payments as processed since webhook handles activation
           gatewayError,
-          subdomainStatus,
-          isSubdomainActivated
+          subdomainStatus: 'checking', // Start with checking status
+          isSubdomainActivated: false
         })
         
-        // If this is a direct redirect from Stripe, trigger subdomain activation
-        if (isDirect && sessionId && !processed) {
-          console.log('🔄 [BILLING-SUCCESS] Direct redirect detected - triggering subdomain activation...')
-          try {
-            const activationResponse = await fetch('/api/subdomains/activate', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' }
-            })
+        // Check subdomain activation status periodically (webhook-based activation)
+        if (sessionId && !isSoftwareOwner && !usedSoftwareOwnerPromo) {
+          console.log('🔄 [BILLING-SUCCESS] Checking webhook-based activation status...')
+          
+          // Poll for activation status since webhook handles the activation
+          let attempts = 0;
+          const maxAttempts = 12; // 60 seconds total (5 second intervals)
+          
+          const checkActivation = async () => {
+            attempts++;
             
-            if (activationResponse.ok) {
-              const activationResult = await activationResponse.json()
-              console.log('✅ [BILLING-SUCCESS] Subdomain activated via direct call:', activationResult)
+            try {
+              const statusResponse = await fetch('/api/subdomains/status', {
+                credentials: 'include'
+              });
               
-              // Update the success data to show activation succeeded
-              setSuccessData(prev => ({
-                ...prev,
-                processed: true,
-                isSubdomainActivated: true,
-                subdomainStatus: 'active'
-              }))
-            } else {
-              console.warn('⚠️ [BILLING-SUCCESS] Direct activation failed - user can activate manually')
+              if (statusResponse.ok) {
+                const statusResult = await statusResponse.json();
+                
+                if (statusResult.success && statusResult.status === 'active') {
+                  console.log('✅ [BILLING-SUCCESS] Webhook activation confirmed!');
+                  setSuccessData(prev => ({
+                    ...prev,
+                    isSubdomainActivated: true,
+                    subdomainStatus: 'active',
+                    userSubdomain: statusResult.subdomain
+                  }));
+                  return; // Stop polling
+                }
+              }
+              
+              // Continue polling if not activated yet and we haven't exceeded max attempts
+              if (attempts < maxAttempts) {
+                setTimeout(checkActivation, 5000); // Check every 5 seconds
+              } else {
+                console.warn('⚠️ [BILLING-SUCCESS] Webhook activation timeout - showing manual activation option');
+                setSuccessData(prev => ({
+                  ...prev,
+                  subdomainStatus: 'error'
+                }));
+              }
+            } catch (error) {
+              console.warn('⚠️ [BILLING-SUCCESS] Error checking activation status:', error);
+              if (attempts < maxAttempts) {
+                setTimeout(checkActivation, 5000);
+              }
             }
-          } catch (activationError) {
-            console.warn('⚠️ [BILLING-SUCCESS] Direct activation error:', activationError)
-          }
+          };
+          
+          // Start checking after a short delay to allow webhook processing
+          setTimeout(checkActivation, 3000);
         }
         
         // Note: Subdomain activation now happens in payment gateway before success page

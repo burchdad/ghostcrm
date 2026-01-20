@@ -358,38 +358,63 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
 
     const supabase = await createSupabaseServer();
 
-    // Find the user by email
-    const { data: user, error: userError } = await supabase
+    // Use admin client for reliable access
+    const { supabaseAdmin } = await import('@/lib/supabaseAdmin');
+
+    // Find the user by email - try both users and profiles tables
+    let user: any = null;
+    
+    // Try users table first
+    const { data: userData, error: userError } = await supabaseAdmin
       .from('users')
       .select('id, organization_id')
       .eq('email', customerEmail)
       .single();
 
-    if (userError || !user) {
-      console.warn('⚠️ [STRIPE_WEBHOOK] User not found for email:', customerEmail);
+    if (userData) {
+      user = userData;
+    } else {
+      // Fallback to profiles table
+      const { data: profileData, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, organization_id')
+        .eq('email', customerEmail)
+        .single();
+      
+      if (profileData) {
+        user = profileData;
+      }
+    }
+
+    if (!user) {
+      console.warn('⚠️ [STRIPE_WEBHOOK] User not found in any table for email:', customerEmail);
       return;
     }
+
+    console.log('✅ [STRIPE_WEBHOOK] Found user:', user.id, 'Organization:', user.organization_id);
 
     if (!user.organization_id) {
       console.warn('⚠️ [STRIPE_WEBHOOK] User has no organization:', user.id);
       return;
     }
 
-    // Find and activate the subdomain
-    const { data: subdomainRecord, error: subdomainError } = await supabase
+    // Find subdomain records - check multiple status types
+    const { data: subdomainRecords, error: subdomainError } = await supabaseAdmin
       .from('subdomains')
       .select('*')
       .eq('organization_id', user.organization_id)
-      .eq('status', 'pending_payment')
-      .single();
+      .in('status', ['pending_payment', 'pending', 'inactive']);
 
-    if (subdomainError || !subdomainRecord) {
-      console.warn('⚠️ [STRIPE_WEBHOOK] No pending subdomain found for organization:', user.organization_id);
+    if (subdomainError || !subdomainRecords || subdomainRecords.length === 0) {
+      console.warn('⚠️ [STRIPE_WEBHOOK] No eligible subdomain found for organization:', user.organization_id);
       return;
     }
 
-    // Activate the subdomain
-    const { error: updateError } = await supabase
+    const subdomainRecord = subdomainRecords[0]; // Take the first eligible subdomain
+    console.log('🔍 [STRIPE_WEBHOOK] Found subdomain:', subdomainRecord.subdomain, 'Status:', subdomainRecord.status);
+
+    // Activate the subdomain using admin client
+    const { error: updateError } = await supabaseAdmin
       .from('subdomains')
       .update({
         status: 'active',
@@ -403,11 +428,39 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
       return;
     }
 
-    console.log('✅ [STRIPE_WEBHOOK] Subdomain activated:', subdomainRecord.subdomain);
+    console.log('✅ [STRIPE_WEBHOOK] Subdomain activated successfully:', subdomainRecord.subdomain);
+
+    // Optionally create tenant memberships if needed using RLS bypass
+    try {
+      const { data: existingMembership } = await supabaseAdmin
+        .from('tenant_memberships')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!existingMembership && user.organization_id) {
+        // Use RPC function to bypass RLS
+        const { data: membershipResult, error: membershipError } = await supabaseAdmin
+          .rpc('create_tenant_membership', {
+            p_user_id: user.id,
+            p_tenant_id: user.organization_id,
+            p_role: 'owner'
+          });
+
+        if (membershipError) {
+          console.warn('⚠️ [STRIPE_WEBHOOK] Could not create tenant membership:', membershipError);
+        } else {
+          console.log('✅ [STRIPE_WEBHOOK] Created tenant membership for user:', user.id);
+        }
+      }
+    } catch (membershipError) {
+      console.warn('⚠️ [STRIPE_WEBHOOK] Error handling tenant membership:', membershipError);
+    }
 
     // Optionally call the subdomain provisioning API to set up DNS
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/subdomains/provision`, {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai';
+      const response = await fetch(`${baseUrl}/api/subdomains/provision`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -426,9 +479,11 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
       }
     } catch (provisionError) {
       console.error('❌ [STRIPE_WEBHOOK] Error provisioning subdomain DNS:', provisionError);
+      // Don't fail activation for DNS provisioning errors
     }
 
   } catch (error) {
     console.error('❌ [STRIPE_WEBHOOK] Error in activateSubdomainAfterPayment:', error);
+    throw error; // Re-throw to ensure webhook failure is logged
   }
 }
