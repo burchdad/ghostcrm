@@ -51,8 +51,8 @@ export async function GET(req: NextRequest) {
     console.log(`✅ [DEBUG-USER] Found user in ${table}:`, user.id);
 
     // If user found, also get related data
-    let organizationData = null;
-    let subdomainData = null;
+    let organizationData: any = null;
+    let subdomainData: any[] | null = null;
 
     if (user.organization_id) {
       const { data: orgData } = await supabaseAdmin
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
           .from('subdomains')
           .select('*')
           .eq('organization_id', orgData.id);
-        subdomainData = subData;
+        subdomainData = subData || null;
       }
     }
 
