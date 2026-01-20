@@ -346,13 +346,53 @@ async function registerHandler(req: Request) {
       organizationId = orgResult.data.id;
       console.log("✅ [REGISTER] Organization created:", organizationId, "with subdomain:", finalSubdomain);
 
-      // Create organization membership as owner
-      const membershipResult = await supabaseAdmin
+      // 🔧 ARCHITECTURAL FIX: Create authenticated user session for membership operations
+      // RLS policies require user context for membership operations
+      console.log("🔐 [REGISTER] Creating user session for membership operations...");
+      
+      // Create a server client with user session context
+      const { createClient } = require('@supabase/supabase-js');
+      
+      // First, sign in the user we just created to get a session
+      const sessionClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { auth: { persistSession: false } }
+      );
+      
+      const { data: signInData, error: signInError } = await sessionClient.auth.signInWithPassword({
+        email: emailNorm,
+        password: password,
+      });
+
+      if (signInError || !signInData.session) {
+        console.error("❌ [REGISTER] Failed to create user session:", signInError);
+        throw new Error(`Session creation failed: ${signInError?.message}`);
+      }
+
+      // Create authenticated client for membership operations
+      const userSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          auth: { persistSession: false },
+          global: {
+            headers: {
+              Authorization: `Bearer ${signInData.session.access_token}`,
+            },
+          },
+        }
+      );
+
+      console.log("✅ [REGISTER] User session established for membership operations");
+
+      // Create organization membership as authenticated user
+      const membershipResult = await userSupabase
         .from("organization_memberships")
         .insert({
           organization_id: organizationId,
-          user_id: authUserId, // 🔧 FIX: Use authUserId consistently
-          role: "owner", // All registrations are owners
+          user_id: authUserId,
+          role: "owner",
           status: "active",
         });
 
@@ -363,8 +403,8 @@ async function registerHandler(req: Request) {
       
       console.log("✅ [REGISTER] Organization membership created");
 
-      // 🚨 CRITICAL FIX #1: Create tenant membership (what get_user_tenant_ids() relies on)
-      const { error: tenantMembershipErr } = await supabaseAdmin
+      // Create tenant membership as authenticated user
+      const { error: tenantMembershipErr } = await userSupabase
         .from("tenant_memberships")
         .insert({
           user_id: authUserId,
