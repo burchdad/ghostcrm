@@ -7,8 +7,6 @@ import { hash } from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { limitKey } from "@/lib/rateLimitEdge";
 import { withCORS } from "@/lib/cors";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import speakeasy from "speakeasy";
 import crypto from "crypto";
 
@@ -106,8 +104,43 @@ async function registerHandler(req: Request) {
       );
     }
 
-    // --- Check if auth user exists by attempting creation
-    console.log("🔍 [REGISTER] Attempting auth user creation to check existence…");
+    // --- Check if user already exists in public.users (authoritative check)
+    console.log("🔍 [REGISTER] Checking if user exists in public.users...");
+    const { data: existingUser, error: checkError } = await supabaseAdmin
+      .from("users")
+      .select("id,email")
+      .eq("email", emailNorm)
+      .single();
+
+    // If error is "no rows" (PGRST116), that's fine; else surface the error
+    if (checkError && checkError.code !== "PGRST116") {
+      console.error("❌ [REGISTER] Database error:", checkError);
+      return NextResponse.json(
+        { error: "Database connection error. Please try again." },
+        { status: 500 }
+      );
+    }
+
+    if (existingUser) {
+      console.log("❌ [REGISTER] User already exists in public.users:", emailNorm);
+      return NextResponse.json(
+        { error: "An account with this email already exists" },
+        { status: 409 }
+      );
+    }
+
+    // 🔧 FIX: Clean up any orphaned auth users first (from previous failed registrations)
+    console.log("🧹 [REGISTER] Checking for orphaned auth users...");
+    try {
+      const { data: existingAuth } = await supabaseAdmin.auth.admin.getUserByEmail(emailNorm);
+      if (existingAuth?.user) {
+        console.log("🧹 [REGISTER] Found orphaned auth user, cleaning up:", emailNorm);
+        await supabaseAdmin.auth.admin.deleteUser(existingAuth.user.id);
+        console.log("✅ [REGISTER] Orphaned auth user cleaned up");
+      }
+    } catch (cleanupError) {
+      console.warn("⚠️ [REGISTER] Auth cleanup failed (proceeding anyway):", cleanupError);
+    }
 
     // 🔧 FIX: Create Supabase Auth user FIRST to get canonical user ID
     console.log("🔐 [REGISTER] Creating Supabase Auth user...");
@@ -403,8 +436,8 @@ async function registerHandler(req: Request) {
     // Auth user was already created at the beginning of registration process
     console.log("✅ [REGISTER] Using existing Supabase Auth user");
 
-    // Build a response that we can attach Supabase cookies to
-    let res = NextResponse.json({
+    // Build a success response (no session cookies - client will call /login)
+    const res = NextResponse.json({
       success: true,
       user: { 
         id: user.id, 
@@ -420,36 +453,8 @@ async function registerHandler(req: Request) {
       trial_mode: true,
     });
 
-    // --- Attach Supabase session cookies by signing the user in server-side
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.log("🍪 [REGISTER] Setting up Supabase session cookies...");
-      
-      const cookieStore = cookies();
-      const supa = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-        {
-          cookies: {
-            getAll: () => cookieStore.getAll(),
-            setAll: (cs) => cs.forEach((c) => res.cookies.set(c)),
-          },
-        }
-      );
-
-      // Sign in to create sb-* cookies
-      const { error: signInErr } = await supa.auth.signInWithPassword({
-        email: emailNorm,
-        password: password,
-      });
-      
-      if (signInErr) {
-        console.warn("⚠️ [REGISTER] signInWithPassword failed:", signInErr.message);
-      } else {
-        console.log("✅ [REGISTER] Supabase session established");
-      }
-    }
-
     console.log("🎉 [REGISTER] Registration completed:", user.id);
+    console.log("ℹ️ [REGISTER] Client should call /api/auth/login to establish session");
     return res;
   } catch (e: any) {
     console.error("💥 [REGISTER] Unexpected error:", e);
