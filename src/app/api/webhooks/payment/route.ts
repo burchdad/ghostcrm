@@ -4,6 +4,8 @@
  * Note: Stripe types removed for now - add when payment provider is chosen
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { createSupabaseServer } from '@/utils/supabase/server';

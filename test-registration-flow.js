@@ -3,18 +3,18 @@
  * Tests the updated registration API with subdomain field
  */
 
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'http://localhost:3000';
 
 async function testRegistrationFlow() {
-  console.log('🧪 Testing Registration Flow with Subdomain...\n');
+  console.log('🧪 Testing FIXED Registration Flow with Authentication...\n');
 
-  // Test data
+  // Test data with unique values
   const testUser = {
     firstName: 'John',
     lastName: 'Doe', 
-    companyName: 'Test Motors',
-    subdomain: 'testmotors',
-    email: `test.${Date.now()}@example.com`, // Unique email
+    companyName: 'Test Motors Corp',
+    subdomain: `testmotors${Date.now().toString().slice(-6)}`,
+    email: `test.fix.${Date.now()}@example.com`, // Unique email
     password: 'Password123!',
     role: 'owner'
   };
