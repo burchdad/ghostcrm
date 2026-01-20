@@ -38,12 +38,15 @@ function SuccessContent() {
         const sessionId = urlParams.get('session_id')
         const processed = urlParams.get('processed') === 'true'
         const gatewayError = urlParams.get('gateway_error') === 'true'
+        const isDirect = urlParams.get('direct') === 'true'
         
         // Show messaging based on payment gateway processing
         if (processed) {
           console.log('✅ [BILLING-SUCCESS] Payment processed through gateway successfully')
         } else if (gatewayError) {
           console.warn('⚠️ [BILLING-SUCCESS] Gateway processing error - payment may need manual verification')
+        } else if (isDirect) {
+          console.log('🔄 [BILLING-SUCCESS] Direct redirect from Stripe - will activate subdomain')
         }
         
         // Check if user is software owner by checking their session/role
@@ -138,11 +141,39 @@ function SuccessContent() {
           isSoftwareOwner: isSoftwareOwner || usedSoftwareOwnerPromo,
           shouldStartOnboarding,
           userSubdomain: userSubdomain || undefined,
-          processed,
+          processed: processed || isDirect, // Treat direct redirects as processed
           gatewayError,
           subdomainStatus,
           isSubdomainActivated
         })
+        
+        // If this is a direct redirect from Stripe, trigger subdomain activation
+        if (isDirect && sessionId && !processed) {
+          console.log('🔄 [BILLING-SUCCESS] Direct redirect detected - triggering subdomain activation...')
+          try {
+            const activationResponse = await fetch('/api/subdomains/activate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            })
+            
+            if (activationResponse.ok) {
+              const activationResult = await activationResponse.json()
+              console.log('✅ [BILLING-SUCCESS] Subdomain activated via direct call:', activationResult)
+              
+              // Update the success data to show activation succeeded
+              setSuccessData(prev => ({
+                ...prev,
+                processed: true,
+                isSubdomainActivated: true,
+                subdomainStatus: 'active'
+              }))
+            } else {
+              console.warn('⚠️ [BILLING-SUCCESS] Direct activation failed - user can activate manually')
+            }
+          } catch (activationError) {
+            console.warn('⚠️ [BILLING-SUCCESS] Direct activation error:', activationError)
+          }
+        }
         
         // Note: Subdomain activation now happens in payment gateway before success page
         // Status checking here provides real-time confirmation for UI updates

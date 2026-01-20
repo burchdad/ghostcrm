@@ -48,11 +48,23 @@ export async function POST(request: NextRequest) {
     // Create checkout session with Stripe
     const checkoutUrl = await withStripe(
       async (stripe) => {
+        // Use more reliable base URL construction
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai';
+        
+        // TEMP FIX: Go directly to success page to bypass payment gateway issues
+        const directSuccessUrl = `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}&direct=true`;
+        const defaultCancelUrl = `${baseUrl}/billing/cancel`;
+        
+        console.log('🔍 [CREATE-CHECKOUT] Environment URL:', process.env.NEXT_PUBLIC_APP_URL);
+        console.log('🔍 [CREATE-CHECKOUT] Base URL:', baseUrl);
+        console.log('🔍 [CREATE-CHECKOUT] Direct Success URL:', successUrl || directSuccessUrl);
+        console.log('🔍 [CREATE-CHECKOUT] Cancel URL:', cancelUrl || defaultCancelUrl);
+        
         // Prepare session parameters
         const baseSessionParams: any = {
           mode: 'subscription',
-          success_url: successUrl || `${process.env.NEXT_PUBLIC_APP_URL}/api/billing/payment-gateway?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: cancelUrl || `${process.env.NEXT_PUBLIC_APP_URL}/billing/cancel`,
+          success_url: successUrl || directSuccessUrl,
+          cancel_url: cancelUrl || defaultCancelUrl,
           metadata: {
             planId,
             billing: billing || 'monthly',
