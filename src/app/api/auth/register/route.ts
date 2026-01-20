@@ -141,28 +141,7 @@ async function registerHandler(req: Request) {
       );
     }
 
-    // Also check auth.users directly using admin API
-    console.log("🔍 [REGISTER] Checking if user exists in auth.users...");
-    try {
-      const { data: authUsersList } = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 1000 // Get enough to search through
-      });
-      
-      const existingAuthUser = authUsersList?.users?.find((u: any) => u.email?.toLowerCase() === emailNorm);
-      
-      if (existingAuthUser) {
-        console.log("❌ [REGISTER] User already exists in auth.users:", emailNorm);
-        return NextResponse.json(
-          { error: "An account with this email already exists" },
-          { status: 409 }
-        );
-      }
-    } catch (authCheckError) {
-      console.warn("⚠️ [REGISTER] Could not check auth users (proceeding):", authCheckError);
-    }
-
-    // 🔧 FIX: Create Supabase Auth user FIRST to get canonical user ID
+    // 🔧 FIX: Create Supabase Auth user FIRST to get canonical user ID  
     console.log("🔐 [REGISTER] Creating Supabase Auth user...");
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email: emailNorm,
