@@ -141,6 +141,27 @@ async function registerHandler(req: Request) {
       );
     }
 
+    // Also check auth.users directly using admin API
+    console.log("🔍 [REGISTER] Checking if user exists in auth.users...");
+    try {
+      const { data: existingAuthUser } = await supabaseAdmin.auth.admin.getUserByEmail?.(emailNorm) || 
+                                        await supabaseAdmin.auth.admin.listUsers({
+                                          page: 1,
+                                          perPage: 1000 // Get enough to search through
+                                        });
+      
+      if (existingAuthUser?.user || 
+          (existingAuthUser?.users && existingAuthUser.users.some((u: any) => u.email?.toLowerCase() === emailNorm))) {
+        console.log("❌ [REGISTER] User already exists in auth.users:", emailNorm);
+        return NextResponse.json(
+          { error: "An account with this email already exists" },
+          { status: 409 }
+        );
+      }
+    } catch (authCheckError) {
+      console.warn("⚠️ [REGISTER] Could not check auth users (proceeding):", authCheckError);
+    }
+
     // 🔧 FIX: Create Supabase Auth user FIRST to get canonical user ID
     console.log("🔐 [REGISTER] Creating Supabase Auth user...");
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
@@ -172,6 +193,15 @@ async function registerHandler(req: Request) {
     // Handle other auth errors with more specific messaging
     if (createErr) {
       console.error("❌ [REGISTER] createUser failed:", createErr);
+      
+      // Check for database/duplicate user errors
+      if (createErr.message?.includes('Database error creating new user') || 
+          createErr.message?.includes('User already registered')) {
+        return NextResponse.json(
+          { error: "An account with this email already exists" },
+          { status: 409 }
+        );
+      }
       
       // Check for common auth issues
       if (createErr.message?.includes('Invalid email')) {
