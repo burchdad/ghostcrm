@@ -148,15 +148,23 @@ async function handleMainDomainRouting(
 ): Promise<NextResponse> {
   console.log(`🏠 [MIDDLEWARE] Main domain routing: ${pathname}`);
   
-  // Allow access to billing success page without authentication (user just completed payment)
-  // This must be checked BEFORE any authenticated user redirects
-  if (pathname.startsWith("/billing/success")) {
-    console.log('💳 [MIDDLEWARE] Billing success page - allowing access regardless of auth state');
+  // Allow access to billing and activation endpoints without authentication
+  // These must be checked BEFORE any authenticated user redirects
+  const publicBillingPaths = [
+    "/billing/success",
+    "/billing/cancel", 
+    "/api/subdomains/status",
+    "/api/subdomains/activate",
+    "/api/webhooks/stripe"
+  ];
+  
+  if (publicBillingPaths.some(path => pathname.startsWith(path))) {
+    console.log('💳 [MIDDLEWARE] Public billing/activation endpoint - allowing access regardless of auth state');
     return response;
   }
   
   // Allow access to public pages without authentication
-  const publicPaths = ["/", "/login", "/register", "/billing", "/billing/cancel"];
+  const publicPaths = ["/", "/login", "/register", "/billing"];
   if (publicPaths.some(path => pathname.startsWith(path))) {
     console.log('📖 [MIDDLEWARE] Public path - allowing access');
     
