@@ -148,17 +148,33 @@ async function handleMainDomainRouting(
 ): Promise<NextResponse> {
   console.log(`🏠 [MIDDLEWARE] Main domain routing: ${pathname}`);
   
-  // Redirect authenticated users from landing/login to their account area
-  if (user && (pathname === "/" || pathname === "/login")) {
-    console.log('✅ [MIDDLEWARE] Authenticated user on public page - redirecting to billing');
-    const redirectResponse = NextResponse.redirect(new URL("/billing", request.url));
+  // Allow access to billing success page without authentication (user just completed payment)
+  // This must be checked BEFORE any authenticated user redirects
+  if (pathname.startsWith("/billing/success")) {
+    console.log('💳 [MIDDLEWARE] Billing success page - allowing access regardless of auth state');
+    return response;
+  }
+  
+  // Allow access to public pages without authentication
+  const publicPaths = ["/", "/login", "/register", "/billing", "/billing/cancel"];
+  if (publicPaths.some(path => pathname.startsWith(path))) {
+    console.log('📖 [MIDDLEWARE] Public path - allowing access');
     
-    // Copy any cookies that were set during auth check
-    response.cookies.getAll().forEach(cookie => {
-      redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
-    });
+    // Redirect authenticated users from landing/login to their account area
+    // BUT NOT if they're going to billing pages (payment flow)
+    if (user && (pathname === "/" || pathname === "/login") && !pathname.startsWith("/billing")) {
+      console.log('✅ [MIDDLEWARE] Authenticated user on landing/login - redirecting to billing');
+      const redirectResponse = NextResponse.redirect(new URL("/billing", request.url));
+      
+      // Copy any cookies that were set during auth check
+      response.cookies.getAll().forEach(cookie => {
+        redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+      });
+      
+      return redirectResponse;
+    }
     
-    return redirectResponse;
+    return response;
   }
 
   console.log('✅ [MIDDLEWARE] Allowing main domain access');

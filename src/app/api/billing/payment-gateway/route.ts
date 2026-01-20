@@ -88,15 +88,19 @@ export async function GET(request: NextRequest) {
     await updatePaymentStatus(session);
 
     // Redirect to success page with processed flag
-    const successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/billing/success?session_id=${sessionId}&processed=true`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai';
+    const successUrl = `${baseUrl}/billing/success?session_id=${sessionId}&processed=true`;
     console.log('🎉 [PAYMENT-GATEWAY] Payment processing complete, redirecting to:', successUrl);
+    console.log('🔍 [PAYMENT-GATEWAY] Environment NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL);
     
     return NextResponse.redirect(successUrl);
 
   } catch (error) {
     console.error('❌ [PAYMENT-GATEWAY] Unexpected error:', error);
     // Don't block user from success page due to processing errors
-    const fallbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/billing/success?session_id=${searchParams.get('session_id')}&gateway_error=true`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai';
+    const fallbackUrl = `${baseUrl}/billing/success?session_id=${searchParams.get('session_id')}&gateway_error=true`;
+    console.log('🔄 [PAYMENT-GATEWAY] Using fallback redirect:', fallbackUrl);
     return NextResponse.redirect(fallbackUrl);
   }
 }

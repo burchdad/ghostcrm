@@ -48,7 +48,18 @@ function SuccessContent() {
         
         // Check if user is software owner by checking their session/role
         const response = await fetch('/api/auth/check-owner-status')
-        const { isSoftwareOwner, userRole } = await response.json()
+        
+        // Handle API call failures gracefully
+        let isSoftwareOwner = false
+        let userRole = null
+        
+        if (response.ok) {
+          const data = await response.json()
+          isSoftwareOwner = data.isSoftwareOwner
+          userRole = data.userRole
+        } else {
+          console.warn('⚠️ [BILLING-SUCCESS] Could not check owner status, assuming regular user')
+        }
         
         // Get user's organization/subdomain info for proper redirect
         let userSubdomain = null
@@ -56,21 +67,30 @@ function SuccessContent() {
         if (!isSoftwareOwner) {
           try {
             const orgResponse = await fetch('/api/auth/me')
-            const userData = await orgResponse.json()
-            userEmail = userData.user?.email // Store email for activation check
-            if (userData.user?.organizationSubdomain) {
-              // Use the organizationSubdomain from the user data directly
-              userSubdomain = userData.user.organizationSubdomain
-              console.log('🔍 [BILLING-SUCCESS] Found user subdomain:', userSubdomain)
-            } else if (userData.user?.tenantId) {
-              // Fallback: Get organization details to find subdomain
-              const orgDetailsResponse = await fetch(`/api/organization/${userData.user.tenantId}`)
-              const orgData = await orgDetailsResponse.json()
-              userSubdomain = orgData.organization?.subdomain
-              console.log('🔍 [BILLING-SUCCESS] Found subdomain from org API:', userSubdomain)
+            
+            if (orgResponse.ok) {
+              const userData = await orgResponse.json()
+              userEmail = userData.user?.email // Store email for activation check
+              if (userData.user?.organizationSubdomain) {
+                // Use the organizationSubdomain from the user data directly
+                userSubdomain = userData.user.organizationSubdomain
+                console.log('🔍 [BILLING-SUCCESS] Found user subdomain:', userSubdomain)
+              } else if (userData.user?.tenantId) {
+                // Fallback: Get organization details to find subdomain
+                const orgDetailsResponse = await fetch(`/api/organization/${userData.user.tenantId}`)
+                if (orgDetailsResponse.ok) {
+                  const orgData = await orgDetailsResponse.json()
+                  userSubdomain = orgData.organization?.subdomain
+                  console.log('🔍 [BILLING-SUCCESS] Found subdomain from org API:', userSubdomain)
+                }
+              }
+            } else {
+              console.warn('⚠️ [BILLING-SUCCESS] Could not authenticate user, but allowing success page access')
+              // For payment success, we'll show a generic success message even if auth fails
             }
           } catch (error) {
-            console.warn('Could not fetch user organization info:', error)
+            console.warn('⚠️ [BILLING-SUCCESS] Could not fetch user organization info:', error)
+            // Don't fail the page - just continue without user-specific data
           }
         }
         
