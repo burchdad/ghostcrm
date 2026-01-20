@@ -160,11 +160,14 @@ async function registerHandler(req: Request) {
       });
     }
 
-    // If user already exists (422), return 409 immediately
+    // If user already exists (422), return 409 with helpful message
     if (createErr?.status === 422) {
       console.log("❌ [REGISTER] User already exists:", emailNorm);
       return NextResponse.json(
-        { error: "An account with this email already exists" },
+        { 
+          error: "An account with this email already exists", 
+          suggestion: "If this is your account, try signing in instead or use the password reset option."
+        },
         { status: 409 }
       );
     }
@@ -177,7 +180,10 @@ async function registerHandler(req: Request) {
       if (createErr.message?.includes('Database error creating new user') || 
           createErr.message?.includes('User already registered')) {
         return NextResponse.json(
-          { error: "An account with this email already exists" },
+          { 
+            error: "An account with this email already exists",
+            suggestion: "If this is your account, try signing in instead or use the password reset option."
+          },
           { status: 409 }
         );
       }
