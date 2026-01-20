@@ -144,14 +144,14 @@ async function registerHandler(req: Request) {
     // Also check auth.users directly using admin API
     console.log("🔍 [REGISTER] Checking if user exists in auth.users...");
     try {
-      const { data: existingAuthUser } = await supabaseAdmin.auth.admin.getUserByEmail?.(emailNorm) || 
-                                        await supabaseAdmin.auth.admin.listUsers({
-                                          page: 1,
-                                          perPage: 1000 // Get enough to search through
-                                        });
+      const { data: authUsersList } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 1000 // Get enough to search through
+      });
       
-      if (existingAuthUser?.user || 
-          (existingAuthUser?.users && existingAuthUser.users.some((u: any) => u.email?.toLowerCase() === emailNorm))) {
+      const existingAuthUser = authUsersList?.users?.find((u: any) => u.email?.toLowerCase() === emailNorm);
+      
+      if (existingAuthUser) {
         console.log("❌ [REGISTER] User already exists in auth.users:", emailNorm);
         return NextResponse.json(
           { error: "An account with this email already exists" },
