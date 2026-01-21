@@ -36,9 +36,7 @@ BEGIN
   ) RETURNING id INTO membership_id;
   
   RETURN membership_id;
-EXCEPTION
-  WHEN OTHERS THEN
-    RAISE EXCEPTION 'Failed to create organization membership: %', SQLERRM;
+  -- No exception handler - let real errors surface for debugging
 END;
 $$;
 
@@ -71,9 +69,7 @@ BEGIN
   ) RETURNING id INTO membership_id;
   
   RETURN membership_id;
-EXCEPTION
-  WHEN OTHERS THEN
-    RAISE EXCEPTION 'Failed to create tenant membership: %', SQLERRM;
+  -- No exception handler - let real errors surface for debugging
 END;
 $$;
 
