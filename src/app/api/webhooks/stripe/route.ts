@@ -90,6 +90,7 @@ async function processWebhookEvent(event: Stripe.Event): Promise<{
       case 'customer.subscription.deleted':
         return await handleSubscriptionCanceled(event.data.object as Stripe.Subscription);
       
+      // 🚨 FIX 5: Enhanced webhook events for subscription lifecycle
       case 'invoice.payment_succeeded':
         return await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
       

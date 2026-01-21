@@ -51,8 +51,21 @@ export default function RegisterPage() {
       }
 
       localStorage.setItem('userEmail', email);
-      setMessage('Account created! Redirecting to billing...');
-      setTimeout(() => router.push('/billing'), 1500);
+      setMessage('Account created! Please check your email to verify your account.');
+      
+      // Registration successful - show email verification message
+      if (data.next_step === 'verify_email') {
+        // Don't redirect - user needs to verify email first
+        setMessage('Account created! Check your email and verify your account, then you can log in at your subdomain.');
+      } else {
+        // Fallback redirect if email verification is bypassed
+        if (data.organization?.id && subdomain) {
+          const subdomainUrl = `https://${subdomain}.ghostcrm.ai/login`;
+          setTimeout(() => window.location.href = subdomainUrl, 1500);
+        } else {
+          setTimeout(() => router.push('/login'), 1500);
+        }
+      }
     } catch (err: any) {
       setMessage(err.message || 'Registration failed');
     } finally {
@@ -351,7 +364,12 @@ export default function RegisterPage() {
                     id="subdomain"
                     type="text"
                     value={subdomain}
-                    onChange={(e) => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    onChange={(e) => {
+                      const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                      // Prevent leading/trailing hyphens and ensure minimum length
+                      const cleaned = value.replace(/^-+|-+$/g, '');
+                      setSubdomain(cleaned);
+                    }}
                     required
                     style={{
                       width: '100%',

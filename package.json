@@ -40,6 +40,7 @@
     "@radix-ui/react-toast": "^1.2.15",
     "@sendgrid/mail": "^8.1.5",
     "@sentry/react": "^10.11.0",
+    "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.75.1",
     "@types/pg": "^8.15.5",

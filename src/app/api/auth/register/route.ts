@@ -3,12 +3,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { hash } from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { limitKey } from "@/lib/rateLimitEdge";
 import { withCORS } from "@/lib/cors";
-import speakeasy from "speakeasy";
-import crypto from "crypto";
 
 type RegisterBody = {
   email?: string;
@@ -17,22 +14,115 @@ type RegisterBody = {
   lastName?: string;
   companyName?: string;
   subdomain?: string;
-  role?: string;
 };
 
-async function registerHandler(req: Request) {
-  console.log("🚀 [REGISTER] Starting registration process...");
+function jsonError(message: string, status = 400, extra?: Record<string, any>) {
+  return NextResponse.json({ error: message, ...(extra ?? {}) }, { status });
+}
 
+function normalizeEmail(email: string) {
+  return String(email).trim().toLowerCase();
+}
+
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Your DB-side regex is stricter; keep route-side validation aligned.
+function validateSubdomainOrThrow(subdomain: string) {
+  const s = subdomain.trim().toLowerCase();
+  const re = /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/; // 3-63, no leading/trailing hyphen
+  if (!re.test(s)) {
+    throw new Error(
+      "Invalid subdomain format. Use 3–63 chars: lowercase letters, numbers, hyphens; cannot start/end with hyphen."
+    );
+  }
+
+  const reserved = new Set([
+    "www", "api", "admin", "app", "mail", "ftp", "blog", "support",
+    "help", "docs", "status", "dev", "staging", "test", "demo",
+    "dashboard", "login", "register", "auth", "billing", "account",
+  ]);
+  if (reserved.has(s)) {
+    throw new Error(`'${s}' is a reserved subdomain name. Please choose a different name.`);
+  }
+
+  return s;
+}
+
+function defaultOrgName(body: RegisterBody) {
+  const fn = (body.firstName ?? "").trim();
+  const cn = (body.companyName ?? "").trim();
+  if (cn) return cn;
+  if (fn) return `${fn}'s Organization`;
+  return "My Organization";
+}
+
+function generateBaseSubdomain(body: RegisterBody, authUserId: string) {
+  const provided = (body.subdomain ?? "").trim();
+  if (provided) return validateSubdomainOrThrow(provided);
+
+  const cn = (body.companyName ?? "").trim().toLowerCase();
+  if (cn) {
+    const base = cn
+      .replace(/[^a-z0-9]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 20);
+    // if company name becomes empty, fall back
+    if (base.length >= 3) return base;
+  }
+
+  return `org-${authUserId.slice(0, 8)}`; // already valid format
+}
+
+// Wait for trigger-created public.users row
+async function waitForPublicUser(authUserId: string, maxRetries = 8, delayMs = 250) {
+  for (let i = 0; i < maxRetries; i++) {
+    const { data, error } = await supabaseAdmin
+      .from("users")
+      .select("id,email")
+      .eq("id", authUserId)
+      .maybeSingle();
+
+    if (data?.id) return data;
+
+    // Ignore "no rows" style errors; only break early on real failures
+    if (error && error.code && error.code !== "PGRST116") {
+      // keep retrying a couple times, but don't spin forever
+      if (i >= 2) throw new Error("Database error while waiting for user sync trigger.");
+    }
+
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+  throw new Error("User sync trigger did not create public user record in time.");
+}
+
+function sanitizeErrorForClient(e: any) {
+  const msg = e?.message ? String(e.message) : "Registration failed";
+  // Don't leak internals in prod
+  if (process.env.NODE_ENV === "production") {
+    // Map a few common cases safely
+    if (msg.toLowerCase().includes("reserved subdomain")) return { error: msg };
+    if (msg.toLowerCase().includes("invalid subdomain")) return { error: msg };
+    if (msg.toLowerCase().includes("invalid email")) return { error: "Invalid email format" };
+    if (msg.toLowerCase().includes("already exists")) return { error: "An account with this email already exists" };
+    return { error: "Registration failed. Please try again." };
+  }
+  return { error: msg };
+}
+
+export const POST = withCORS(registerHandler);
+
+async function registerHandler(req: Request) {
   try {
-    const {
-      email,
-      password,
-      firstName,
-      lastName,
-      companyName,
-      subdomain,
-      role,
-    }: RegisterBody = await req.json();
+    const body: RegisterBody = await req.json().catch(() => ({}));
+
+    const emailRaw = body.email ?? "";
+    const password = body.password ?? "";
+    const firstName = (body.firstName ?? "").trim();
+    const lastName = (body.lastName ?? "").trim();
+    const companyName = (body.companyName ?? "").trim();
 
     // --- Rate limit by client IP
     const clientIP =
@@ -40,606 +130,91 @@ async function registerHandler(req: Request) {
       req.headers.get("x-real-ip") ??
       "unknown";
     const rateKey = `register:${clientIP}`;
-    const rateResult = await limitKey(rateKey);
-    if (!rateResult.allowed) {
-      return NextResponse.json(
-        { error: "Too many registration attempts. Please try again later." },
-        { status: 429 }
-      );
+    const rate = await limitKey(rateKey);
+    if (!rate.allowed) {
+      return jsonError("Too many registration attempts. Please try again later.", 429);
     }
 
-    // --- Validate inputs
-    console.log("🔍 [REGISTER] Validating inputs:", { 
-      hasEmail: !!email, 
-      hasPassword: !!password, 
-      hasFirstName: !!firstName, 
-      hasLastName: !!lastName,
-      hasCompanyName: !!companyName,
-      hasSubdomain: !!subdomain,
-      role 
-    });
-    
-    if (!email || !password) {
-      console.log("❌ [REGISTER] Missing email or password");
-      return NextResponse.json(
-        { error: "Missing email or password" },
-        { status: 400 }
-      );
-    }
-    
-    // Validate subdomain if provided
-    if (subdomain) {
-      const subdomainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
-      if (!subdomainRegex.test(subdomain) || subdomain.length < 3 || subdomain.length > 63) {
-        console.log("❌ [REGISTER] Invalid subdomain format:", subdomain);
-        return NextResponse.json(
-          { error: "Invalid subdomain format. Must be 3-63 characters, lowercase letters, numbers, and hyphens only." },
-          { status: 400 }
-        );
-      }
-      
-      // Check for reserved subdomains
-      const reservedSubdomains = [
-        'www', 'api', 'admin', 'app', 'mail', 'ftp', 'blog', 'support', 
-        'help', 'docs', 'status', 'dev', 'staging', 'test', 'demo',
-        'dashboard', 'login', 'register', 'auth', 'billing', 'account'
-      ];
-      
-      if (reservedSubdomains.includes(subdomain.toLowerCase())) {
-        console.log("❌ [REGISTER] Reserved subdomain:", subdomain);
-        return NextResponse.json(
-          { error: `'${subdomain}' is a reserved subdomain name. Please choose a different name.` },
-          { status: 400 }
-        );
-      }
-    }
-    
-    const emailNorm = String(email).trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
-      console.log("❌ [REGISTER] Invalid email format:", emailNorm);
-      return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+    // --- Validate basics
+    const email = normalizeEmail(emailRaw);
+    if (!email || !password) return jsonError("Missing email or password", 400);
+    if (!isValidEmail(email)) return jsonError("Invalid email format", 400);
+    if (password.length < 8) return jsonError("Password must be at least 8 characters", 400);
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return jsonError("Database configuration error. Please contact support.", 500);
     }
 
-    // --- All registrations create company owners (simplified flow)
+    // 🎯 ONLY CREATE AUTH USER - No org/subdomain until payment
+    // Set redirect URL for email verification
+    const redirectTo = process.env.NODE_ENV === 'production' 
+      ? 'https://ghostcrm.ai/auth/callback'
+      : 'http://localhost:3000/auth/callback';
 
-    // --- Validate Supabase env
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.SUPABASE_SERVICE_ROLE_KEY
-    ) {
-      console.error("❌ [REGISTER] Missing Supabase configuration");
-      return NextResponse.json(
-        { error: "Database configuration error. Please contact support." },
-        { status: 500 }
-      );
-    }
-
-    // Test Supabase admin connection
-    try {
-      const { data: testConnection } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1 });
-      console.log("✅ [REGISTER] Supabase admin connection verified");
-    } catch (connectionError) {
-      console.error("❌ [REGISTER] Supabase admin connection failed:", connectionError);
-      return NextResponse.json(
-        { error: "Database connection error. Please contact support." },
-        { status: 500 }
-      );
-    }
-
-    // --- Check if user already exists in public.users (authoritative check)
-    console.log("🔍 [REGISTER] Checking if user exists in public.users...");
-    const { data: existingUser, error: checkError } = await supabaseAdmin
-      .from("users")
-      .select("id,email")
-      .eq("email", emailNorm)
-      .single();
-
-    // Enhanced error logging for diagnosis
-    if (checkError) {
-      console.log("🔍 [REGISTER] User check result:", {
-        error_code: checkError.code,
-        error_message: checkError.message,
-        is_no_rows: checkError.code === "PGRST116"
-      });
-    }
-
-    // If error is "no rows" (PGRST116), that's fine; else surface the error
-    if (checkError && checkError.code !== "PGRST116") {
-      console.error("❌ [REGISTER] Database error:", checkError);
-      return NextResponse.json(
-        { error: "Database connection error. Please try again." },
-        { status: 500 }
-      );
-    }
-
-    if (existingUser) {
-      console.log("❌ [REGISTER] User already exists in public.users:", emailNorm);
-      return NextResponse.json(
-        { error: "An account with this email already exists" },
-        { status: 409 }
-      );
-    }
-
-    // 🔧 FIX: Create Supabase Auth user FIRST to get canonical user ID  
-    console.log("🔐 [REGISTER] Creating Supabase Auth user...");
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-      email: emailNorm,
-      password: password,
-      email_confirm: true // mark confirmed to avoid verify step
+      email,
+      password,
+      email_confirm: false, // 🎯 Require email verification
+      user_metadata: {
+        first_name: firstName,
+        last_name: lastName,
+        company_name: companyName,
+        role: "unassigned", // 🎯 No role until payment
+      },
     });
 
-    // Enhanced error logging for debugging
     if (createErr) {
-      console.error("❌ [REGISTER] createUser detailed error:", {
-        status: createErr.status,
-        message: createErr.message,
-        name: createErr.name,
-        cause: createErr.cause,
-        email: emailNorm
-      });
-    }
+      // normalize common duplicate user situations into 409
+      const msg = createErr.message?.toLowerCase?.() ?? "";
+      const isDup =
+        createErr.status === 422 ||
+        msg.includes("already") ||
+        msg.includes("registered") ||
+        msg.includes("duplicate");
 
-    // If user already exists (422), return 409 with helpful message
-    if (createErr?.status === 422) {
-      console.log("❌ [REGISTER] User already exists:", emailNorm);
-      return NextResponse.json(
-        { 
-          error: "An account with this email already exists", 
-          suggestion: "If this is your account, try signing in instead or use the password reset option."
-        },
-        { status: 409 }
-      );
-    }
+      if (isDup) {
+        return jsonError("An account with this email already exists.", 409, {
+          suggestion: "Try signing in or use password reset.",
+        });
+      }
 
-    // Handle other auth errors with more specific messaging
-    if (createErr) {
-      console.error("❌ [REGISTER] createUser failed:", createErr);
-      
-      // Check for database/duplicate user errors
-      if (createErr.message?.includes('Database error creating new user') || 
-          createErr.message?.includes('User already registered')) {
-        return NextResponse.json(
-          { 
-            error: "An account with this email already exists",
-            suggestion: "If this is your account, try signing in instead or use the password reset option."
-          },
-          { status: 409 }
-        );
+      // sanitize details in production
+      if (process.env.NODE_ENV === "production") {
+        return jsonError("Registration failed. Please try again.", 500);
       }
-      
-      // Check for common auth issues
-      if (createErr.message?.includes('Invalid email')) {
-        return NextResponse.json(
-          { error: "Invalid email format provided" },
-          { status: 400 }
-        );
-      }
-      
-      if (createErr.message?.includes('password')) {
-        return NextResponse.json(
-          { error: "Password does not meet requirements" },
-          { status: 400 }
-        );
-      }
-      
-      // Generic auth setup error
-      return NextResponse.json(
-        { error: "Authentication setup failed. Please try again.", detail: createErr.message },
-        { status: 500 }
-      );
+      return jsonError("Registration failed.", 500, { detail: createErr.message });
     }
 
     const authUserId = created?.user?.id;
-    if (!authUserId) {
-      console.error("❌ [REGISTER] No auth user ID returned");
-      return NextResponse.json(
-        { error: "Authentication setup failed. Please try again." },
-        { status: 500 }
-      );
-    }
+    if (!authUserId) return jsonError("Registration failed. Please try again.", 500);
 
-    console.log("✅ [REGISTER] Auth user established with ID:", authUserId);
-
-    // --- Hash password for public.users
-    console.log("🔐 [REGISTER] Hashing password…");
-    const password_hash = await hash(password, 10);
-    
-    // --- Generate security fields for complete user setup
-    console.log("🔧 [REGISTER] Generating security fields...");
-    const totp_secret = speakeasy.generateSecret({
-      name: `GhostCRM (${emailNorm})`,
-      issuer: 'GhostCRM'
-    }).base32;
-    const jwt_token = crypto.randomUUID(); // Placeholder token field
-
-    // 🔧 FIX: Insert into public.users using auth user ID (no tenant_id yet)
-    console.log("💾 [REGISTER] Inserting user into public.users with auth ID…");
-    const insertResult = await supabaseAdmin
-      .from("users")
-      .upsert({
-        id: authUserId, // 🎯 KEY FIX: Use auth user ID to maintain consistency
-        email: emailNorm,
-        password_hash,
-        role: "owner",
-        first_name: firstName ?? "",
-        last_name: lastName ?? "",
-        company_name: companyName ?? "",
-        totp_secret: totp_secret,
-        webauthn_credentials: [], // Empty array for new users (jsonb column)
-        jwt_token: jwt_token,
-        organization_id: null, // Will be set after organization creation
-        tenant_id: null // 🔧 FIX: Will be set to organization_id (not random UUID)
-      }, { onConflict: "id" })
-      .select("id,email,role,tenant_id,totp_secret,webauthn_credentials,jwt_token")
-      .single();
-
-    // 🚨 CRITICAL FIX: Also create profile entry to align with auth context
-    console.log("💾 [REGISTER] Creating corresponding profile entry...");
-    const profileInsert = await supabaseAdmin
-      .from("profiles")
-      .upsert({
-        id: authUserId,
-        email: emailNorm,
-        role: "owner",
-        organization_id: null, // Will be updated after org creation
-        tenant_id: null,
-        status: 'active',
-        requires_password_reset: false
-      }, { onConflict: "id" });
-
-    if (insertResult.error) {
-      const { code, message } = insertResult.error;
-      console.error("❌ [REGISTER] Full database error details:", {
-        code,
-        message,
-        details: insertResult.error.details,
-        hint: insertResult.error.hint
-      });
-      
-      if (code === "23505" || /duplicate/i.test(message)) {
-        console.log("❌ [REGISTER] Duplicate email on insert:", emailNorm);
-        return NextResponse.json({ error: "Email already registered" }, { status: 409 });
-      }
-      console.log("❌ [REGISTER] Database error on insert:", insertResult.error);
-      return NextResponse.json(
-        { error: "db_error", detail: message },
-        { status: 500 }
-      );
-    }
-
-    const user = insertResult.data!;
-    console.log("✅ [REGISTER] User created successfully:", user.id);
-
-    // --- Create organization/tenant for all registrations
-    let organizationId: string | null = null;
-    console.log("🏢 [REGISTER] Creating organization for company owner...");
-    
-    // Use user-provided subdomain or generate from company name
-    let baseSubdomain = subdomain || (companyName 
-      ? companyName.toLowerCase()
-          .replace(/[^a-z0-9]/g, '-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, '')
-          .substring(0, 20)
-      : `org-${user.id.substring(0, 8)}`);
-    
-    // Ensure subdomain uniqueness
-    let counter = 1;
-    let finalSubdomain = baseSubdomain;
-    
-    while (true) {
-      // Check both organizations and placeholder subdomains tables
-      const [orgCheck, subdomainCheck] = await Promise.all([
-        supabaseAdmin
-          .from("organizations")
-          .select("id")
-          .eq("subdomain", finalSubdomain)
-          .single(),
-        supabaseAdmin
-          .from("subdomains")
-          .select("id")
-          .eq("subdomain", finalSubdomain)
-          .single()
-      ]);
-      
-      if (!orgCheck.data && !subdomainCheck.data) break;
-      
-      finalSubdomain = `${baseSubdomain}-${counter}`;
-      counter++;
-      
-      // Prevent infinite loop
-      if (counter > 100) {
-        finalSubdomain = `org-${user.id.substring(0, 8)}-${Date.now()}`;
-        break;
-      }
-    }
-
+    // 🎯 TRIGGERS STILL CREATE public.users + public.profiles (but no org fields)
+    // Wait for trigger sync (optional - for immediate profile access)
     try {
-      const orgResult = await supabaseAdmin
-        .from("organizations")
-        .insert({
-          name: companyName || `${firstName}'s Organization`,
-          subdomain: finalSubdomain,
-          owner_id: authUserId, // 🔧 FIX: Use authUserId consistently
-          status: "active",
-        })
-        .select("id")
-        .single();
-
-      // Enhanced error logging for 400 diagnosis
-      if (orgResult.error) {
-        console.error("❌ [REGISTER] Failed to create organization:", {
-          code: orgResult.error.code,
-          message: orgResult.error.message,
-          details: orgResult.error.details,
-          hint: orgResult.error.hint,
-          // Log the data we tried to insert for debugging
-          attempted_data: {
-            name: companyName || `${firstName}'s Organization`,
-            subdomain: finalSubdomain,
-            owner_id: authUserId,
-            status: "active"
-          }
-        });
-        throw new Error(`Organization creation failed: ${orgResult.error.message}`);
-      }
-      
-      organizationId = orgResult.data.id;
-      console.log("✅ [REGISTER] Organization created:", organizationId, "with subdomain:", finalSubdomain);
-
-      // 🔧 RLS BYPASS FIX: Infinite recursion in organization_memberships policy
-      // Use admin client with explicit RLS bypass to avoid circular policy dependencies
-      console.log("🔐 [REGISTER] Creating memberships with RLS bypass...");
-      
-      try {
-        // Method 1: Try RPC functions that bypass RLS
-        console.log("🔄 [REGISTER] Attempting RPC membership creation...");
-        
-        const [orgResult, tenantResult] = await Promise.allSettled([
-          supabaseAdmin.rpc('create_organization_membership', {
-            p_organization_id: organizationId,
-            p_user_id: authUserId,
-            p_role: 'owner',
-            p_status: 'active'
-          }),
-          supabaseAdmin.rpc('create_tenant_membership', {
-            p_user_id: authUserId,
-            p_tenant_id: organizationId,
-            p_role: 'owner'
-          })
-        ]);
-
-        // Check if RPC methods succeeded
-        if (orgResult.status === 'fulfilled' && tenantResult.status === 'fulfilled' && 
-            !orgResult.value.error && !tenantResult.value.error) {
-          console.log("✅ [REGISTER] Memberships created via RPC functions");
-        } else {
-          console.log("❌ [REGISTER] RPC membership errors:", {
-            org_result: orgResult.status === 'rejected' ? orgResult.reason : orgResult.value,
-            tenant_result: tenantResult.status === 'rejected' ? tenantResult.reason : tenantResult.value
-          });
-          throw new Error("RPC methods failed, trying direct insert");
-        }
-
-      } catch (rpcError) {
-        console.log("🔄 [REGISTER] RPC failed, attempting direct admin insert...");
-        
-        try {
-          // Method 2: Direct admin insert (service_role should bypass RLS)
-          const membershipPromises = [
-            supabaseAdmin
-              .from("organization_memberships")
-              .insert({
-                organization_id: organizationId,
-                user_id: authUserId,
-                role: "owner",
-                status: "active",
-              }),
-            supabaseAdmin
-              .from("tenant_memberships")  
-              .insert({
-                user_id: authUserId,
-                tenant_id: organizationId,
-                role: "owner",
-              })
-          ];
-
-          const [orgMembershipResult, tenantMembershipResult] = await Promise.all(membershipPromises);
-          
-          if (orgMembershipResult.error) {
-            console.error("❌ [REGISTER] Organization membership error:", {
-              code: orgMembershipResult.error.code,
-              message: orgMembershipResult.error.message,
-              details: orgMembershipResult.error.details,
-              hint: orgMembershipResult.error.hint
-            });
-            throw new Error(`Organization membership failed: ${orgMembershipResult.error.message}`);
-          }
-          
-          if (tenantMembershipResult.error) {
-            console.error("❌ [REGISTER] Tenant membership error:", {
-              code: tenantMembershipResult.error.code,
-              message: tenantMembershipResult.error.message,
-              details: tenantMembershipResult.error.details,
-              hint: tenantMembershipResult.error.hint
-            });
-            throw new Error(`Tenant membership failed: ${tenantMembershipResult.error.message}`);
-          }
-          
-          console.log("✅ [REGISTER] Memberships created via direct admin insert");
-          
-        } catch (directError) {
-          console.error("❌ [REGISTER] Direct admin insert also failed:", directError);
-          
-          // Method 3: Manual SQL execution as last resort
-          console.log("🔄 [REGISTER] Attempting raw SQL execution...");
-          
-          try {
-            await supabaseAdmin.rpc('exec_sql', {
-              sql: `
-                INSERT INTO organization_memberships (organization_id, user_id, role, status, created_at, updated_at)
-                VALUES ('${organizationId}', '${authUserId}', 'owner', 'active', NOW(), NOW())
-                ON CONFLICT DO NOTHING;
-                
-                INSERT INTO tenant_memberships (user_id, tenant_id, role, created_at, updated_at)
-                VALUES ('${authUserId}', '${organizationId}', 'owner', NOW(), NOW())
-                ON CONFLICT DO NOTHING;
-              `
-            });
-            
-            console.log("✅ [REGISTER] Memberships created via raw SQL");
-            
-          } catch (sqlError) {
-            console.error("❌ [REGISTER] All membership creation methods failed:", sqlError);
-            // Don't fail the entire registration - user can be manually added to org later
-            console.warn("⚠️ [REGISTER] Continuing without memberships - user will need manual org assignment");
-          }
-        }
-      }
-
-      // Update user record with organization info as owner
-      const { error: updateError } = await supabaseAdmin
-        .from("users")
-        .update({ 
-          organization_id: organizationId,
-          tenant_id: organizationId, // 🔧 FIX: Set tenant_id to organization_id (not random UUID)
-          role: "owner" // Always owner for registrations
-        })
-        .eq("id", authUserId); // 🔧 FIX: Use authUserId consistently
-        
-      if (updateError) {
-        console.error("❌ [REGISTER] Failed to update user with organization:", updateError);
-        throw new Error(`User update failed: ${updateError.message}`);
-      }
-      
-      // 🚨 CRITICAL FIX: Also update profile table to stay in sync
-      console.log("🔄 [REGISTER] Updating profile with organization info...");
-      const { error: profileUpdateError } = await supabaseAdmin
-        .from("profiles")
-        .update({ 
-          organization_id: organizationId,
-          tenant_id: organizationId,
-          role: "owner"
-        })
-        .eq("id", authUserId);
-        
-      if (profileUpdateError) {
-        console.warn("⚠️ [REGISTER] Failed to update profile (non-critical):", profileUpdateError);
-      }
-      
-      console.log("✅ [REGISTER] User updated with organization");
-      
-      // Create placeholder subdomain entry (inactive until payment)
-      try {
-        const { error: subdomainError } = await supabaseAdmin
-          .from("subdomains")
-          .insert({
-            subdomain: finalSubdomain,
-            organization_id: organizationId,
-            status: 'pending', // 🔧 FIX: Use 'pending' instead of 'placeholder' to match check constraint
-            organization_name: companyName || `${firstName}'s Organization`,
-            owner_email: emailNorm
-          });
-          
-        if (subdomainError) {
-          console.error("❌ [REGISTER] Failed to create subdomain entry:", subdomainError);
-          // Don't fail registration for this, but log the error
-        } else {
-          console.log("✅ [REGISTER] Subdomain entry created:", finalSubdomain, "(pending activation)");
-        }
-      } catch (subdomainError) {
-        console.error("❌ [REGISTER] Subdomain creation error:", subdomainError);
-      }
-    } catch (orgError) {
-      console.error("❌ [REGISTER] Organization setup failed:", orgError);
-      
-      // 🚨 CRITICAL FIX #2: Clean up both auth and public user records
-      await supabaseAdmin
-        .from("users")
-        .delete()
-        .eq("id", authUserId);
-      
-      // Also cleanup the auth user to prevent partial state on retry
-      try {
-        await supabaseAdmin.auth.admin.deleteUser(authUserId);
-        console.log("✅ [REGISTER] Auth user cleaned up");
-      } catch (e) {
-        console.warn("⚠️ [REGISTER] Failed to cleanup auth user:", e);
-      }
-      
-      return NextResponse.json(
-        { error: "Account setup failed. Please try again with a different company name." },
-        { status: 500 }
-      );
+      await waitForPublicUser(authUserId);
+    } catch (triggerError) {
+      console.warn("[REGISTER] Trigger sync failed (non-fatal):", triggerError);
+      // Continue - not critical for registration success
     }
 
-    // --- Audit (best effort; ignore failures)
-    try {
-      await supabaseAdmin.from("audit_events").insert({
-        org_id: process.env.DEFAULT_ORG_ID ?? null,
-        actor_id: user.id,
-        entity: "user",
-        entity_id: user.id,
-        action: "register",
-        diff: { email: emailNorm },
-      });
-    } catch (auditErr) {
-      console.warn("⚠️ [REGISTER] Audit log failed:", auditErr);
-    }
-
-    // --- Welcome email (optional, fail-soft)
-    try {
-      if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM) {
-        const sg = (await import("@sendgrid/mail")).default;
-        sg.setApiKey(process.env.SENDGRID_API_KEY);
-        await sg.send({
-          to: emailNorm,
-          from: process.env.SENDGRID_FROM,
-          subject: "Welcome to GhostCRM",
-          text: "Your account has been created.",
-        });
-        console.log("✅ [REGISTER] Welcome email sent");
-      } else {
-        console.log("ℹ️ [REGISTER] No SendGrid config; skipping email");
-      }
-    } catch (e) {
-      console.warn("⚠️ [REGISTER] SendGrid error:", (e as any)?.message || e);
-    }
-
-    // --- Create Supabase Auth user and establish session
-    console.log("🔐 [REGISTER] Auth user already created with ID:", authUserId);
-    
-    // Auth user was already created at the beginning of registration process
-    console.log("✅ [REGISTER] Using existing Supabase Auth user");
-
-    // Build a success response (no session cookies - client will call /login)
-    const res = NextResponse.json({
+    // 🎯 CLEAN REGISTRATION RESPONSE - No org data until payment
+    return NextResponse.json({
       success: true,
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        role: user.role,
-        organizationId: organizationId 
+      message: "Account created successfully! Please check your email to verify your account.",
+      user: {
+        id: authUserId,
+        email,
+        role: "unassigned", // 🎯 No role until payment
+        email_confirmed: false,
+        organizationId: null, // 🎯 No org until payment
+        tenantId: null, // 🎯 No tenant until payment
       },
-      organization: organizationId ? {
-        id: organizationId,
-        name: companyName || `${firstName}'s Organization`,
-        role: "owner" // All registrations are owners
-      } : null,
-      trial_mode: true,
+      next_step: "verify_email", // 🎯 Next: email verification
+      next_url: "/verify-email",
     });
 
-    console.log("🎉 [REGISTER] Registration completed:", user.id);
-    console.log("ℹ️ [REGISTER] Client should call /api/auth/login to establish session");
-    return res;
   } catch (e: any) {
-    console.error("💥 [REGISTER] Unexpected error:", e);
-    return NextResponse.json(
-      { error: "server_error", detail: e?.message || String(e) },
-      { status: 500 }
-    );
+    console.error("[REGISTER] unexpected error:", e);
+    return NextResponse.json(sanitizeErrorForClient(e), { status: 500 });
   }
 }
-
-// CORS-wrapped POST handler
-export const POST = withCORS(registerHandler);
