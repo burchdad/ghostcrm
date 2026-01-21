@@ -273,6 +273,20 @@ async function registerHandler(req: Request) {
       .select("id,email,role,tenant_id,totp_secret,webauthn_credentials,jwt_token")
       .single();
 
+    // 🚨 CRITICAL FIX: Also create profile entry to align with auth context
+    console.log("💾 [REGISTER] Creating corresponding profile entry...");
+    const profileInsert = await supabaseAdmin
+      .from("profiles")
+      .upsert({
+        id: authUserId,
+        email: emailNorm,
+        role: "owner",
+        organization_id: null, // Will be updated after org creation
+        tenant_id: null,
+        status: 'active',
+        requires_password_reset: false
+      }, { onConflict: "id" });
+
     if (insertResult.error) {
       const { code, message } = insertResult.error;
       console.error("❌ [REGISTER] Full database error details:", {
@@ -496,6 +510,21 @@ async function registerHandler(req: Request) {
       if (updateError) {
         console.error("❌ [REGISTER] Failed to update user with organization:", updateError);
         throw new Error(`User update failed: ${updateError.message}`);
+      }
+      
+      // 🚨 CRITICAL FIX: Also update profile table to stay in sync
+      console.log("🔄 [REGISTER] Updating profile with organization info...");
+      const { error: profileUpdateError } = await supabaseAdmin
+        .from("profiles")
+        .update({ 
+          organization_id: organizationId,
+          tenant_id: organizationId,
+          role: "owner"
+        })
+        .eq("id", authUserId);
+        
+      if (profileUpdateError) {
+        console.warn("⚠️ [REGISTER] Failed to update profile (non-critical):", profileUpdateError);
       }
       
       console.log("✅ [REGISTER] User updated with organization");
