@@ -49,6 +49,16 @@ async function registerHandler(req: Request) {
     }
 
     // --- Validate inputs
+    console.log("🔍 [REGISTER] Validating inputs:", { 
+      hasEmail: !!email, 
+      hasPassword: !!password, 
+      hasFirstName: !!firstName, 
+      hasLastName: !!lastName,
+      hasCompanyName: !!companyName,
+      hasSubdomain: !!subdomain,
+      role 
+    });
+    
     if (!email || !password) {
       console.log("❌ [REGISTER] Missing email or password");
       return NextResponse.json(
@@ -123,6 +133,15 @@ async function registerHandler(req: Request) {
       .select("id,email")
       .eq("email", emailNorm)
       .single();
+
+    // Enhanced error logging for diagnosis
+    if (checkError) {
+      console.log("🔍 [REGISTER] User check result:", {
+        error_code: checkError.code,
+        error_message: checkError.message,
+        is_no_rows: checkError.code === "PGRST116"
+      });
+    }
 
     // If error is "no rows" (PGRST116), that's fine; else surface the error
     if (checkError && checkError.code !== "PGRST116") {
@@ -333,12 +352,20 @@ async function registerHandler(req: Request) {
         .select("id")
         .single();
 
+      // Enhanced error logging for 400 diagnosis
       if (orgResult.error) {
         console.error("❌ [REGISTER] Failed to create organization:", {
           code: orgResult.error.code,
           message: orgResult.error.message,
           details: orgResult.error.details,
-          hint: orgResult.error.hint
+          hint: orgResult.error.hint,
+          // Log the data we tried to insert for debugging
+          attempted_data: {
+            name: companyName || `${firstName}'s Organization`,
+            subdomain: finalSubdomain,
+            owner_id: authUserId,
+            status: "active"
+          }
         });
         throw new Error(`Organization creation failed: ${orgResult.error.message}`);
       }
@@ -373,6 +400,10 @@ async function registerHandler(req: Request) {
             !orgResult.value.error && !tenantResult.value.error) {
           console.log("✅ [REGISTER] Memberships created via RPC functions");
         } else {
+          console.log("❌ [REGISTER] RPC membership errors:", {
+            org_result: orgResult.status === 'rejected' ? orgResult.reason : orgResult.value,
+            tenant_result: tenantResult.status === 'rejected' ? tenantResult.reason : tenantResult.value
+          });
           throw new Error("RPC methods failed, trying direct insert");
         }
 
@@ -402,10 +433,22 @@ async function registerHandler(req: Request) {
           const [orgMembershipResult, tenantMembershipResult] = await Promise.all(membershipPromises);
           
           if (orgMembershipResult.error) {
+            console.error("❌ [REGISTER] Organization membership error:", {
+              code: orgMembershipResult.error.code,
+              message: orgMembershipResult.error.message,
+              details: orgMembershipResult.error.details,
+              hint: orgMembershipResult.error.hint
+            });
             throw new Error(`Organization membership failed: ${orgMembershipResult.error.message}`);
           }
           
           if (tenantMembershipResult.error) {
+            console.error("❌ [REGISTER] Tenant membership error:", {
+              code: tenantMembershipResult.error.code,
+              message: tenantMembershipResult.error.message,
+              details: tenantMembershipResult.error.details,
+              hint: tenantMembershipResult.error.hint
+            });
             throw new Error(`Tenant membership failed: ${tenantMembershipResult.error.message}`);
           }
           
