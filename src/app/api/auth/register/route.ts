@@ -147,9 +147,8 @@ async function registerHandler(req: Request) {
 
     // 🎯 ONLY CREATE AUTH USER - No org/subdomain until payment
     // Set redirect URL for email verification
-    const redirectTo = process.env.NODE_ENV === 'production' 
-      ? 'https://ghostcrm.ai/auth/callback'
-      : 'http://localhost:3000/auth/callback';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const redirectTo = `${siteUrl}/auth/callback`;
 
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -187,6 +186,71 @@ async function registerHandler(req: Request) {
 
     const authUserId = created?.user?.id;
     if (!authUserId) return jsonError("Registration failed. Please try again.", 500);
+
+    // 🎯 SEND VERIFICATION EMAIL - Use our custom email service with Supabase verification link
+    try {
+      console.log('[REGISTER] Starting email verification process for:', email);
+      console.log('[REGISTER] Environment check:', {
+        hasSendgridKey: !!process.env.SENDGRID_API_KEY,
+        sendgridFrom: process.env.SENDGRID_FROM,
+        siteUrl: siteUrl,
+        redirectTo: redirectTo
+      });
+
+      // First generate the verification link
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'signup',
+        email,
+        options: {
+          redirectTo: redirectTo,
+        }
+      });
+
+      console.log('[REGISTER] generateLink result:', {
+        hasData: !!linkData,
+        hasProps: !!linkData?.properties,
+        hasAction: !!linkData?.properties?.action_link,
+        error: linkError?.message,
+        linkDataKeys: linkData ? Object.keys(linkData) : 'no data'
+      });
+
+      if (linkError) {
+        console.error('[REGISTER] Email verification link generation failed:', linkError);
+        // Don't fail registration if email fails - user can resend later
+      } else if (linkData?.properties?.action_link) {
+        console.log('[REGISTER] Got action link, sending email via EmailService...');
+        
+        // Send the verification email using our custom email service
+        const { EmailService } = await import('@/lib/email-service');
+        const emailService = EmailService.getInstance();
+        
+        console.log('[REGISTER] About to send verification email:', {
+          email,
+          firstName,
+          hasActionLink: !!linkData.properties.action_link
+        });
+
+        const emailSent = await emailService.sendVerificationEmail(
+          email,
+          firstName,
+          linkData.properties.action_link
+        );
+
+        console.log('[REGISTER] Email send result:', { emailSent });
+
+        if (emailSent) {
+          console.log('[REGISTER] Verification email sent successfully to:', email);
+        } else {
+          console.error('[REGISTER] Failed to send verification email, but link was generated');
+        }
+      } else {
+        console.error('[REGISTER] No action link returned from generateLink - check Supabase Auth URL configuration');
+        console.error('[REGISTER] LinkData structure:', JSON.stringify(linkData, null, 2));
+      }
+    } catch (emailSendError) {
+      console.error('[REGISTER] Email verification sending failed:', emailSendError);
+      // Continue - don't block registration on email failure
+    }
 
     // 🎯 TRIGGERS STILL CREATE public.users + public.profiles (but no org fields)
     // Wait for trigger sync (optional - for immediate profile access)

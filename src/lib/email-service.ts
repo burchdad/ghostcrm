@@ -211,6 +211,165 @@ This invitation was sent to ${data.inviteeName}. If you received this in error, 
   }
 
   /**
+   * Send email verification email with Supabase verification link
+   */
+  async sendVerificationEmail(
+    email: string, 
+    firstName: string,
+    verificationUrl: string
+  ): Promise<boolean> {
+    console.log('[EMAIL] sendVerificationEmail called:', {
+      email,
+      firstName,
+      hasVerificationUrl: !!verificationUrl,
+      urlLength: verificationUrl?.length,
+      isConfigured: this.isConfigured,
+      hasSendgridKey: !!process.env.SENDGRID_API_KEY,
+      sendgridFrom: process.env.SENDGRID_FROM
+    });
+
+    if (!this.isConfigured) {
+      console.warn('⚠️ [EMAIL] SendGrid not configured, skipping verification email');
+      return false;
+    }
+
+    if (!process.env.SENDGRID_FROM) {
+      console.error('❌ [EMAIL] SENDGRID_FROM not configured');
+      return false;
+    }
+
+    const emailHtml = this.generateVerificationEmailHtml(firstName, verificationUrl);
+    const emailText = this.generateVerificationEmailText(firstName, verificationUrl);
+
+    console.log('[EMAIL] About to call sgMail.send...');
+
+    try {
+      const sendResult = await sgMail.send({
+        to: email,
+        from: process.env.SENDGRID_FROM,
+        subject: 'Verify your GhostCRM account',
+        html: emailHtml,
+        text: emailText,
+      });
+
+      console.log('✅ [EMAIL] SendGrid API call successful:', {
+        statusCode: sendResult?.[0]?.statusCode,
+        messageId: sendResult?.[0]?.headers?.['x-message-id']
+      });
+      console.log(`✅ [EMAIL] Verification email sent to ${email}`);
+      return true;
+    } catch (error) {
+      console.error('❌ [EMAIL] SendGrid API call failed:', {
+        message: error?.message,
+        code: error?.code,
+        response: error?.response?.body
+      });
+      console.error('❌ [EMAIL] Failed to send verification email:', error);
+      return false;
+    }
+  }
+
+  private generateVerificationEmailHtml(firstName: string, verificationUrl: string): string {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Account - GhostCRM</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center; padding: 40px 20px; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+        .header p { margin: 10px 0 0 0; opacity: 0.9; }
+        .content { padding: 40px 30px; }
+        .verification-card { background-color: #f8fafc; border-left: 4px solid #667eea; padding: 24px; margin: 30px 0; border-radius: 8px; }
+        .button { display: inline-block; background-color: #667eea; color: white; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; margin: 20px 0; transition: background-color 0.3s; }
+        .button:hover { background-color: #5a67d8; }
+        .footer { background-color: #f8fafc; padding: 30px; text-align: center; color: #64748b; font-size: 14px; }
+        .security-notice { background-color: #fef3c7; border: 1px solid #f59e0b; color: #92400e; padding: 16px; border-radius: 8px; margin: 20px 0; }
+        .logo { font-size: 32px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">👻</div>
+            <h1>GhostCRM</h1>
+            <p>Auto Dealership CRM Platform</p>
+        </div>
+        
+        <div class="content">
+            <h2 style="color: #374151; margin-bottom: 20px;">Welcome, ${firstName}!</h2>
+            
+            <p style="color: #6b7280; line-height: 1.6; margin-bottom: 24px;">
+                Thank you for signing up for GhostCRM. To complete your account setup and start managing your dealership, please verify your email address by clicking the button below.
+            </p>
+
+            <div class="verification-card">
+                <h3 style="color: #374151; margin: 0 0 16px 0;">🔐 Account Security</h3>
+                <p style="color: #6b7280; margin: 0; line-height: 1.5;">
+                    This verification step ensures the security of your account and enables all GhostCRM features including inventory management, customer tracking, and team collaboration.
+                </p>
+            </div>
+
+            <div style="text-align: center;">
+                <a href="${verificationUrl}" class="button" style="color: white; text-decoration: none;">
+                    Verify My Account
+                </a>
+            </div>
+
+            <div class="security-notice">
+                <strong>⚠️ Security Notice:</strong> This verification link will expire in 24 hours. If you didn't create this account, please ignore this email.
+            </div>
+
+            <p style="color: #9ca3af; font-size: 14px; line-height: 1.5;">
+                If the button above doesn't work, you can copy and paste this link into your browser:<br>
+                <a href="${verificationUrl}" style="color: #667eea; word-break: break-all;">${verificationUrl}</a>
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 GhostCRM. All rights reserved.</p>
+            <p>This email was sent to verify your account. If you didn't create an account, please ignore this email.</p>
+        </div>
+    </div>
+</body>
+</html>`;
+  }
+
+  private generateVerificationEmailText(firstName: string, verificationUrl: string): string {
+    return `
+Welcome to GhostCRM, ${firstName}!
+
+Thank you for signing up for GhostCRM. To complete your account setup and start managing your dealership, please verify your email address.
+
+Click or copy this link to verify your account:
+${verificationUrl}
+
+This verification link will expire in 24 hours. If you didn't create this account, please ignore this email.
+
+Once verified, you'll have access to:
+• Inventory management
+• Customer relationship tracking  
+• Sales pipeline management
+• Team collaboration tools
+• Analytics and reporting
+
+If the link above doesn't work, you can copy and paste it into your browser.
+
+Welcome to the GhostCRM family!
+
+The GhostCRM Team
+
+---
+© 2025 GhostCRM. All rights reserved.
+This email was sent to verify your account. If you didn't create an account, please ignore this email.
+`;
+  }
+
+  /**
    * Send a notification email
    */
   async sendNotificationEmail(
