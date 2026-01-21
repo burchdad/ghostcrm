@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { limitKey } from "@/lib/rateLimitEdge";
 
 function jsonError(message: string, status = 400, extra = {}) {
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     // Rate limit by IP + email combination
     const clientIP = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "unknown";
     const rateKey = `resend-verification:${clientIP}:${email || 'no-email'}`;
-    const rate = await limitKey(rateKey, { limit: 3, windowMs: 15 * 60 * 1000 }); // 3 attempts per 15 minutes
+    const rate = await limitKey(rateKey); // Use existing rate limiter (5 attempts per 10 minutes)
 
     if (!rate.allowed) {
       // Always return same message regardless of rate limit reason
@@ -42,22 +42,29 @@ export async function POST(req: Request) {
     const minProcessingTime = 1000; // Always take at least 1 second
 
     try {
-      // Check if user exists and is unverified
-      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(normalizedEmail);
+      // Check if user exists and is unverified - use listUsers to find by email
+      const { data: usersData, error: userError } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 1000 // Should be enough for email search
+      });
+      
+      // Find user by email
+      const userData = usersData?.users?.find((user: any) => user.email?.toLowerCase() === normalizedEmail);
       
       console.log('[RESEND-VERIFICATION] User lookup result:', {
-        hasUser: !!userData?.user,
-        userExists: !!userData?.user?.id,
-        isVerified: !!userData?.user?.email_confirmed_at,
-        userError: userError?.message
+        hasUser: !!userData,
+        userExists: !!userData?.id,
+        isVerified: !!userData?.email_confirmed_at,
+        userError: userError?.message,
+        totalUsers: usersData?.users?.length || 0
       });
       
       // Only proceed if user exists and is unverified
-      if (userData?.user && !userData.user.email_confirmed_at) {
+      if (userData && !userData.email_confirmed_at) {
         console.log('[RESEND-VERIFICATION] Generating verification link...');
         
         const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'signup',
+          type: 'magiclink',
           email: normalizedEmail,
           options: {
             redirectTo: redirectTo,
@@ -73,7 +80,7 @@ export async function POST(req: Request) {
 
         if (!linkError && linkData?.properties?.action_link) {
           // Get user metadata for personalized email
-          const firstName = userData.user.user_metadata?.first_name || 'there';
+          const firstName = userData.user_metadata?.first_name || 'there';
 
           console.log('[RESEND-VERIFICATION] About to send email via EmailService...');
 

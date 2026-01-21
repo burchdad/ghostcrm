@@ -197,9 +197,9 @@ async function registerHandler(req: Request) {
         redirectTo: redirectTo
       });
 
-      // First generate the verification link
+      // First generate the verification link  
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'signup',
+        type: 'magiclink',
         email,
         options: {
           redirectTo: redirectTo,
