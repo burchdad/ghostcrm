@@ -40,6 +40,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: error.message }, { status: 401 });
     }
 
+    const user = data?.user;
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Authentication failed" }, { status: 401 });
+    }
+
+    // 🎯 CHECK EMAIL VERIFICATION - Block unverified users
+    if (!user.email_confirmed_at) {
+      console.log('[LOGIN] Blocking unverified user:', user.email);
+      return NextResponse.json({ 
+        success: false, 
+        error: "Please verify your email address before signing in. Check your email for the verification link.",
+        code: "email_not_verified",
+        email: user.email
+      }, { status: 403 });
+    }
+
+    console.log('[LOGIN] Email verified user logged in successfully:', {
+      userId: user.id,
+      email: user.email,
+      emailConfirmed: !!user.email_confirmed_at
+    });
+
     // Build the REAL response now (JSON body), then apply cookies to it
     const res = NextResponse.json({
       success: true,

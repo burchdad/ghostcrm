@@ -51,20 +51,18 @@ export default function RegisterPage() {
       }
 
       localStorage.setItem('userEmail', email);
-      setMessage('Account created! Please check your email to verify your account.');
       
-      // Registration successful - show email verification message
-      if (data.next_step === 'verify_email') {
-        // Don't redirect - user needs to verify email first
-        setMessage('Account created! Check your email and verify your account, then you can log in at your subdomain.');
+      // 🎯 NEW FLOW: Redirect immediately to billing for plan selection
+      if (data.next_step === 'select_plan') {
+        setMessage('Account created! Redirecting to select your plan...');
+        setTimeout(() => router.push('/billing?welcome=true'), 1500);
+      } else if (data.next_step === 'verify_email') {
+        // Fallback: old flow that required email verification first
+        setMessage('Account created! Check your email and verify your account, then you can log in.');
       } else {
-        // Fallback redirect if email verification is bypassed
-        if (data.organization?.id && subdomain) {
-          const subdomainUrl = `https://${subdomain}.ghostcrm.ai/login`;
-          setTimeout(() => window.location.href = subdomainUrl, 1500);
-        } else {
-          setTimeout(() => router.push('/login'), 1500);
-        }
+        // Fallback redirect if neither flow is specified
+        setMessage('Account created! Please check your email to verify your account.');
+        setTimeout(() => router.push('/login'), 1500);
       }
     } catch (err: any) {
       setMessage(err.message || 'Registration failed');

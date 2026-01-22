@@ -273,10 +273,10 @@ async function registerHandler(req: Request) {
       // Continue - not critical for registration success
     }
 
-    // 🎯 CLEAN REGISTRATION RESPONSE - No org data until payment
+    // 🎯 CLEAN REGISTRATION RESPONSE - Redirect immediately to billing
     return NextResponse.json({
       success: true,
-      message: "Account created successfully! Please check your email to verify your account.",
+      message: "Account created successfully! Check your email to verify your account, then select your plan.",
       user: {
         id: authUserId,
         email,
@@ -285,8 +285,8 @@ async function registerHandler(req: Request) {
         organizationId: null, // 🎯 No org until payment
         tenantId: null, // 🎯 No tenant until payment
       },
-      next_step: "verify_email", // 🎯 Next: email verification
-      next_url: "/verify-email",
+      next_step: "select_plan", // 🎯 Next: go to billing immediately
+      next_url: "/billing",
     });
 
   } catch (e: any) {
