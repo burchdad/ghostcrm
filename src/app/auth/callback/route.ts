@@ -55,6 +55,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/login?error=verification_failed', requestUrl.origin))
     }
 
+    console.log('[AUTH CALLBACK] User verified successfully:', { 
+      userId: user.id, 
+      email: user.email,
+      emailConfirmed: !!user.email_confirmed_at 
+    });
+
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('tenant_id, organization_id')
@@ -66,6 +72,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/login?error=user_lookup_failed', requestUrl.origin))
     }
 
+    // 🎯 NEW USERS (no organization) should go to billing to select plan
+    if (!userData?.organization_id) {
+      console.log('[AUTH CALLBACK] New user without organization, redirecting to billing');
+      const billingUrl = new URL("/billing", requestUrl.origin);
+      billingUrl.searchParams.set("welcome", "true");
+      return NextResponse.redirect(billingUrl);
+    }
+
+    // 🎯 EXISTING USERS with organization - check for active subdomain
     if (userData?.organization_id) {
       const { data: subdomainData, error: subdomainError } = await supabase
         .from('subdomains')
@@ -83,7 +98,7 @@ export async function GET(request: NextRequest) {
       if (subdomainData?.subdomain && isGhostDomain) {
         const target = new URL(requestUrl.origin);
         target.host = `${subdomainData.subdomain}.ghostcrm.ai`;
-        target.pathname = "/login";
+        target.pathname = "/dashboard";
         target.searchParams.set("verified", "true");
         if (safeNext !== "/") {
           target.searchParams.set("next", safeNext);

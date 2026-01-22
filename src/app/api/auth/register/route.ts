@@ -146,9 +146,17 @@ async function registerHandler(req: Request) {
     }
 
     // 🎯 ONLY CREATE AUTH USER - No org/subdomain until payment
-    // Set redirect URL for email verification
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    // Set redirect URL for email verification - ensure production URL
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                   (process.env.NODE_ENV === 'production' ? 'https://ghostcrm.ai' : 'http://localhost:3000');
     const redirectTo = `${siteUrl}/auth/callback`;
+
+    console.log('[REGISTER] Site URL configuration:', {
+      nodeEnv: process.env.NODE_ENV,
+      nextPublicSiteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+      computedSiteUrl: siteUrl,
+      redirectTo: redirectTo
+    });
 
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
