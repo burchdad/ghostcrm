@@ -67,6 +67,16 @@ export class EmailService {
         subject: `You're invited to join ${data.organizationName} on GhostCRM`,
         html: emailHtml,
         text: emailText,
+        // 🎯 DISABLE CLICK TRACKING for invitation emails  
+        // This prevents SendGrid from wrapping invitation links with tracking domains
+        trackingSettings: {
+          clickTracking: {
+            enable: false
+          },
+          openTracking: {
+            enable: false
+          }
+        }
       });
 
       console.log(`✅ [EMAIL] Team invitation sent to ${email}`);
@@ -250,6 +260,16 @@ This invitation was sent to ${data.inviteeName}. If you received this in error, 
         subject: 'Verify your GhostCRM account',
         html: emailHtml,
         text: emailText,
+        // 🎯 DISABLE CLICK TRACKING for verification emails
+        // This prevents SendGrid from wrapping verification links with tracking domains
+        trackingSettings: {
+          clickTracking: {
+            enable: false
+          },
+          openTracking: {
+            enable: false
+          }
+        }
       });
 
       console.log('✅ [EMAIL] SendGrid API call successful:', {
@@ -427,7 +447,17 @@ This email was sent to verify your account. If you didn't create an account, ple
             </div>
           </body>
           </html>
-        `
+        `,
+        // 🎯 DISABLE CLICK TRACKING for notification emails
+        // This prevents SendGrid from wrapping notification links with tracking domains
+        trackingSettings: {
+          clickTracking: {
+            enable: false
+          },
+          openTracking: {
+            enable: false
+          }
+        }
       };
 
       const response = await sgMail.send(msg);
