@@ -219,7 +219,9 @@ async function registerHandler(req: Request) {
         hasProps: !!linkData?.properties,
         hasAction: !!linkData?.properties?.action_link,
         error: linkError?.message,
-        linkDataKeys: linkData ? Object.keys(linkData) : 'no data'
+        linkDataKeys: linkData ? Object.keys(linkData) : 'no data',
+        actualActionLink: linkData?.properties?.action_link,
+        actionLinkDomain: linkData?.properties?.action_link ? new URL(linkData.properties.action_link).hostname : 'no link'
       });
 
       if (linkError) {
