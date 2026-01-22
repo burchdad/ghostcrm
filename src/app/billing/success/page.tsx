@@ -65,8 +65,11 @@ function SuccessContent() {
         }
         
         // Get user's organization/subdomain info for proper redirect
-        let userSubdomain = null
-        let userEmail = null
+        let userSubdomain: string | null = null
+        let userEmail: string | null = null
+        let subdomainStatus: 'checking' | 'pending_payment' | 'active' | 'error' = 'checking'
+        let isSubdomainActivated = false
+        
         if (!isSoftwareOwner) {
           try {
             const orgResponse = await fetch('/api/auth/me')
@@ -97,6 +100,64 @@ function SuccessContent() {
           }
         }
         
+        // Check if coming from successful Stripe checkout and ensure organization exists
+        if (sessionId) {
+          try {
+            console.log('🏢 [BILLING-SUCCESS] Ensuring organization exists for session:', sessionId);
+            
+            const ensureOrgResponse = await fetch('/api/billing/ensure-organization', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sessionId })
+            });
+
+            if (ensureOrgResponse.ok) {
+              const orgResult = await ensureOrgResponse.json();
+              console.log('🏢 [BILLING-SUCCESS] Organization result:', orgResult);
+              
+              if (orgResult.success && orgResult.subdomain) {
+                userSubdomain = orgResult.subdomain;
+                console.log('🎯 [BILLING-SUCCESS] Got subdomain from ensure-organization:', userSubdomain);
+                
+                // Set as activated immediately since we just created/confirmed it
+                subdomainStatus = orgResult.status || 'active';
+                isSubdomainActivated = subdomainStatus === 'active';
+                
+                // If organization is active, redirect immediately
+                if (isSubdomainActivated) {
+                  console.log(`🚀 [BILLING-SUCCESS] Organization active - redirecting to: ${userSubdomain}.ghostcrm.ai/login`);
+                  
+                  // Update state to show success
+                  setSuccessData({
+                    sessionId: sessionId || undefined,
+                    promoCode: undefined,
+                    isSoftwareOwner: false,
+                    shouldStartOnboarding: false,
+                    userSubdomain: userSubdomain || undefined,
+                    processed: true,
+                    gatewayError: false,
+                    subdomainStatus: 'active',
+                    isSubdomainActivated: true
+                  });
+                  
+                  setLoading(false);
+                  
+                  // Redirect after showing success message
+                  setTimeout(() => {
+                    window.location.href = `https://${userSubdomain}.ghostcrm.ai/login`;
+                  }, 2000); // 2 second delay to show success message
+                  
+                  return; // Skip the rest of the function
+                }
+              }
+            } else {
+              console.warn('⚠️ [BILLING-SUCCESS] Failed to ensure organization exists');
+            }
+          } catch (error) {
+            console.error('❌ [BILLING-SUCCESS] Error ensuring organization:', error);
+          }
+        }
+        
         // Check if they used the SOFTWAREOWNER promo code
         const promoCode = sessionId ? await checkPromoCodeUsed(sessionId) : null
         
@@ -104,9 +165,6 @@ function SuccessContent() {
         const shouldStartOnboarding = !isSoftwareOwner && !usedSoftwareOwnerPromo
         
         // For non-software owners, check real subdomain activation status
-        let subdomainStatus: 'checking' | 'pending_payment' | 'active' | 'error' = 'checking'
-        let isSubdomainActivated = false
-        
         if (!isSoftwareOwner && !usedSoftwareOwnerPromo && userEmail) {
           try {
             console.log('🔍 [BILLING-SUCCESS] Checking real subdomain status...')
@@ -168,12 +226,21 @@ function SuccessContent() {
                 
                 if (statusResult.success && statusResult.status === 'active') {
                   console.log('✅ [BILLING-SUCCESS] Webhook activation confirmed!');
+                  const activatedSubdomain = statusResult.subdomain;
+                  
                   setSuccessData(prev => ({
                     ...prev,
                     isSubdomainActivated: true,
                     subdomainStatus: 'active',
-                    userSubdomain: statusResult.subdomain
+                    userSubdomain: activatedSubdomain
                   }));
+                  
+                  // 🎯 AUTO-REDIRECT to subdomain login page after activation
+                  console.log(`🚀 [BILLING-SUCCESS] Auto-redirecting to: ${activatedSubdomain}.ghostcrm.ai/login`);
+                  setTimeout(() => {
+                    window.location.href = `https://${activatedSubdomain}.ghostcrm.ai/login`;
+                  }, 2000); // 2 second delay to show success message
+                  
                   return; // Stop polling
                 }
               }
@@ -276,15 +343,16 @@ function SuccessContent() {
   }
 
   const handleGoToSubdomain = () => {
-    if (!successData.isSubdomainActivated) {
+    if (!successData.isSubdomainActivated || !successData.userSubdomain) {
       alert('Please wait for subdomain activation to complete before accessing your portal.')
       return
     }
     
-    // Clear session and redirect directly to login-owner page
-    fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
-      router.push('/login-owner')
-    })
+    console.log(`🚀 [BILLING-SUCCESS] Redirecting to subdomain: ${successData.userSubdomain}`)
+    
+    // Redirect to the actual subdomain login page
+    const subdomainUrl = `https://${successData.userSubdomain}.ghostcrm.ai/login`
+    window.location.href = subdomainUrl
   }
 
   async function checkPromoCodeUsed(sessionId: string): Promise<string | null> {
