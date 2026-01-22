@@ -146,13 +146,15 @@ async function registerHandler(req: Request) {
     }
 
     // 🎯 ONLY CREATE AUTH USER - No org/subdomain until payment
-    // Set redirect URL for email verification - ensure production URL
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+    // Set redirect URL for email verification - use existing NEXT_PUBLIC_BASE_URL
+    const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                   process.env.NEXT_PUBLIC_SITE_URL || 
                    (process.env.NODE_ENV === 'production' ? 'https://ghostcrm.ai' : 'http://localhost:3000');
     const redirectTo = `${siteUrl}/auth/callback`;
 
     console.log('[REGISTER] Site URL configuration:', {
       nodeEnv: process.env.NODE_ENV,
+      nextPublicBaseUrl: process.env.NEXT_PUBLIC_BASE_URL,
       nextPublicSiteUrl: process.env.NEXT_PUBLIC_SITE_URL,
       computedSiteUrl: siteUrl,
       redirectTo: redirectTo

@@ -34,12 +34,14 @@ export async function POST(req: Request) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+    const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                   process.env.NEXT_PUBLIC_SITE_URL || 
                    (process.env.NODE_ENV === 'production' ? 'https://ghostcrm.ai' : 'http://localhost:3000');
     const redirectTo = `${siteUrl}/auth/callback`;
 
     console.log('[RESEND-VERIFICATION] Site URL configuration:', {
       nodeEnv: process.env.NODE_ENV,
+      nextPublicBaseUrl: process.env.NEXT_PUBLIC_BASE_URL,
       nextPublicSiteUrl: process.env.NEXT_PUBLIC_SITE_URL,
       computedSiteUrl: siteUrl,
       redirectTo: redirectTo
