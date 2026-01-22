@@ -5,13 +5,29 @@ import { cookies } from 'next/headers'
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  const error = requestUrl.searchParams.get('error')
   const rawNext = requestUrl.searchParams.get('next') || '/'
   
   // Sanitize next parameter to prevent open redirects
   const safeNext = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
 
+  // 🎯 Handle Supabase verification errors
+  if (error) {
+    console.error('[AUTH CALLBACK] Supabase returned error:', error)
+    
+    // Check for specific error types and provide appropriate redirects
+    if (error === 'invalid_verification') {
+      // This might be a fragment-based flow, redirect to a client-side handler
+      return NextResponse.redirect(new URL('/auth/verify-callback', requestUrl.origin))
+    }
+    
+    return NextResponse.redirect(new URL(`/login?error=${error}`, requestUrl.origin))
+  }
+
   if (!code) {
-    return NextResponse.redirect(new URL('/login?error=invalid_verification', requestUrl.origin))
+    // No code parameter - might be implicit flow with fragments
+    // Redirect to client-side handler that can access fragments
+    return NextResponse.redirect(new URL('/auth/verify-callback', requestUrl.origin))
   }
 
   // Dynamic domain detection
