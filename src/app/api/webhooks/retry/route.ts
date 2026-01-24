@@ -43,11 +43,11 @@ async function handleRetryRequest(req: NextRequest) {
     // 3. Check for cron secret in headers (Vercel's cron secret)
     const cronSecret = req.headers.get('x-vercel-cron-secret');
     if (cronSecret === process.env.CRON_SECRET) {
-      authHeader = process.env.WEBHOOK_RETRY_SECRET; // Allow Vercel cron
+      authHeader = process.env.WEBHOOK_RETRY_SECRET || null; // Allow Vercel cron
     }
     
     // Auth check
-    if (authHeader !== process.env.WEBHOOK_RETRY_SECRET) {
+    if (!authHeader || authHeader !== process.env.WEBHOOK_RETRY_SECRET) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
