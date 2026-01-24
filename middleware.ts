@@ -2,6 +2,27 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+// Performance optimization: In-memory cache for middleware data
+const middlewareCache = new Map();
+const CACHE_DURATION = 30000; // 30 seconds cache
+
+// Helper to get cached data
+function getCachedData(key: string) {
+  const cached = middlewareCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  return null;
+}
+
+// Helper to set cached data
+function setCachedData(key: string, data: any) {
+  middlewareCache.set(key, {
+    data,
+    timestamp: Date.now()
+  });
+}
+
 // Helper to copy all cookies from one response to another (preserves all attributes)
 function copyCookies(from: NextResponse, to: NextResponse) {
   for (const c of from.cookies.getAll()) {
@@ -126,19 +147,28 @@ async function handleSubdomainRouting(
     return response;
   }
 
-  // 🌐 Check if subdomain exists and is active
-  let subdomainData = null;
-  try {
-    const { data } = await supabase
-      .from('subdomains')
-      .select('id, status, organization_id, organization_name')
-      .eq('subdomain', subdomain)
-      .eq('status', 'active') // Only active subdomains are accessible
-      .maybeSingle();
-    
-    subdomainData = data;
-  } catch (error) {
-    debugLog('⚠️ [MIDDLEWARE] Error fetching subdomain:', error);
+  // 🚀 PERFORMANCE: Check cache first for subdomain data
+  const subdomainCacheKey = `subdomain:${subdomain}`;
+  let subdomainData = getCachedData(subdomainCacheKey);
+  
+  if (!subdomainData) {
+    // 🌐 Check if subdomain exists and is active (only if not cached)
+    try {
+      const { data } = await supabase
+        .from('subdomains')
+        .select('id, status, organization_id, organization_name')
+        .eq('subdomain', subdomain)
+        .eq('status', 'active') // Only active subdomains are accessible
+        .maybeSingle();
+      
+      subdomainData = data;
+      // Cache for 30 seconds to reduce DB hits
+      setCachedData(subdomainCacheKey, subdomainData);
+    } catch (error) {
+      debugLog('⚠️ [MIDDLEWARE] Error fetching subdomain:', error);
+    }
+  } else {
+    debugLog('⚡ [MIDDLEWARE] Using cached subdomain data');
   }
 
   // 🚫 Subdomain not found or not active
@@ -155,28 +185,40 @@ async function handleSubdomainRouting(
     return redirectWithCookies(response, loginUrl);
   }
 
-  // 🔒 Check if user is a member of this organization
-  try {
-    const { data: membership } = await supabase
-      .from('organization_memberships')
-      .select('id, role, status')
-      .eq('user_id', user.id)
-      .eq('organization_id', subdomainData.organization_id)
-      .eq('status', 'active')
-      .maybeSingle();
+  // � PERFORMANCE: Check cache for user membership
+  const membershipCacheKey = `membership:${user.id}:${subdomainData.organization_id}`;
+  let membership = getCachedData(membershipCacheKey);
+  
+  if (!membership) {
+    // 🔒 Check if user is a member of this organization (only if not cached)
+    try {
+      const { data: membershipData } = await supabase
+        .from('organization_memberships')
+        .select('id, role, status')
+        .eq('user_id', user.id)
+        .eq('organization_id', subdomainData.organization_id)
+        .eq('status', 'active')
+        .maybeSingle();
 
-    if (!membership) {
-      debugLog('❌ [MIDDLEWARE] User not member of organization:', user.id, subdomainData.organization_id);
-      // Redirect to main domain login (not tenant login)
+      membership = membershipData;
+      // Cache for shorter time since this can change more frequently
+      setCachedData(membershipCacheKey, membership);
+    } catch (membershipError) {
+      debugLog('⚠️ [MIDDLEWARE] Membership validation error:', membershipError);
+      // Fail-safe: redirect to main domain login
       return redirectWithCookies(response, new URL('https://ghostcrm.ai/login', request.url));
     }
+  } else {
+    debugLog('⚡ [MIDDLEWARE] Using cached membership data');
+  }
 
-    debugLog('✅ [MIDDLEWARE] User authorized for subdomain:', user.id, 'Role:', membership.role);
-  } catch (membershipError) {
-    debugLog('⚠️ [MIDDLEWARE] Membership validation error:', membershipError);
-    // Fail-safe: redirect to main domain login
+  if (!membership) {
+    debugLog('❌ [MIDDLEWARE] User not member of organization:', user.id, subdomainData.organization_id);
+    // Redirect to main domain login (not tenant login)
     return redirectWithCookies(response, new URL('https://ghostcrm.ai/login', request.url));
   }
+
+  debugLog('✅ [MIDDLEWARE] User authorized for subdomain:', user.id, 'Role:', membership.role);
 
   // ✅ All checks passed
   debugLog('✅ [MIDDLEWARE] Allowing subdomain access');
@@ -230,19 +272,27 @@ async function handleMainDomainRouting(
     return redirectWithCookies(response, new URL('/verify-email', request.url));
   }
 
-  // 🎯 Get user tenant status for STATE B/C determination
-  let userTenantId = null;
-  try {
-    const { data: userData } = await supabase
-      .from('users')
-      .select('tenant_id')
-      .eq('id', user.id)
-      .maybeSingle();
-    
-    userTenantId = userData?.tenant_id;
-    debugLog('🏢 [MIDDLEWARE] User tenant_id:', userTenantId ?? 'null');
-  } catch (error) {
-    debugLog('⚠️ [MIDDLEWARE] Error fetching user tenant:', error);
+  // 🚀 PERFORMANCE: Get user tenant status with caching for STATE B/C determination
+  const userCacheKey = `user:${user.id}`;
+  let userTenantId = getCachedData(userCacheKey);
+  
+  if (userTenantId === null) {
+    try {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      userTenantId = userData?.tenant_id || null;
+      // Cache user data for 60 seconds
+      setCachedData(userCacheKey, userTenantId);
+      debugLog('🏢 [MIDDLEWARE] User tenant_id:', userTenantId ?? 'null');
+    } catch (error) {
+      debugLog('⚠️ [MIDDLEWARE] Error fetching user tenant:', error);
+    }
+  } else {
+    debugLog('⚡ [MIDDLEWARE] Using cached user tenant data:', userTenantId ?? 'null');
   }
 
   // 🎯 STATE B: Verified, unpaid (tenant_id is null)
@@ -264,23 +314,34 @@ async function handleMainDomainRouting(
     return response;
   }
 
-  // Get their subdomain and redirect them there
-  try {
-    const { data: orgData } = await supabase
-      .from('organizations')
-      .select('subdomain')
-      .eq('id', userTenantId)
-      .eq('status', 'active')
-      .maybeSingle();
+  // 🚀 PERFORMANCE: Get organization subdomain with caching
+  const orgCacheKey = `org:${userTenantId}`;
+  let orgData = getCachedData(orgCacheKey);
+  
+  if (!orgData) {
+    try {
+      const { data: organizationData } = await supabase
+        .from('organizations')
+        .select('subdomain')
+        .eq('id', userTenantId)
+        .eq('status', 'active')
+        .maybeSingle();
+      
+      orgData = organizationData;
+      // Cache organization data for 60 seconds
+      setCachedData(orgCacheKey, orgData);
+    } catch (error) {
+      debugLog('⚠️ [MIDDLEWARE] Error fetching org subdomain:', error);
+    }
+  } else {
+    debugLog('⚡ [MIDDLEWARE] Using cached organization data');
+  }
     
     if (orgData?.subdomain) {
       const subdomainUrl = `https://${orgData.subdomain}.ghostcrm.ai`;
       debugLog('🚀 [MIDDLEWARE] Redirecting to tenant subdomain:', subdomainUrl);
       return redirectWithCookies(response, new URL(subdomainUrl));
     }
-  } catch (error) {
-    debugLog('⚠️ [MIDDLEWARE] Error fetching org subdomain:', error);
-  }
 
   // Fallback: allow access to main domain
   debugLog('✅ [MIDDLEWARE] Allowing main domain access');

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useMemo, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { getBrowserSupabase } from '@/utils/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
+import { debounce } from '@/lib/utils/performance';
 
 interface AuthUser {
   id: string;

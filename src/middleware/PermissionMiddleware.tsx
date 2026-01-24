@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Permission } from '@/lib/permissions';
 
@@ -327,6 +327,66 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
   const authCheckInProgress = useRef(false);
   const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Performance: Memoize public paths to prevent recreation on every render
+  const publicPaths = useMemo(() => [
+    '/',             // landing
+    '/login',
+    '/register',
+    '/reset-password',
+    '/login-owner',      // owner role-specific login
+    '/login-salesmanager', // sales manager role-specific login  
+    '/login-salesrep',   // sales rep role-specific login
+    '/owner/login',  // software owner login
+    '/marketing',    // marketing section root
+    '/pricing',      // public pricing page  
+    '/features',     // public features page
+    '/demo',         // free demo landing
+    '/inventory/qr-vehicle-profile', // Public QR vehicle profiles
+    '/billing/success', // Post-payment success page (may have temporary auth issues)
+    '/billing/cancel',  // Post-payment cancel page
+    '/terms',
+    '/privacy'
+  ], []);
+
+  // Performance: Memoize tenant route redirects to prevent recreation
+  const tenantRouteRedirects = useMemo(() => ({
+    '/dashboard': {
+      'owner': '/tenant-owner/dashboard',
+      'admin': '/tenant-salesmanager/dashboard',
+      'manager': '/tenant-salesmanager/dashboard',
+      'sales_rep': '/tenant-salesrep/dashboard',
+      'user': '/tenant-salesrep/dashboard'
+    },
+    '/leads': {
+      'owner': '/tenant-owner/leads',
+      'admin': '/tenant-salesmanager/leads',
+      'manager': '/tenant-salesmanager/leads',
+      'sales_rep': '/tenant-salesrep/leads',
+      'user': '/tenant-salesrep/leads'
+    },
+    '/deals': {
+      'owner': '/tenant-owner/deals',
+      'admin': '/tenant-salesmanager/deals',
+      'manager': '/tenant-salesmanager/deals',
+      'sales_rep': '/tenant-salesrep/deals',
+      'user': '/tenant-salesrep/deals'
+    },
+    '/inventory': {
+      'owner': '/tenant-owner/inventory',
+      'admin': '/tenant-salesmanager/inventory',
+      'manager': '/tenant-salesmanager/inventory',
+      'sales_rep': '/tenant-salesrep/inventory',
+      'user': '/tenant-salesrep/inventory'
+    },
+    '/calendar': {
+      'owner': '/tenant-owner/calendar',
+      'admin': '/tenant-salesmanager/calendar',
+      'manager': '/tenant-salesmanager/calendar',
+      'sales_rep': '/tenant-salesrep/calendar',
+      'user': '/tenant-salesrep/calendar'
+    }
+  }), []);
+
   // Helper function to set authorization and reset check flag
   const setAuthorizationResult = (authorized: boolean) => {
     authCheckInProgress.current = false;
@@ -354,67 +414,43 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
   }, []);
 
   useEffect(() => {
-    // Route guard effect - silent mode for production
+    // Route guard effect - optimized for performance
 
     // Reset authorization state when auth context changes
     if (isLoading) {
-      // Auth loading, resetting state
       setIsAuthorized(null);
       setIsCheckingRedirect(true);
       authCheckInProgress.current = false;
       return;
     }
 
-    // If already authorized and not checking redirects, don't re-run unless user/path changes
+    // Performance: If already authorized and stable, skip unless critical changes
     if (isAuthorized === true && !isCheckingRedirect && authCheckInProgress.current === false) {
-      // Already authorized and stable, skipping check
       return;
     }
     
     if (authCheckInProgress.current) {
-      // Auth check already in progress, skipping
-      return; // Critical: don't decide if check is already in progress
+      return; // Don't start concurrent checks
     }
 
     authCheckInProgress.current = true;
-    setIsCheckingRedirect(true); // Start checking for redirects
+    setIsCheckingRedirect(true);
 
-    // Set a timeout as a safety net to prevent infinite loading
+    // Reduced timeout from 5s to 2s for better performance
     checkTimeoutRef.current = setTimeout(() => {
       if (authCheckInProgress.current) {
         setAuthorizationResult(true);
       }
-    }, 5000); // 5 second timeout
-
-    // Starting authorization check - silent mode
+    }, 2000);
 
     // Define public paths that don't require authentication
-    const publicPaths = [
-      '/',             // landing
-      '/login',
-      '/register',
-      '/reset-password',
-      '/login-owner',      // owner role-specific login
-      '/login-salesmanager', // sales manager role-specific login  
-      '/login-salesrep',   // sales rep role-specific login
-      '/owner/login',  // software owner login
-      '/marketing',    // marketing section root
-      '/pricing',      // public pricing page  
-      '/features',     // public features page
-      '/demo',         // free demo landing
-      '/inventory/qr-vehicle-profile', // Public QR vehicle profiles
-      '/billing/success', // Post-payment success page (may have temporary auth issues)
-      '/billing/cancel',  // Post-payment cancel page
-      '/terms',
-      '/privacy'
-    ];
+    // Performance: Use memoized publicPaths instead of recreating array
 
     // Check if current path is public
     const isPublicPath = publicPaths.some(path => startsWithSeg(pathname, path));
 
     // If it's a public path, allow access without authentication
     if (isPublicPath) {
-      // Public path access granted
       setAuthorizationResult(true);
       return;
     }
@@ -438,7 +474,6 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
           
           // Check if session is still valid
           if (expires > new Date()) {
-            // Owner session valid - allowing access
             setAuthorizationResult(true);
             return;
           } else {
@@ -449,7 +484,6 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
         }
       }
       
-      // No valid owner session for owner route
       authCheckInProgress.current = false;
       setIsCheckingRedirect(false);
       router.push('/owner/login');
@@ -464,53 +498,12 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
       return;
     }
 
-    // User authenticated - proceeding with route checks - silent mode
-
     // Auto-redirect users from legacy routes to tenant-specific routes
-    const tenantRouteRedirects: Record<string, Record<string, string>> = {
-      '/dashboard': {
-        'owner': '/tenant-owner/dashboard',
-        'admin': '/tenant-salesmanager/dashboard',
-        'manager': '/tenant-salesmanager/dashboard',
-        'sales_rep': '/tenant-salesrep/dashboard',
-        'user': '/tenant-salesrep/dashboard'
-      },
-      '/leads': {
-        'owner': '/tenant-owner/leads',
-        'admin': '/tenant-salesmanager/leads',
-        'manager': '/tenant-salesmanager/leads',
-        'sales_rep': '/tenant-salesrep/leads',
-        'user': '/tenant-salesrep/leads'
-      },
-      '/deals': {
-        'owner': '/tenant-owner/deals',
-        'admin': '/tenant-salesmanager/deals',
-        'manager': '/tenant-salesmanager/deals',
-        'sales_rep': '/tenant-salesrep/deals',
-        'user': '/tenant-salesrep/deals'
-      },
-      '/inventory': {
-        'owner': '/tenant-owner/inventory',
-        'admin': '/tenant-salesmanager/inventory',
-        'manager': '/tenant-salesmanager/inventory',
-        'sales_rep': '/tenant-salesrep/inventory',
-        'user': '/tenant-salesrep/inventory'
-      },
-      '/calendar': {
-        'owner': '/tenant-owner/calendar',
-        'admin': '/tenant-salesmanager/calendar',
-        'manager': '/tenant-salesmanager/calendar',
-        'sales_rep': '/tenant-salesrep/calendar',
-        'user': '/tenant-salesrep/calendar'
-      }
-    };
-
-    // Check if current path should be redirected to tenant-specific route
+    // Performance: Use memoized tenantRouteRedirects
     const redirectTarget = tenantRouteRedirects[pathname]?.[user.role];
     if (redirectTarget) {
-      // Redirecting user to appropriate path
       authCheckInProgress.current = false;
-      setIsCheckingRedirect(false); // Complete redirect check
+      setIsCheckingRedirect(false);
       router.push(redirectTarget);
       return;
     }
@@ -569,16 +562,11 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     setAuthorizationResult(true);
   }, [isLoading, user?.role, user?.id, pathname]); // Removed hasPermission and router to prevent unnecessary re-runs
 
-  // Show loading state - including while checking for redirects
+  // Show loading state - optimized for performance
   if (isLoading || isAuthorized === null || isCheckingRedirect) {
-    const loadingReason = isLoading ? 'auth loading' : 
-                         isAuthorized === null ? 'authorization not determined' : 
-                         'checking redirects';
-    
-    // Showing loading state - silent mode
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600"></div>
       </div>
     );
   }

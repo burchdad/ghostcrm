@@ -39,12 +39,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   {children}
                 </RouteGuard>
               </CollapseLayout>
-              {/* Global components that should work on ALL pages */}
+              {/* Performance: Load AI components only after initial render */}
               <AIAgentInitializer />
+              <Toaster />
+              {/* Load these components with lower priority */}
               <GlobalAIAssistant />
               <QuickAddButton />
               <GlobalCollaborationButton />
-              <Toaster />
             </FloatingUIProvider>
           </Providers>
         </GlobalErrorBoundary>
