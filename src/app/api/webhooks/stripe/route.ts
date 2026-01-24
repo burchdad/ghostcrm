@@ -18,6 +18,60 @@ import { trackPromoCodeUsage } from '@/lib/promo-code-tracking';
 export const runtime = 'nodejs';
 
 /**
+ * Enhanced user lookup with comprehensive table search
+ */
+async function findUserByEmail(email: string): Promise<any> {
+  const { supabaseAdmin } = await import('@/lib/supabaseAdmin');
+  
+  // Try users table first (primary)
+  const { data: userData } = await supabaseAdmin
+    .from('users')
+    .select('id, organization_id, email')
+    .eq('email', email)
+    .single();
+    
+  if (userData) return userData;
+  
+  // Fallback to profiles table
+  const { data: profileData } = await supabaseAdmin
+    .from('profiles')
+    .select('id, organization_id, email')
+    .eq('email', email)
+    .single();
+    
+  if (profileData) return profileData;
+  
+  // Final fallback to auth.users via RPC
+  try {
+    const { data: authUser } = await supabaseAdmin
+      .rpc('get_user_by_email', { user_email: email });
+    return authUser;
+  } catch (error) {
+    console.warn('⚠️ [WEBHOOK] Auth user lookup failed:', error);
+  }
+  
+  return null;
+}
+
+/**
+ * Create retry entry for failed webhook operations
+ */
+async function createRetryEntry(retryData: any): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import('@/lib/supabaseAdmin');
+    await supabaseAdmin
+      .from('webhook_retries')
+      .insert({
+        ...retryData,
+        created_at: new Date().toISOString(),
+        status: 'pending'
+      });
+  } catch (error) {
+    console.warn('⚠️ [WEBHOOK] Could not create retry entry:', error);
+  }
+}
+
+/**
  * POST /api/webhooks/stripe
  * Handle Stripe webhook events for subscription management
  */
@@ -362,29 +416,19 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
     // Use admin client for reliable access
     const { supabaseAdmin } = await import('@/lib/supabaseAdmin');
 
-    // Find the user by email - try both users and profiles tables
-    let user: any = null;
+    // Find user with comprehensive lookup across all possible tables
+    const user = await findUserByEmail(customerEmail);
     
-    // Try users table first
-    const { data: userData, error: userError } = await supabaseAdmin
-      .from('users')
-      .select('id, organization_id')
-      .eq('email', customerEmail)
-      .single();
-
-    if (userData) {
-      user = userData;
-    } else {
-      // Fallback to profiles table
-      const { data: profileData, error: profileError } = await supabaseAdmin
-        .from('profiles')
-        .select('id, organization_id')
-        .eq('email', customerEmail)
-        .single();
-      
-      if (profileData) {
-        user = profileData;
-      }
+    if (!user) {
+      console.warn('⚠️ [STRIPE_WEBHOOK] User not found in any table for email:', customerEmail);
+      // Create a retry entry for manual intervention
+      await createRetryEntry({
+        type: 'user_not_found',
+        email: customerEmail,
+        session_id: session.id,
+        created_at: new Date().toISOString()
+      });
+      return;
     }
 
     if (!user) {
@@ -414,22 +458,26 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
     const subdomainRecord = subdomainRecords[0]; // Take the first eligible subdomain
     console.log('🔍 [STRIPE_WEBHOOK] Found subdomain:', subdomainRecord.subdomain, 'Status:', subdomainRecord.status);
 
-    // Activate the subdomain using admin client
-    const { error: updateError } = await supabaseAdmin
+    // Mark subdomain as provisioning first (not yet fully active)
+    const { error: provisioningError } = await supabaseAdmin
       .from('subdomains')
       .update({
-        status: 'active',
-        updated_at: new Date().toISOString(),
-        provisioned_at: new Date().toISOString()
+        status: 'provisioning',
+        updated_at: new Date().toISOString()
       })
       .eq('id', subdomainRecord.id);
 
-    if (updateError) {
-      console.error('❌ [STRIPE_WEBHOOK] Failed to activate subdomain:', updateError);
+    if (provisioningError) {
+      console.error('❌ [STRIPE_WEBHOOK] Failed to mark subdomain as provisioning:', provisioningError);
+      await createRetryEntry({
+        type: 'provisioning_failed',
+        subdomain_id: subdomainRecord.id,
+        error: provisioningError.message
+      });
       return;
     }
 
-    console.log('✅ [STRIPE_WEBHOOK] Subdomain activated successfully:', subdomainRecord.subdomain);
+    console.log('✅ [STRIPE_WEBHOOK] Subdomain marked as provisioning, proceeding with DNS setup...');
 
     // Optionally create tenant memberships if needed using RLS bypass
     try {
@@ -458,7 +506,7 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
       console.warn('⚠️ [STRIPE_WEBHOOK] Error handling tenant membership:', membershipError);
     }
 
-    // Optionally call the subdomain provisioning API to set up DNS
+    // CRITICAL: Call the subdomain provisioning API to set up DNS - must succeed
     try {
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai';
       const response = await fetch(`${baseUrl}/api/subdomains/provision`, {
@@ -474,13 +522,51 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
       });
 
       if (response.ok) {
-        console.log('✅ [STRIPE_WEBHOOK] Subdomain DNS provisioned:', subdomainRecord.subdomain);
+        // DNS provisioning successful - mark subdomain as fully active
+        const { error: activationError } = await supabaseAdmin
+          .from('subdomains')
+          .update({
+            status: 'active',
+            provisioned_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', subdomainRecord.id);
+          
+        if (activationError) {
+          console.error('❌ [STRIPE_WEBHOOK] Failed to mark subdomain as active after DNS provisioning:', activationError);
+          throw new Error('Failed to activate subdomain after DNS setup');
+        }
+        
+        console.log('✅ [STRIPE_WEBHOOK] Subdomain fully activated with DNS:', subdomainRecord.subdomain);
       } else {
-        console.warn('⚠️ [STRIPE_WEBHOOK] DNS provisioning failed for:', subdomainRecord.subdomain);
+        const errorText = await response.text();
+        console.error('❌ [STRIPE_WEBHOOK] DNS provisioning failed:', response.status, errorText);
+        
+        // Keep subdomain in provisioning state and create retry entry
+        await createRetryEntry({
+          type: 'dns_provisioning_failed',
+          subdomain_id: subdomainRecord.id,
+          subdomain_name: subdomainRecord.subdomain,
+          error: `HTTP ${response.status}: ${errorText}`,
+          retry_count: 0
+        });
+        
+        throw new Error(`DNS provisioning failed: ${response.status}`);
       }
     } catch (provisionError) {
       console.error('❌ [STRIPE_WEBHOOK] Error provisioning subdomain DNS:', provisionError);
-      // Don't fail activation for DNS provisioning errors
+      
+      // Create retry entry for failed DNS provisioning
+      await createRetryEntry({
+        type: 'dns_provisioning_error',
+        subdomain_id: subdomainRecord.id,
+        subdomain_name: subdomainRecord.subdomain,
+        error: String(provisionError),
+        retry_count: 0
+      });
+      
+      // This is now critical - fail the webhook if DNS provisioning fails
+      throw provisionError;
     }
 
   } catch (error) {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from '@/contexts/auth-context';
 import BrandPanel from "@/components/auth/BrandPanel";
 import AuthForm from "@/components/auth/AuthForm";
+import { getBaseDomain } from '@/lib/utils/environment';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,14 +23,18 @@ export default function LoginPage() {
         case 'owner':
           // Check if we're on a tenant subdomain or if this is a tenant owner
           const hostname = window.location.hostname;
+          const baseDomain = getBaseDomain();
           const isSubdomain = hostname !== 'localhost' && 
                               hostname !== '127.0.0.1' && 
-                              (hostname.includes('.localhost') || hostname.includes('.ghostcrm.ai'));
+                              hostname !== baseDomain &&
+                              (hostname.includes('.localhost') || 
+                               hostname.includes('.ghostcrm.ai') ||
+                               hostname.includes('.vercel.app'));
           
           // For development: if user has tenant_id or is known tenant owner email, redirect to tenant dashboard
           const isTenantOwner = user.tenantId || user.email === 'burchsl4@gmail.com';
           
-          console.log('🔍 [LoginPage] Owner detection:', { hostname, isSubdomain, isTenantOwner, tenantId: user.tenantId });
+          console.log('🔍 [LoginPage] Owner detection:', { hostname, baseDomain, isSubdomain, isTenantOwner, tenantId: user.tenantId });
           
           if (isSubdomain || isTenantOwner) {
             redirectPath = "/tenant-owner/dashboard";

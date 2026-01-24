@@ -1,4 +1,4 @@
-import { BILLING_PUBLIC_PATHS } from './public-paths';
+import { BILLING_PUBLIC_PATHS } from '@/lib/constants/public-paths';
 
 /**
  * Utility functions for billing flow detection and protection

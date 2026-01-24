@@ -6,6 +6,23 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import './page.css'
 
+// Environment-aware domain detection
+const getBaseDomain = (): string => {
+  if (typeof window === 'undefined') return 'ghostcrm.ai'
+  
+  const hostname = window.location.hostname
+  // Development environments
+  if (hostname.includes('localhost') || hostname === '127.0.0.1') {
+    return hostname.includes('.localhost') ? 'localhost:3000' : 'localhost:3000'
+  }
+  // Staging environment
+  if (hostname.includes('staging') || hostname.includes('vercel.app')) {
+    return hostname.includes('.') ? hostname.split('.').slice(-2).join('.') : 'ghostcrm.ai'
+  }
+  // Production
+  return 'ghostcrm.ai'
+}
+
 interface SuccessData {
   sessionId?: string
   promoCode?: string
@@ -256,14 +273,20 @@ function SuccessContent() {
           
           // Poll for activation status since webhook handles the activation
           let attempts = 0;
-          const maxAttempts = 12; // 60 seconds total (5 second intervals)
+          const maxAttempts = 24; // 120 seconds total with exponential backoff
+          let backoffDelay = 2000; // Start with 2 seconds
+          const maxBackoffDelay = 10000; // Max 10 seconds between attempts
           
           const checkActivation = async () => {
             attempts++;
             
             try {
               const statusResponse = await fetch('/api/subdomains/status', {
-                credentials: 'include'
+                credentials: 'include',
+                headers: {
+                  'Cache-Control': 'no-cache',
+                  'X-Webhook-Poll': attempts.toString() // Help webhook track polling
+                }
               });
               
               if (statusResponse.ok) {
@@ -281,7 +304,8 @@ function SuccessContent() {
                   }));
                   
                   // 🎯 AUTO-REDIRECT to subdomain login page after activation
-                  console.log(`🚀 [BILLING-SUCCESS] Auto-redirecting to: ${activatedSubdomain}.ghostcrm.ai/login`);
+                  const baseDomain = getBaseDomain();
+                  console.log(`🚀 [BILLING-SUCCESS] Auto-redirecting to: ${activatedSubdomain}.${baseDomain}/login`);
                   setTimeout(() => {
                     // Clear any auth errors before redirect
                     try {
@@ -290,7 +314,7 @@ function SuccessContent() {
                     } catch (e) {
                       // Ignore storage errors
                     }
-                    window.location.href = `https://${activatedSubdomain}.ghostcrm.ai/login`;
+                    window.location.href = `${window.location.protocol}//${activatedSubdomain}.${baseDomain}/login`;
                   }, 2000); // 2 second delay to show success message
                   
                   return; // Stop polling

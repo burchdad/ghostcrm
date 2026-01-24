@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { extractSubdomain, isSubdomain } from '@/lib/utils/environment';
 
 // Performance optimization: In-memory cache for middleware data
 const middlewareCache = new Map();
@@ -103,26 +104,6 @@ export async function middleware(request: NextRequest) {
   }
 
   return await handleMainDomainRouting(request, response, pathname, user, supabase);
-}
-
-function extractSubdomain(host: string): string | null {
-  // dev
-  if (host.includes("localhost") || host.includes("127.0.0.1")) return null;
-
-  // remove port
-  const cleanHost = host.split(":")[0];
-  const parts = cleanHost.split(".");
-
-  // ghostcrm.ai or www.ghostcrm.ai
-  if (parts.length === 2) return null;
-  if (parts.length === 3 && parts[0] === "www") return null;
-
-  // {subdomain}.ghostcrm.ai
-  if (parts.length === 3 && parts[1] === "ghostcrm" && parts[2] === "ai") {
-    return parts[0];
-  }
-
-  return null;
 }
 
 async function handleSubdomainRouting(
