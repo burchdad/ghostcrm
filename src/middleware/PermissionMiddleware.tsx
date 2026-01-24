@@ -403,6 +403,8 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
       '/features',     // public features page
       '/demo',         // free demo landing
       '/inventory/qr-vehicle-profile', // Public QR vehicle profiles
+      '/billing/success', // Post-payment success page (may have temporary auth issues)
+      '/billing/cancel',  // Post-payment cancel page
       '/terms',
       '/privacy'
     ];
