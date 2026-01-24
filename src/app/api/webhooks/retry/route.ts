@@ -10,10 +10,43 @@ export const runtime = 'nodejs';
  * Retry failed webhook operations manually or via cron job
  */
 export async function POST(req: NextRequest) {
+  return handleRetryRequest(req);
+}
+
+/**
+ * GET /api/webhooks/retry
+ * Alternative endpoint for Vercel Cron (supports GET requests)
+ */
+export async function GET(req: NextRequest) {
+  return handleRetryRequest(req);
+}
+
+async function handleRetryRequest(req: NextRequest) {
   try {
-    const { authHeader } = await req.json();
+    let authHeader: string | null = null;
     
-    // Simple auth check for retry endpoint
+    // Handle different auth methods
+    // 1. Vercel Cron (via Authorization header)
+    const authHeaderFromHeader = req.headers.get('Authorization');
+    if (authHeaderFromHeader?.startsWith('Bearer ')) {
+      authHeader = authHeaderFromHeader.replace('Bearer ', '');
+    }
+    
+    // 2. Manual/external cron (via JSON body)
+    try {
+      const body = await req.json();
+      authHeader = authHeader || body.authHeader;
+    } catch (e) {
+      // No JSON body, that's fine for Vercel Cron
+    }
+    
+    // 3. Check for cron secret in headers (Vercel's cron secret)
+    const cronSecret = req.headers.get('x-vercel-cron-secret');
+    if (cronSecret === process.env.CRON_SECRET) {
+      authHeader = process.env.WEBHOOK_RETRY_SECRET; // Allow Vercel cron
+    }
+    
+    // Auth check
     if (authHeader !== process.env.WEBHOOK_RETRY_SECRET) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
