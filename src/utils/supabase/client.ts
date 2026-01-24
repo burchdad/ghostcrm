@@ -55,6 +55,13 @@ async function handleRefreshTokenError() {
       // Clear client cache
       clearClientCache();
       
+      // 🚨 CRITICAL FIX: Don't redirect to login from billing success page
+      const currentPath = window.location.pathname;
+      if (currentPath === '/billing/success') {
+        console.log('🛡️ Refresh token error on billing success page - suppressing redirect');
+        return;
+      }
+      
       // Redirect to login
       window.location.href = '/auth/login';
     }

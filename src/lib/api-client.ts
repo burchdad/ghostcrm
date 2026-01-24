@@ -31,6 +31,13 @@ export async function apiRequest(url: string, options: RequestInit = {}): Promis
         } else {
           const refreshError = await refreshResponse.json();
           if (refreshError.requiresLogin) {
+            // 🚨 CRITICAL FIX: Don't redirect to login from billing success page
+            const currentPath = window.location.pathname;
+            if (currentPath === '/billing/success') {
+              console.log('🛡️ Token refresh failed but suppressing redirect on billing success page');
+              return response; // Return original 401 response without redirecting
+            }
+            
             console.log('❌ Token refresh failed, redirecting to login');
             window.location.href = '/login';
             return response; // Return original 401 response

@@ -49,8 +49,23 @@ function SuccessContent() {
           console.log('🔄 [BILLING-SUCCESS] Direct redirect from Stripe - will activate subdomain')
         }
         
+        // 🚨 CRITICAL FIX: Prevent auth context from redirecting during billing success processing
+        console.log('🛡️ [BILLING-SUCCESS] Temporarily disabling auth redirects during payment processing')
+        
         // Check if user is software owner by checking their session/role
-        const response = await fetch('/api/auth/check-owner-status')
+        let response
+        try {
+          response = await fetch('/api/auth/check-owner-status', {
+            credentials: 'include',
+            headers: {
+              'Cache-Control': 'no-cache',
+            }
+          })
+        } catch (authError) {
+          console.warn('⚠️ [BILLING-SUCCESS] Auth check failed, continuing with payment processing:', authError)
+          // Continue processing even if auth fails - billing success is more important
+          response = { ok: false }
+        }
         
         // Handle API call failures gracefully
         let isSoftwareOwner = false
@@ -72,7 +87,14 @@ function SuccessContent() {
         
         if (!isSoftwareOwner) {
           try {
-            const orgResponse = await fetch('/api/auth/me')
+            console.log('🔍 [BILLING-SUCCESS] Fetching user organization info with auth safeguards...')
+            const orgResponse = await fetch('/api/auth/me', {
+              credentials: 'include',
+              headers: {
+                'Cache-Control': 'no-cache',
+                'X-Billing-Success': 'true' // Signal this is from billing success page
+              }
+            })
             
             if (orgResponse.ok) {
               const userData = await orgResponse.json()
@@ -83,11 +105,21 @@ function SuccessContent() {
                 console.log('🔍 [BILLING-SUCCESS] Found user subdomain:', userSubdomain)
               } else if (userData.user?.tenantId) {
                 // Fallback: Get organization details to find subdomain
-                const orgDetailsResponse = await fetch(`/api/organization/${userData.user.tenantId}`)
-                if (orgDetailsResponse.ok) {
-                  const orgData = await orgDetailsResponse.json()
-                  userSubdomain = orgData.organization?.subdomain
-                  console.log('🔍 [BILLING-SUCCESS] Found subdomain from org API:', userSubdomain)
+                try {
+                  const orgDetailsResponse = await fetch(`/api/organization/${userData.user.tenantId}`, {
+                    credentials: 'include',
+                    headers: {
+                      'Cache-Control': 'no-cache',
+                      'X-Billing-Success': 'true'
+                    }
+                  })
+                  if (orgDetailsResponse.ok) {
+                    const orgData = await orgDetailsResponse.json()
+                    userSubdomain = orgData.organization?.subdomain
+                    console.log('🔍 [BILLING-SUCCESS] Found subdomain from org API:', userSubdomain)
+                  }
+                } catch (orgError) {
+                  console.warn('⚠️ [BILLING-SUCCESS] Could not fetch organization details:', orgError)
                 }
               }
             } else {
@@ -95,7 +127,7 @@ function SuccessContent() {
               // For payment success, we'll show a generic success message even if auth fails
             }
           } catch (error) {
-            console.warn('⚠️ [BILLING-SUCCESS] Could not fetch user organization info:', error)
+            console.warn('⚠️ [BILLING-SUCCESS] Could not fetch user organization info, continuing with payment processing:', error)
             // Don't fail the page - just continue without user-specific data
           }
         }
@@ -107,7 +139,12 @@ function SuccessContent() {
             
             const ensureOrgResponse = await fetch('/api/billing/ensure-organization', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache',
+                'X-Billing-Success': 'true'
+              },
+              credentials: 'include',
               body: JSON.stringify({ sessionId })
             });
 
@@ -142,8 +179,16 @@ function SuccessContent() {
                   
                   setLoading(false);
                   
-                  // Redirect after showing success message
+                  // 🎯 CRITICAL FIX: Perform redirect without auth context interference
+                  console.log(`🚀 [BILLING-SUCCESS] Performing protected redirect to subdomain: ${userSubdomain}`);
                   setTimeout(() => {
+                    // Clear any auth errors that might cause redirect interference
+                    try {
+                      sessionStorage.removeItem('auth_error');
+                      localStorage.removeItem('auth_redirect_pending');
+                    } catch (e) {
+                      // Ignore storage errors
+                    }
                     window.location.href = `https://${userSubdomain}.ghostcrm.ai/login`;
                   }, 2000); // 2 second delay to show success message
                   
@@ -238,6 +283,13 @@ function SuccessContent() {
                   // 🎯 AUTO-REDIRECT to subdomain login page after activation
                   console.log(`🚀 [BILLING-SUCCESS] Auto-redirecting to: ${activatedSubdomain}.ghostcrm.ai/login`);
                   setTimeout(() => {
+                    // Clear any auth errors before redirect
+                    try {
+                      sessionStorage.removeItem('auth_error');
+                      localStorage.removeItem('auth_redirect_pending');
+                    } catch (e) {
+                      // Ignore storage errors
+                    }
                     window.location.href = `https://${activatedSubdomain}.ghostcrm.ai/login`;
                   }, 2000); // 2 second delay to show success message
                   
@@ -348,7 +400,15 @@ function SuccessContent() {
       return
     }
     
-    console.log(`🚀 [BILLING-SUCCESS] Redirecting to subdomain: ${successData.userSubdomain}`)
+    console.log(`🚀 [BILLING-SUCCESS] Manual redirect to subdomain: ${successData.userSubdomain}`)
+    
+    // Clear any auth errors before redirect
+    try {
+      sessionStorage.removeItem('auth_error');
+      localStorage.removeItem('auth_redirect_pending');
+    } catch (e) {
+      // Ignore storage errors
+    }
     
     // Redirect to the actual subdomain login page
     const subdomainUrl = `https://${successData.userSubdomain}.ghostcrm.ai/login`
