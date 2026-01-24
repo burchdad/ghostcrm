@@ -1,9 +1,1 @@
-{
-  "_comment": "Cron job temporarily disabled due to auth issues",
-  "_crons": [
-    {
-      "path": "/api/webhooks/retry",
-      "schedule": "*/5 * * * *"
-    }
-  ]
-}
+{}
