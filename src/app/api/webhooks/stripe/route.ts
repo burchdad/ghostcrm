@@ -23,33 +23,54 @@ export const runtime = 'nodejs';
 async function findUserByEmail(email: string): Promise<any> {
   const { supabaseAdmin } = await import('@/lib/supabaseAdmin');
   
+  console.log('🔍 [WEBHOOK] Looking for user with email:', email);
+  
   // Try users table first (primary)
-  const { data: userData } = await supabaseAdmin
+  const { data: userData, error: usersError } = await supabaseAdmin
     .from('users')
-    .select('id, organization_id, email')
+    .select('id, organization_id, email, tenant_id')
     .eq('email', email)
     .single();
     
-  if (userData) return userData;
-  
-  // Fallback to profiles table
-  const { data: profileData } = await supabaseAdmin
-    .from('profiles')
-    .select('id, organization_id, email')
-    .eq('email', email)
-    .single();
-    
-  if (profileData) return profileData;
-  
-  // Final fallback to auth.users via RPC
-  try {
-    const { data: authUser } = await supabaseAdmin
-      .rpc('get_user_by_email', { user_email: email });
-    return authUser;
-  } catch (error) {
-    console.warn('⚠️ [WEBHOOK] Auth user lookup failed:', error);
+  if (userData) {
+    console.log('✅ [WEBHOOK] Found user in users table:', userData.id);
+    return userData;
+  } else {
+    console.log('❌ [WEBHOOK] Users table lookup failed:', usersError?.message);
   }
   
+  // Fallback to profiles table
+  const { data: profileData, error: profilesError } = await supabaseAdmin
+    .from('profiles')
+    .select('id, organization_id, email, tenant_id')
+    .eq('email', email)
+    .single();
+    
+  if (profileData) {
+    console.log('✅ [WEBHOOK] Found user in profiles table:', profileData.id);
+    return profileData;
+  } else {
+    console.log('❌ [WEBHOOK] Profiles table lookup failed:', profilesError?.message);
+  }
+  
+  // Try direct auth.users lookup
+  const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+  
+  if (authUsers?.users) {
+    const authUser = authUsers.users.find(u => u.email === email);
+    if (authUser) {
+      console.log('✅ [WEBHOOK] Found user in auth.users:', authUser.id);
+      // Return in expected format
+      return {
+        id: authUser.id,
+        email: authUser.email,
+        organization_id: null, // Will need to be set later
+        tenant_id: null
+      };
+    }
+  }
+  
+  console.log('❌ [WEBHOOK] User not found in any table for email:', email);
   return null;
 }
 
