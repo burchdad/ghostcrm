@@ -57,7 +57,7 @@ async function findUserByEmail(email: string): Promise<any> {
   const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
   
   if (authUsers?.users) {
-    const authUser = authUsers.users.find(u => u.email === email);
+    const authUser = authUsers.users.find((u: any) => u.email === email);
     if (authUser) {
       console.log('✅ [WEBHOOK] Found user in auth.users:', authUser.id);
       // Return in expected format
