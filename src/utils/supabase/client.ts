@@ -55,15 +55,24 @@ async function handleRefreshTokenError() {
       // Clear client cache
       clearClientCache();
       
-      // 🚨 CRITICAL FIX: Don't redirect to login from billing success page
+      // 🚨 CRITICAL FIX: Don't redirect to login from billing flows
       const currentPath = window.location.pathname;
-      if (currentPath === '/billing/success') {
-        console.log('🛡️ Refresh token error on billing success page - suppressing redirect');
+      const searchParams = new URLSearchParams(window.location.search);
+      
+      // Check if we're in any billing flow
+      const billingPaths = ['/billing/success', '/billing/cancel', '/billing/'];
+      const isBillingFlow = billingPaths.some(path => currentPath.startsWith(path));
+      
+      // Check if coming from Stripe redirect
+      const hasStripeParams = ['session_id', 'payment_intent', 'setup_intent'].some(param => searchParams.has(param));
+      
+      if (isBillingFlow || hasStripeParams) {
+        console.log('🛡️ Refresh token error in billing flow - suppressing redirect');
         return;
       }
       
-      // Redirect to login
-      window.location.href = '/auth/login';
+      // Redirect to login (correct path)
+      window.location.href = '/login';
     }
   } catch (error) {
     console.error('❌ [Auth] Failed to handle refresh token error:', error);
