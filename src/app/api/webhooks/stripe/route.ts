@@ -423,6 +423,9 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<{
  * Activate subdomain after successful payment
  */
 async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): Promise<void> {
+  // Use admin client for reliable access - import at top level
+  const { supabaseAdmin } = await import('@/lib/supabaseAdmin');
+  
   try {
     console.log('🌐 [STRIPE_WEBHOOK] Activating subdomain after payment for session:', session.id);
 
@@ -435,9 +438,6 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
     }
 
     const supabase = await createSupabaseServer();
-
-    // Use admin client for reliable access
-    const { supabaseAdmin } = await import('@/lib/supabaseAdmin');
 
     // Find user with comprehensive lookup across all possible tables
     const user = await findUserByEmail(customerEmail);
