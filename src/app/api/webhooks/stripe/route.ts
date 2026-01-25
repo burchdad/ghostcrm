@@ -247,7 +247,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription): Prom
       return { success: false, processed: false, error: 'Missing planId' };
     }
 
-    const supabase = await createSupabaseServer();
+    const { supabaseAdmin } = await import('@/lib/supabaseAdmin');
 
     // Update or create subscription record
     const subscriptionData = {
@@ -264,7 +264,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription): Prom
       updated_at: new Date().toISOString(),
     };
 
-    const { error: dbError } = await supabase
+    const { error: dbError } = await supabaseAdmin
       .from('subscriptions')
       .upsert(subscriptionData, { onConflict: 'stripe_subscription_id' });
 
