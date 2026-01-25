@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import ContactSalesModal from "@/components/modals/ContactSalesModal";
+import VerificationCodeModal from "@/components/modals/VerificationCodeModal";
 import { loginSchema, LoginFormData } from "./schemas";
 
 interface AuthFormProps {
@@ -18,9 +19,8 @@ interface AuthFormProps {
 export default function AuthForm({ showOwnerAccess = true, tenantContext = null }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showContactSales, setShowContactSales] = useState(false);
-  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
-  const [resendingVerification, setResendingVerification] = useState(false);
   const { login, isLoading } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -94,8 +94,8 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
         // Check for email verification error
         if (result.code === 'email_not_verified') {
           setUnverifiedEmail(data.email);
-          setShowEmailVerification(true);
-          return; // Don't show generic error, show verification UI instead
+          setShowVerificationModal(true);
+          return; // Show verification code modal
         }
         
         loginForm.setError("root", {
@@ -114,38 +114,10 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
     }
   };
 
-  const handleResendVerification = async () => {
-    if (!unverifiedEmail || resendingVerification) return;
-    
-    setResendingVerification(true);
-    try {
-      const response = await fetch('/api/auth/resend-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: unverifiedEmail }),
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        loginForm.setError("root", {
-          type: "manual",
-          message: "Verification email sent! Check your inbox and spam folder, then try logging in again.",
-        });
-      } else {
-        loginForm.setError("root", {
-          type: "manual",
-          message: result.error || "Failed to send verification email. Please try again.",
-        });
-      }
-    } catch (error) {
-      loginForm.setError("root", {
-        type: "manual",
-        message: "Failed to send verification email. Please try again.",
-      });
-    } finally {
-      setResendingVerification(false);
-      setShowEmailVerification(false); // Hide the verification UI
-    }
+  const handleVerificationSuccess = () => {
+    setShowVerificationModal(false);
+    setUnverifiedEmail('');
+    // The modal will handle the redirect after successful verification
   };
 
   return (
@@ -237,10 +209,6 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
           isLoading={isLoading}
           showOwnerAccess={showOwnerAccess}
           isInviteFlow={isInviteFlow}
-          showEmailVerification={showEmailVerification}
-          unverifiedEmail={unverifiedEmail}
-          onResendVerification={handleResendVerification}
-          resendingVerification={resendingVerification}
         />
 
         {/* Sign Up Link */}
@@ -347,6 +315,14 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
         isOpen={showContactSales}
         onClose={() => setShowContactSales(false)}
       />
+
+      {/* Verification Code Modal */}
+      <VerificationCodeModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        email={unverifiedEmail}
+        onSuccess={handleVerificationSuccess}
+      />
     </div>
   );
 }
@@ -360,10 +336,6 @@ interface LoginFormProps {
   isLoading: boolean;
   showOwnerAccess: boolean;
   isInviteFlow?: boolean;
-  showEmailVerification?: boolean;
-  unverifiedEmail?: string;
-  onResendVerification?: () => Promise<void>;
-  resendingVerification?: boolean;
 }
 
 function LoginForm({ 
@@ -373,11 +345,7 @@ function LoginForm({
   setShowPassword, 
   isLoading, 
   showOwnerAccess, 
-  isInviteFlow = false,
-  showEmailVerification = false,
-  unverifiedEmail = '',
-  onResendVerification,
-  resendingVerification = false 
+  isInviteFlow = false
 }: LoginFormProps) {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
 
@@ -387,40 +355,6 @@ function LoginForm({
       {errors.root && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
           {errors.root.message}
-        </div>
-      )}
-
-      {/* Email verification notice */}
-      {showEmailVerification && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-4 rounded-lg text-sm mb-4">
-          <div className="flex items-start gap-3">
-            <Mail className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="font-medium mb-2">Email Verification Required</p>
-              <p className="text-blue-700 mb-3">
-                Please verify your email address (<strong>{unverifiedEmail}</strong>) before signing in. 
-                Check your inbox and spam folder for the verification link.
-              </p>
-              <button
-                type="button"
-                onClick={onResendVerification}
-                disabled={resendingVerification}
-                className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {resendingVerification ? (
-                  <>
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-700 mr-1"></div>
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="h-3 w-3 mr-1" />
-                    Resend Verification Email
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
         </div>
       )}
 

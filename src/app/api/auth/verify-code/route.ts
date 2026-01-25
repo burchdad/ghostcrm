@@ -96,7 +96,7 @@ async function verifyCodeHandler(req: NextRequest) {
     }
 
     // Check for active subdomain
-    let subdomainInfo = null;
+    let subdomainInfo: { subdomain: string; url: string } | null = null;
     if (userProfile?.organization_id) {
       const { data: subdomain, error: subdomainError } = await supabaseAdmin
         .from('subdomains')
