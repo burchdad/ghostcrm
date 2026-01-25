@@ -168,7 +168,7 @@ async function registerHandler(req: Request) {
         first_name: firstName,
         last_name: lastName,
         company_name: companyName,
-        role: "unassigned", // 🎯 Role will be set to 'owner' after payment
+        role: "tenant-owner", // 🎯 They're creating their org, so they're the owner
       },
     });
 
@@ -366,7 +366,7 @@ async function registerHandler(req: Request) {
       user: {
         id: authUserId,
         email,
-        role: "unassigned", // 🎯 Will become 'owner' after payment
+        role: "tenant-owner", // 🎯 They're the owner from registration
         email_confirmed: false,
         organizationId: organizationId, // 🎯 Now created during registration
         tenantId: organizationId, // 🎯 Same as organizationId
