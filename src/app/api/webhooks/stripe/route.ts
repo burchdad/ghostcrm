@@ -255,9 +255,12 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription): Prom
       stripe_customer_id: subscription.customer as string,
       plan_id: planId,
       status: subscription.status,
-      current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
-      current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
-      trial_end: (subscription as any).trial_end ? new Date((subscription as any).trial_end * 1000).toISOString() : null,
+      current_period_start: subscription.current_period_start ? 
+        new Date(subscription.current_period_start * 1000).toISOString() : null,
+      current_period_end: subscription.current_period_end ? 
+        new Date(subscription.current_period_end * 1000).toISOString() : null,
+      trial_end: subscription.trial_end ? 
+        new Date(subscription.trial_end * 1000).toISOString() : null,
       updated_at: new Date().toISOString(),
       ...(tenantId && { tenant_id: tenantId }),
     };
