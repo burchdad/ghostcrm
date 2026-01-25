@@ -87,25 +87,44 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
         return;
       }
       
-      // Regular login flow
+      // Regular login flow - validate credentials first
       const result = await login(data.email, data.password);
       
       if (!result.success) {
-        // Check for email verification error
-        if (result.code === 'email_not_verified') {
-          setUnverifiedEmail(data.email);
-          setShowVerificationModal(true);
-          return; // Show verification code modal
-        }
-        
         loginForm.setError("root", {
           type: "manual",
-          message: result.message || "Login failed. Please try again.",
+          message: result.message || "Invalid email or password. Please try again.",
         });
         return;
       }
       
-      // Redirect handled by useEffect in parent component
+      // Credentials are valid - now send verification code and show modal
+      try {
+        // Send verification code email
+        const verificationResponse = await fetch('/api/auth/resend-verification-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: data.email }),
+        });
+
+        if (!verificationResponse.ok) {
+          loginForm.setError("root", {
+            type: "manual",
+            message: "Failed to send verification code. Please try again.",
+          });
+          return;
+        }
+
+        // Show verification modal
+        setUnverifiedEmail(data.email);
+        setShowVerificationModal(true);
+        
+      } catch (error) {
+        loginForm.setError("root", {
+          type: "manual",
+          message: "Failed to send verification code. Please try again.",
+        });
+      }
     } catch (error: any) {
       loginForm.setError("root", {
         type: "manual",
@@ -114,10 +133,13 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
     }
   };
 
-  const handleVerificationSuccess = () => {
+  const handleVerificationSuccess = async () => {
     setShowVerificationModal(false);
     setUnverifiedEmail('');
-    // The modal will handle the redirect after successful verification
+    
+    // After successful verification, complete the login process
+    // Refresh the page or trigger auth context refresh to redirect
+    window.location.reload();
   };
 
   return (
