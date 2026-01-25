@@ -454,11 +454,6 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
       return;
     }
 
-    if (!user) {
-      console.warn('⚠️ [STRIPE_WEBHOOK] User not found in any table for email:', customerEmail);
-      return;
-    }
-
     console.log('✅ [STRIPE_WEBHOOK] Found user:', user.id, 'Organization:', user.organization_id);
 
     if (!user.organization_id) {
