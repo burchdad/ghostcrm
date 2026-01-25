@@ -31,7 +31,7 @@ interface SuccessData {
   userSubdomain?: string
   processed?: boolean
   gatewayError?: boolean
-  subdomainStatus?: 'checking' | 'pending_payment' | 'active' | 'error'
+  subdomainStatus?: 'checking' | 'pending' | 'active' | 'error'
   isSubdomainActivated?: boolean
 }
 
@@ -109,7 +109,7 @@ function SuccessContent() {
         // Get user's organization/subdomain info for proper redirect
         let userSubdomain: string | null = null
         let userEmail: string | null = null
-        let subdomainStatus: 'checking' | 'pending_payment' | 'active' | 'error' = 'checking'
+        let subdomainStatus: 'checking' | 'pending' | 'active' | 'error' = 'checking'
         let isSubdomainActivated = false
         
         if (!isSoftwareOwner) {
@@ -183,21 +183,127 @@ function SuccessContent() {
                 userSubdomain = orgResult.subdomain;
                 console.log('🎯 [BILLING-SUCCESS] Got subdomain from ensure-organization:', userSubdomain);
                 
-                // Set as activated immediately since we just created/confirmed it
-                subdomainStatus = orgResult.status || 'active';
-                isSubdomainActivated = subdomainStatus === 'active';
+                // Start polling subdomain status instead of assuming it's active
+                subdomainStatus = 'checking';
+                console.log('🔄 [BILLING-SUCCESS] Starting subdomain status polling...');
                 
-                // If organization is active, redirect immediately
-                if (isSubdomainActivated) {
-                  console.log(`🚀 [BILLING-SUCCESS] Organization active - redirecting to: ${userSubdomain}.ghostcrm.ai/login`);
-                  
-                  // Update state to show success
-                  setSuccessData({
-                    sessionId: sessionId || undefined,
-                    promoCode: undefined,
-                    isSoftwareOwner: false,
-                    shouldStartOnboarding: false,
-                    userSubdomain: userSubdomain || undefined,
+                // Check subdomain status immediately and then poll
+                await pollSubdomainStatus(userSubdomain);
+                
+              } else {
+                console.warn('⚠️ [BILLING-SUCCESS] Could not ensure organization for session:', sessionId);
+                subdomainStatus = 'error';
+              }
+            } else {
+              console.error('❌ [BILLING-SUCCESS] Ensure organization API failed:', await ensureOrgResponse.text());
+              subdomainStatus = 'error';
+            }
+          } catch (error) {
+            console.error('❌ [BILLING-SUCCESS] Error ensuring organization:', error);
+            subdomainStatus = 'error';
+          }
+        }
+        
+        setSuccessData({
+          sessionId: sessionId || undefined,
+          promoCode: urlParams.get('promo_code') || undefined,
+          isSoftwareOwner,
+          shouldStartOnboarding: !processed,
+          userSubdomain: userSubdomain || undefined,
+          processed,
+          gatewayError,
+          subdomainStatus,
+          isSubdomainActivated
+        })
+        setLoading(false)
+        setAuthCheckCompleted(true)
+        
+      } catch (error) {
+        console.error('❌ [BILLING-SUCCESS] Failed to check user status:', error)
+        setSuccessData({
+          isSoftwareOwner: false,
+          shouldStartOnboarding: true,
+          subdomainStatus: 'error',
+          isSubdomainActivated: false
+        })
+        setLoading(false)
+        setAuthCheckCompleted(true)
+      }
+    }
+
+    // Subdomain status polling function
+    async function pollSubdomainStatus(subdomain: string, maxAttempts = 12) {
+      console.log(`🔍 [BILLING-SUCCESS] Polling subdomain status for: ${subdomain}`);
+      
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const statusResponse = await fetch('/api/subdomain/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subdomain }),
+            credentials: 'include'
+          });
+          
+          if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            console.log(`🔍 [BILLING-SUCCESS] Status check ${attempt}/${maxAttempts}:`, statusData);
+            
+            if (statusData.status === 'active') {
+              console.log(`🎉 [BILLING-SUCCESS] Subdomain is ACTIVE! Redirecting to: ${subdomain}.${getBaseDomain()}/login`);
+              
+              // Update state to show activation success
+              setSuccessData(prev => ({
+                ...prev,
+                subdomainStatus: 'active',
+                isSubdomainActivated: true
+              }));
+              
+              // Redirect to subdomain login after brief delay
+              setTimeout(() => {
+                window.location.href = `https://${subdomain}.${getBaseDomain()}/login?welcome=true`;
+              }, 2000);
+              
+              return;
+            } else if (statusData.status === 'pending') {
+              console.log(`⏳ [BILLING-SUCCESS] Subdomain still pending (${attempt}/${maxAttempts}), continuing to poll...`);
+              
+              // Update UI to show we're still checking
+              setSuccessData(prev => ({
+                ...prev,
+                subdomainStatus: 'checking'
+              }));
+              
+              // Wait 2 seconds before next attempt
+              if (attempt < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+              }
+            } else {
+              console.warn(`⚠️ [BILLING-SUCCESS] Unexpected subdomain status: ${statusData.status}`);
+              break;
+            }
+          } else {
+            console.warn(`⚠️ [BILLING-SUCCESS] Status check API failed:`, await statusResponse.text());
+            break;
+          }
+        } catch (error) {
+          console.warn(`⚠️ [BILLING-SUCCESS] Status check error:`, error);
+          break;
+        }
+      }
+      
+      // If we get here, polling failed or timed out
+      console.log('⏰ [BILLING-SUCCESS] Subdomain status polling completed - showing manual activation options');
+      setSuccessData(prev => ({
+        ...prev,
+        subdomainStatus: 'pending',
+        isSubdomainActivated: false
+      }));
+    }
+
+    checkUserStatus()
+  }, [authCheckCompleted])
+
+  // Rest of the component logic...
                     processed: true,
                     gatewayError: false,
                     subdomainStatus: 'active',
@@ -613,8 +719,8 @@ function getGatewayStatusMessage(successData: SuccessData): JSX.Element {
     return <span className="gateway-error">⚠️ Payment successful - Account activation processing</span>;
   } else if (successData.subdomainStatus === 'error') {
     return <span className="gateway-error">⚠️ Activation verification in progress</span>;
-  } else if (successData.subdomainStatus === 'pending_payment') {
-    return <span className="gateway-pending">🔄 Payment confirmed - Finalizing subdomain activation</span>;
+  } else if (successData.subdomainStatus === 'pending') {
+    return <span className="gateway-pending">⏳ Payment successful - Subdomain activation pending</span>;
   } else if (successData.subdomainStatus === 'checking') {
     return <span className="gateway-standard">🔍 Payment confirmed - Verifying account activation</span>;
   } else {
@@ -626,8 +732,8 @@ function getGatewayStatusMessage(successData: SuccessData): JSX.Element {
 function getSubdomainStatusTitle(successData: SuccessData): string {
   if (successData.isSubdomainActivated) {
     return 'Subscription Activated';
-  } else if (successData.subdomainStatus === 'pending_payment') {
-    return 'Activation In Progress';
+  } else if (successData.subdomainStatus === 'pending') {
+    return 'Activation Pending - Manual Options Available';
   } else if (successData.subdomainStatus === 'error') {
     return 'Activation Pending';
   } else {
@@ -639,8 +745,8 @@ function getSubdomainStatusTitle(successData: SuccessData): string {
 function getSubdomainStatusDescription(successData: SuccessData): string {
   if (successData.isSubdomainActivated) {
     return 'Your GhostCRM subscription is now active and your custom subdomain portal is ready to use.';
-  } else if (successData.subdomainStatus === 'pending_payment') {
-    return 'Your payment has been confirmed. We are finalizing your subdomain activation and it will be ready shortly.';
+  } else if (successData.subdomainStatus === 'pending') {
+    return 'Your payment was successful, but subdomain activation is taking longer than expected. You can use the manual activation button below or wait a few more minutes for automatic activation.';
   } else if (successData.subdomainStatus === 'error') {
     return 'Your payment was successful. We are working on activating your subdomain portal.';
   } else {
