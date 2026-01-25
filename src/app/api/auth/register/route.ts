@@ -173,18 +173,28 @@ async function registerHandler(req: Request) {
     });
 
     if (createErr) {
+      console.log('[REGISTER] Auth creation error:', createErr);
+      
       // normalize common duplicate user situations into 409
       const msg = createErr.message?.toLowerCase?.() ?? "";
       const isDup =
         createErr.status === 422 ||
+        createErr.code === '23505' || // PostgreSQL unique violation
         msg.includes("already") ||
         msg.includes("registered") ||
-        msg.includes("duplicate");
+        msg.includes("duplicate") ||
+        msg.includes("email_already_taken");
 
       if (isDup) {
         return jsonError("An account with this email already exists.", 409, {
           suggestion: "Try signing in or use password reset.",
+          code: "EMAIL_ALREADY_EXISTS"
         });
+      }
+
+      // Rate limiting error
+      if (msg.includes("rate") || msg.includes("limit")) {
+        return jsonError("Too many registration attempts. Please try again later.", 429);
       }
 
       // sanitize details in production

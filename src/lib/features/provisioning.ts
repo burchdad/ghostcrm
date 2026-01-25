@@ -34,11 +34,14 @@ export class FeatureProvisioner {
   private supabase: any;
 
   constructor() {
-    this.initSupabase();
+    // Don't initialize in constructor - will be done in methods
   }
 
-  private async initSupabase() {
-    this.supabase = await createSupabaseServer();
+  private async ensureSupabase() {
+    if (!this.supabase) {
+      this.supabase = await createSupabaseServer();
+    }
+    return this.supabase;
   }
 
   /**
@@ -55,8 +58,11 @@ export class FeatureProvisioner {
     };
 
     try {
+      // Ensure Supabase is initialized
+      const supabase = await this.ensureSupabase();
+      
       // 1. Activate subscription using stored procedure
-      const { error: activationError } = await this.supabase.rpc(
+      const { error: activationError } = await supabase.rpc(
         'activate_subscription',
         {
           p_tenant_id: context.tenantId,
@@ -72,7 +78,7 @@ export class FeatureProvisioner {
       }
 
       // 2. Get the features that were activated
-      const { data: subscription } = await this.supabase
+      const { data: subscription } = await supabase
         .from('tenant_subscriptions')
         .select('enabled_features, add_on_features')
         .eq('tenant_id', context.tenantId)
@@ -117,8 +123,11 @@ export class FeatureProvisioner {
     };
 
     try {
+      // Ensure Supabase is initialized
+      const supabase = await this.ensureSupabase();
+      
       // 1. Get current subscription state
-      const { data: currentSub } = await this.supabase
+      const { data: currentSub } = await supabase
         .from('tenant_subscriptions')
         .select('enabled_features, add_on_features, plan_id')
         .eq('tenant_id', context.tenantId)
@@ -135,7 +144,7 @@ export class FeatureProvisioner {
       ];
 
       // 2. Update subscription with new plan/features
-      const { error: updateError } = await this.supabase.rpc(
+      const { error: updateError } = await supabase.rpc(
         'activate_subscription',
         {
           p_tenant_id: context.tenantId,
@@ -151,7 +160,7 @@ export class FeatureProvisioner {
       }
 
       // 3. Calculate feature changes
-      const { data: updatedSub } = await this.supabase
+      const { data: updatedSub } = await supabase
         .from('tenant_subscriptions')
         .select('enabled_features, add_on_features')
         .eq('tenant_id', context.tenantId)
@@ -203,8 +212,11 @@ export class FeatureProvisioner {
     };
 
     try {
+      // Ensure Supabase is initialized
+      const supabase = await this.ensureSupabase();
+      
       // 1. Get current features
-      const { data: currentSub } = await this.supabase
+      const { data: currentSub } = await supabase
         .from('tenant_subscriptions')
         .select('enabled_features, add_on_features')
         .eq('tenant_id', context.tenantId)
@@ -227,7 +239,7 @@ export class FeatureProvisioner {
       ];
 
       // 3. Update subscription status and features
-      const { error: suspendError } = await this.supabase
+      const { error: suspendError } = await supabase
         .from('tenant_subscriptions')
         .update({
           status: context.status,
@@ -415,7 +427,8 @@ export class FeatureProvisioner {
     result: ProvisioningResult
   ): Promise<void> {
     try {
-      await this.supabase
+      const supabase = await this.ensureSupabase();
+      await supabase
         .from('billing_events')
         .insert({
           subscription_id: context.subscriptionId,
