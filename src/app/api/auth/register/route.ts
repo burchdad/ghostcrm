@@ -145,7 +145,7 @@ async function registerHandler(req: Request) {
       return jsonError("Database configuration error. Please contact support.", 500);
     }
 
-    // 🎯 ONLY CREATE AUTH USER - No org/subdomain until payment
+    // 🎯 CREATE AUTH USER + ORGANIZATION + PENDING SUBDOMAIN
     // Set redirect URL for email verification - use existing NEXT_PUBLIC_BASE_URL
     const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || 
                    process.env.NEXT_PUBLIC_SITE_URL || 
@@ -168,7 +168,7 @@ async function registerHandler(req: Request) {
         first_name: firstName,
         last_name: lastName,
         company_name: companyName,
-        role: "unassigned", // 🎯 No role until payment
+        role: "unassigned", // 🎯 Role will be set to 'owner' after payment
       },
     });
 
@@ -196,6 +196,92 @@ async function registerHandler(req: Request) {
 
     const authUserId = created?.user?.id;
     if (!authUserId) return jsonError("Registration failed. Please try again.", 500);
+
+    // 🎯 CREATE ORGANIZATION + PENDING SUBDOMAIN
+    let organizationId: string | null = null;
+    let subdomainName: string | null = null;
+    
+    try {
+      console.log('[REGISTER] Creating organization and pending subdomain for user:', authUserId);
+      
+      // Generate subdomain name
+      subdomainName = generateBaseSubdomain(body, authUserId);
+      console.log('[REGISTER] Generated subdomain:', subdomainName);
+      
+      // Check if subdomain already exists
+      const { data: existingSubdomain } = await supabaseAdmin
+        .from('subdomains')
+        .select('subdomain')
+        .eq('subdomain', subdomainName)
+        .single();
+        
+      if (existingSubdomain) {
+        // Generate a unique subdomain by appending random chars
+        const randomSuffix = Math.random().toString(36).substring(2, 6);
+        subdomainName = `${subdomainName}-${randomSuffix}`;
+        console.log('[REGISTER] Subdomain exists, using unique name:', subdomainName);
+      }
+      
+      // Create organization record
+      const orgName = defaultOrgName(body);
+      const { data: newOrg, error: orgError } = await supabaseAdmin
+        .from('organizations')
+        .insert({
+          name: orgName,
+          subdomain: subdomainName,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select('id')
+        .single();
+        
+      if (orgError || !newOrg) {
+        console.error('[REGISTER] Failed to create organization:', orgError);
+        throw new Error('Failed to create organization');
+      }
+      
+      organizationId = newOrg.id;
+      console.log('[REGISTER] Created organization:', { id: organizationId, name: orgName, subdomain: subdomainName });
+      
+      // Create pending subdomain record
+      const { error: subdomainError } = await supabaseAdmin
+        .from('subdomains')
+        .insert({
+          subdomain: subdomainName,
+          organization_id: organizationId,
+          organization_name: orgName,
+          owner_email: email,
+          status: 'pending_payment', // 🎯 KEY: This is what the webhook will look for!
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+        
+      if (subdomainError) {
+        console.error('[REGISTER] Failed to create subdomain record:', subdomainError);
+        throw new Error('Failed to create subdomain record');
+      }
+      
+      console.log('[REGISTER] Created pending subdomain record:', { subdomain: subdomainName, status: 'pending_payment' });
+      
+      // Update user record with organization_id
+      const { error: userUpdateError } = await supabaseAdmin
+        .from('users')
+        .update({ 
+          organization_id: organizationId,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', authUserId);
+        
+      if (userUpdateError) {
+        console.warn('[REGISTER] Failed to update user with organization_id:', userUpdateError);
+        // Don't fail registration for this
+      }
+      
+    } catch (orgCreationError) {
+      console.error('[REGISTER] Organization/subdomain creation failed:', orgCreationError);
+      // Don't fail the entire registration - user can still go through checkout
+      // The webhook will handle organization creation as fallback
+    }
 
     // 🎯 SEND VERIFICATION EMAIL - Use our custom email service with Supabase verification link
     try {
@@ -273,19 +359,29 @@ async function registerHandler(req: Request) {
       // Continue - not critical for registration success
     }
 
-    // 🎯 CLEAN REGISTRATION RESPONSE - Redirect immediately to billing
+    // 🎯 ENHANCED REGISTRATION RESPONSE - Include organization and subdomain info
     return NextResponse.json({
       success: true,
       message: "Account created successfully! Check your email to verify your account, then select your plan.",
       user: {
         id: authUserId,
         email,
-        role: "unassigned", // 🎯 No role until payment
+        role: "unassigned", // 🎯 Will become 'owner' after payment
         email_confirmed: false,
-        organizationId: null, // 🎯 No org until payment
-        tenantId: null, // 🎯 No tenant until payment
+        organizationId: organizationId, // 🎯 Now created during registration
+        tenantId: organizationId, // 🎯 Same as organizationId
       },
-      next_step: "select_plan", // 🎯 Next: go to billing immediately
+      organization: organizationId ? {
+        id: organizationId,
+        name: defaultOrgName(body),
+        subdomain: subdomainName
+      } : null,
+      subdomain: subdomainName ? {
+        name: subdomainName,
+        status: 'pending_payment', // 🎯 Ready for webhook activation!
+        url: `https://${subdomainName}.ghostcrm.ai`
+      } : null,
+      next_step: "select_plan", // 🎯 Next: go to billing to activate subdomain
       next_url: "/billing",
     });
 
