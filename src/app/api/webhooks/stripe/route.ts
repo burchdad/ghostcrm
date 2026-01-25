@@ -557,6 +557,38 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
         }
         
         console.log('✅ [STRIPE_WEBHOOK] Subdomain fully activated with DNS:', subdomainRecord.subdomain);
+      } else if (response.status === 409) {
+        // Subdomain already exists - check if it's already active
+        console.log('ℹ️ [STRIPE_WEBHOOK] Subdomain already exists, checking if it\'s active:', subdomainRecord.subdomain);
+        
+        const { data: existingSubdomain } = await supabaseAdmin
+          .from('subdomains')
+          .select('status')
+          .eq('subdomain', subdomainRecord.subdomain)
+          .single();
+          
+        if (existingSubdomain?.status === 'active') {
+          console.log('✅ [STRIPE_WEBHOOK] Subdomain already active, no action needed:', subdomainRecord.subdomain);
+          
+          // Update the current record to active status just in case
+          const { error: activationError } = await supabaseAdmin
+            .from('subdomains')
+            .update({
+              status: 'active',
+              provisioned_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', subdomainRecord.id);
+            
+          if (activationError) {
+            console.warn('⚠️ [STRIPE_WEBHOOK] Could not update subdomain status, but continuing:', activationError);
+          }
+        } else {
+          // Subdomain exists but isn't active - this is an actual conflict
+          const errorText = await response.text();
+          console.error('❌ [STRIPE_WEBHOOK] Subdomain conflict - exists but not active:', errorText);
+          throw new Error(`Subdomain conflict: ${errorText}`);
+        }
       } else {
         const errorText = await response.text();
         console.error('❌ [STRIPE_WEBHOOK] DNS provisioning failed:', response.status, errorText);
