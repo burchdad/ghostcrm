@@ -289,6 +289,58 @@ This invitation was sent to ${data.inviteeName}. If you received this in error, 
     }
   }
 
+  /**
+   * Send email verification code (modern auth flow)
+   */
+  async sendVerificationCode(
+    email: string, 
+    firstName: string,
+    verificationCode: string
+  ): Promise<boolean> {
+    console.log('[EMAIL] sendVerificationCode called:', {
+      email,
+      firstName,
+      codeLength: verificationCode?.length,
+      isConfigured: this.isConfigured
+    });
+
+    if (!this.isConfigured) {
+      console.warn('⚠️ [EMAIL] SendGrid not configured, skipping verification code email');
+      return false;
+    }
+
+    if (!process.env.SENDGRID_FROM) {
+      console.error('❌ [EMAIL] SENDGRID_FROM not configured');
+      return false;
+    }
+
+    const emailHtml = this.generateVerificationCodeEmailHtml(firstName, verificationCode);
+    const emailText = this.generateVerificationCodeEmailText(firstName, verificationCode);
+
+    try {
+      const sendResult = await sgMail.send({
+        to: email,
+        from: process.env.SENDGRID_FROM,
+        subject: 'Your GhostCRM verification code',
+        html: emailHtml,
+        text: emailText,
+        trackingSettings: {
+          clickTracking: { enable: false },
+          openTracking: { enable: false }
+        }
+      });
+
+      console.log('✅ [EMAIL] Verification code email sent:', {
+        statusCode: sendResult?.[0]?.statusCode,
+        messageId: sendResult?.[0]?.headers?.['x-message-id']
+      });
+      return true;
+    } catch (error) {
+      console.error('❌ [EMAIL] Failed to send verification code email:', error);
+      return false;
+    }
+  }
+
   private generateVerificationEmailHtml(firstName: string, verificationUrl: string): string {
     return `
 <!DOCTYPE html>
@@ -468,6 +520,96 @@ This email was sent to verify your account. If you didn't create an account, ple
       console.error('❌ [EMAIL] Error sending notification email:', error);
       return false;
     }
+  }
+
+  private generateVerificationCodeEmailHtml(firstName: string, verificationCode: string): string {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Code - GhostCRM</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center; padding: 40px 20px; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+        .header p { margin: 10px 0 0 0; opacity: 0.9; }
+        .content { padding: 40px 30px; }
+        .code-container { background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-align: center; padding: 30px; border-radius: 12px; margin: 30px 0; }
+        .code { font-family: 'Monaco', 'Menlo', monospace; font-size: 36px; font-weight: 700; letter-spacing: 8px; margin: 10px 0; }
+        .code-label { font-size: 14px; opacity: 0.9; margin-bottom: 10px; }
+        .footer { background-color: #f8fafc; padding: 30px; text-align: center; color: #64748b; font-size: 14px; }
+        .security-notice { background-color: #fef3c7; border: 1px solid #f59e0b; color: #92400e; padding: 16px; border-radius: 8px; margin: 20px 0; }
+        .logo { font-size: 32px; margin-bottom: 10px; }
+        .info-card { background-color: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">👻</div>
+            <h1>GhostCRM</h1>
+            <p>Auto Dealership CRM Platform</p>
+        </div>
+        
+        <div class="content">
+            <h2 style="color: #374151; margin-bottom: 20px;">Hi ${firstName}!</h2>
+            
+            <p style="color: #6b7280; line-height: 1.6; margin-bottom: 24px;">
+                Here's your verification code to complete your GhostCRM account setup:
+            </p>
+
+            <div class="code-container">
+                <div class="code-label">YOUR VERIFICATION CODE</div>
+                <div class="code">${verificationCode}</div>
+                <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">
+                    Enter this code in your browser to continue
+                </p>
+            </div>
+
+            <div class="info-card">
+                <h3 style="color: #0ea5e9; margin: 0 0 12px 0;">📱 Quick & Secure</h3>
+                <p style="color: #0f172a; margin: 0; line-height: 1.5;">
+                    This code will expire in <strong>10 minutes</strong> for your security. Simply enter it when prompted to verify your email and access your GhostCRM dashboard.
+                </p>
+            </div>
+
+            <div class="security-notice">
+                <strong>🔒 Security:</strong> Never share this code with anyone. GhostCRM will never ask for your verification code.
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2026 GhostCRM. All rights reserved.</p>
+            <p>This code was requested for your account. If you didn't request this, please ignore this email.</p>
+        </div>
+    </div>
+</body>
+</html>`;
+  }
+
+  private generateVerificationCodeEmailText(firstName: string, verificationCode: string): string {
+    return `
+GhostCRM - Verification Code
+
+Hi ${firstName}!
+
+Here's your verification code to complete your GhostCRM account setup:
+
+VERIFICATION CODE: ${verificationCode}
+
+This code will expire in 10 minutes for your security.
+
+Simply enter this code when prompted to verify your email and access your GhostCRM dashboard.
+
+SECURITY NOTICE: Never share this code with anyone. GhostCRM will never ask for your verification code.
+
+---
+© 2026 GhostCRM. All rights reserved.
+This code was requested for your account. If you didn't request this, please ignore this email.
+`;
   }
 }
 

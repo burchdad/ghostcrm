@@ -283,70 +283,38 @@ async function registerHandler(req: Request) {
       // The webhook will handle organization creation as fallback
     }
 
-    // 🎯 SEND VERIFICATION EMAIL - Use our custom email service with Supabase verification link
+    // 🎯 SEND VERIFICATION CODE - Modern auth flow with 6-digit codes
     try {
-      console.log('[REGISTER] Starting email verification process for:', email);
-      console.log('[REGISTER] Environment check:', {
-        hasSendgridKey: !!process.env.SENDGRID_API_KEY,
-        sendgridFrom: process.env.SENDGRID_FROM,
-        siteUrl: siteUrl,
-        redirectTo: redirectTo
+      console.log('[REGISTER] Starting verification code process for:', email);
+      
+      // Generate and store verification code
+      const { createVerificationCode } = await import('@/lib/verification-codes');
+      const verificationCode = await createVerificationCode(authUserId, email);
+      
+      console.log('[REGISTER] Generated verification code:', { 
+        userId: authUserId,
+        codeLength: verificationCode.length
       });
 
-      // First generate the verification link  
-      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'magiclink',
+      // Send verification code email using new method
+      const { EmailService } = await import('@/lib/email-service');
+      const emailService = EmailService.getInstance();
+      
+      const emailSent = await emailService.sendVerificationCode(
         email,
-        options: {
-          redirectTo: redirectTo,
-        }
-      });
+        firstName,
+        verificationCode
+      );
 
-      console.log('[REGISTER] generateLink result:', {
-        hasData: !!linkData,
-        hasProps: !!linkData?.properties,
-        hasAction: !!linkData?.properties?.action_link,
-        error: linkError?.message,
-        linkDataKeys: linkData ? Object.keys(linkData) : 'no data',
-        actualActionLink: linkData?.properties?.action_link,
-        actionLinkDomain: linkData?.properties?.action_link ? new URL(linkData.properties.action_link).hostname : 'no link'
-      });
-
-      if (linkError) {
-        console.error('[REGISTER] Email verification link generation failed:', linkError);
-        // Don't fail registration if email fails - user can resend later
-      } else if (linkData?.properties?.action_link) {
-        console.log('[REGISTER] Got action link, sending email via EmailService...');
-        
-        // Send the verification email using our custom email service
-        const { EmailService } = await import('@/lib/email-service');
-        const emailService = EmailService.getInstance();
-        
-        console.log('[REGISTER] About to send verification email:', {
-          email,
-          firstName,
-          hasActionLink: !!linkData.properties.action_link
-        });
-
-        const emailSent = await emailService.sendVerificationEmail(
-          email,
-          firstName,
-          linkData.properties.action_link
-        );
-
-        console.log('[REGISTER] Email send result:', { emailSent });
-
-        if (emailSent) {
-          console.log('[REGISTER] Verification email sent successfully to:', email);
-        } else {
-          console.error('[REGISTER] Failed to send verification email, but link was generated');
-        }
+      if (emailSent) {
+        console.log('[REGISTER] Verification code email sent successfully to:', email);
       } else {
-        console.error('[REGISTER] No action link returned from generateLink - check Supabase Auth URL configuration');
-        console.error('[REGISTER] LinkData structure:', JSON.stringify(linkData, null, 2));
+        console.error('[REGISTER] Failed to send verification code email');
+        // Don't fail registration - user can request a new code later
       }
-    } catch (emailSendError) {
-      console.error('[REGISTER] Email verification sending failed:', emailSendError);
+      
+    } catch (codeError) {
+      console.error('[REGISTER] Verification code generation/sending failed:', codeError);
       // Continue - don't block registration on email failure
     }
 
@@ -362,7 +330,12 @@ async function registerHandler(req: Request) {
     // 🎯 ENHANCED REGISTRATION RESPONSE - Include organization and subdomain info
     return NextResponse.json({
       success: true,
-      message: "Account created successfully! Check your email to verify your account, then select your plan.",
+      message: "Account created successfully! Check your email for a verification code, then select your plan.",
+      verification: {
+        method: "code",
+        message: "A 6-digit verification code has been sent to your email",
+        expires_in: 600 // 10 minutes
+      },
       user: {
         id: authUserId,
         email,
@@ -381,7 +354,7 @@ async function registerHandler(req: Request) {
         status: 'pending_payment', // 🎯 Ready for webhook activation!
         url: `https://${subdomainName}.ghostcrm.ai`
       } : null,
-      next_step: "select_plan", // 🎯 Next: go to billing to activate subdomain
+      next_step: "verify_email_then_select_plan", // 🎯 New flow
       next_url: "/billing",
     });
 
