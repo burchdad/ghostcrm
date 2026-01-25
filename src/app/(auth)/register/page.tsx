@@ -53,7 +53,7 @@ export default function RegisterPage() {
       localStorage.setItem('userEmail', email);
       
       // ✅ SIMPLE FLOW: Account created -> Go to billing to select plan
-      setMessage('Account created successfully! Redirecting to select your plan...');
+      setMessage('Account created successfully!');
       setTimeout(() => router.push('/billing?welcome=true'), 1500);
     } catch (err: any) {
       setMessage(err.message || 'Registration failed');
