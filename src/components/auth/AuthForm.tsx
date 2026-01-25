@@ -92,6 +92,41 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null,
       const result = await login(data.email, data.password);
       
       if (!result.success) {
+        // Check if this is an unverified email case
+        if (result.code === 'email_not_verified' || result.message?.includes('verify your email')) {
+          console.log('🔄 Unverified email detected, showing verification modal');
+          
+          try {
+            // Send verification code email
+            const verificationResponse = await fetch('/api/auth/resend-verification-code', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: data.email }),
+            });
+
+            if (!verificationResponse.ok) {
+              loginForm.setError("root", {
+                type: "manual",
+                message: "Failed to send verification code. Please try again.",
+              });
+              return;
+            }
+
+            // Show verification modal instead of error
+            setUnverifiedEmail(data.email);
+            setShowVerificationModal(true);
+            return;
+            
+          } catch (error) {
+            loginForm.setError("root", {
+              type: "manual",
+              message: "Failed to send verification code. Please try again.",
+            });
+            return;
+          }
+        }
+        
+        // For other errors, show the error message
         loginForm.setError("root", {
           type: "manual",
           message: result.message || "Invalid email or password. Please try again.",
@@ -99,33 +134,8 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null,
         return;
       }
       
-      // Credentials are valid - now send verification code and show modal
-      try {
-        // Send verification code email
-        const verificationResponse = await fetch('/api/auth/resend-verification-code', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: data.email }),
-        });
-
-        if (!verificationResponse.ok) {
-          loginForm.setError("root", {
-            type: "manual",
-            message: "Failed to send verification code. Please try again.",
-          });
-          return;
-        }
-
-        // Show verification modal
-        setUnverifiedEmail(data.email);
-        setShowVerificationModal(true);
-        
-      } catch (error) {
-        loginForm.setError("root", {
-          type: "manual",
-          message: "Failed to send verification code. Please try again.",
-        });
-      }
+      // Login was successful - user is already verified and logged in
+      // The auth context will handle the redirect
     } catch (error: any) {
       loginForm.setError("root", {
         type: "manual",

@@ -120,6 +120,22 @@ function SuccessContent() {
           isSubdomainActivated: isSubdomainActivated
         })
         
+        // If subdomain is already active, redirect immediately
+        if (isSubdomainActivated && userSubdomain && !isSoftwareOwner && !usedSoftwareOwnerPromo) {
+          console.log('🚀 Subdomain already active - immediate redirect to:', userSubdomain);
+          const baseDomain = getBaseDomain();
+          setTimeout(() => {
+            try {
+              sessionStorage.removeItem('auth_error');
+              localStorage.removeItem('auth_redirect_pending');
+            } catch (e) {
+              // Ignore storage errors
+            }
+            window.location.href = `${window.location.protocol}//${userSubdomain}.${baseDomain}/login`;
+          }, 1500); // Short delay to show success message
+          return;
+        }
+        
         // Check subdomain activation status periodically (webhook-based activation)
         if (sessionId && !isSoftwareOwner && !usedSoftwareOwnerPromo) {
           console.log('🔄 Checking webhook-based activation status...')
