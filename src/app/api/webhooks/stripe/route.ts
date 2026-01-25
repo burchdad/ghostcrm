@@ -262,7 +262,6 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription): Prom
       trial_end: (subscription as any).trial_end ? 
         new Date((subscription as any).trial_end * 1000).toISOString() : null,
       updated_at: new Date().toISOString(),
-      ...(tenantId && { tenant_id: tenantId }),
     };
 
     const { error: dbError } = await supabase
