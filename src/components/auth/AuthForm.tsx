@@ -14,9 +14,10 @@ import { loginSchema, LoginFormData } from "./schemas";
 interface AuthFormProps {
   showOwnerAccess?: boolean; // Controls whether to show Software Owner Access section
   tenantContext?: string | null; // Tenant context for multi-tenant login
+  successMessage?: string; // Optional success message to display
 }
 
-export default function AuthForm({ showOwnerAccess = true, tenantContext = null }: AuthFormProps) {
+export default function AuthForm({ showOwnerAccess = true, tenantContext = null, successMessage }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showContactSales, setShowContactSales] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -221,6 +222,23 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
             Sign in to your Ghost Auto CRM account
           </p>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <div style={{
+            marginBottom: '1.5rem',
+            padding: '1rem',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            border: '1px solid rgba(34, 197, 94, 0.2)',
+            borderRadius: '0.75rem',
+            color: '#15803d',
+            fontSize: '0.875rem',
+            textAlign: 'center',
+            fontWeight: '500'
+          }}>
+            {successMessage}
+          </div>
+        )}
 
         {/* Login Form */}
         <LoginForm 

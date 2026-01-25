@@ -52,17 +52,21 @@ export default function RegisterPage() {
 
       localStorage.setItem('userEmail', email);
       
-      // 🎯 NEW FLOW: Redirect immediately to billing for plan selection
+      // 🎯 NEW FLOW: Handle different next steps
       if (data.next_step === 'select_plan') {
         setMessage('Account created! Redirecting to select your plan...');
         setTimeout(() => router.push('/billing?welcome=true'), 1500);
+      } else if (data.next_step === 'verify_email_then_select_plan') {
+        setMessage('Account created! You will receive a verification code when you log in.');
+        setTimeout(() => router.push('/login?registered=true'), 1500);
       } else if (data.next_step === 'verify_email') {
         // Fallback: old flow that required email verification first
         setMessage('Account created! Check your email and verify your account, then you can log in.');
+        setTimeout(() => router.push('/login?registered=true'), 1500);
       } else {
-        // Fallback redirect if neither flow is specified
-        setMessage('Account created! Please check your email to verify your account.');
-        setTimeout(() => router.push('/login'), 1500);
+        // Fallback redirect - should not happen with current flow
+        setMessage('Account created! Please log in to continue.');
+        setTimeout(() => router.push('/login?registered=true'), 1500);
       }
     } catch (err: any) {
       setMessage(err.message || 'Registration failed');

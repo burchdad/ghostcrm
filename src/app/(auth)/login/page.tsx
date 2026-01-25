@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from '@/contexts/auth-context';
 import BrandPanel from "@/components/auth/BrandPanel";
 import AuthForm from "@/components/auth/AuthForm";
@@ -9,7 +9,16 @@ import { getBaseDomain } from '@/lib/utils/environment';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading } = useAuth();
+  const [successMessage, setSuccessMessage] = useState<string | undefined>();
+
+  // Check for registration success
+  useEffect(() => {
+    if (searchParams.get('registered') === 'true') {
+      setSuccessMessage('🎉 Account created successfully! Please log in to continue.');
+    }
+  }, [searchParams]);
 
   // Redirect if already authenticated based on role and context
   useEffect(() => {
@@ -211,7 +220,7 @@ export default function LoginPage() {
 
           {/* Auth Form */}
           <div style={{ position: 'relative', zIndex: 2 }} className="auth-form-container-mobile">
-            <AuthForm />
+            <AuthForm successMessage={successMessage} />
           </div>
         </div>
       </div>
