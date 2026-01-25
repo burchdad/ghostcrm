@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import ContactSalesModal from "@/components/modals/ContactSalesModal";
-import VerificationCodeModal from "@/components/modals/VerificationCodeModal";
+import { VerificationCodeModal } from "@/components/modals/VerificationCodeModal";
 import { loginSchema, LoginFormData } from "./schemas";
 
 interface AuthFormProps {
@@ -320,8 +320,8 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
       <VerificationCodeModal
         isOpen={showVerificationModal}
         onClose={() => setShowVerificationModal(false)}
-        email={unverifiedEmail}
-        onSuccess={handleVerificationSuccess}
+        userEmail={unverifiedEmail}
+        onVerificationSuccess={handleVerificationSuccess}
       />
     </div>
   );
