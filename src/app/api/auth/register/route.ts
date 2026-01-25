@@ -354,7 +354,7 @@ async function registerHandler(req: Request) {
         status: 'pending_payment', // 🎯 Ready for webhook activation!
         url: `https://${subdomainName}.ghostcrm.ai`
       } : null,
-      next_step: "verify_email_then_select_plan", // 🎯 New flow
+      next_step: "select_plan", // ✅ Always go to billing for plan selection
       next_url: "/billing",
     });
 
