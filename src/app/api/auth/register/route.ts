@@ -251,7 +251,7 @@ async function registerHandler(req: Request) {
           organization_id: organizationId,
           organization_name: orgName,
           owner_email: email,
-          status: 'pending_payment', // 🎯 KEY: This is what the webhook will look for!
+          status: 'pending', // 🎯 KEY: This is what the webhook will look for!
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
@@ -261,7 +261,7 @@ async function registerHandler(req: Request) {
         throw new Error('Failed to create subdomain record');
       }
       
-      console.log('[REGISTER] Created pending subdomain record:', { subdomain: subdomainName, status: 'pending_payment' });
+      console.log('[REGISTER] Created pending subdomain record:', { subdomain: subdomainName, status: 'pending' });
       
       // Update user record with organization_id
       const { error: userUpdateError } = await supabaseAdmin
@@ -351,7 +351,7 @@ async function registerHandler(req: Request) {
       } : null,
       subdomain: subdomainName ? {
         name: subdomainName,
-        status: 'pending_payment', // 🎯 Ready for webhook activation!
+        status: 'pending', // 🎯 Ready for webhook activation!
         url: `https://${subdomainName}.ghostcrm.ai`
       } : null,
       next_step: "select_plan", // ✅ Always go to billing for plan selection

@@ -461,12 +461,12 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
       return;
     }
 
-    // Find subdomain records - check multiple status types
+    // Find subdomain records - check for pending status (which includes pending_payment scenarios)
     const { data: subdomainRecords, error: subdomainError } = await supabaseAdmin
       .from('subdomains')
       .select('*')
       .eq('organization_id', user.organization_id)
-      .in('status', ['pending_payment', 'pending', 'inactive']);
+      .in('status', ['pending', 'inactive']);
 
     if (subdomainError || !subdomainRecords || subdomainRecords.length === 0) {
       console.warn('⚠️ [STRIPE_WEBHOOK] No eligible subdomain found for organization:', user.organization_id);
@@ -476,26 +476,27 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
     const subdomainRecord = subdomainRecords[0]; // Take the first eligible subdomain
     console.log('🔍 [STRIPE_WEBHOOK] Found subdomain:', subdomainRecord.subdomain, 'Status:', subdomainRecord.status);
 
-    // Mark subdomain as provisioning first (not yet fully active)
-    const { error: provisioningError } = await supabaseAdmin
+    // Mark subdomain as active immediately since payment is successful
+    const { error: activationError } = await supabaseAdmin
       .from('subdomains')
       .update({
-        status: 'provisioning',
-        updated_at: new Date().toISOString()
+        status: 'active',
+        updated_at: new Date().toISOString(),
+        provisioned_at: new Date().toISOString()
       })
       .eq('id', subdomainRecord.id);
 
-    if (provisioningError) {
-      console.error('❌ [STRIPE_WEBHOOK] Failed to mark subdomain as provisioning:', provisioningError);
+    if (activationError) {
+      console.error('❌ [STRIPE_WEBHOOK] Failed to mark subdomain as active:', activationError);
       await createRetryEntry({
-        type: 'provisioning_failed',
+        type: 'activation_failed',
         subdomain_id: subdomainRecord.id,
-        error: provisioningError.message
+        error: activationError.message
       });
       return;
     }
 
-    console.log('✅ [STRIPE_WEBHOOK] Subdomain marked as provisioning, proceeding with DNS setup...');
+    console.log('✅ [STRIPE_WEBHOOK] Subdomain marked as active after payment success!');
 
     // Optionally create tenant memberships if needed using RLS bypass
     try {
