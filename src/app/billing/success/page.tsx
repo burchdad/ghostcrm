@@ -46,8 +46,14 @@ function SuccessContent() {
   })
   const [loading, setLoading] = useState(true)
   const [manualActivating, setManualActivating] = useState(false)
+  const [authCheckCompleted, setAuthCheckCompleted] = useState(false) // Prevent multiple auth checks
 
   useEffect(() => {
+    // Prevent multiple executions of this effect
+    if (authCheckCompleted) {
+      return;
+    }
+
     async function checkUserStatus() {
       try {
         // Get URL params
@@ -72,16 +78,18 @@ function SuccessContent() {
         // Check if user is software owner by checking their session/role
         let response
         try {
+          console.log('🔍 [BILLING-SUCCESS] Checking owner status...')
           response = await fetch('/api/auth/check-owner-status', {
             credentials: 'include',
             headers: {
               'Cache-Control': 'no-cache',
             }
           })
+          console.log('🔍 [BILLING-SUCCESS] Auth check response status:', response.status)
         } catch (authError) {
           console.warn('⚠️ [BILLING-SUCCESS] Auth check failed, continuing with payment processing:', authError)
           // Continue processing even if auth fails - billing success is more important
-          response = { ok: false }
+          response = { ok: false, status: 500 }
         }
         
         // Handle API call failures gracefully
@@ -92,8 +100,10 @@ function SuccessContent() {
           const data = await response.json()
           isSoftwareOwner = data.isSoftwareOwner
           userRole = data.userRole
+          console.log('✅ [BILLING-SUCCESS] Auth check successful:', { isSoftwareOwner, userRole })
         } else {
-          console.warn('⚠️ [BILLING-SUCCESS] Could not check owner status, assuming regular user')
+          console.warn('⚠️ [BILLING-SUCCESS] Could not check owner status (status:', response.status, '), assuming regular user')
+          // Don't retry - just continue with the flow
         }
         
         // Get user's organization/subdomain info for proper redirect
@@ -356,11 +366,12 @@ function SuccessContent() {
         console.error('Error checking user status:', error)
       } finally {
         setLoading(false)
+        setAuthCheckCompleted(true) // Mark auth check as completed
       }
     }
 
     checkUserStatus()
-  }, [router])
+  }, []) // Remove router dependency to prevent infinite loops
 
   // Manual activation function
   const handleManualActivation = async () => {
