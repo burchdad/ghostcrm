@@ -12,9 +12,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email and verification code are required' }, { status: 400 });
     }
 
-    console.log(`📧 [EMAIL] Sending verification code to ${email}:`);
-    console.log(`   Code: ${verificationCode}`);
-    console.log(`   Name: ${firstName || 'User'}`);
+    console.log(`\n🔥🔥🔥 VERIFICATION CODE FOR ${email}: ${verificationCode} 🔥🔥🔥`);
+    console.log(`📧 [EMAIL] User: ${firstName || 'User'}`);
+    console.log(`📧 [EMAIL] Email: ${email}`);
+    console.log(`📧 [EMAIL] Code: ${verificationCode}`);
+    console.log(`🔥🔥🔥 USE THIS CODE IN THE MODAL 🔥🔥🔥\n`);
     
     // TODO: Implement actual email sending here
     // For now, just log the code - in production you'd use SendGrid, Resend, etc.

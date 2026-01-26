@@ -32,6 +32,7 @@ export default function PostLoginVerificationModal({
   }, [isOpen, codeSent]);
 
   const sendVerificationCode = async () => {
+    console.log('🔄 [MODAL] Resending verification code...');
     setResending(true);
     setError(null);
     
@@ -42,13 +43,16 @@ export default function PostLoginVerificationModal({
       });
       
       const data = await response.json();
+      console.log('📡 [MODAL] Resend response:', { status: response.status, data });
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to send verification code');
       }
       
       setCodeSent(true);
+      console.log('✅ [MODAL] Verification code resent successfully');
     } catch (err) {
+      console.error('❌ [MODAL] Resend failed:', err);
       setError(err instanceof Error ? err.message : 'Failed to send verification code');
     } finally {
       setResending(false);

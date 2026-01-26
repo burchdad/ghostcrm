@@ -46,6 +46,9 @@ export async function POST(request: NextRequest) {
 
     // Send verification email with code
     try {
+      console.log(`📧 [VERIFICATION] Generated code ${verificationCode} for user ${user.email}`);
+      console.log(`📧 [VERIFICATION] Code expires at: ${new Date(Date.now() + 10 * 60 * 1000).toISOString()}`);
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email/send-verification-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -57,11 +60,13 @@ export async function POST(request: NextRequest) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send verification email');
+        console.warn('⚠️ [VERIFICATION] Email sending failed, but code is stored');
+      } else {
+        console.log('✅ [VERIFICATION] Email sent successfully (check console logs for actual code)');
       }
     } catch (emailError) {
       console.error('Failed to send verification email:', emailError);
-      // Continue anyway - user can request resend
+      console.log(`📧 [VERIFICATION] EMAIL FAILED - Use this code manually: ${verificationCode}`);
     }
 
     return NextResponse.json({
