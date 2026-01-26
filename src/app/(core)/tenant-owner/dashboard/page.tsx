@@ -10,10 +10,6 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import { ToastProvider } from "@/components/utils/ToastProvider";
 import { I18nProvider, useI18n } from "@/components/utils/I18nProvider";
 import MobileFloatingNavigation from "@/components/mobile/MobileFloatingNavigation";
-import Sidebar from "@/components/layout/Sidebar";
-import GlobalCollaborationButton from "@/components/navigation/GlobalCollaborationButton";
-import QuickAddButton from "@/components/navigation/QuickAddButton";
-import GlobalAIAssistant from "@/components/global/GlobalAIAssistant";
 import "./page.css";
 import { 
   Users, 
@@ -590,14 +586,9 @@ function TenantOwnerDashboard() {
   // Main dashboard render
   return (
     <>
-      {/* Sidebar - Left navigation menu */}
-      <Sidebar />
-      
       <div className="tenant-dashboard-container">
-        {/* Mobile Floating Navigation - Only shown on mobile screens */}
-        <div className="md:hidden">
-          <MobileFloatingNavigation />
-        </div>
+        {/* Mobile Floating Navigation - Only shown on mobile */}
+        <MobileFloatingNavigation />
 
       <div className="tenant-dashboard-content">
         {/* GM Metrics Cards - Horizontal Layout */}
@@ -1233,15 +1224,6 @@ function TenantOwnerDashboard() {
       
       {/* Metrics Customization Modal */}
       <MetricsCustomizationModal />
-
-      {/* Global Floating Buttons - Bottom-left corner, desktop only */}
-      <div className="hidden md:block">
-        <div className="fixed bottom-4 left-4 z-50 flex flex-col gap-3">
-          <GlobalCollaborationButton />
-          <QuickAddButton />
-          <GlobalAIAssistant />
-        </div>
-      </div>
     </>
   );
 }
