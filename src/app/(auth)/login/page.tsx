@@ -59,13 +59,17 @@ export default function LoginPage() {
         case 'software_owner':
           // Check if user has an active subdomain (from user profile)
           if (user.tenantId && user.tenantId !== 'default-org') {
-            redirectPath = `https://${user.tenantId}.${baseDomain}/dashboard`;
+            redirectPath = `https://${user.tenantId}.${baseDomain}/tenant-owner/dashboard`;
           } else {
             redirectPath = "/owner/dashboard"; // Software owner
           }
           break;
+        case 'owner':
+          // For tenant owners, redirect directly to tenant dashboard
+          redirectPath = "/tenant-owner/dashboard";
+          break;
         case 'admin':
-          redirectPath = "/dashboard";
+          redirectPath = "/tenant-owner/dashboard"; // Changed from /dashboard
           break;
         case 'manager':
           redirectPath = "/tenant-salesmanager/leads";
@@ -74,12 +78,12 @@ export default function LoginPage() {
           redirectPath = "/tenant-salesrep/leads";
           break;
         case 'user':
-          // Regular user role - redirect to main dashboard
-          redirectPath = "/dashboard";
+          // Regular user role - redirect to tenant dashboard if on subdomain
+          redirectPath = "/tenant-owner/dashboard";
           break;
         default:
-          console.warn('🚨 [LoginPage] Unknown role:', user.role, '- defaulting to dashboard');
-          redirectPath = "/dashboard";
+          console.warn('🚨 [LoginPage] Unknown role:', user.role, '- defaulting to tenant dashboard');
+          redirectPath = "/tenant-owner/dashboard";
       }
       
       console.log('➡️ [LoginPage] Redirecting to:', redirectPath);

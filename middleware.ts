@@ -328,9 +328,17 @@ async function handleMainDomainRouting(
   }
     
     if (orgData?.subdomain) {
-      const subdomainUrl = `https://${orgData.subdomain}.ghostcrm.ai`;
-      debugLog('🚀 [MIDDLEWARE] Redirecting to tenant subdomain:', subdomainUrl);
-      return redirectWithCookies(response, new URL(subdomainUrl));
+      // 🚨 FIX: Don't redirect if user is already on their subdomain
+      const currentHost = request.headers.get("host") || "";
+      const expectedSubdomainHost = `${orgData.subdomain}.ghostcrm.ai`;
+      
+      if (currentHost !== expectedSubdomainHost && !currentHost.includes('localhost')) {
+        const subdomainUrl = `https://${orgData.subdomain}.ghostcrm.ai`;
+        debugLog('🚀 [MIDDLEWARE] Redirecting to tenant subdomain:', subdomainUrl);
+        return redirectWithCookies(response, new URL(subdomainUrl));
+      } else {
+        debugLog('✅ [MIDDLEWARE] User already on correct subdomain, allowing access');
+      }
     }
 
   // Fallback: allow access to main domain
