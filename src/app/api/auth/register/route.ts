@@ -166,12 +166,13 @@ async function registerHandler(req: Request) {
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: false, // 🎯 Require email verification
+      email_confirm: true, // 🎯 Allow immediate login - verification happens post-login
       user_metadata: {
         first_name: firstName,
         last_name: lastName,
         company_name: companyName,
         role: "tenant-owner", // 🎯 They're creating their org, so they're the owner
+        email_verification_pending: true, // 🎯 Flag for post-login verification
       },
     });
 

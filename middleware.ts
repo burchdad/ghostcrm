@@ -166,12 +166,13 @@ async function handleSubdomainRouting(
     return redirectWithCookies(response, loginUrl);
   }
 
-  // 🎯 SUBDOMAIN EMAIL VERIFICATION: Check email verification for authenticated users
-  if (!user.email_confirmed_at) {
-    debugLog('📧 [MIDDLEWARE] Subdomain user email not verified - redirecting to verify-email');
-    const verifyUrl = new URL(`/verify-email?redirect=${encodeURIComponent(pathname)}`, request.url);
-    return redirectWithCookies(response, verifyUrl);
-  }
+  // 🎯 SUBDOMAIN EMAIL VERIFICATION: DISABLED for Verizon-style flow
+  // Verification now happens post-login with modal, not middleware blocking
+  // if (!user.email_confirmed_at) {
+  //   debugLog('📧 [MIDDLEWARE] Subdomain user email not verified - redirecting to verify-email');
+  //   const verifyUrl = new URL(`/verify-email?redirect=${encodeURIComponent(pathname)}`, request.url);
+  //   return redirectWithCookies(response, verifyUrl);
+  // }
 
   // � PERFORMANCE: Check cache for user membership
   const membershipCacheKey = `membership:${user.id}:${subdomainData.organization_id}`;
@@ -249,16 +250,17 @@ async function handleMainDomainRouting(
     return redirectWithCookies(response, new URL('/login', request.url));
   }
 
-  // 🎯 STATE A: Authenticated but email not verified
-  if (!user.email_confirmed_at) {
-    const allowedPaths = ["/verify-email", "/login", "/register"];
-    if (allowedPaths.some(p => pathname === p || pathname.startsWith(p + "/"))) {
-      return response;
-    }
-    
-    debugLog('📧 [MIDDLEWARE] Email not verified - redirecting to verify-email');
-    return redirectWithCookies(response, new URL('/verify-email', request.url));
-  }
+  // 🎯 STATE A: Authenticated but email not verified - DISABLED for Verizon-style flow
+  // Email verification now happens post-login with modal, not middleware blocking
+  // if (!user.email_confirmed_at) {
+  //   const allowedPaths = ["/verify-email", "/login", "/register"];
+  //   if (allowedPaths.some(p => pathname === p || pathname.startsWith(p + "/"))) {
+  //     return response;
+  //   }
+  //   
+  //   debugLog('📧 [MIDDLEWARE] Email not verified - redirecting to verify-email');
+  //   return redirectWithCookies(response, new URL('/verify-email', request.url));
+  // }
 
   // 🚀 PERFORMANCE: Get user tenant status with caching for STATE B/C determination
   const userCacheKey = `user:${user.id}`;
