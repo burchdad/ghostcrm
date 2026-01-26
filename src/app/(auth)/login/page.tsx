@@ -11,7 +11,7 @@ import { getBaseDomain } from '@/lib/utils/environment';
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, isLoading } = useAuth();
+  const { user, supabaseUser, isLoading } = useAuth();
   const [successMessage, setSuccessMessage] = useState<string | undefined>();
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [verificationData, setVerificationData] = useState<{
@@ -52,14 +52,14 @@ export default function LoginPage() {
 
     if (user) {
       // Enhanced role-based routing with more specific paths
-      const userRole = user.user_metadata?.role || user.role || 'user';
+      const userRole = user.role || 'user';
       console.log('👤 [LoginPage] User role:', userRole);
       
       switch (userRole) {
         case 'software_owner':
-          // Check if user has an active subdomain
-          if (user.user_metadata?.subdomain) {
-            redirectPath = `https://${user.user_metadata.subdomain}.${baseDomain}/dashboard`;
+          // Check if user has an active subdomain (from user profile)
+          if (user.tenantId && user.tenantId !== 'default-org') {
+            redirectPath = `https://${user.tenantId}.${baseDomain}/dashboard`;
           } else {
             redirectPath = "/owner/dashboard"; // Software owner
           }
@@ -94,13 +94,13 @@ export default function LoginPage() {
       console.log('🔄 [LoginPage] Checking verification status for user:', user.email);
       
       // Check if user needs post-login verification
-      const needsVerification = user.user_metadata?.email_verification_pending === true;
+      const needsVerification = supabaseUser?.user_metadata?.email_verification_pending === true;
       
       if (needsVerification) {
         console.log('📧 [LoginPage] User needs post-login verification');
         setVerificationData({
           email: user.email || '',
-          firstName: user.user_metadata?.first_name || 'User'
+          firstName: supabaseUser?.user_metadata?.first_name || 'User'
         });
         setShowVerificationModal(true);
         return; // Don't redirect until verification is complete
@@ -109,7 +109,7 @@ export default function LoginPage() {
       // Proceed with normal redirect logic if verification not needed
       handlePostVerificationRedirect();
     }
-  }, [user, isLoading, router]);
+  }, [user, supabaseUser, isLoading, router]);
 
   // Emergency timeout to prevent infinite loading
   useEffect(() => {
