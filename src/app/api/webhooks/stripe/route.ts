@@ -567,20 +567,6 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
         type: 'activation_error',
         subdomain_id: subdomainRecord.id,
         subdomain_name: subdomainRecord.subdomain,
-          error: `HTTP ${response.status}: ${errorText}`,
-          retry_count: 0
-        });
-        
-        throw new Error(`DNS provisioning failed: ${response.status}`);
-      }
-    } catch (provisionError) {
-      console.error('❌ [STRIPE_WEBHOOK] Error provisioning subdomain DNS:', provisionError);
-      
-      // Create retry entry for failed DNS provisioning
-      await createRetryEntry({
-        type: 'dns_provisioning_error',
-        subdomain_id: subdomainRecord.id,
-        subdomain_name: subdomainRecord.subdomain,
         error: String(activationError),
         retry_count: 0
       });
