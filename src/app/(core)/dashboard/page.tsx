@@ -102,7 +102,6 @@ function DashboardContent() {
         console.error('Error checking software owner status:', error);
         // Fallback redirect to login for proper routing
         router.push('/login');
-        }
       }
     };
 
