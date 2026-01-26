@@ -525,79 +525,48 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
       console.warn('⚠️ [STRIPE_WEBHOOK] Error handling tenant membership:', membershipError);
     }
 
-    // CRITICAL: Call the subdomain provisioning API to set up DNS - must succeed
+    // CRITICAL: Instead of calling provision API (which creates new subdomains), 
+    // directly activate the existing subdomain since payment is successful
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai';
-      const response = await fetch(`${baseUrl}/api/subdomains/provision`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subdomain: subdomainRecord.subdomain,
-          organizationId: user.organization_id,
-          organizationName: subdomainRecord.organization_name,
-          ownerEmail: customerEmail,
-          autoProvision: true
+      console.log('🔄 [STRIPE_WEBHOOK] Activating existing subdomain after payment:', subdomainRecord.subdomain);
+      
+      // Simply mark the existing subdomain as active - no need for DNS provisioning API call
+      const { error: finalActivationError } = await supabaseAdmin
+        .from('subdomains')
+        .update({
+          status: 'active',
+          provisioned_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
-      });
-
-      if (response.ok) {
-        // DNS provisioning successful - mark subdomain as fully active
-        const { error: activationError } = await supabaseAdmin
-          .from('subdomains')
-          .update({
-            status: 'active',
-            provisioned_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', subdomainRecord.id);
-          
-        if (activationError) {
-          console.error('❌ [STRIPE_WEBHOOK] Failed to mark subdomain as active after DNS provisioning:', activationError);
-          throw new Error('Failed to activate subdomain after DNS setup');
-        }
+        .eq('id', subdomainRecord.id);
         
-        console.log('✅ [STRIPE_WEBHOOK] Subdomain fully activated with DNS:', subdomainRecord.subdomain);
-      } else if (response.status === 409) {
-        // Subdomain already exists - check if it's already active
-        console.log('ℹ️ [STRIPE_WEBHOOK] Subdomain already exists, checking if it\'s active:', subdomainRecord.subdomain);
-        
-        const { data: existingSubdomain } = await supabaseAdmin
-          .from('subdomains')
-          .select('status')
-          .eq('subdomain', subdomainRecord.subdomain)
-          .single();
-          
-        if (existingSubdomain?.status === 'active') {
-          console.log('✅ [STRIPE_WEBHOOK] Subdomain already active, no action needed:', subdomainRecord.subdomain);
-          
-          // Update the current record to active status just in case
-          const { error: activationError } = await supabaseAdmin
-            .from('subdomains')
-            .update({
-              status: 'active',
-              provisioned_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', subdomainRecord.id);
-            
-          if (activationError) {
-            console.warn('⚠️ [STRIPE_WEBHOOK] Could not update subdomain status, but continuing:', activationError);
-          }
-        } else {
-          // Subdomain exists but isn't active - this is an actual conflict
-          const errorText = await response.text();
-          console.error('❌ [STRIPE_WEBHOOK] Subdomain conflict - exists but not active:', errorText);
-          throw new Error(`Subdomain conflict: ${errorText}`);
-        }
-      } else {
-        const errorText = await response.text();
-        console.error('❌ [STRIPE_WEBHOOK] DNS provisioning failed:', response.status, errorText);
-        
-        // Keep subdomain in provisioning state and create retry entry
+      if (finalActivationError) {
+        console.error('❌ [STRIPE_WEBHOOK] Failed to mark subdomain as active after payment:', finalActivationError);
         await createRetryEntry({
-          type: 'dns_provisioning_failed',
+          type: 'final_activation_failed',
           subdomain_id: subdomainRecord.id,
-          subdomain_name: subdomainRecord.subdomain,
+          error: finalActivationError.message
+        });
+        return;
+      }
+      
+      console.log('✅ [STRIPE_WEBHOOK] Subdomain successfully activated after payment:', subdomainRecord.subdomain);
+      
+      // Optional: Send activation email to user
+      try {
+        // You could add email notification logic here if needed
+        console.log('📧 [STRIPE_WEBHOOK] Subdomain activation complete for:', customerEmail);
+      } catch (emailError) {
+        console.warn('⚠️ [STRIPE_WEBHOOK] Could not send activation email:', emailError);
+        // Don't fail the webhook for email issues
+      }
+      
+    } catch (activationError) {
+      console.error('❌ [STRIPE_WEBHOOK] Error during subdomain activation:', activationError);
+      await createRetryEntry({
+        type: 'activation_error',
+        subdomain_id: subdomainRecord.id,
+        subdomain_name: subdomainRecord.subdomain,
           error: `HTTP ${response.status}: ${errorText}`,
           retry_count: 0
         });
@@ -612,12 +581,12 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
         type: 'dns_provisioning_error',
         subdomain_id: subdomainRecord.id,
         subdomain_name: subdomainRecord.subdomain,
-        error: String(provisionError),
+        error: String(activationError),
         retry_count: 0
       });
       
-      // This is now critical - fail the webhook if DNS provisioning fails
-      throw provisionError;
+      // This is now critical - fail the webhook if activation fails
+      throw activationError;
     }
 
   } catch (error) {

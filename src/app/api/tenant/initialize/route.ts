@@ -63,14 +63,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create organization membership for the owner
+    // Create tenant membership for the owner
     const { error: membershipError } = await supabaseAdmin
-      .from('organization_memberships')
+      .from('tenant_memberships')
       .insert({
-        organization_id: organization.id,
+        tenant_id: organization.id,
         user_id: user.id,
         role: 'owner',
-        created_at: new Date().toISOString()
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       });
 
     if (membershipError) {
@@ -125,11 +127,11 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Check if user already has an organization
+    // Check if user already has a tenant membership
     const { data: membership } = await supabaseAdmin
-      .from('organization_memberships')
+      .from('tenant_memberships')
       .select(`
-        organization_id,
+        tenant_id,
         role,
         organizations!inner(
           id,

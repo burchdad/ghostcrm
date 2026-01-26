@@ -48,13 +48,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Fallback: Check organization_memberships table using user ID
-    console.log('🔍 [ORGANIZATION API] Fallback: Checking memberships for user:', user.id);
+    // Fallback: Check tenant_memberships table using user ID
+    console.log('🔍 [ORGANIZATION API] Fallback: Checking tenant memberships for user:', user.id);
     
     const { data: membership, error: membershipError } = await supabase
-      .from('organization_memberships')
+      .from('tenant_memberships')
       .select(`
-        organization_id,
+        tenant_id,
         organizations!inner (
           id,
           name,

@@ -174,10 +174,10 @@ async function handleSubdomainRouting(
     // 🔒 Check if user is a member of this organization (only if not cached)
     try {
       const { data: membershipData } = await supabase
-        .from('organization_memberships')
+        .from('tenant_memberships')
         .select('id, role, status')
         .eq('user_id', user.id)
-        .eq('organization_id', subdomainData.organization_id)
+        .eq('tenant_id', subdomainData.organization_id)
         .eq('status', 'active')
         .maybeSingle();
 
