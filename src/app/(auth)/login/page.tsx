@@ -39,9 +39,9 @@ export default function LoginPage() {
 
     // Check if we're on a subdomain
     if (currentHost !== baseDomain && currentHost.endsWith(`.${baseDomain}`)) {
-      // We're on a subdomain - redirect to subdomain's main page  
-      const redirectPath = "/";
-      console.log('🏢 [LoginPage] On subdomain - redirecting to:', redirectPath);
+      // We're on a subdomain - redirect to tenant dashboard
+      const redirectPath = "/tenant-owner/dashboard";
+      console.log('🏢 [LoginPage] On subdomain - redirecting to tenant dashboard:', redirectPath);
       router.push(redirectPath);
       return;
     }

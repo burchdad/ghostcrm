@@ -35,8 +35,11 @@ export async function POST(request: NextRequest) {
 
     // Verify code
     if (code !== storedCode) {
+      console.log(`❌ [VERIFY] Code mismatch - entered: "${code}", stored: "${storedCode}"`);
       return NextResponse.json({ error: 'Invalid verification code' }, { status: 400 });
     }
+
+    console.log(`✅ [VERIFY] Code verified successfully for user: ${user.email}`);
 
     // Mark email as verified and clear verification metadata
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {

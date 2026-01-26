@@ -49,7 +49,11 @@ export async function POST(request: NextRequest) {
       console.log(`📧 [VERIFICATION] Generated code ${verificationCode} for user ${user.email}`);
       console.log(`📧 [VERIFICATION] Code expires at: ${new Date(Date.now() + 10 * 60 * 1000).toISOString()}`);
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email/send-verification-code`, {
+      // Get the base URL for the email service
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                     (request.headers.get('host') ? `https://${request.headers.get('host')}` : 'http://localhost:3000');
+      
+      const response = await fetch(`${baseUrl}/api/email/send-verification-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
