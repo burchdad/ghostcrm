@@ -273,12 +273,13 @@ function TenantOwnerDashboard() {
 
   // Fetch owner-specific analytics
   useEffect(() => {
-    // Don't fetch analytics if user is not loaded or not an owner
-    if (!user || user.role !== 'owner') {
+    // Don't fetch analytics if user is not loaded
+    if (!user) {
+      console.log('🔍 [TENANT-DASHBOARD] No user, skipping analytics fetch');
       return;
     }
 
-    console.log('🔍 [TENANT-DASHBOARD] Starting analytics fetch, user loaded:', !!user);
+    console.log('🔍 [TENANT-DASHBOARD] Starting analytics fetch for user:', user.email, 'Role:', user.role);
     
     async function fetchOwnerAnalytics() {
       try {
@@ -566,9 +567,20 @@ function TenantOwnerDashboard() {
     );
   }
 
-  // Show access denied if not authenticated or not an owner
-  if (!user || user.role !== 'owner') {
-    return null;
+  // Show loading screen if user not loaded yet
+  if (!user) {
+    return (
+      <div className="tenant-dashboard-loading">
+        <div className="tenant-dashboard-loading-spinner">
+          <div className="tenant-dashboard-loading-ring"></div>
+          <div className="tenant-dashboard-loading-ring"></div>
+        </div>
+        <div className="tenant-dashboard-loading-text">
+          <h3 className="tenant-dashboard-loading-title">Loading User...</h3>
+          <p className="tenant-dashboard-loading-subtitle">Authenticating</p>
+        </div>
+      </div>
+    );
   }
 
   // Main dashboard render
