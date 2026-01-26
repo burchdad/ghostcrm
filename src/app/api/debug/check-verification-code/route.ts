@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServer } from '@/utils/supabase/server';
 
+// Force dynamic rendering
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/debug/check-verification-code
  * Debug endpoint to check what verification code is stored for the current user

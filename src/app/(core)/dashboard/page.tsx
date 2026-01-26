@@ -89,23 +89,10 @@ function DashboardContent() {
         const data = await response.json();
         
         if (!data.isSoftwareOwner) {
-          console.log('🔄 [DASHBOARD] User does not have software owner access, redirecting based on role:', user.role);
+          console.log('🔄 [DASHBOARD] User does not have software owner access, redirecting to login for proper role routing');
           
-          switch (user.role) {
-            case 'owner':
-              router.push('/tenant-owner/dashboard');
-              break;
-            case 'admin':
-            case 'manager':
-              router.push('/tenant-salesmanager/leads');
-              break;
-            case 'sales_rep':
-            case 'user':
-              router.push('/tenant-salesrep/leads');
-              break;
-            default:
-              router.push('/login');
-          }
+          // Instead of role-based redirects here, send to login which will handle proper routing
+          router.push('/login');
           return;
         }
         
@@ -113,11 +100,8 @@ function DashboardContent() {
         setOnboardingLoading(false);
       } catch (error) {
         console.error('Error checking software owner status:', error);
-        // Fallback redirect based on user role
-        if (user.role === 'owner') {
-          router.push('/tenant-owner/dashboard');
-        } else {
-          router.push('/login');
+        // Fallback redirect to login for proper routing
+        router.push('/login');
         }
       }
     };

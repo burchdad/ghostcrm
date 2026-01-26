@@ -48,7 +48,7 @@ export default function LoginPage() {
 
     // We're on main domain - redirect based on role
     console.log('🏠 [LoginPage] On main domain - checking role...');
-    let redirectPath = "/dashboard"; // Default fallback
+    let redirectPath = "/tenant-owner/dashboard"; // Default to tenant dashboard for all users
 
     if (user) {
       // Enhanced role-based routing with more specific paths
@@ -61,7 +61,7 @@ export default function LoginPage() {
           if (user.tenantId && user.tenantId !== 'default-org') {
             redirectPath = `https://${user.tenantId}.${baseDomain}/tenant-owner/dashboard`;
           } else {
-            redirectPath = "/owner/dashboard"; // Software owner
+            redirectPath = "/dashboard"; // Only software owners go to main dashboard
           }
           break;
         case 'owner':
@@ -69,7 +69,7 @@ export default function LoginPage() {
           redirectPath = "/tenant-owner/dashboard";
           break;
         case 'admin':
-          redirectPath = "/tenant-owner/dashboard"; // Changed from /dashboard
+          redirectPath = "/tenant-owner/dashboard";
           break;
         case 'manager':
           redirectPath = "/tenant-salesmanager/leads";
