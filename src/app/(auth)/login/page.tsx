@@ -102,6 +102,29 @@ export default function LoginPage() {
       // Immediate redirect without delay
       router.push(redirectPath);
     }
+  };
+
+  // Check if user needs post-login verification or redirect
+  useEffect(() => {
+    if (user && !isLoading) {
+      console.log('🔄 [LoginPage] Checking verification status for user:', user.email);
+      
+      // Check if user needs post-login verification
+      const needsVerification = user.user_metadata?.email_verification_pending === true;
+      
+      if (needsVerification) {
+        console.log('📧 [LoginPage] User needs post-login verification');
+        setVerificationData({
+          email: user.email || '',
+          firstName: user.user_metadata?.first_name || 'User'
+        });
+        setShowVerificationModal(true);
+        return; // Don't redirect until verification is complete
+      }
+      
+      // Proceed with normal redirect logic if verification not needed
+      handlePostVerificationRedirect();
+    }
   }, [user, isLoading, router]);
 
   // Emergency timeout to prevent infinite loading
