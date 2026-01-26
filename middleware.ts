@@ -122,7 +122,7 @@ async function handleSubdomainRouting(
   }
 
   // 🚨 FIX 2: Check public paths BEFORE doing DB lookup
-  const publicPaths = ["/login", "/register", "/about", "/pricing", "/tenant-not-found"];
+  const publicPaths = ["/login", "/register", "/about", "/pricing", "/tenant-not-found", "/verify-email"];
   if (publicPaths.some(p => pathname === p || pathname.startsWith(p + "/"))) {
     debugLog('📖 [MIDDLEWARE] Public tenant path - allowing access');
     return response;
@@ -164,6 +164,13 @@ async function handleSubdomainRouting(
     debugLog('❌ [MIDDLEWARE] No user - redirecting to subdomain login');
     const loginUrl = new URL(`/login?redirect=${encodeURIComponent(pathname)}`, request.url);
     return redirectWithCookies(response, loginUrl);
+  }
+
+  // 🎯 SUBDOMAIN EMAIL VERIFICATION: Check email verification for authenticated users
+  if (!user.email_confirmed_at) {
+    debugLog('📧 [MIDDLEWARE] Subdomain user email not verified - redirecting to verify-email');
+    const verifyUrl = new URL(`/verify-email?redirect=${encodeURIComponent(pathname)}`, request.url);
+    return redirectWithCookies(response, verifyUrl);
   }
 
   // � PERFORMANCE: Check cache for user membership

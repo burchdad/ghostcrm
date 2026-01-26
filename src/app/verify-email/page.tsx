@@ -38,7 +38,31 @@ export default function VerifyEmailPage() {
     ;(async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
-        if (user?.email_confirmed_at) router.push('/billing')
+        if (user?.email_confirmed_at) {
+          // Check if we're on a subdomain and redirect appropriately
+          const hostname = window.location.hostname
+          const isSubdomain = hostname !== 'localhost' && 
+                              hostname !== '127.0.0.1' && 
+                              hostname !== 'ghostcrm.ai' &&
+                              hostname !== 'www.ghostcrm.ai' &&
+                              (hostname.includes('.localhost') || 
+                               hostname.includes('.ghostcrm.ai') ||
+                               hostname.includes('.vercel.app'))
+          
+          // Get redirect parameter from URL if available
+          const redirectPath = searchParams.get('redirect')
+          
+          if (isSubdomain && redirectPath) {
+            // Redirect to the intended path on the subdomain
+            router.push(redirectPath)
+          } else if (isSubdomain) {
+            // Default subdomain dashboard
+            router.push('/dashboard')
+          } else {
+            // Main domain - go to billing
+            router.push('/billing')
+          }
+        }
       } finally {
         setLoading(false)
       }
