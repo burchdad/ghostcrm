@@ -166,12 +166,14 @@ function TenantOwnerDashboard() {
   useEffect(() => {
     if (!user) {
       setOnboardingLoading(false);
+      setLoading(false); // Also clear main loading
       return;
     }
 
     console.log('✅ [TENANT-DASHBOARD] User authenticated:', user.email, 'Role:', user.role);
     // Trust the auth system - if they're here, they should be here
     setOnboardingLoading(false);
+    setLoading(false); // Clear main loading state
   }, [user]);
 
   // Allow access for all authenticated users - trust the auth system
