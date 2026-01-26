@@ -590,17 +590,14 @@ function TenantOwnerDashboard() {
   // Main dashboard render
   return (
     <>
-      {/* Sidebar */}
+      {/* Sidebar - Left navigation menu */}
       <Sidebar />
       
-      {/* Global Floating Buttons */}
-      <GlobalCollaborationButton />
-      <QuickAddButton />
-      <GlobalAIAssistant />
-      
       <div className="tenant-dashboard-container">
-        {/* Mobile Floating Navigation - Only shown on mobile */}
-        <MobileFloatingNavigation />
+        {/* Mobile Floating Navigation - Only shown on mobile screens */}
+        <div className="md:hidden">
+          <MobileFloatingNavigation />
+        </div>
 
       <div className="tenant-dashboard-content">
         {/* GM Metrics Cards - Horizontal Layout */}
@@ -1236,6 +1233,15 @@ function TenantOwnerDashboard() {
       
       {/* Metrics Customization Modal */}
       <MetricsCustomizationModal />
+
+      {/* Global Floating Buttons - Bottom-left corner, desktop only */}
+      <div className="hidden md:block">
+        <div className="fixed bottom-4 left-4 z-50 flex flex-col gap-3">
+          <GlobalCollaborationButton />
+          <QuickAddButton />
+          <GlobalAIAssistant />
+        </div>
+      </div>
     </>
   );
 }
