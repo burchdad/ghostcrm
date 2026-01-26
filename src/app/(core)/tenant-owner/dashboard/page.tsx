@@ -170,8 +170,10 @@ function TenantOwnerDashboard() {
         return;
       }
 
-      // Only owners should be on this dashboard
-      if (user.role !== 'owner') {
+      // Allow tenant owners and admins on this dashboard
+      const allowedRoles = ['owner', 'admin', 'user', 'manager', 'sales_rep'];
+      if (!allowedRoles.includes(user.role)) {
+        console.log('🚨 [TENANT-DASHBOARD] User role not allowed:', user.role);
         router.push('/dashboard');
         return;
       }
@@ -183,16 +185,16 @@ function TenantOwnerDashboard() {
     checkOnboardingStatus();
   }, [user, router]);
 
-  // Redirect non-owners to regular dashboard
+  // Allow access for tenant users - remove restrictive redirect
   useEffect(() => {
-    // Redirect check effect - silent mode
+    // Remove redirect check - allow all authenticated users on subdomain
+    // The middleware handles proper access control
     
-    // Only redirect if auth is ready and we have a user who is not an owner
-    if (!loading && !isLoading && user && user.role !== 'owner') {
-      console.log('🔄 [TENANT-DASHBOARD] Redirecting non-owner to dashboard');
-      router.push('/dashboard');
+    if (!loading && !isLoading && user) {
+      console.log('✅ [TENANT-DASHBOARD] User authenticated with role:', user.role);
+      // Allow access - no redirect needed
     }
-  }, [user, loading, router, isLoading]);
+  }, [user, loading, isLoading]);
 
   // Navigation handlers for metric cards
   const handleRevenueClick = () => {
