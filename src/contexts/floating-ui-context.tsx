@@ -43,13 +43,13 @@ export function FloatingUIProvider({ children }: { children: React.ReactNode }) 
     const isPublicPage = hideOnPages.includes(pathname);
     const isMarketingPage = pathname.includes('/marketing');
     const isNotAuthenticated = !isAuthenticated;
-    const hasNoTenantContext = !user?.tenantId; // Must have tenant context
+    const hasNoTenantContext = !user?.tenantId && !user?.organizationId; // Must have tenant or organization context
     
     // Only show if:
     // 1. Not on public/marketing/auth pages
     // 2. User is authenticated
-    // 3. User has tenant context (tenantId)
-    const shouldShow = !isPublicPage && !isMarketingPage && isAuthenticated && !!user?.tenantId;
+    // 3. User has tenant context (tenantId or organizationId)
+    const shouldShow = !isPublicPage && !isMarketingPage && isAuthenticated && (!!user?.tenantId || !!user?.organizationId);
     
     return shouldShow;
   }, [pathname, isAuthenticated, user?.tenantId]);

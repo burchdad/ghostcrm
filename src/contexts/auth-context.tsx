@@ -179,6 +179,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Bootstrap only when we have a real token (prevents half-initialized session calls)
       console.log('🚀 [Auth] Calling ensureProfileBootstrapped...');
       await ensureProfileBootstrapped(accessToken);
+      
+      console.log('🔄 [Auth] Bootstrap completed, refreshing profile data...');
+      
+      // Small delay to ensure bootstrap write completes
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Then fetch with maybeSingle to prevent 406 errors
       console.log('📊 [Auth] Querying profiles table...');
