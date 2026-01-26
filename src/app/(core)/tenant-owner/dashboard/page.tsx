@@ -162,37 +162,22 @@ function TenantOwnerDashboard() {
     disable: []
   });
 
-  // Onboarding guard for tenant owners
+  // Simplified - trust the auth system, no redirects
   useEffect(() => {
-    async function checkOnboardingStatus() {
-      if (!user) {
-        setOnboardingLoading(false);
-        return;
-      }
-
-      // Allow tenant owners and admins on this dashboard
-      const allowedRoles = ['owner', 'admin', 'user', 'manager', 'sales_rep'];
-      if (!allowedRoles.includes(user.role)) {
-        console.log('🚨 [TENANT-DASHBOARD] User role not allowed:', user.role);
-        router.push('/dashboard');
-        return;
-      }
-
-      // Allow access to dashboard
+    if (!user) {
       setOnboardingLoading(false);
+      return;
     }
 
-    checkOnboardingStatus();
-  }, [user, router]);
+    console.log('✅ [TENANT-DASHBOARD] User authenticated:', user.email, 'Role:', user.role);
+    // Trust the auth system - if they're here, they should be here
+    setOnboardingLoading(false);
+  }, [user]);
 
-  // Allow access for tenant users - remove restrictive redirect
+  // Allow access for all authenticated users - trust the auth system
   useEffect(() => {
-    // Remove redirect check - allow all authenticated users on subdomain
-    // The middleware handles proper access control
-    
     if (!loading && !isLoading && user) {
-      console.log('✅ [TENANT-DASHBOARD] User authenticated with role:', user.role);
-      // Allow access - no redirect needed
+      console.log('✅ [TENANT-DASHBOARD] Dashboard access granted for:', user.email);
     }
   }, [user, loading, isLoading]);
 

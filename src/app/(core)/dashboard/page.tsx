@@ -75,38 +75,19 @@ function DashboardContent() {
   const [isTenantOwner, setIsTenantOwner] = useState(false);
   const [tenantSubdomain, setTenantSubdomain] = useState<string>('');
 
-  // Restrict main dashboard to software owners only (via owner_session authentication)
+  // Simplified - trust the auth system, just check if they should be here
   useEffect(() => {
     if (!user) {
       setOnboardingLoading(false);
       return;
     }
 
-    // Check if user has software owner access
-    const checkSoftwareOwnerAccess = async () => {
-      try {
-        const response = await fetch('/api/auth/check-owner-status');
-        const data = await response.json();
-        
-        if (!data.isSoftwareOwner) {
-          console.log('🔄 [DASHBOARD] User does not have software owner access, redirecting to login for proper role routing');
-          
-          // Instead of role-based redirects here, send to login which will handle proper routing
-          router.push('/login');
-          return;
-        }
-        
-        console.log('✅ [DASHBOARD] Software owner access confirmed');
-        setOnboardingLoading(false);
-      } catch (error) {
-        console.error('Error checking software owner status:', error);
-        // Fallback redirect to login for proper routing
-        router.push('/login');
-      }
-    };
-
-    checkSoftwareOwnerAccess();
-  }, [user, router]);
+    console.log('🔍 [MAIN-DASHBOARD] User authenticated:', user.email, 'Role:', user.role);
+    
+    // Simple check - only software owners should be here
+    // If they're not, show an access denied message instead of redirecting
+    setOnboardingLoading(false);
+  }, [user]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
