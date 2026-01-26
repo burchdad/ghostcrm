@@ -107,6 +107,9 @@ function sanitizeErrorForClient(e: any) {
     if (msg.toLowerCase().includes("invalid subdomain")) return { error: msg };
     if (msg.toLowerCase().includes("invalid email")) return { error: "Invalid email format" };
     if (msg.toLowerCase().includes("already exists")) return { error: "An account with this email already exists" };
+    if (msg.toLowerCase().includes("subdomain") && msg.toLowerCase().includes("unique")) {
+      return { error: "Registration temporarily unavailable. Please try again in a moment." };
+    }
     return { error: "Registration failed. Please try again." };
   }
   return { error: msg };
@@ -218,18 +221,56 @@ async function registerHandler(req: Request) {
       subdomainName = generateBaseSubdomain(body, authUserId);
       console.log('[REGISTER] Generated subdomain:', subdomainName);
       
-      // Check if subdomain already exists
-      const { data: existingSubdomain } = await supabaseAdmin
-        .from('subdomains')
-        .select('subdomain')
-        .eq('subdomain', subdomainName)
-        .single();
+      // Check if subdomain already exists in BOTH tables
+      const [subdomainCheck, organizationCheck] = await Promise.all([
+        supabaseAdmin
+          .from('subdomains')
+          .select('subdomain')
+          .eq('subdomain', subdomainName)
+          .single(),
+        supabaseAdmin
+          .from('organizations')
+          .select('subdomain')
+          .eq('subdomain', subdomainName)
+          .single()
+      ]);
         
-      if (existingSubdomain) {
+      if (subdomainCheck.data || organizationCheck.data) {
         // Generate a unique subdomain by appending random chars
-        const randomSuffix = Math.random().toString(36).substring(2, 6);
-        subdomainName = `${subdomainName}-${randomSuffix}`;
-        console.log('[REGISTER] Subdomain exists, using unique name:', subdomainName);
+        let attempts = 0;
+        let isUnique = false;
+        
+        while (!isUnique && attempts < 10) {
+          const randomSuffix = Math.random().toString(36).substring(2, 6);
+          const candidateSubdomain = `${subdomainName}-${randomSuffix}`;
+          
+          const [newSubdomainCheck, newOrganizationCheck] = await Promise.all([
+            supabaseAdmin
+              .from('subdomains')
+              .select('subdomain')
+              .eq('subdomain', candidateSubdomain)
+              .single(),
+            supabaseAdmin
+              .from('organizations')
+              .select('subdomain')
+              .eq('subdomain', candidateSubdomain)
+              .single()
+          ]);
+          
+          if (!newSubdomainCheck.data && !newOrganizationCheck.data) {
+            subdomainName = candidateSubdomain;
+            isUnique = true;
+            console.log('[REGISTER] Generated unique subdomain:', subdomainName);
+          }
+          
+          attempts++;
+        }
+        
+        if (!isUnique) {
+          // Fallback to timestamp-based naming
+          subdomainName = `org-${authUserId.slice(0, 8)}-${Date.now()}`;
+          console.log('[REGISTER] Using timestamp fallback subdomain:', subdomainName);
+        }
       }
       
       // Create organization record
@@ -247,11 +288,42 @@ async function registerHandler(req: Request) {
         
       if (orgError || !newOrg) {
         console.error('[REGISTER] Failed to create organization:', orgError);
-        throw new Error('Failed to create organization');
+        
+        // Check if it's a subdomain uniqueness violation
+        const isSubdomainConflict = orgError?.code === '23505' && 
+          (orgError?.message?.includes('subdomain') || orgError?.message?.includes('organizations_subdomain_key'));
+        
+        if (isSubdomainConflict) {
+          // Retry with a timestamp-based unique subdomain
+          const fallbackSubdomain = `org-${authUserId.slice(0, 8)}-${Date.now()}`;
+          console.log('[REGISTER] Subdomain conflict, retrying with fallback:', fallbackSubdomain);
+          
+          const { data: retryOrg, error: retryError } = await supabaseAdmin
+            .from('organizations')
+            .insert({
+              name: orgName,
+              subdomain: fallbackSubdomain,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .select('id')
+            .single();
+            
+          if (retryError || !retryOrg) {
+            console.error('[REGISTER] Retry failed:', retryError);
+            throw new Error('Failed to create organization with unique subdomain');
+          }
+          
+          organizationId = retryOrg.id;
+          subdomainName = fallbackSubdomain;
+          console.log('[REGISTER] Retry succeeded:', { id: organizationId, subdomain: subdomainName });
+        } else {
+          throw new Error('Failed to create organization');
+        }
+      } else {
+        organizationId = newOrg.id;
+        console.log('[REGISTER] Created organization:', { id: organizationId, name: orgName, subdomain: subdomainName });
       }
-      
-      organizationId = newOrg.id;
-      console.log('[REGISTER] Created organization:', { id: organizationId, name: orgName, subdomain: subdomainName });
       
       // Create pending subdomain record
       const { error: subdomainError } = await supabaseAdmin
@@ -268,10 +340,20 @@ async function registerHandler(req: Request) {
         
       if (subdomainError) {
         console.error('[REGISTER] Failed to create subdomain record:', subdomainError);
-        throw new Error('Failed to create subdomain record');
+        
+        // Check if it's a subdomain uniqueness violation
+        const isSubdomainConflict = subdomainError?.code === '23505' && 
+          subdomainError?.message?.includes('subdomain');
+        
+        if (isSubdomainConflict) {
+          console.warn('[REGISTER] Subdomain record already exists, continuing with organization creation');
+          // Don't fail registration - the important part (organization) is created
+        } else {
+          throw new Error('Failed to create subdomain record');
+        }
+      } else {
+        console.log('[REGISTER] Created pending subdomain record:', { subdomain: subdomainName, status: 'pending' });
       }
-      
-      console.log('[REGISTER] Created pending subdomain record:', { subdomain: subdomainName, status: 'pending' });
       
       // Update user record with organization_id
       const { error: userUpdateError } = await supabaseAdmin
