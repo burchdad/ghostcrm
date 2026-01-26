@@ -40,7 +40,7 @@ export default function TestManualActivation() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ userEmail: email }),
       })
       
       const data = await response.json()

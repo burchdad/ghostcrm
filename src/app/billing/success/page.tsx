@@ -86,16 +86,23 @@ function SuccessContent() {
         if (userEmail) {
           try {
             const subdomainResponse = await fetch('/api/subdomains/status', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ userEmail }),
               credentials: 'include'
             })
             
             if (subdomainResponse.ok) {
               const subdomainData = await subdomainResponse.json()
-              if (subdomainData.success) {
-                userSubdomain = subdomainData.subdomain
-                subdomainStatus = subdomainData.status || 'pending'
+              if (subdomainData.success && subdomainData.subdomain) {
+                userSubdomain = subdomainData.subdomain.subdomain
+                subdomainStatus = subdomainData.subdomain.status || 'pending'
                 isSubdomainActivated = subdomainStatus === 'active'
               }
+            } else {
+              console.log('No subdomain found for user:', userEmail)
             }
           } catch (error) {
             console.error('Error fetching subdomain status:', error)
@@ -120,19 +127,21 @@ function SuccessContent() {
           isSubdomainActivated: isSubdomainActivated
         })
         
-        // If subdomain is already active, redirect immediately
+        // If subdomain is already active, don't auto-redirect immediately 
+        // Instead, show the success page and let user manually navigate
         if (isSubdomainActivated && userSubdomain && !isSoftwareOwner && !usedSoftwareOwnerPromo) {
-          console.log('🚀 Subdomain already active - immediate redirect to:', userSubdomain);
-          const baseDomain = getBaseDomain();
-          setTimeout(() => {
-            try {
-              sessionStorage.removeItem('auth_error');
-              localStorage.removeItem('auth_redirect_pending');
-            } catch (e) {
-              // Ignore storage errors
-            }
-            window.location.href = `${window.location.protocol}//${userSubdomain}.${baseDomain}/login`;
-          }, 1500); // Short delay to show success message
+          console.log('🚀 Subdomain already active - showing success page with manual navigation option:', userSubdomain);
+          setSuccessData({
+            sessionId: sessionId || undefined,
+            promoCode: promoCode || undefined,
+            isSoftwareOwner: isSoftwareOwner || usedSoftwareOwnerPromo,
+            shouldStartOnboarding,
+            userSubdomain: userSubdomain || undefined,
+            processed: true,
+            gatewayError: false,
+            subdomainStatus: subdomainStatus as any,
+            isSubdomainActivated: isSubdomainActivated
+          });
           return;
         }
         
@@ -149,19 +158,22 @@ function SuccessContent() {
             
             try {
               const statusResponse = await fetch('/api/subdomains/status', {
-                credentials: 'include',
+                method: 'POST',
                 headers: {
+                  'Content-Type': 'application/json',
                   'Cache-Control': 'no-cache',
                   'X-Webhook-Poll': attempts.toString()
-                }
+                },
+                body: JSON.stringify({ userEmail }),
+                credentials: 'include'
               });
               
               if (statusResponse.ok) {
                 const statusResult = await statusResponse.json();
                 
-                if (statusResult.success && statusResult.status === 'active') {
+                if (statusResult.success && statusResult.subdomain && statusResult.subdomain.status === 'active') {
                   console.log('✅ Webhook activation confirmed!');
-                  const activatedSubdomain = statusResult.subdomain;
+                  const activatedSubdomain = statusResult.subdomain.subdomain;
                   
                   setSuccessData(prev => ({
                     ...prev,
@@ -170,18 +182,8 @@ function SuccessContent() {
                     userSubdomain: activatedSubdomain
                   }));
                   
-                  // Auto-redirect to subdomain login page after activation
-                  const baseDomain = getBaseDomain();
-                  console.log(`🚀 Auto-redirecting to: ${activatedSubdomain}.${baseDomain}/login`);
-                  setTimeout(() => {
-                    try {
-                      sessionStorage.removeItem('auth_error');
-                      localStorage.removeItem('auth_redirect_pending');
-                    } catch (e) {
-                      // Ignore storage errors
-                    }
-                    window.location.href = `${window.location.protocol}//${activatedSubdomain}.${baseDomain}/login`;
-                  }, 2000);
+                  // Don't auto-redirect - let user click the button when ready
+                  console.log(`✅ Subdomain activated - user can now navigate to: ${activatedSubdomain}.${getBaseDomain()}/login`);
                   
                   return;
                 }
@@ -260,6 +262,11 @@ function SuccessContent() {
       if (result.success) {
         // Refresh the subdomain status
         const statusResponse = await fetch('/api/subdomains/status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userEmail }),
           credentials: 'include'
         })
         const statusResult = await statusResponse.json()
@@ -267,9 +274,9 @@ function SuccessContent() {
         if (statusResult.success && statusResult.subdomain) {
           setSuccessData(prev => ({
             ...prev,
-            subdomainStatus: statusResult.status,
-            isSubdomainActivated: statusResult.status === 'active',
-            userSubdomain: statusResult.subdomain
+            subdomainStatus: statusResult.subdomain.status,
+            isSubdomainActivated: statusResult.subdomain.status === 'active',
+            userSubdomain: statusResult.subdomain.subdomain
           }))
         }
         
