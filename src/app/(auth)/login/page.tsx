@@ -26,58 +26,42 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
-  // Check if user needs post-login verification
-  useEffect(() => {
-    if (user && !isLoading) {
-      console.log('🔄 [LoginPage] Checking verification status for user:', user.email);
-      
-      // Check if user needs post-login verification
-      const needsVerification = user.user_metadata?.email_verification_pending === true;
-      
-      if (needsVerification) {
-        console.log('📧 [LoginPage] User needs post-login verification');
-        setVerificationData({
-          email: user.email || '',
-          firstName: user.user_metadata?.first_name || 'User'
-        });
-        setShowVerificationModal(true);
-        return; // Don't redirect until verification is complete
-      }
-      
-      // Proceed with normal redirect logic if verification not needed
-      handlePostVerificationRedirect();
-    }
-  }, [user, isLoading]);
-
+  // Helper function to handle redirect after verification is complete
   const handlePostVerificationRedirect = () => {
     if (!user) return;
+
+    console.log('🎯 [LoginPage] handlePostVerificationRedirect called for user:', user.email);
     
-    console.log('🔄 [LoginPage] Redirecting authenticated user:', user.email, 'Role:', user.role);
+    const currentHost = window.location.hostname;
+    const baseDomain = getBaseDomain();
     
-    // Simple role-based redirect - eliminate complex detection logic
-    let redirectPath = "/dashboard"; // default
-    
-    switch (user.role) {
-      case 'owner':
-        // Check if we're on a tenant subdomain or if this is a tenant owner
-        const hostname = window.location.hostname;
-        const baseDomain = getBaseDomain();
-        const isSubdomain = hostname !== 'localhost' && 
-                            hostname !== '127.0.0.1' && 
-                            hostname !== baseDomain &&
-                            (hostname.includes('.localhost') || 
-                             hostname.includes('.ghostcrm.ai') ||
-                             hostname.includes('.vercel.app'));
-        
-        // For development: if user has tenant_id or is known tenant owner email, redirect to tenant dashboard
-        const isTenantOwner = user.tenantId || user.email === 'burchsl4@gmail.com';
-        
-        console.log('🔍 [LoginPage] Owner detection:', { hostname, baseDomain, isSubdomain, isTenantOwner, tenantId: user.tenantId });
-        
-        if (isSubdomain || isTenantOwner) {
-          redirectPath = "/tenant-owner/dashboard";
-        } else {
-          redirectPath = "/owner/dashboard"; // Software owner
+    console.log('🌐 [LoginPage] Current host:', currentHost, 'Base domain:', baseDomain);
+
+    // Check if we're on a subdomain
+    if (currentHost !== baseDomain && currentHost.endsWith(`.${baseDomain}`)) {
+      // We're on a subdomain - redirect to subdomain's main page  
+      const redirectPath = "/";
+      console.log('🏢 [LoginPage] On subdomain - redirecting to:', redirectPath);
+      router.push(redirectPath);
+      return;
+    }
+
+    // We're on main domain - redirect based on role
+    console.log('🏠 [LoginPage] On main domain - checking role...');
+    let redirectPath = "/dashboard"; // Default fallback
+
+    if (user) {
+      // Enhanced role-based routing with more specific paths
+      const userRole = user.user_metadata?.role || user.role || 'user';
+      console.log('👤 [LoginPage] User role:', userRole);
+      
+      switch (userRole) {
+        case 'software_owner':
+          // Check if user has an active subdomain
+          if (user.user_metadata?.subdomain) {
+            redirectPath = `https://${user.user_metadata.subdomain}.${baseDomain}/dashboard`;
+          } else {
+            redirectPath = "/owner/dashboard"; // Software owner
           }
           break;
         case 'admin':
@@ -104,7 +88,7 @@ export default function LoginPage() {
     }
   };
 
-  // Check if user needs post-login verification or redirect
+  // Check if user needs post-login verification
   useEffect(() => {
     if (user && !isLoading) {
       console.log('🔄 [LoginPage] Checking verification status for user:', user.email);
@@ -140,40 +124,6 @@ export default function LoginPage() {
 
     return () => clearTimeout(emergencyTimeout);
   }, [isLoading]);
-
-  // Show loading spinner while auth is initializing
-  if (isLoading) {
-    console.log('⏳ [LoginPage] Showing loading state');
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0c0c1e 0%, #1a1a2e 35%, #16213e 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'white'
-      }}>
-        <div style={{
-          textAlign: 'center',
-          fontSize: '18px'
-        }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            border: '4px solid rgba(255,255,255,0.1)',
-            borderTop: '4px solid #8b5cf6',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 16px auto'
-          }}></div>
-          Loading...
-          <div style={{ fontSize: '14px', marginTop: '8px', opacity: 0.7 }}>
-            If this takes too long, please refresh the page
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Helper function to handle redirect after verification is complete
   const handleVerificationComplete = () => {
