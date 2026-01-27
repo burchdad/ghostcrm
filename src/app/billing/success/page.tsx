@@ -1,60 +1,40 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { useRouter } from 'next/navigation'
-import { CheckCircle } from 'lucide-react'
+import { 
+  CheckCircle, 
+  Mail, 
+  Star, 
+  Users, 
+  Car, 
+  BarChart3, 
+  MessageSquare, 
+  Calendar, 
+  Target, 
+  Zap,
+  Shield,
+  Smartphone,
+  Globe,
+  TrendingUp,
+  Clock,
+  Award,
+  ArrowRight,
+  ExternalLink
+} from 'lucide-react'
 import './page.css'
 
-// Get base domain based on environment
-const getBaseDomain = (): string => {
-  if (typeof window === 'undefined') return 'ghostcrm.ai'
-  
-  const hostname = window.location.hostname
-  
-  if (hostname === 'localhost') {
-    return 'localhost:3000'
-  }
-  
-  if (hostname.includes('vercel.app')) {
-    return hostname.includes('.') ? hostname.split('.').slice(-2).join('.') : 'ghostcrm.ai'
-  }
-  
-  return 'ghostcrm.ai'
-}
-
 function SuccessContent() {
-  const router = useRouter()
-  const [countdown, setCountdown] = useState(5)
   const [userSubdomain, setUserSubdomain] = useState<string | null>(null)
-  const [isSoftwareOwner, setIsSoftwareOwner] = useState(false)
+  const [planType, setPlanType] = useState<string>('Professional')
 
   useEffect(() => {
     async function initializeSuccess() {
       try {
-        // Get auth info to check user type
+        // Get auth info and subdomain
         const authResponse = await fetch('/api/auth/me')
         const authData = await authResponse.json()
-        const isOwner = authData.user?.email === 'andrei@budisteanu.net'
         const userEmail = authData.user?.email
         
-        setIsSoftwareOwner(isOwner)
-        
-        if (isOwner) {
-          // Software owner redirect
-          const timer = setInterval(() => {
-            setCountdown((prev) => {
-              if (prev <= 1) {
-                clearInterval(timer)
-                router.push('/owner/dashboard')
-                return 0
-              }
-              return prev - 1
-            })
-          }, 1000)
-          return
-        }
-        
-        // Regular user - get their subdomain
         if (userEmail) {
           try {
             const subdomainResponse = await fetch('/api/subdomains/status', {
@@ -75,86 +55,200 @@ function SuccessContent() {
           }
         }
         
-        // Start countdown for redirect
-        const timer = setInterval(() => {
-          setCountdown((prev) => {
-            if (prev <= 1) {
-              clearInterval(timer)
-              if (userSubdomain) {
-                window.location.href = `https://${userSubdomain}.${getBaseDomain()}/login`
-              } else {
-                router.push('/login')
-              }
-              return 0
-            }
-            return prev - 1
-          })
-        }, 1000)
-        
       } catch (error) {
         console.error('Success page initialization error:', error)
       }
     }
 
     initializeSuccess()
-  }, [router, userSubdomain])
+  }, [])
 
   return (
     <div className="success-container">
-      <div className="success-card">
-        <div className="success-header">
-          <div className="success-icon">
-            <CheckCircle className="check-icon" />
-          </div>
-          <h2 className="success-title">🎉 Payment Successful!</h2>
-          <p className="success-subtitle">
-            {isSoftwareOwner ? (
-              'Welcome back! Redirecting to your owner dashboard...'
-            ) : (
-              <>
-                Thank you for subscribing to GhostCRM!
-                <br />
-                <strong>📧 Check your email</strong> for your welcome guide with login instructions and next steps.
-              </>
-            )}
-          </p>
+      {/* Header Section */}
+      <div className="success-header-section">
+        <div className="success-icon-large">
+          <CheckCircle className="check-icon-large" />
         </div>
-
-        <div className="redirect-card">
-          <div className="redirect-info">
-            <h3 style={{ margin: '0 0 10px 0', color: '#374151' }}>
-              {isSoftwareOwner ? '🚀 Redirecting to Dashboard' : '🔑 Redirecting to Login'}
-            </h3>
-            <p style={{ margin: '0 0 15px 0', color: '#6b7280' }}>
-              {isSoftwareOwner ? (
-                'Taking you to your owner dashboard...'
-              ) : userSubdomain ? (
-                <>Taking you to <strong>{userSubdomain}.ghostcrm.ai</strong></>
-              ) : (
-                'Taking you to your login page...'
-              )}
+        <h1 className="success-main-title">🎉 Welcome to GhostCRM!</h1>
+        <h2 className="success-subtitle">Your {planType} Plan is Now Active</h2>
+        
+        {/* Email Check Notice */}
+        <div className="email-check-notice">
+          <div className="email-icon">
+            <Mail className="mail-icon" />
+          </div>
+          <div className="email-content">
+            <h3>📧 Check Your Email Now!</h3>
+            <p>
+              We've sent you a <strong>comprehensive welcome email</strong> containing:
             </p>
-            <div className="countdown">
-              <span className="countdown-number">{countdown}</span>
-              <span className="countdown-text">seconds</span>
+            <ul>
+              <li>🔗 Your personalized subdomain login link{userSubdomain ? ` (${userSubdomain}.ghostcrm.ai)` : ''}</li>
+              <li>📚 Complete getting started guide</li>
+              <li>💡 Pro tips from automotive CRM experts</li>
+              <li>📞 Direct contact information for your setup specialist</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* What You Can Do Section */}
+      <div className="features-showcase">
+        <h2 className="features-title">🚀 Here's What You Can Do Right Now</h2>
+        
+        <div className="features-grid">
+          {/* Lead Management */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <Target className="icon" />
+            </div>
+            <h3>Smart Lead Management</h3>
+            <ul>
+              <li>Capture leads from 15+ sources automatically</li>
+              <li>AI-powered lead scoring and prioritization</li>
+              <li>Automatic follow-up sequences</li>
+              <li>Hot lead alerts via SMS/Email</li>
+            </ul>
+          </div>
+
+          {/* Inventory Management */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <Car className="icon" />
+            </div>
+            <h3>Vehicle Inventory</h3>
+            <ul>
+              <li>Track up to 2,000 vehicles in your inventory</li>
+              <li>Automatic VIN decoding and specifications</li>
+              <li>Photo management and virtual tours</li>
+              <li>Pricing intelligence and market analysis</li>
+            </ul>
+          </div>
+
+          {/* Team Collaboration */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <Users className="icon" />
+            </div>
+            <h3>Team Management</h3>
+            <ul>
+              <li>Add up to 25 team members</li>
+              <li>Role-based permissions and access control</li>
+              <li>Performance tracking and leaderboards</li>
+              <li>Commission calculations and reporting</li>
+            </ul>
+          </div>
+
+          {/* Analytics & Reporting */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <BarChart3 className="icon" />
+            </div>
+            <h3>Advanced Analytics</h3>
+            <ul>
+              <li>Real-time sales performance dashboards</li>
+              <li>ROI tracking and conversion analytics</li>
+              <li>Customer journey mapping</li>
+              <li>Automated daily/weekly reports</li>
+            </ul>
+          </div>
+
+          {/* Communication Hub */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <MessageSquare className="icon" />
+            </div>
+            <h3>Omnichannel Communication</h3>
+            <ul>
+              <li>Unified inbox for SMS, Email, Chat</li>
+              <li>AI-powered response suggestions</li>
+              <li>Automated appointment scheduling</li>
+              <li>Customer communication history</li>
+            </ul>
+          </div>
+
+          {/* Mobile Access */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <Smartphone className="icon" />
+            </div>
+            <h3>Mobile CRM Access</h3>
+            <ul>
+              <li>Full-featured mobile app for iOS/Android</li>
+              <li>Offline mode for lot walks and test drives</li>
+              <li>Photo capture and document scanning</li>
+              <li>Push notifications for urgent leads</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Next Steps Section */}
+      <div className="next-steps-section">
+        <h2 className="next-steps-title">🎯 Your Next Steps</h2>
+        
+        <div className="steps-grid">
+          <div className="step-card">
+            <div className="step-number">1</div>
+            <div className="step-content">
+              <h3>Check Your Email</h3>
+              <p>Open the welcome email we just sent you. It contains your login link and getting started checklist.</p>
             </div>
           </div>
           
-          {!isSoftwareOwner && (
-            <div style={{ 
-              background: '#f0f9ff', 
-              border: '1px solid #0ea5e9', 
-              borderRadius: '8px', 
-              padding: '15px', 
-              marginTop: '20px',
-              fontSize: '14px',
-              color: '#0c4a6e'
-            }}>
-              <strong>💌 Don't miss your welcome email!</strong>
-              <br />
-              It contains your complete getting started guide, pro tips, and support information.
+          <div className="step-card">
+            <div className="step-number">2</div>
+            <div className="step-content">
+              <h3>Access Your CRM</h3>
+              <p>Click the link in your email to access your personalized CRM at {userSubdomain ? `${userSubdomain}.ghostcrm.ai` : 'your custom subdomain'}.</p>
             </div>
-          )}
+          </div>
+          
+          <div className="step-card">
+            <div className="step-number">3</div>
+            <div className="step-content">
+              <h3>Schedule Your Setup Call</h3>
+              <p>Book a 30-minute onboarding call with your dedicated setup specialist (included in your plan).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Guarantee Section */}
+      <div className="guarantee-section">
+        <div className="guarantee-content">
+          <div className="guarantee-icon">
+            <Shield className="shield-icon" />
+          </div>
+          <div>
+            <h3>30-Day Money-Back Guarantee</h3>
+            <p>Not satisfied? Get a full refund within 30 days, no questions asked. We're confident you'll love GhostCRM!</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Support Section */}
+      <div className="support-section">
+        <h3>Need Help Getting Started?</h3>
+        <div className="support-options">
+          <button className="support-btn primary">
+            <MessageSquare className="btn-icon" />
+            Live Chat Support
+          </button>
+          <button className="support-btn secondary">
+            <Calendar className="btn-icon" />
+            Schedule Setup Call
+          </button>
+          <a 
+            href={userSubdomain ? `https://${userSubdomain}.ghostcrm.ai/login` : '#'}
+            className="support-btn tertiary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <ExternalLink className="btn-icon" />
+            Access Your CRM
+          </a>
         </div>
       </div>
     </div>
