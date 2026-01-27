@@ -728,27 +728,45 @@ This code was requested for your account. If you didn't request this, please ign
                 <a href="${loginUrl}" class="button" style="color: white; text-decoration: none;">
                     🔑 Login to Your Subdomain
                 </a>
-                <a href="${dashboardUrl}" class="button secondary" style="color: white; text-decoration: none;">
-                    🚀 Go to Dashboard
-                </a>
             </div>
 
             <div class="features-grid">
                 <div class="feature-card">
                     <h3 style="color: #10b981; margin: 0 0 12px 0;">🚗 Inventory Management</h3>
-                    <p style="color: #374151; margin: 0; font-size: 14px;">Track your entire vehicle inventory with detailed records, photos, and pricing.</p>
+                    <p style="color: #374151; margin: 0; font-size: 14px;">Track your entire vehicle inventory with detailed records, photos, and pricing. Set up automated alerts for low stock and aging inventory.</p>
                 </div>
                 <div class="feature-card">
                     <h3 style="color: #10b981; margin: 0 0 12px 0;">👥 Customer Tracking</h3>
-                    <p style="color: #374151; margin: 0; font-size: 14px;">Manage leads, customer relationships, and sales pipeline efficiently.</p>
+                    <p style="color: #374151; margin: 0; font-size: 14px;">Manage leads, customer relationships, and sales pipeline efficiently. Automated follow-ups and customer communication tools included.</p>
                 </div>
                 <div class="feature-card">
                     <h3 style="color: #10b981; margin: 0 0 12px 0;">📊 Analytics & Reports</h3>
-                    <p style="color: #374151; margin: 0; font-size: 14px;">Get insights with comprehensive reporting and analytics dashboard.</p>
+                    <p style="color: #374151; margin: 0; font-size: 14px;">Get insights with comprehensive reporting and analytics dashboard. Track sales performance, inventory turnover, and customer metrics.</p>
                 </div>
                 <div class="feature-card">
                     <h3 style="color: #10b981; margin: 0 0 12px 0;">🤝 Team Collaboration</h3>
-                    <p style="color: #374151; margin: 0; font-size: 14px;">Invite team members and collaborate on deals and customer management.</p>
+                    <p style="color: #374151; margin: 0; font-size: 14px;">Invite team members and collaborate on deals and customer management. Role-based permissions and activity tracking.</p>
+                </div>
+            </div>
+
+            <div style="background-color: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 20px; border-radius: 8px; margin: 30px 0;">
+                <h3 style="color: #0c4a6e; margin: 0 0 15px 0;">🎯 Quick Start Guide for Auto Dealers</h3>
+                <div style="color: #1e40af; font-size: 14px; line-height: 1.6;">
+                    <p style="margin: 0 0 10px 0;"><strong>Day 1:</strong> Set up your inventory categories (New, Used, Certified Pre-Owned)</p>
+                    <p style="margin: 0 0 10px 0;"><strong>Week 1:</strong> Import your current vehicle data and customer contacts</p>
+                    <p style="margin: 0 0 10px 0;"><strong>Week 2:</strong> Configure your sales pipeline and automation rules</p>
+                    <p style="margin: 0;"><strong>Month 1:</strong> Analyze your first month's data and optimize your processes</p>
+                </div>
+            </div>
+
+            <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;">
+                <h3 style="color: #92400e; margin: 0 0 15px 0;">📚 Helpful Resources</h3>
+                <div style="color: #92400e; font-size: 14px; line-height: 1.6;">
+                    <p style="margin: 0 0 8px 0;">• <strong>Video Tutorials:</strong> Step-by-step setup guides available in your dashboard</p>
+                    <p style="margin: 0 0 8px 0;">• <strong>Live Chat Support:</strong> Available 9 AM - 6 PM EST for onboarding assistance</p>
+                    <p style="margin: 0 0 8px 0;">• <strong>Industry Best Practices:</strong> Auto dealership CRM strategies and tips</p>
+                    <p style="margin: 0 0 8px 0;">• <strong>Integration Guides:</strong> Connect with your existing tools and services</p>
+                    <p style="margin: 0;">• <strong>Mobile App:</strong> Manage your dealership on the go (iOS & Android)</p>
                 </div>
             </div>
 
@@ -757,14 +775,39 @@ This code was requested for your account. If you didn't request this, please ign
                 <ol style="color: #92400e; margin: 0; padding-left: 20px;">
                     <li>Click the login button above to access your subdomain</li>
                     <li>Complete your contact verification (email/phone setup)</li>
-                    <li>Import your inventory or create your first vehicle listings</li>
-                    <li>Invite team members to collaborate</li>
-                    <li>Start managing your leads and customers!</li>
+                    <li><strong>Import your existing data:</strong> Upload vehicle inventory via CSV or API</li>
+                    <li><strong>Set up your team:</strong> Invite sales staff with appropriate permissions</li>
+                    <li><strong>Configure lead sources:</strong> Connect your website forms and phone system</li>
+                    <li><strong>Customize your pipeline:</strong> Set up your unique sales process stages</li>
+                    <li><strong>Enable automations:</strong> Set up follow-up sequences and notifications</li>
                 </ol>
             </div>
 
+            <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; margin: 30px 0;">
+                <h3 style="color: #065f46; margin: 0 0 12px 0;">💡 Pro Tips for Auto Dealers</h3>
+                <div style="color: #065f46; font-size: 14px; line-height: 1.6;">
+                    <p style="margin: 0 0 10px 0;"><strong>📸 Photo Management:</strong> Upload high-quality photos for better lead conversion - studies show listings with 10+ photos get 40% more inquiries.</p>
+                    <p style="margin: 0 0 10px 0;"><strong>📱 Mobile Optimization:</strong> 70% of car shoppers use mobile devices - ensure your team updates inventory on-the-go.</p>
+                    <p style="margin: 0 0 10px 0;"><strong>⚡ Quick Response:</strong> Respond to leads within 5 minutes for 21x higher conversion rates.</p>
+                    <p style="margin: 0;"><strong>📊 Monthly Reviews:</strong> Check your analytics monthly to identify top-performing vehicles and sales trends.</p>
+                </div>
+            </div>
+
+            <div style="text-align: center; background-color: #f8fafc; padding: 25px; border-radius: 8px; margin: 30px 0;">
+                <h3 style="color: #374151; margin: 0 0 15px 0;">🚀 Need Help Getting Started?</h3>
+                <p style="color: #6b7280; margin: 0 0 15px 0; font-size: 14px;">
+                    Our success team is here to help you maximize your GhostCRM experience
+                </p>
+                <div style="font-size: 14px; color: #374151;">
+                    <p style="margin: 5px 0;"><strong>📧 Email Support:</strong> <a href="mailto:success@ghostcrm.ai" style="color: #10b981;">success@ghostcrm.ai</a></p>
+                    <p style="margin: 5px 0;"><strong>💬 Live Chat:</strong> Available in your dashboard (bottom right corner)</p>
+                    <p style="margin: 5px 0;"><strong>📞 Phone Support:</strong> (555) 123-GHOST - Monday-Friday 9 AM-6 PM EST</p>
+                    <p style="margin: 5px 0;"><strong>🎥 Video Onboarding:</strong> Schedule a free 30-minute setup session</p>
+                </div>
+            </div>
+
             <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin-top: 30px;">
-                Your login credentials are the same email and password you used during registration. If you need any help getting started, our support team is here to assist you.
+                Your login credentials are the same email and password you used during registration. For security, we recommend enabling two-factor authentication in your account settings.
             </p>
         </div>
         
@@ -801,23 +844,52 @@ This is your team's dedicated GhostCRM workspace.
 LOGIN NOW:
 ${loginUrl}
 
-DASHBOARD:
-${dashboardUrl}
-
 FEATURES AVAILABLE TO YOU:
-🚗 Inventory Management - Track your entire vehicle inventory with detailed records, photos, and pricing
-👥 Customer Tracking - Manage leads, customer relationships, and sales pipeline efficiently  
-📊 Analytics & Reports - Get insights with comprehensive reporting and analytics dashboard
-🤝 Team Collaboration - Invite team members and collaborate on deals and customer management
+🚗 Inventory Management - Track your entire vehicle inventory with detailed records, photos, and pricing. Set up automated alerts for low stock and aging inventory.
+
+👥 Customer Tracking - Manage leads, customer relationships, and sales pipeline efficiently. Automated follow-ups and customer communication tools included.
+
+📊 Analytics & Reports - Get insights with comprehensive reporting and analytics dashboard. Track sales performance, inventory turnover, and customer metrics.
+
+🤝 Team Collaboration - Invite team members and collaborate on deals and customer management. Role-based permissions and activity tracking.
+
+🎯 QUICK START GUIDE FOR AUTO DEALERS:
+Day 1: Set up your inventory categories (New, Used, Certified Pre-Owned)
+Week 1: Import your current vehicle data and customer contacts
+Week 2: Configure your sales pipeline and automation rules  
+Month 1: Analyze your first month's data and optimize your processes
+
+📚 HELPFUL RESOURCES:
+• Video Tutorials: Step-by-step setup guides available in your dashboard
+• Live Chat Support: Available 9 AM - 6 PM EST for onboarding assistance
+• Industry Best Practices: Auto dealership CRM strategies and tips
+• Integration Guides: Connect with your existing tools and services
+• Mobile App: Manage your dealership on the go (iOS & Android)
 
 🔐 NEXT STEPS:
 1. Click the login link above to access your subdomain
 2. Complete your contact verification (email/phone setup)
-3. Import your inventory or create your first vehicle listings
-4. Invite team members to collaborate
-5. Start managing your leads and customers!
+3. Import your existing data: Upload vehicle inventory via CSV or API
+4. Set up your team: Invite sales staff with appropriate permissions
+5. Configure lead sources: Connect your website forms and phone system
+6. Customize your pipeline: Set up your unique sales process stages
+7. Enable automations: Set up follow-up sequences and notifications
 
-Your login credentials are the same email and password you used during registration. If you need any help getting started, our support team is here to assist you.
+💡 PRO TIPS FOR AUTO DEALERS:
+📸 Photo Management: Upload high-quality photos for better lead conversion - studies show listings with 10+ photos get 40% more inquiries.
+📱 Mobile Optimization: 70% of car shoppers use mobile devices - ensure your team updates inventory on-the-go.
+⚡ Quick Response: Respond to leads within 5 minutes for 21x higher conversion rates.
+📊 Monthly Reviews: Check your analytics monthly to identify top-performing vehicles and sales trends.
+
+🚀 NEED HELP GETTING STARTED?
+Our success team is here to help you maximize your GhostCRM experience
+
+📧 Email Support: success@ghostcrm.ai
+💬 Live Chat: Available in your dashboard (bottom right corner)  
+📞 Phone Support: (555) 123-GHOST - Monday-Friday 9 AM-6 PM EST
+🎥 Video Onboarding: Schedule a free 30-minute setup session
+
+Your login credentials are the same email and password you used during registration. For security, we recommend enabling two-factor authentication in your account settings.
 
 ---
 © 2026 GhostCRM. All rights reserved.
