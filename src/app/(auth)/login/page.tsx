@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/auth-context';
 import BrandPanel from "@/components/auth/BrandPanel";
 import AuthForm from "@/components/auth/AuthForm";
 import { PostLoginSetupModal } from "@/components/modals/PostLoginSetupModal";
-import { getBaseDomain } from '@/lib/utils/environment';
+import { getBaseDomain, isSubdomain } from '@/lib/utils/environment';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,6 +17,21 @@ export default function LoginPage() {
   const [setupData, setSetupData] = useState<{
     email?: string;
   }>({});
+
+  // Determine if we should show owner access button (only on main domain, not subdomains)
+  const [showOwnerAccess, setShowOwnerAccess] = useState(false);
+
+  useEffect(() => {
+    // Only show software owner access on the main domain (not tenant subdomains)
+    const isOnSubdomain = isSubdomain();
+    setShowOwnerAccess(!isOnSubdomain);
+    
+    console.log('🏢 [LoginPage] Domain check:', {
+      hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
+      isSubdomain: isOnSubdomain,
+      showOwnerAccess: !isOnSubdomain
+    });
+  }, []);
 
   // Check for registration success
   useEffect(() => {
@@ -242,7 +257,11 @@ export default function LoginPage() {
 
           {/* Auth Form */}
           <div style={{ position: 'relative', zIndex: 2 }} className="auth-form-container-mobile">
-            <AuthForm successMessage={successMessage} />
+            <AuthForm 
+              successMessage={successMessage}
+              showOwnerAccess={showOwnerAccess}
+              isStaffLogin={showOwnerAccess}
+            />
           </div>
         </div>
       </div>

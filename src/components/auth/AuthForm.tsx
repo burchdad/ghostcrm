@@ -16,9 +16,10 @@ interface AuthFormProps {
   showOwnerAccess?: boolean; // Controls whether to show Software Owner Access section
   tenantContext?: string | null; // Tenant context for multi-tenant login
   successMessage?: string; // Optional success message to display
+  isStaffLogin?: boolean; // Whether this is the main domain staff login
 }
 
-export default function AuthForm({ showOwnerAccess = true, tenantContext = null, successMessage }: AuthFormProps) {
+export default function AuthForm({ showOwnerAccess = true, tenantContext = null, successMessage, isStaffLogin = false }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showContactSales, setShowContactSales] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -207,7 +208,7 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null,
             lineHeight: '1.1',
             textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
           }}>
-            Welcome Back
+            {isStaffLogin ? 'Staff Access' : 'Welcome Back'}
           </h2>
           <p style={{
             color: '#6b7280',
@@ -215,7 +216,10 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null,
             lineHeight: '1.4',
             fontWeight: '500'
           }}>
-            Sign in to your Ghost Auto CRM account
+            {isStaffLogin 
+              ? 'Sign in to access staff dashboard and administrative tools'
+              : 'Sign in to your Ghost Auto CRM account'
+            }
           </p>
         </div>
 
