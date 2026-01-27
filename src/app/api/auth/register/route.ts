@@ -376,40 +376,9 @@ async function registerHandler(req: Request) {
       // The webhook will handle organization creation as fallback
     }
 
-    // 🎯 SEND VERIFICATION CODE - Modern auth flow with 6-digit codes
-    try {
-      console.log('[REGISTER] Starting verification code process for:', email);
-      
-      // Generate and store verification code
-      const { createVerificationCode } = await import('@/lib/verification-codes');
-      const verificationCode = await createVerificationCode(authUserId, email);
-      
-      console.log('[REGISTER] Generated verification code:', { 
-        userId: authUserId,
-        codeLength: verificationCode.length
-      });
-
-      // Send verification code email using new method
-      const { EmailService } = await import('@/lib/email-service');
-      const emailService = EmailService.getInstance();
-      
-      const emailSent = await emailService.sendVerificationCode(
-        email,
-        firstName,
-        verificationCode
-      );
-
-      if (emailSent) {
-        console.log('[REGISTER] Verification code email sent successfully to:', email);
-      } else {
-        console.error('[REGISTER] Failed to send verification code email');
-        // Don't fail registration - user can request a new code later
-      }
-      
-    } catch (codeError) {
-      console.error('[REGISTER] Verification code generation/sending failed:', codeError);
-      // Continue - don't block registration on email failure
-    }
+    // 🎯 NO IMMEDIATE VERIFICATION - Verizon-style post-login setup approach
+    // Users will verify contact info AFTER login through PostLoginSetupModal
+    console.log('[REGISTER] Account created - verification will happen post-login');
 
     // 🎯 TRIGGERS STILL CREATE public.users + public.profiles (but no org fields)
     // Wait for trigger sync (optional - for immediate profile access)
@@ -423,12 +392,7 @@ async function registerHandler(req: Request) {
     // 🎯 ENHANCED REGISTRATION RESPONSE - Include organization and subdomain info
     return NextResponse.json({
       success: true,
-      message: "Account created successfully! Check your email for a verification code, then select your plan.",
-      verification: {
-        method: "code",
-        message: "A 6-digit verification code has been sent to your email",
-        expires_in: 600 // 10 minutes
-      },
+      message: "Account created successfully! Please select your plan.",
       user: {
         id: authUserId,
         email,
