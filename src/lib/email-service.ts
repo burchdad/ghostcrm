@@ -494,6 +494,14 @@ This email was sent to verify your account. If you didn't create an account, ple
       return false;
     }
   }
+
+  /**
+   * Send a notification email
+   */
+  async sendNotificationEmail(
+    email: string, 
+    emailTemplate: { subject: string; template: string }
+  ): Promise<boolean> {
     if (!this.isConfigured) {
       console.warn('⚠️ [EMAIL] SendGrid not configured, skipping notification email');
       return false;

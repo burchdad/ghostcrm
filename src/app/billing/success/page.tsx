@@ -338,7 +338,7 @@ function SuccessContent() {
           <p className="success-subtitle">
             {successData.isSoftwareOwner 
               ? 'Software Owner access confirmed. Redirecting to your dashboard...'
-              : 'Thank you for your subscription. You will now be redirected to login to your tenant portal!'
+              : '🎉 Your GhostCRM account is ready! Check your email for login instructions and welcome guide.'
             }
           </p>
           
