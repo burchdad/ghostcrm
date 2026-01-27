@@ -3,11 +3,18 @@
    Complete standalone styling for src/app/billing/page.tsx
    ================================ */
 
+/* Force dark background on billing page */
+html.billing-active,
+html.billing-active body {
+  background: linear-gradient(135deg, #0c0c1e 0%, #1a1a2e 35%, #16213e 100%) !important;
+  color: #ffffff !important;
+}
+
 /* Base billing page layout */
 .billing-page {
-  background: linear-gradient(135deg, #0c0c1e 0%, #1a1a2e 35%, #16213e 100%);
-  min-height: 100vh;
-  color: #ffffff;
+  background: linear-gradient(135deg, #0c0c1e 0%, #1a1a2e 35%, #16213e 100%) !important;
+  min-height: 100vh !important;
+  color: #ffffff !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   position: relative;
   overflow-x: hidden; /* Fix horizontal scroll */
@@ -16,15 +23,16 @@
 
 /* Hero background with enhanced glassmorphism */
 .billing-hero-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   overflow: hidden;
-  z-index: -1;
+  z-index: -1 !important;
+  background: linear-gradient(135deg, #0c0c1e 0%, #1a1a2e 35%, #16213e 100%) !important;
 }
 
 /* Glassmorphism background elements */
@@ -34,7 +42,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to right, rgba(124, 58, 237, 0.2), rgba(236, 72, 153, 0.2));
+  background: linear-gradient(to right, rgba(124, 58, 237, 0.3), rgba(236, 72, 153, 0.3)) !important;
 }
 
 .billing-bg-blur-1 {
@@ -43,7 +51,7 @@
   right: -50%;
   width: 600px;
   height: 600px;
-  background: rgba(124, 58, 237, 0.2);
+  background: rgba(124, 58, 237, 0.4) !important;
   border-radius: 50%;
   filter: blur(60px);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -55,7 +63,7 @@
   left: -50%;
   width: 600px;
   height: 600px;
-  background: rgba(236, 72, 153, 0.2);
+  background: rgba(236, 72, 153, 0.4) !important;
   border-radius: 50%;
   filter: blur(60px);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -68,7 +76,7 @@
   left: 25%;
   width: 400px;
   height: 400px;
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(59, 130, 246, 0.3) !important;
   border-radius: 50%;
   filter: blur(60px);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -81,7 +89,7 @@
   right: 25%;
   width: 300px;
   height: 300px;
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(245, 158, 11, 0.25) !important;
   border-radius: 50%;
   filter: blur(60px);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
