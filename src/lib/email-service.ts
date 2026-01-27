@@ -804,5 +804,6 @@ This welcome email was sent because your payment was processed successfully.
 Your subdomain: ${subdomain}.ghostcrm.ai
 `;
   }
+}
 
 export default EmailService;
