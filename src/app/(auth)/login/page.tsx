@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from '@/contexts/auth-context';
 import BrandPanel from "@/components/auth/BrandPanel";
 import AuthForm from "@/components/auth/AuthForm";
-import PostLoginVerificationModal from "@/components/auth/PostLoginVerificationModal";
+import { PostLoginSetupModal } from "@/components/modals/PostLoginSetupModal";
 import { getBaseDomain } from '@/lib/utils/environment';
 
 export default function LoginPage() {
@@ -14,9 +14,8 @@ export default function LoginPage() {
   const { user, supabaseUser, isLoading } = useAuth();
   const [successMessage, setSuccessMessage] = useState<string | undefined>();
   const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [verificationData, setVerificationData] = useState<{
+  const [setupData, setSetupData] = useState<{
     email?: string;
-    firstName?: string;
   }>({});
 
   // Check for registration success
@@ -92,25 +91,36 @@ export default function LoginPage() {
     }
   };
 
-  // Check if user needs post-login verification
+  // Check if user needs post-login verification setup
   useEffect(() => {
     if (user && !isLoading) {
       console.log('🔄 [LoginPage] Checking verification status for user:', user.email);
       
-      // Check if user needs post-login verification
-      const needsVerification = supabaseUser?.user_metadata?.email_verification_pending === true;
+      // Only show setup for truly unverified users
+      // Don't show if email is already confirmed in Supabase Auth
+      const isEmailConfirmed = supabaseUser?.email_confirmed_at != null;
+      const needsSetup = !isEmailConfirmed && (
+        supabaseUser?.user_metadata?.email_verification_pending === true ||
+        supabaseUser?.user_metadata?.verification_setup_completed !== true
+      );
       
-      if (needsVerification) {
-        console.log('📧 [LoginPage] User needs post-login verification');
-        setVerificationData({
-          email: user.email || '',
-          firstName: supabaseUser?.user_metadata?.first_name || 'User'
+      console.log('📊 [LoginPage] Setup check:', {
+        isEmailConfirmed,
+        email_verification_pending: supabaseUser?.user_metadata?.email_verification_pending,
+        verification_setup_completed: supabaseUser?.user_metadata?.verification_setup_completed,
+        needsSetup
+      });
+      
+      if (needsSetup) {
+        console.log('📧 [LoginPage] User needs post-login setup');
+        setSetupData({
+          email: user.email || ''
         });
         setShowVerificationModal(true);
-        return; // Don't redirect until verification is complete
+        return; // Don't redirect until setup is complete
       }
       
-      // Proceed with normal redirect logic if verification not needed
+      // Proceed with normal redirect logic if setup not needed
       handlePostVerificationRedirect();
     }
   }, [user, supabaseUser, isLoading, router]);
@@ -129,8 +139,8 @@ export default function LoginPage() {
     return () => clearTimeout(emergencyTimeout);
   }, [isLoading]);
 
-  // Helper function to handle redirect after verification is complete
-  const handleVerificationComplete = () => {
+  // Helper function to handle redirect after setup is complete
+  const handleSetupComplete = () => {
     setShowVerificationModal(false);
     handlePostVerificationRedirect();
   };
@@ -237,13 +247,12 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Post-Login Verification Modal */}
-      <PostLoginVerificationModal
+      {/* Post-Login Setup Modal */}
+      <PostLoginSetupModal
         isOpen={showVerificationModal}
         onClose={() => setShowVerificationModal(false)}
-        onVerified={handleVerificationComplete}
-        userEmail={verificationData.email}
-        firstName={verificationData.firstName}
+        onSetupComplete={handleSetupComplete}
+        userEmail={setupData.email || ''}
       />
     </div>
   );

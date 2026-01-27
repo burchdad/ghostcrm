@@ -9,6 +9,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import ContactSalesModal from "@/components/modals/ContactSalesModal";
 import { VerificationCodeModal } from "@/components/modals/VerificationCodeModal";
+import { PostLoginSetupModal } from "@/components/modals/PostLoginSetupModal";
 import { loginSchema, LoginFormData } from "./schemas";
 
 interface AuthFormProps {
@@ -21,6 +22,7 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null,
   const [showPassword, setShowPassword] = useState(false);
   const [showContactSales, setShowContactSales] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showPostLoginSetup, setShowPostLoginSetup] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const { login, isLoading } = useAuth();
   const searchParams = useSearchParams();
@@ -94,36 +96,12 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null,
       if (!result.success) {
         // Check if this is an unverified email case
         if (result.code === 'email_not_verified' || result.message?.includes('verify your email')) {
-          console.log('🔄 Unverified email detected, showing verification modal');
+          console.log('🔄 Unverified email detected, showing post-login setup');
           
-          try {
-            // Send verification code email
-            const verificationResponse = await fetch('/api/auth/resend-verification-code', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: data.email }),
-            });
-
-            if (!verificationResponse.ok) {
-              loginForm.setError("root", {
-                type: "manual",
-                message: "Failed to send verification code. Please try again.",
-              });
-              return;
-            }
-
-            // Show verification modal instead of error
-            setUnverifiedEmail(data.email);
-            setShowVerificationModal(true);
-            return;
-            
-          } catch (error) {
-            loginForm.setError("root", {
-              type: "manual",
-              message: "Failed to send verification code. Please try again.",
-            });
-            return;
-          }
+          // Show post-login setup modal (Verizon-style flow)
+          setUnverifiedEmail(data.email);
+          setShowPostLoginSetup(true);
+          return;
         }
         
         // For other errors, show the error message
@@ -150,6 +128,14 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null,
     
     // After successful verification, complete the login process
     // Refresh the page or trigger auth context refresh to redirect
+    window.location.reload();
+  };
+
+  const handleSetupComplete = async () => {
+    setShowPostLoginSetup(false);
+    setUnverifiedEmail('');
+    
+    // Refresh the auth state - user should now be fully authenticated and verified
     window.location.reload();
   };
 
@@ -372,6 +358,14 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null,
         onClose={() => setShowVerificationModal(false)}
         userEmail={unverifiedEmail}
         onVerificationSuccess={handleVerificationSuccess}
+      />
+
+      {/* Post-Login Setup Modal */}
+      <PostLoginSetupModal
+        isOpen={showPostLoginSetup}
+        onClose={() => setShowPostLoginSetup(false)}
+        userEmail={unverifiedEmail}
+        onSetupComplete={handleSetupComplete}
       />
     </div>
   );

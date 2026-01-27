@@ -33,6 +33,25 @@ async function verifyCodeHandler(req: NextRequest) {
       return jsonError('Invalid email format', 400);
     }
 
+    // First, check all codes for this email to debug
+    const { data: allCodes, error: debugError } = await supabaseAdmin
+      .from('verification_codes')
+      .select('id, user_id, code, expires_at, used, created_at')
+      .eq('email', email.toLowerCase())
+      .order('created_at', { ascending: false });
+
+    console.log('[VERIFY-CODE] All codes for email:', { 
+      email: email.toLowerCase(), 
+      count: allCodes?.length || 0,
+      codes: allCodes?.map(c => ({
+        code: c.code,
+        used: c.used,
+        expires_at: c.expires_at,
+        expired: new Date() > new Date(c.expires_at),
+        created_at: c.created_at
+      }))
+    });
+
     // Find valid verification code
     const { data: codeRecord, error: codeError } = await supabaseAdmin
       .from('verification_codes')
@@ -51,7 +70,17 @@ async function verifyCodeHandler(req: NextRequest) {
     }
 
     if (!codeRecord) {
-      console.log('[VERIFY-CODE] No valid code found:', { email, code });
+      console.log('[VERIFY-CODE] No valid code found:', { 
+        email: email.toLowerCase(), 
+        code, 
+        currentTime: new Date().toISOString(),
+        searchedFor: {
+          email: email.toLowerCase(),
+          code,
+          used: false,
+          expires_after: new Date().toISOString()
+        }
+      });
       return jsonError('Invalid or expired verification code', 400);
     }
 
