@@ -644,6 +644,28 @@ This email was sent to verify your account. If you didn't create an account, ple
 </html>`;
   }
 
+  private generateVerificationCodeEmailText(firstName: string, verificationCode: string): string {
+    return `
+GhostCRM - Verification Code
+
+Hi ${firstName}!
+
+Here's your verification code to complete your GhostCRM account setup:
+
+VERIFICATION CODE: ${verificationCode}
+
+This code will expire in 10 minutes for your security.
+
+Simply enter this code when prompted to verify your email and access your GhostCRM dashboard.
+
+SECURITY NOTICE: Never share this code with anyone. GhostCRM will never ask for your verification code.
+
+---
+© 2026 GhostCRM. All rights reserved.
+This code was requested for your account. If you didn't request this, please ignore this email.
+`;
+  }
+
   private generateWelcomeSubdomainEmailHtml(firstName: string, subdomain: string, companyName: string): string {
     const loginUrl = `https://${subdomain}.ghostcrm.ai/login`;
     const dashboardUrl = `https://${subdomain}.ghostcrm.ai/dashboard`;
