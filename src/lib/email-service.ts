@@ -442,12 +442,58 @@ This email was sent to verify your account. If you didn't create an account, ple
   }
 
   /**
-   * Send a notification email
+   * Send welcome email with subdomain login link after successful payment
    */
-  async sendNotificationEmail(
+  async sendWelcomeSubdomainEmail(
     email: string, 
-    emailTemplate: { subject: string; template: string }
+    firstName: string,
+    subdomain: string,
+    companyName: string
   ): Promise<boolean> {
+    console.log('[EMAIL] sendWelcomeSubdomainEmail called:', {
+      email,
+      firstName,
+      subdomain,
+      companyName,
+      isConfigured: this.isConfigured
+    });
+
+    if (!this.isConfigured) {
+      console.warn('⚠️ [EMAIL] SendGrid not configured, skipping welcome email');
+      return false;
+    }
+
+    if (!process.env.SENDGRID_FROM) {
+      console.error('❌ [EMAIL] SENDGRID_FROM not configured');
+      return false;
+    }
+
+    const emailHtml = this.generateWelcomeSubdomainEmailHtml(firstName, subdomain, companyName);
+    const emailText = this.generateWelcomeSubdomainEmailText(firstName, subdomain, companyName);
+
+    try {
+      const sendResult = await sgMail.send({
+        to: email,
+        from: process.env.SENDGRID_FROM,
+        subject: `🎉 Welcome to GhostCRM! Your subdomain ${subdomain} is ready`,
+        html: emailHtml,
+        text: emailText,
+        trackingSettings: {
+          clickTracking: { enable: false },
+          openTracking: { enable: false }
+        }
+      });
+
+      console.log('✅ [EMAIL] Welcome subdomain email sent:', {
+        statusCode: sendResult?.[0]?.statusCode,
+        messageId: sendResult?.[0]?.headers?.['x-message-id']
+      });
+      return true;
+    } catch (error) {
+      console.error('❌ [EMAIL] Failed to send welcome subdomain email:', error);
+      return false;
+    }
+  }
     if (!this.isConfigured) {
       console.warn('⚠️ [EMAIL] SendGrid not configured, skipping notification email');
       return false;
@@ -590,27 +636,165 @@ This email was sent to verify your account. If you didn't create an account, ple
 </html>`;
   }
 
-  private generateVerificationCodeEmailText(firstName: string, verificationCode: string): string {
+  private generateWelcomeSubdomainEmailHtml(firstName: string, subdomain: string, companyName: string): string {
+    const loginUrl = `https://${subdomain}.ghostcrm.ai/login`;
+    const dashboardUrl = `https://${subdomain}.ghostcrm.ai/dashboard`;
+    
     return `
-GhostCRM - Verification Code
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to GhostCRM - Your Subdomain is Ready!</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-align: center; padding: 40px 20px; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+        .header p { margin: 10px 0 0 0; opacity: 0.9; }
+        .content { padding: 40px 30px; }
+        .welcome-card { background: linear-gradient(135deg, #10b981, #059669); color: white; text-align: center; padding: 30px; border-radius: 12px; margin: 30px 0; }
+        .subdomain { font-family: 'Monaco', 'Menlo', monospace; font-size: 24px; font-weight: 700; margin: 15px 0; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; }
+        .button { display: inline-block; background-color: #10b981; color: white; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; margin: 20px 10px; transition: background-color 0.3s; }
+        .button:hover { background-color: #059669; }
+        .button.secondary { background-color: #6366f1; }
+        .button.secondary:hover { background-color: #4f46e5; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0; }
+        .feature-card { background-color: #f8fafc; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; }
+        .footer { background-color: #f8fafc; padding: 30px; text-align: center; color: #64748b; font-size: 14px; }
+        .logo { font-size: 32px; margin-bottom: 10px; }
+        .success-notice { background-color: #d1fae5; border: 1px solid #10b981; color: #065f46; padding: 16px; border-radius: 8px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">👻</div>
+            <h1>GhostCRM</h1>
+            <p>Auto Dealership CRM Platform</p>
+        </div>
+        
+        <div class="content">
+            <h2 style="color: #374151; margin-bottom: 20px;">🎉 Welcome to GhostCRM, ${firstName}!</h2>
+            
+            <div class="success-notice">
+                <strong>✅ Payment Successful!</strong> Your GhostCRM account for ${companyName} has been activated and is ready to use.
+            </div>
 
-Hi ${firstName}!
+            <p style="color: #6b7280; line-height: 1.6; margin-bottom: 24px;">
+                Congratulations! Your payment has been processed successfully and your personalized GhostCRM subdomain is now live and ready for your team.
+            </p>
 
-Here's your verification code to complete your GhostCRM account setup:
+            <div class="welcome-card">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">YOUR PERSONALIZED SUBDOMAIN</div>
+                <div class="subdomain">${subdomain}.ghostcrm.ai</div>
+                <p style="margin: 15px 0 0 0; font-size: 14px; opacity: 0.9;">
+                    This is your team's dedicated GhostCRM workspace
+                </p>
+            </div>
 
-VERIFICATION CODE: ${verificationCode}
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${loginUrl}" class="button" style="color: white; text-decoration: none;">
+                    🔑 Login to Your Subdomain
+                </a>
+                <a href="${dashboardUrl}" class="button secondary" style="color: white; text-decoration: none;">
+                    🚀 Go to Dashboard
+                </a>
+            </div>
 
-This code will expire in 10 minutes for your security.
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3 style="color: #10b981; margin: 0 0 12px 0;">🚗 Inventory Management</h3>
+                    <p style="color: #374151; margin: 0; font-size: 14px;">Track your entire vehicle inventory with detailed records, photos, and pricing.</p>
+                </div>
+                <div class="feature-card">
+                    <h3 style="color: #10b981; margin: 0 0 12px 0;">👥 Customer Tracking</h3>
+                    <p style="color: #374151; margin: 0; font-size: 14px;">Manage leads, customer relationships, and sales pipeline efficiently.</p>
+                </div>
+                <div class="feature-card">
+                    <h3 style="color: #10b981; margin: 0 0 12px 0;">📊 Analytics & Reports</h3>
+                    <p style="color: #374151; margin: 0; font-size: 14px;">Get insights with comprehensive reporting and analytics dashboard.</p>
+                </div>
+                <div class="feature-card">
+                    <h3 style="color: #10b981; margin: 0 0 12px 0;">🤝 Team Collaboration</h3>
+                    <p style="color: #374151; margin: 0; font-size: 14px;">Invite team members and collaborate on deals and customer management.</p>
+                </div>
+            </div>
 
-Simply enter this code when prompted to verify your email and access your GhostCRM dashboard.
+            <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;">
+                <h3 style="color: #92400e; margin: 0 0 12px 0;">🔐 Next Steps</h3>
+                <ol style="color: #92400e; margin: 0; padding-left: 20px;">
+                    <li>Click the login button above to access your subdomain</li>
+                    <li>Complete your contact verification (email/phone setup)</li>
+                    <li>Import your inventory or create your first vehicle listings</li>
+                    <li>Invite team members to collaborate</li>
+                    <li>Start managing your leads and customers!</li>
+                </ol>
+            </div>
 
-SECURITY NOTICE: Never share this code with anyone. GhostCRM will never ask for your verification code.
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin-top: 30px;">
+                Your login credentials are the same email and password you used during registration. If you need any help getting started, our support team is here to assist you.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>© 2026 GhostCRM. All rights reserved.</p>
+            <p>This welcome email was sent because your payment was processed successfully.</p>
+            <p style="margin-top: 15px;">
+                <strong>Your subdomain:</strong> <a href="${loginUrl}" style="color: #10b981;">${subdomain}.ghostcrm.ai</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>`;
+  }
+
+  private generateWelcomeSubdomainEmailText(firstName: string, subdomain: string, companyName: string): string {
+    const loginUrl = `https://${subdomain}.ghostcrm.ai/login`;
+    const dashboardUrl = `https://${subdomain}.ghostcrm.ai/dashboard`;
+    
+    return `
+GhostCRM - Welcome! Your Subdomain is Ready
+
+🎉 Welcome to GhostCRM, ${firstName}!
+
+✅ PAYMENT SUCCESSFUL! Your GhostCRM account for ${companyName} has been activated and is ready to use.
+
+Congratulations! Your payment has been processed successfully and your personalized GhostCRM subdomain is now live and ready for your team.
+
+YOUR PERSONALIZED SUBDOMAIN:
+${subdomain}.ghostcrm.ai
+
+This is your team's dedicated GhostCRM workspace.
+
+LOGIN NOW:
+${loginUrl}
+
+DASHBOARD:
+${dashboardUrl}
+
+FEATURES AVAILABLE TO YOU:
+🚗 Inventory Management - Track your entire vehicle inventory with detailed records, photos, and pricing
+👥 Customer Tracking - Manage leads, customer relationships, and sales pipeline efficiently  
+📊 Analytics & Reports - Get insights with comprehensive reporting and analytics dashboard
+🤝 Team Collaboration - Invite team members and collaborate on deals and customer management
+
+🔐 NEXT STEPS:
+1. Click the login link above to access your subdomain
+2. Complete your contact verification (email/phone setup)
+3. Import your inventory or create your first vehicle listings
+4. Invite team members to collaborate
+5. Start managing your leads and customers!
+
+Your login credentials are the same email and password you used during registration. If you need any help getting started, our support team is here to assist you.
 
 ---
 © 2026 GhostCRM. All rights reserved.
-This code was requested for your account. If you didn't request this, please ignore this email.
+This welcome email was sent because your payment was processed successfully.
+
+Your subdomain: ${subdomain}.ghostcrm.ai
 `;
   }
-}
 
 export default EmailService;

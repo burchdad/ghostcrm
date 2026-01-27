@@ -552,12 +552,32 @@ async function activateSubdomainAfterPayment(session: Stripe.Checkout.Session): 
       
       console.log('✅ [STRIPE_WEBHOOK] Subdomain successfully activated after payment:', subdomainRecord.subdomain);
       
-      // Optional: Send activation email to user
+      // 📧 SEND WELCOME EMAIL with subdomain login link
       try {
-        // You could add email notification logic here if needed
-        console.log('📧 [STRIPE_WEBHOOK] Subdomain activation complete for:', customerEmail);
+        console.log('📧 [STRIPE_WEBHOOK] Sending welcome email with subdomain info...');
+        
+        const { EmailService } = await import('@/lib/email-service');
+        const emailService = EmailService.getInstance();
+        
+        // Get user details from session metadata or database
+        const firstName = session.metadata?.first_name || session.customer_details?.name?.split(' ')[0] || 'User';
+        const companyName = session.metadata?.company_name || 'Your Company';
+        
+        const emailSent = await emailService.sendWelcomeSubdomainEmail(
+          customerEmail,
+          firstName,
+          subdomainRecord.subdomain,
+          companyName
+        );
+        
+        if (emailSent) {
+          console.log('✅ [STRIPE_WEBHOOK] Welcome email sent successfully to:', customerEmail);
+        } else {
+          console.warn('⚠️ [STRIPE_WEBHOOK] Failed to send welcome email (non-critical):', customerEmail);
+        }
+        
       } catch (emailError) {
-        console.warn('⚠️ [STRIPE_WEBHOOK] Could not send activation email:', emailError);
+        console.warn('⚠️ [STRIPE_WEBHOOK] Could not send welcome email:', emailError);
         // Don't fail the webhook for email issues
       }
       
