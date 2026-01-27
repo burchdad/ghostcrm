@@ -323,7 +323,7 @@ export default function MarketingHeader() {
               Contact Sales
             </button>
 
-            {/* Client Login Button */}
+            {/* Staff Login Button */}
             <Link href="/login" style={{
               display: 'flex',
               alignItems: 'center',
@@ -361,7 +361,7 @@ export default function MarketingHeader() {
               }} className="shine-effect"></div>
               
               <LogIn style={{ width: '1rem', height: '1rem', position: 'relative', zIndex: 10 }} />
-              <span style={{ position: 'relative', zIndex: 10 }}>Client Login</span>
+              <span style={{ position: 'relative', zIndex: 10 }}>Staff Login</span>
             </Link>
           </div>
 
@@ -632,7 +632,7 @@ export default function MarketingHeader() {
                     e.currentTarget.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)'
                   }}
                 >
-                  Client Login
+                  Staff Login
                 </Link>
               </div>
             </div>

@@ -77,16 +77,21 @@ export function isSubdomain(hostname?: string): boolean {
   const host = hostname || (typeof window !== 'undefined' ? window.location.hostname : '');
   const baseDomain = getBaseDomain();
   
-  // Skip localhost and main domain
+  // Skip localhost and main domain variants
   if (host === 'localhost' || host === '127.0.0.1' || host === baseDomain) {
     return false;
   }
   
-  // Check for subdomain patterns
+  // www subdomain should be treated as main domain
+  if (host === `www.${baseDomain}` || host === 'www.ghostcrm.ai') {
+    return false;
+  }
+  
+  // Check for actual subdomain patterns (excluding www)
   return host.includes('.localhost') || 
          host.includes('.ghostcrm.ai') || 
          host.includes('.vercel.app') ||
-         (host.includes('.') && host !== baseDomain);
+         (host.includes('.') && host !== baseDomain && host !== `www.${baseDomain}`);
 }
 
 /**
@@ -101,22 +106,26 @@ export function extractSubdomain(hostname?: string): string | null {
   
   // Extract subdomain part
   if (host.includes('.localhost')) {
-    return host.split('.localhost')[0];
+    const subdomain = host.split('.localhost')[0];
+    return subdomain === 'www' ? null : subdomain;
   }
   
   if (host.includes('.ghostcrm.ai')) {
-    return host.split('.ghostcrm.ai')[0];
+    const subdomain = host.split('.ghostcrm.ai')[0];
+    return subdomain === 'www' ? null : subdomain;
   }
   
   if (host.includes('.vercel.app')) {
     const parts = host.split('.');
-    return parts[0]; // First part is usually the subdomain
+    const subdomain = parts[0];
+    return subdomain === 'www' ? null : subdomain;
   }
   
   // Generic fallback
   const parts = host.split('.');
   if (parts.length > 2) {
-    return parts[0];
+    const subdomain = parts[0];
+    return subdomain === 'www' ? null : subdomain;
   }
   
   return null;
