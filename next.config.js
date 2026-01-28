@@ -47,6 +47,23 @@ const nextConfig = {
   images: {
     domains: ['ghostcrm.ai', 'www.ghostcrm.ai', 'vercel.app'],
   },
+  // Canonical domain redirects - www.ghostcrm.ai -> ghostcrm.ai
+  async redirects() {
+    return [
+      {
+        source: '/(.*)',
+        has: [
+          {
+            type: 'host',
+            value: 'www.ghostcrm.ai',
+          },
+        ],
+        destination: 'https://ghostcrm.ai/:path*',
+        permanent: true,
+        statusCode: 301,
+      },
+    ]
+  },
   // Headers for production security
   async headers() {
     return [
