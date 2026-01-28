@@ -138,6 +138,8 @@
   position: relative;
   overflow: hidden;
   animation: fadeInUp 1s var(--ease-premium) calc(0.4s + var(--stagger-delay, 0s)) both;
+  transform-style: preserve-3d;
+  cursor: pointer;
 }
 
 .feature-card:nth-child(1) { --stagger-delay: 0s; }
@@ -176,11 +178,34 @@
 }
 
 .feature-card:hover {
-  transform: translateY(-16px) scale(1.02);
+  animation: cardMorph 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   background: rgba(255, 255, 255, 1);
   backdrop-filter: var(--blur-premium);
-  box-shadow: var(--shadow-premium);
+  box-shadow: var(--shadow-enterprise);
   border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* ✨ Stripe-Level Card Interactions */
+.feature-card:active {
+  transform: scale(0.98) perspective(1000px) rotateX(2deg);
+  transition: transform 0.1s ease;
+}
+
+.feature-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.feature-card:hover::after {
+  opacity: 1;
 }
 
 .feature-icon-wrapper {

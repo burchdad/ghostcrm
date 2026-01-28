@@ -1,7 +1,9 @@
-/* Hero Section Styles */
+/* ✨ STRIPE-LEVEL HERO SECTION */
 .hero-section {
   min-height: 100vh;
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+  background-size: 400% 400%;
+  animation: gradientFlow 12s ease-in-out infinite;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -10,6 +12,7 @@
   overflow: hidden;
   color: white;
   padding: 2rem 0;
+  transform-style: preserve-3d;
 }
 
 /* Override Tailwind max-width constraints for dashboard preview */
@@ -121,6 +124,7 @@
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-lg);
+  transform-style: preserve-3d;
 }
 
 .hero-cta-primary::before {
@@ -140,12 +144,22 @@
   backdrop-filter: var(--blur-xl);
   border-color: rgba(255, 255, 255, 0.5);
   color: white;
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: var(--shadow-premium);
+  animation: buttonMorph 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  box-shadow: var(--shadow-enterprise);
 }
 
 .hero-cta-primary:hover::before {
   opacity: 1;
+}
+
+/* ✨ Stripe-Level Interactive States */
+.hero-cta-primary {
+  will-change: transform, box-shadow, backdrop-filter;
+}
+
+.hero-cta-primary:active {
+  transform: scale(0.98) perspective(500px) rotateX(5deg);
+  transition: transform 0.1s ease;
 }
 
 .hero-cta-secondary {
