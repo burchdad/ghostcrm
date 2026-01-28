@@ -47,18 +47,15 @@
   content: '';
   position: absolute;
   top: 0;
+.cta-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
   left: 0;
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, #8b5cf6, #ec4899, #f59e0b);
   animation: gradientShift 3s ease-in-out infinite;
-}
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
-  border-radius: 2rem 2rem 0 0;
 }
 
 .cta-title {
