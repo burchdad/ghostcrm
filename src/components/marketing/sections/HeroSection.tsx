@@ -12,12 +12,13 @@ export default function HeroSection() {
   useEffect(() => {
     const onSubdomain = isSubdomain();
     const subdomain = extractSubdomain();
+    let formattedName = '';
     
     setIsOnSubdomain(onSubdomain);
     
     if (onSubdomain && subdomain) {
       // Convert subdomain to company name (e.g., "burchmotors" -> "Burch Motors")
-      const formattedName = subdomain
+      formattedName = subdomain
         .split(/(?=[A-Z])/) // Split on capital letters
         .join(' ')
         .split(/[\s-_]+/) // Split on spaces, hyphens, underscores
