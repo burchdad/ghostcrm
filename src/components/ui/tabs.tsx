@@ -32,7 +32,7 @@ const Tabs = React.forwardRef<
           } as any)
         }
         return child
-      })}
+      }) as React.ReactNode}
     </div>
   )
 })
@@ -61,7 +61,7 @@ const TabsList = React.forwardRef<
         } as any)
       }
       return child
-    })}
+    }) as React.ReactNode}
   </div>
 ))
 TabsList.displayName = "TabsList"

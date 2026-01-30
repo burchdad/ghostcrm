@@ -31,6 +31,22 @@ export async function apiRequest(url: string, options: RequestInit = {}): Promis
         } else {
           const refreshError = await refreshResponse.json();
           if (refreshError.requiresLogin) {
+            // 🚨 CRITICAL FIX: Don't redirect to login from billing flows
+            const currentPath = window.location.pathname;
+            const searchParams = new URLSearchParams(window.location.search);
+            
+            // Check if we're in any billing flow
+            const billingPaths = ['/billing/success', '/billing/cancel', '/billing/'];
+            const isBillingFlow = billingPaths.some(path => currentPath.startsWith(path));
+            
+            // Check if coming from Stripe redirect
+            const hasStripeParams = ['session_id', 'payment_intent', 'setup_intent'].some(param => searchParams.has(param));
+            
+            if (isBillingFlow || hasStripeParams) {
+              console.log('🛡️ Token refresh failed in billing flow - suppressing redirect');
+              return response; // Return original 401 response without redirecting
+            }
+            
             console.log('❌ Token refresh failed, redirecting to login');
             window.location.href = '/login';
             return response; // Return original 401 response

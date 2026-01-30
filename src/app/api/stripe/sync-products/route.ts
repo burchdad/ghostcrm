@@ -1,3 +1,6 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from 'next/server'
 import { syncAllProductsWithStripe } from '@/lib/stripe/product-sync'
 import { cookies } from 'next/headers'

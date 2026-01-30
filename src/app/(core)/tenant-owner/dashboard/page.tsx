@@ -9,6 +9,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { ToastProvider } from "@/components/utils/ToastProvider";
 import { I18nProvider, useI18n } from "@/components/utils/I18nProvider";
+import MobileFloatingNavigation from "@/components/mobile/MobileFloatingNavigation";
 import "./page.css";
 import { 
   Users, 
@@ -142,6 +143,7 @@ function TenantOwnerDashboard() {
   const [chartSettings, setChartSettings] = useState<Record<string, any>>({});
   const [activeChartsView, setActiveChartsView] = useState<'grid' | 'marketplace'>('grid');
   const [showAIModal, setShowAIModal] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useRibbonPage({
     context: "dashboard",
@@ -160,37 +162,26 @@ function TenantOwnerDashboard() {
     disable: []
   });
 
-  // Onboarding guard for tenant owners
+  // Simplified - trust the auth system, no redirects
   useEffect(() => {
-    async function checkOnboardingStatus() {
-      if (!user) {
-        setOnboardingLoading(false);
-        return;
-      }
-
-      // Only owners should be on this dashboard
-      if (user.role !== 'owner') {
-        router.push('/dashboard');
-        return;
-      }
-
-      // Allow access to dashboard
+    if (!user) {
       setOnboardingLoading(false);
+      setLoading(false); // Also clear main loading
+      return;
     }
 
-    checkOnboardingStatus();
-  }, [user, router]);
+    console.log('✅ [TENANT-DASHBOARD] User authenticated:', user.email, 'Role:', user.role);
+    // Trust the auth system - if they're here, they should be here
+    setOnboardingLoading(false);
+    setLoading(false); // Clear main loading state
+  }, [user]);
 
-  // Redirect non-owners to regular dashboard
+  // Allow access for all authenticated users - trust the auth system
   useEffect(() => {
-    // Redirect check effect - silent mode
-    
-    // Only redirect if auth is ready and we have a user who is not an owner
-    if (!loading && !isLoading && user && user.role !== 'owner') {
-      console.log('🔄 [TENANT-DASHBOARD] Redirecting non-owner to dashboard');
-      router.push('/dashboard');
+    if (!loading && !isLoading && user) {
+      console.log('✅ [TENANT-DASHBOARD] Dashboard access granted for:', user.email);
     }
-  }, [user, loading, router, isLoading]);
+  }, [user, loading, isLoading]);
 
   // Navigation handlers for metric cards
   const handleRevenueClick = () => {
@@ -282,12 +273,13 @@ function TenantOwnerDashboard() {
 
   // Fetch owner-specific analytics
   useEffect(() => {
-    // Don't fetch analytics if user is not loaded or not an owner
-    if (!user || user.role !== 'owner') {
+    // Don't fetch analytics if user is not loaded
+    if (!user) {
+      console.log('🔍 [TENANT-DASHBOARD] No user, skipping analytics fetch');
       return;
     }
 
-    console.log('🔍 [TENANT-DASHBOARD] Starting analytics fetch, user loaded:', !!user);
+    console.log('🔍 [TENANT-DASHBOARD] Starting analytics fetch for user:', user.email, 'Role:', user.role);
     
     async function fetchOwnerAnalytics() {
       try {
@@ -575,15 +567,29 @@ function TenantOwnerDashboard() {
     );
   }
 
-  // Show access denied if not authenticated or not an owner
-  if (!user || user.role !== 'owner') {
-    return null;
+  // Show loading screen if user not loaded yet
+  if (!user) {
+    return (
+      <div className="tenant-dashboard-loading">
+        <div className="tenant-dashboard-loading-spinner">
+          <div className="tenant-dashboard-loading-ring"></div>
+          <div className="tenant-dashboard-loading-ring"></div>
+        </div>
+        <div className="tenant-dashboard-loading-text">
+          <h3 className="tenant-dashboard-loading-title">Loading User...</h3>
+          <p className="tenant-dashboard-loading-subtitle">Authenticating</p>
+        </div>
+      </div>
+    );
   }
 
   // Main dashboard render
   return (
     <>
       <div className="tenant-dashboard-container">
+        {/* Mobile Floating Navigation - Only shown on mobile */}
+        <MobileFloatingNavigation />
+
       <div className="tenant-dashboard-content">
         {/* GM Metrics Cards - Horizontal Layout */}
         <div className="gm-metrics-section">

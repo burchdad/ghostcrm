@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test SubDomain Activation</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .section { border: 1px solid #ccc; margin: 10px 0; padding: 15px; border-radius: 5px; }
+        .success { background-color: #e8f5e8; border-color: #4caf50; }
+        .error { background-color: #ffeaea; border-color: #f44336; }
+        .info { background-color: #e3f2fd; border-color: #2196f3; }
+        button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #005a8a; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow: auto; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ccc; border-radius: 3px; width: 300px; }
+    </style>
+</head>
+<body>
+    <h1>🚀 GhostCRM SubDomain Activation Test</h1>
+    
+    <div class="section info">
+        <h3>📧 User Email</h3>
+        <input type="email" id="userEmail" placeholder="Enter your email" />
+        <button onclick="checkUser()">Check User Status</button>
+    </div>
+
+    <div class="section info">
+        <h3>🔐 Authentication Test</h3>
+        <button onclick="testAuth()">Test Authentication</button>
+        <button onclick="testProfile()">Test Profile API</button>
+    </div>
+
+    <div class="section info">
+        <h3>🌐 SubDomain Operations</h3>
+        <button onclick="checkSubdomainStatus()">Check SubDomain Status</button>
+        <button onclick="activateSubdomain()">Activate SubDomain</button>
+        <button onclick="testSubdomainAccess()">Test SubDomain Access</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        
+        function addResult(title, content, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `section ${type}`;
+            div.innerHTML = `<h4>${title}</h4><pre>${content}</pre>`;
+            results.appendChild(div);
+        }
+
+        async function testAuth() {
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/me`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult('✅ Authentication Success', JSON.stringify(data, null, 2), 'success');
+                } else {
+                    addResult('❌ Authentication Failed', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                addResult('❌ Authentication Error', error.message, 'error');
+            }
+        }
+
+        async function testProfile() {
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/profile`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult('✅ Profile API Success', JSON.stringify(data, null, 2), 'success');
+                } else {
+                    addResult('❌ Profile API Failed', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                addResult('❌ Profile API Error', error.message, 'error');
+            }
+        }
+
+        async function checkUser() {
+            const email = document.getElementById('userEmail').value;
+            if (!email) {
+                addResult('❌ Validation Error', 'Please enter an email address', 'error');
+                return;
+            }
+
+            try {
+                // Check user in both tables
+                const queries = [
+                    { table: 'users', query: `${API_BASE}/api/debug/user?email=${encodeURIComponent(email)}&table=users` },
+                    { table: 'profiles', query: `${API_BASE}/api/debug/user?email=${encodeURIComponent(email)}&table=profiles` }
+                ];
+
+                for (const { table, query } of queries) {
+                    try {
+                        const response = await fetch(query, { credentials: 'include' });
+                        const data = await response.json();
+                        
+                        if (response.ok && data.user) {
+                            addResult(`✅ User Found in ${table}`, JSON.stringify(data.user, null, 2), 'success');
+                        } else {
+                            addResult(`⚠️ User Not Found in ${table}`, JSON.stringify(data, null, 2), 'info');
+                        }
+                    } catch (error) {
+                        addResult(`❌ Error checking ${table}`, error.message, 'error');
+                    }
+                }
+            } catch (error) {
+                addResult('❌ User Check Error', error.message, 'error');
+            }
+        }
+
+        async function checkSubdomainStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/subdomains/status`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult('✅ SubDomain Status', JSON.stringify(data, null, 2), 'success');
+                } else {
+                    addResult('❌ SubDomain Status Failed', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                addResult('❌ SubDomain Status Error', error.message, 'error');
+            }
+        }
+
+        async function activateSubdomain() {
+            try {
+                const response = await fetch(`${API_BASE}/api/subdomains/activate`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult('✅ SubDomain Activation Success', JSON.stringify(data, null, 2), 'success');
+                } else {
+                    addResult('❌ SubDomain Activation Failed', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                addResult('❌ SubDomain Activation Error', error.message, 'error');
+            }
+        }
+
+        async function testSubdomainAccess() {
+            try {
+                // Get subdomain first
+                const statusResponse = await fetch(`${API_BASE}/api/subdomains/status`, {
+                    credentials: 'include'
+                });
+                const statusData = await statusResponse.json();
+                
+                if (statusData.subdomain) {
+                    const subdomainUrl = `https://${statusData.subdomain}.ghostcrm.ai`;
+                    addResult('🌐 SubDomain URL', `Testing: ${subdomainUrl}`, 'info');
+                    
+                    // Test the subdomain
+                    try {
+                        const testResponse = await fetch(subdomainUrl, { 
+                            mode: 'no-cors' // Avoid CORS issues for testing
+                        });
+                        addResult('✅ SubDomain Accessible', `${subdomainUrl} is reachable`, 'success');
+                    } catch (error) {
+                        addResult('⚠️ SubDomain Test', `${subdomainUrl} - ${error.message}`, 'info');
+                    }
+                } else {
+                    addResult('❌ No SubDomain Found', 'User has no subdomain to test', 'error');
+                }
+            } catch (error) {
+                addResult('❌ SubDomain Access Test Error', error.message, 'error');
+            }
+        }
+
+        // Auto-load user status on page load if email in URL params
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            const email = params.get('email');
+            if (email) {
+                document.getElementById('userEmail').value = email;
+                checkUser();
+            }
+        });
+    </script>
+</body>
+</html>

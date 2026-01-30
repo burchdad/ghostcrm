@@ -8,16 +8,23 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import ContactSalesModal from "@/components/modals/ContactSalesModal";
+import { VerificationCodeModal } from "@/components/modals/VerificationCodeModal";
+import { PostLoginSetupModal } from "@/components/modals/PostLoginSetupModal";
 import { loginSchema, LoginFormData } from "./schemas";
 
 interface AuthFormProps {
   showOwnerAccess?: boolean; // Controls whether to show Software Owner Access section
   tenantContext?: string | null; // Tenant context for multi-tenant login
+  successMessage?: string; // Optional success message to display
+  isStaffLogin?: boolean; // Whether this is the main domain staff login
 }
 
-export default function AuthForm({ showOwnerAccess = true, tenantContext = null }: AuthFormProps) {
+export default function AuthForm({ showOwnerAccess = true, tenantContext = null, successMessage, isStaffLogin = false }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showContactSales, setShowContactSales] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showPostLoginSetup, setShowPostLoginSetup] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const { login, isLoading } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -84,24 +91,53 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
         return;
       }
       
-      // Regular login flow
+      // Regular login flow - validate credentials first
       const result = await login(data.email, data.password);
       
       if (!result.success) {
+        // Check if this is an unverified email case
+        if (result.code === 'email_not_verified' || result.message?.includes('verify your email')) {
+          console.log('🔄 Unverified email detected, showing post-login setup');
+          
+          // Show post-login setup modal (Verizon-style flow)
+          setUnverifiedEmail(data.email);
+          setShowPostLoginSetup(true);
+          return;
+        }
+        
+        // For other errors, show the error message
         loginForm.setError("root", {
           type: "manual",
-          message: result.message || "Login failed. Please try again.",
+          message: result.message || "Invalid email or password. Please try again.",
         });
         return;
       }
       
-      // Redirect handled by useEffect in parent component
+      // Login was successful - user is already verified and logged in
+      // The auth context will handle the redirect
     } catch (error: any) {
       loginForm.setError("root", {
         type: "manual",
         message: error.message || "An error occurred. Please try again.",
       });
     }
+  };
+
+  const handleVerificationSuccess = async () => {
+    setShowVerificationModal(false);
+    setUnverifiedEmail('');
+    
+    // After successful verification, complete the login process
+    // Refresh the page or trigger auth context refresh to redirect
+    window.location.reload();
+  };
+
+  const handleSetupComplete = async () => {
+    setShowPostLoginSetup(false);
+    setUnverifiedEmail('');
+    
+    // Refresh the auth state - user should now be fully authenticated and verified
+    window.location.reload();
   };
 
   return (
@@ -172,7 +208,7 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
             lineHeight: '1.1',
             textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
           }}>
-            Welcome Back
+            {isStaffLogin ? 'Staff Access' : 'Welcome Back'}
           </h2>
           <p style={{
             color: '#6b7280',
@@ -180,9 +216,29 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
             lineHeight: '1.4',
             fontWeight: '500'
           }}>
-            Sign in to your Ghost Auto CRM account
+            {isStaffLogin 
+              ? 'Sign in to access staff dashboard and administrative tools'
+              : 'Sign in to your Ghost Auto CRM account'
+            }
           </p>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <div style={{
+            marginBottom: '1.5rem',
+            padding: '1rem',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            border: '1px solid rgba(34, 197, 94, 0.2)',
+            borderRadius: '0.75rem',
+            color: '#15803d',
+            fontSize: '0.875rem',
+            textAlign: 'center',
+            fontWeight: '500'
+          }}>
+            {successMessage}
+          </div>
+        )}
 
         {/* Login Form */}
         <LoginForm 
@@ -299,6 +355,22 @@ export default function AuthForm({ showOwnerAccess = true, tenantContext = null 
         isOpen={showContactSales}
         onClose={() => setShowContactSales(false)}
       />
+
+      {/* Verification Code Modal */}
+      <VerificationCodeModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        userEmail={unverifiedEmail}
+        onVerificationSuccess={handleVerificationSuccess}
+      />
+
+      {/* Post-Login Setup Modal */}
+      <PostLoginSetupModal
+        isOpen={showPostLoginSetup}
+        onClose={() => setShowPostLoginSetup(false)}
+        userEmail={unverifiedEmail}
+        onSetupComplete={handleSetupComplete}
+      />
     </div>
   );
 }
@@ -314,7 +386,15 @@ interface LoginFormProps {
   isInviteFlow?: boolean;
 }
 
-function LoginForm({ form, onSubmit, showPassword, setShowPassword, isLoading, showOwnerAccess, isInviteFlow = false }: LoginFormProps) {
+function LoginForm({ 
+  form, 
+  onSubmit, 
+  showPassword, 
+  setShowPassword, 
+  isLoading, 
+  showOwnerAccess, 
+  isInviteFlow = false
+}: LoginFormProps) {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
 
   return (

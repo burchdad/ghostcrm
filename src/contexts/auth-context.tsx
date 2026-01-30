@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useMemo, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { getBrowserSupabase } from '@/utils/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
+import { debounce } from '@/lib/utils/performance';
 
 interface AuthUser {
   id: string;
@@ -22,7 +23,7 @@ type AuthState = {
   isAuthenticated: boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string; code?: string }>;
   supabase: any;
 };
 
@@ -178,6 +179,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Bootstrap only when we have a real token (prevents half-initialized session calls)
       console.log('🚀 [Auth] Calling ensureProfileBootstrapped...');
       await ensureProfileBootstrapped(accessToken);
+      
+      console.log('🔄 [Auth] Bootstrap completed, refreshing profile data...');
+      
+      // Small delay to ensure bootstrap write completes
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Then fetch with maybeSingle to prevent 406 errors
       console.log('📊 [Auth] Querying profiles table...');
@@ -231,7 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Login function - bulletproof server + client verification
-  const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; message?: string; code?: string }> => {
     try {
       console.log('🚀 [Auth] Starting login process for:', email);
       
@@ -248,9 +254,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('📡 [Auth] Login API response status:', response.status);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [Auth] Server login failed:', errorText);
-        return { success: false, message: errorText || 'Login failed' };
+        // Try to parse JSON error response first
+        try {
+          const errorData = await response.json();
+          console.error('❌ [Auth] Server login failed:', errorData);
+          return { 
+            success: false, 
+            message: errorData.error || errorData.message || 'Login failed',
+            code: errorData.code // Pass through error codes like 'email_not_verified'
+          };
+        } catch {
+          // Fallback to text if not JSON
+          const errorText = await response.text();
+          console.error('❌ [Auth] Server login failed (text):', errorText);
+          return { success: false, message: errorText || 'Login failed' };
+        }
       }
 
       console.log('✅ [Auth] Server login successful - cookies set');

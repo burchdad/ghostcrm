@@ -1,213 +1,94 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createSafeStripeClient, STRIPE_CONFIG } from '@/lib/stripe-safe';
-import { createSafeSupabaseClient } from '@/lib/supabase-safe';
-import { headers } from 'next/headers';
+// app/api/billing/webhook/route.ts  
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
+import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import Stripe from "stripe";
 
-export const dynamic = 'force-dynamic';
-export async function POST(request: NextRequest) {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-09-30.clover",
+});
+
+export async function POST(req: NextRequest) {
+  const body = await req.text();
+  const signature = req.headers.get("stripe-signature")!;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+
+  let event: Stripe.Event;
+
   try {
-    const stripe = createSafeStripeClient();
-    if (!stripe) {
-      return NextResponse.json(
-        { error: 'Stripe not configured' },
-        { status: 503 }
-      );
-    }
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+  } catch (err: any) {
+    console.error(`❌ [STRIPE WEBHOOK] Signature verification failed:`, err.message);
+    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+  }
 
-    const supabase = createSafeSupabaseClient();
-    if (!supabase) {
-      return NextResponse.json(
-        { error: 'Database not configured' },
-        { status: 503 }
-      );
-    }
+  console.log(`🔔 [STRIPE WEBHOOK] Processing event: ${event.type}`);
 
-    const body = await request.text();
-    const headersList = headers();
-    const signature = headersList.get('stripe-signature');
-
-    if (!signature || !STRIPE_CONFIG.WEBHOOK_SECRET) {
-      console.error('Missing stripe signature or webhook secret');
-      return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
-    }
-
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(body, signature, STRIPE_CONFIG.WEBHOOK_SECRET);
-    } catch (err) {
-      console.error('Webhook signature verification failed:', err);
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
-    }
-
-    console.log('Received Stripe webhook event:', event.type);
-
-    // Handle different event types
+  try {
     switch (event.type) {
-      case 'customer.subscription.trial_will_end':
-        await handleTrialWillEnd(event.data.object, supabase);
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        await handleCheckoutCompleted(session);
         break;
-      
-      case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(event.data.object, supabase);
-        break;
-      
-      case 'invoice.payment_succeeded':
-        await handlePaymentSucceeded(event.data.object, supabase);
-        break;
-      
-      case 'invoice.payment_failed':
-        await handlePaymentFailed(event.data.object, supabase);
-        break;
-      
-      case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event.data.object, supabase);
-        break;
-      
-      case 'setup_intent.succeeded':
-        await handleSetupIntentSucceeded(event.data.object, supabase);
-        break;      default:
-        console.log(`Unhandled event type: ${event.type}`);
+      }
+
+      default:
+        console.log(`🔕 [STRIPE WEBHOOK] Unhandled event type: ${event.type}`);
     }
 
     return NextResponse.json({ received: true });
 
   } catch (error) {
-    console.error('Webhook error:', error);
-    return NextResponse.json(
-      { error: 'Webhook handler failed' },
-      { status: 500 }
-    );
+    console.error(`❌ [STRIPE WEBHOOK] Processing failed:`, error);
+    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 }
 
-async function handleTrialWillEnd(subscription: any, supabase: any) {
-  console.log('Trial will end for subscription:', subscription.id);
-  
-  // Update billing status to indicate trial ending soon
-  const { error } = await supabase
-    .from('user_billing')
-    .update({
-      billing_status: 'trial_ending',
-      updated_at: new Date().toISOString()
-    })
-    .eq('stripe_subscription_id', subscription.id);
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  console.log(`💳 [STRIPE WEBHOOK] Checkout completed: ${session.id}`);
 
-  if (error) {
-    console.error('Error updating billing status for trial ending:', error);
+  const metadata = session.metadata;
+  if (!metadata?.auth_user_id) {
+    console.error('❌ [STRIPE WEBHOOK] Missing auth_user_id in metadata');
+    throw new Error('Missing required metadata: auth_user_id');
   }
 
-  // Here you could also send a reminder email to the user
-  // await sendTrialEndingEmail(subscription.customer);
-}
+  const authUserId = metadata.auth_user_id;
+  const userEmail = metadata.user_email || session.customer_email;
+  const companyName = metadata.company_name || "My Organization";
+  const requestedSubdomain = metadata.subdomain || "";
 
-async function handleSubscriptionUpdated(subscription: any, supabase: any) {
-  console.log('Subscription updated:', subscription.id, 'Status:', subscription.status);
+  console.log(`🏢 [STRIPE WEBHOOK] Provisioning tenant for user: ${authUserId}`);
 
-  let billingStatus = 'active';
-  
-  // Map Stripe subscription status to our billing status
-  switch (subscription.status) {
-    case 'trialing':
-      billingStatus = 'trial_active';
-      break;
-    case 'active':
-      billingStatus = 'active';
-      break;
-    case 'past_due':
-      billingStatus = 'past_due';
-      break;
-    case 'canceled':
-      billingStatus = 'canceled';
-      break;
-    case 'unpaid':
-      billingStatus = 'unpaid';
-      break;
-    default:
-      billingStatus = subscription.status;
-  }
+  try {
+    // 🎯 PROVISION TENANT AFTER PAYMENT SUCCESS (idempotent)
+    const { data: orgResult, error: provisionError } = await supabaseAdmin.rpc('provision_tenant_after_payment', {
+      p_user_id: authUserId,
+      p_org_name: companyName,
+      p_requested_subdomain: requestedSubdomain,
+      p_owner_email: userEmail,
+      p_stripe_customer_id: session.customer as string,
+      p_stripe_subscription_id: session.subscription as string,
+    });
 
-  const { error } = await supabase
-    .from('user_billing')
-    .update({
-      billing_status: billingStatus,
-      subscription_status: subscription.status,
-      updated_at: new Date().toISOString()
-    })
-    .eq('stripe_subscription_id', subscription.id);
-
-  if (error) {
-    console.error('Error updating subscription status:', error);
-  }
-}
-
-async function handlePaymentSucceeded(invoice: any, supabase: any) {
-  console.log('Payment succeeded for invoice:', invoice.id);
-
-  if (invoice.subscription) {
-    const { error } = await supabase
-      .from('user_billing')
-      .update({
-        billing_status: 'active',
-        last_payment_date: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('stripe_subscription_id', invoice.subscription);
-
-    if (error) {
-      console.error('Error updating billing after successful payment:', error);
+    if (provisionError) {
+      console.error('❌ [STRIPE WEBHOOK] Tenant provisioning failed:', provisionError);
+      throw new Error(`Tenant provisioning failed: ${provisionError.message}`);
     }
-  }
-}
 
-async function handlePaymentFailed(invoice: any, supabase: any) {
-  console.log('Payment failed for invoice:', invoice.id);
-
-  if (invoice.subscription) {
-    const { error } = await supabase
-      .from('user_billing')
-      .update({
-        billing_status: 'payment_failed',
-        updated_at: new Date().toISOString()
-      })
-      .eq('stripe_subscription_id', invoice.subscription);
-
-    if (error) {
-      console.error('Error updating billing after failed payment:', error);
+    console.log(`✅ [STRIPE WEBHOOK] Tenant provisioned successfully:`, orgResult);
+    
+    // Log if this was already provisioned (webhook retry)
+    if (orgResult?.already_provisioned) {
+      console.log('ℹ️ [STRIPE WEBHOOK] Tenant was already provisioned (webhook retry)');
     }
-  }
-}
 
-async function handleSubscriptionDeleted(subscription: any, supabase: any) {
-  console.log('Subscription deleted:', subscription.id);
+    return orgResult;
 
-  const { error } = await supabase
-    .from('user_billing')
-    .update({
-      billing_status: 'canceled',
-      subscription_status: 'canceled',
-      updated_at: new Date().toISOString()
-    })
-    .eq('stripe_subscription_id', subscription.id);
-
-  if (error) {
-    console.error('Error updating billing after subscription deletion:', error);
-  }
-}
-
-async function handleSetupIntentSucceeded(setupIntent: any, supabase: any) {
-  console.log('Setup intent succeeded:', setupIntent.id);
-
-  const { error } = await supabase
-    .from('user_billing')
-    .update({
-      payment_method_id: setupIntent.payment_method,
-      setup_intent_status: 'succeeded',
-      updated_at: new Date().toISOString()
-    })
-    .eq('setup_intent_id', setupIntent.id);
-
-  if (error) {
-    console.error('Error updating billing after setup intent success:', error);
+  } catch (error) {
+    console.error('❌ [STRIPE WEBHOOK] Tenant provisioning error:', error);
+    throw error; // Re-throw to trigger 500 response
   }
 }

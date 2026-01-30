@@ -5,11 +5,13 @@ import Link from "next/link";
 import { Car, Menu, X, Crown, LogIn, CreditCard, Home, Play } from "lucide-react";
 import { usePathname } from 'next/navigation';
 import ContactSalesModal from "@/components/modals/ContactSalesModal";
+import { isSubdomain } from '@/lib/utils/environment';
 
 export default function MarketingHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showContactSales, setShowContactSales] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showStaffLogin, setShowStaffLogin] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -18,6 +20,18 @@ export default function MarketingHeader() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Determine if Staff Login should be shown (only on main domain, not subdomains)
+  useEffect(() => {
+    const isOnSubdomain = isSubdomain();
+    setShowStaffLogin(!isOnSubdomain);
+    
+    console.log('🏠 [MarketingHeader] Domain check:', {
+      hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
+      isSubdomain: isOnSubdomain,
+      showStaffLogin: !isOnSubdomain
+    });
   }, []);
 
   return (
@@ -323,46 +337,48 @@ export default function MarketingHeader() {
               Contact Sales
             </button>
 
-            {/* Client Login Button */}
-            <Link href="/login" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '1rem',
-              fontSize: '0.925rem',
-              fontWeight: '700',
-              textDecoration: 'none',
-              color: '#ffffff',
-              background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-              border: 'none',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)'
-              e.currentTarget.style.boxShadow = '0 8px 30px rgba(139, 92, 246, 0.6)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0) scale(1)'
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.4)'
-            }}>
-              {/* Animated gradient overlay */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: '-100%',
-                width: '100%',
-                height: '100%',
-                background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
-                transition: 'left 0.6s ease'
-              }} className="shine-effect"></div>
-              
-              <LogIn style={{ width: '1rem', height: '1rem', position: 'relative', zIndex: 10 }} />
-              <span style={{ position: 'relative', zIndex: 10 }}>Client Login</span>
-            </Link>
+            {/* Staff Login Button - Only show on main domain */}
+            {showStaffLogin && (
+              <Link href="/login" style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                borderRadius: '1rem',
+                fontSize: '0.925rem',
+                fontWeight: '700',
+                textDecoration: 'none',
+                color: '#ffffff',
+                background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                border: 'none',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)'
+                e.currentTarget.style.boxShadow = '0 8px 30px rgba(139, 92, 246, 0.6)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)'
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.4)'
+              }}>
+                {/* Animated gradient overlay */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: '-100%',
+                  width: '100%',
+                  height: '100%',
+                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+                  transition: 'left 0.6s ease'
+                }} className="shine-effect"></div>
+                
+                <LogIn style={{ width: '1rem', height: '1rem', position: 'relative', zIndex: 10 }} />
+                <span style={{ position: 'relative', zIndex: 10 }}>Staff Login</span>
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -603,38 +619,41 @@ export default function MarketingHeader() {
                 Contact Sales
               </button>
               
-              <div style={{
-                padding: '1rem 0',
-                borderTop: '1px solid rgba(139, 92, 246, 0.1)',
-                marginTop: '0.5rem'
-              }}>
-                <Link
-                  href="/login"
-                  style={{
-                    display: 'block',
-                    background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-                    color: 'white',
-                    padding: '0.875rem 1.5rem',
-                    borderRadius: '0.75rem',
-                    fontWeight: '700',
-                    textAlign: 'center',
-                    textDecoration: 'none',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)'
-                  }}
-                  onClick={() => setIsMenuOpen(false)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(139, 92, 246, 0.4)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)'
-                  }}
-                >
-                  Client Login
-                </Link>
-              </div>
+              {/* Staff Login Button - Only show on main domain */}
+              {showStaffLogin && (
+                <div style={{
+                  padding: '1rem 0',
+                  borderTop: '1px solid rgba(139, 92, 246, 0.1)',
+                  marginTop: '0.5rem'
+                }}>
+                  <Link
+                    href="/login"
+                    style={{
+                      display: 'block',
+                      background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                      color: 'white',
+                      padding: '0.875rem 1.5rem',
+                      borderRadius: '0.75rem',
+                      fontWeight: '700',
+                      textAlign: 'center',
+                      textDecoration: 'none',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)'
+                    }}
+                    onClick={() => setIsMenuOpen(false)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)'
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(139, 92, 246, 0.4)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)'
+                    }}
+                  >
+                    Staff Login
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}

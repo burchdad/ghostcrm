@@ -3,11 +3,18 @@
    Complete standalone styling for src/app/billing/page.tsx
    ================================ */
 
+/* Force dark background on billing page */
+html.billing-active,
+html.billing-active body {
+  background: linear-gradient(135deg, #0c0c1e 0%, #1a1a2e 35%, #16213e 100%) !important;
+  color: #ffffff !important;
+}
+
 /* Base billing page layout */
 .billing-page {
-  background: linear-gradient(135deg, #0c0c1e 0%, #1a1a2e 35%, #16213e 100%);
-  min-height: 100vh;
-  color: #ffffff;
+  background: linear-gradient(135deg, #0c0c1e 0%, #1a1a2e 35%, #16213e 100%) !important;
+  min-height: 100vh !important;
+  color: #ffffff !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   position: relative;
   overflow-x: hidden; /* Fix horizontal scroll */
@@ -16,15 +23,16 @@
 
 /* Hero background with enhanced glassmorphism */
 .billing-hero-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   overflow: hidden;
-  z-index: -1;
+  z-index: -1 !important;
+  background: linear-gradient(135deg, #0c0c1e 0%, #1a1a2e 35%, #16213e 100%) !important;
 }
 
 /* Glassmorphism background elements */
@@ -34,7 +42,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to right, rgba(124, 58, 237, 0.2), rgba(236, 72, 153, 0.2));
+  background: linear-gradient(to right, rgba(124, 58, 237, 0.3), rgba(236, 72, 153, 0.3)) !important;
 }
 
 .billing-bg-blur-1 {
@@ -43,7 +51,7 @@
   right: -50%;
   width: 600px;
   height: 600px;
-  background: rgba(124, 58, 237, 0.2);
+  background: rgba(124, 58, 237, 0.4) !important;
   border-radius: 50%;
   filter: blur(60px);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -55,7 +63,7 @@
   left: -50%;
   width: 600px;
   height: 600px;
-  background: rgba(236, 72, 153, 0.2);
+  background: rgba(236, 72, 153, 0.4) !important;
   border-radius: 50%;
   filter: blur(60px);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -68,7 +76,7 @@
   left: 25%;
   width: 400px;
   height: 400px;
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(59, 130, 246, 0.3) !important;
   border-radius: 50%;
   filter: blur(60px);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -81,7 +89,7 @@
   right: 25%;
   width: 300px;
   height: 300px;
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(245, 158, 11, 0.25) !important;
   border-radius: 50%;
   filter: blur(60px);
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -222,6 +230,8 @@
   margin: 2rem auto;
   max-width: 42rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  display: block;
 }
 
 /* Billing toggle section */
@@ -548,44 +558,52 @@
 }
 
 /* ================================
-   TAILWIND REPLACEMENT CLASSES
+   ENHANCED SECTIONS
    ================================ */
 
-/* Layout utilities */
-.absolute { position: absolute; }
-.relative { position: relative; }
-.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
-.overflow-hidden { overflow: hidden; }
+/* Essential layout utilities used by the billing page */
+.text-center {
+  text-align: center;
+}
 
-/* Background utilities */
-.bg-gradient-to-r { background-image: linear-gradient(to right, var(--tw-gradient-stops)); }
+.mb-10 {
+  margin-bottom: 2.5rem;
+}
 
-/* Size utilities */
-.w-2 { width: 0.5rem; }
-.h-2 { height: 0.5rem; }
-.w-6 { width: 1.5rem; }
-.h-6 { height: 1.5rem; }
-.w-7 { width: 1.75rem; }
-.h-7 { height: 1.75rem; }
+.mb-16 {
+  margin-bottom: 4rem;
+}
 
-/* Spacing utilities */
-.mb-10 { margin-bottom: 2.5rem; }
-.mb-16 { margin-bottom: 4rem; }
-.space-y-4 > * + * { margin-top: 1rem; }
+.space-y-4 > * + * {
+  margin-top: 1rem;
+}
 
-/* Text utilities */
-.text-center { text-align: center; }
-.text-xl { font-size: 1.25rem; line-height: 1.75rem; }
-.text-base { font-size: 1rem; line-height: 1.5rem; }
-.font-medium { font-weight: 500; }
-.font-semibold { font-weight: 600; }
+.max-w-6xl {
+  max-width: 72rem;
+}
 
-/* Color utilities */
-.text-white\/70 { color: rgba(255, 255, 255, 0.7); }
-.text-green-400 { color: #4ade80; }
-.bg-white\/30 { background-color: rgba(255, 255, 255, 0.3); }
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
 
-/* Floating particles */
+.w-6 {
+  width: 1.5rem;
+}
+
+.h-6 {
+  height: 1.5rem;
+}
+
+.w-12 {
+  width: 3rem;
+}
+
+.h-12 {
+  height: 3rem;
+}
+
+/* Floating particles animation */
 .floating-particles-container {
   position: absolute;
   top: 0;
@@ -616,47 +634,10 @@
   }
 }
 
-/* Border utilities */
-.rounded-full { border-radius: 9999px; }
-.border-3 { border-width: 3px; }
-.border-white { border-color: #ffffff; }
-.border-t-transparent { border-top-color: transparent; }
-
-/* Grid utilities */
-.grid { display: grid; }
-.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-.gap-8 { gap: 2rem; }
-
-/* Flexbox utilities */
-.flex { display: flex; }
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-
-/* Max width utilities */
-.max-w-4xl { max-width: 56rem; }
-.max-w-6xl { max-width: 72rem; }
-.mx-auto { margin-left: auto; margin-right: auto; }
-
-/* Animation utilities */
-.animate-spin { animation: spin 1s linear infinite; }
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+/* Color utilities */
+.text-white\/70 {
+  color: rgba(255, 255, 255, 0.7);
 }
-
-/* Responsive grid utilities */
-@media (min-width: 768px) {
-  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (min-width: 1024px) {
-  .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-
-/* ================================
-   ENHANCED SECTIONS
-   ================================ */
 
 /* Selected Plan Section */
 .selected-plan-section {

@@ -13,6 +13,7 @@ import { QuickLanguageSelector } from "@/components/global/LanguageSelector";
 import { useI18n } from "@/components/utils/I18nProvider";
 import { getOnlineUsers } from "@/lib/api";
 import styles from "./UnifiedToolbar.module.css";
+import "./unified-toolbar-mobile.css";
 
 // Ribbon registries
 import {

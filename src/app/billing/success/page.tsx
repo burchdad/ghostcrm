@@ -1,421 +1,263 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
-import { CheckCircle, ArrowRight, Home } from 'lucide-react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { 
+  CheckCircle, 
+  Mail, 
+  Star, 
+  Users, 
+  Car, 
+  BarChart3, 
+  MessageSquare, 
+  Calendar, 
+  Target, 
+  Zap,
+  Shield,
+  Smartphone,
+  Globe,
+  TrendingUp,
+  Clock,
+  Award,
+  ArrowRight,
+  ExternalLink
+} from 'lucide-react'
 import './page.css'
 
-interface SuccessData {
-  sessionId?: string
-  promoCode?: string
-  isSoftwareOwner: boolean
-  shouldStartOnboarding: boolean
-  userSubdomain?: string
-  processed?: boolean
-  gatewayError?: boolean
-  subdomainStatus?: 'checking' | 'pending_payment' | 'active' | 'error'
-  isSubdomainActivated?: boolean
-}
-
 function SuccessContent() {
-  const router = useRouter()
-  const [successData, setSuccessData] = useState<SuccessData>({
-    isSoftwareOwner: false,
-    shouldStartOnboarding: true,
-    userSubdomain: undefined,
-    subdomainStatus: 'checking',
-    isSubdomainActivated: false
-  })
-  const [loading, setLoading] = useState(true)
-  const [manualActivating, setManualActivating] = useState(false)
+  const [userSubdomain, setUserSubdomain] = useState<string | null>(null)
+  const [planType, setPlanType] = useState<string>('Professional')
 
   useEffect(() => {
-    async function checkUserStatus() {
+    async function initializeSuccess() {
       try {
-        // Get URL params
-        const urlParams = new URLSearchParams(window.location.search)
-        const sessionId = urlParams.get('session_id')
-        const processed = urlParams.get('processed') === 'true'
-        const gatewayError = urlParams.get('gateway_error') === 'true'
+        // Get auth info and subdomain
+        const authResponse = await fetch('/api/auth/me')
+        const authData = await authResponse.json()
+        const userEmail = authData.user?.email
         
-        // Show messaging based on payment gateway processing
-        if (processed) {
-          console.log('✅ [BILLING-SUCCESS] Payment processed through gateway successfully')
-        } else if (gatewayError) {
-          console.warn('⚠️ [BILLING-SUCCESS] Gateway processing error - payment may need manual verification')
-        }
-        
-        // Check if user is software owner by checking their session/role
-        const response = await fetch('/api/auth/check-owner-status')
-        const { isSoftwareOwner, userRole } = await response.json()
-        
-        // Get user's organization/subdomain info for proper redirect
-        let userSubdomain = null
-        let userEmail = null
-        if (!isSoftwareOwner) {
+        if (userEmail) {
           try {
-            const orgResponse = await fetch('/api/auth/me')
-            const userData = await orgResponse.json()
-            userEmail = userData.user?.email // Store email for activation check
-            if (userData.user?.organizationSubdomain) {
-              // Use the organizationSubdomain from the user data directly
-              userSubdomain = userData.user.organizationSubdomain
-              console.log('🔍 [BILLING-SUCCESS] Found user subdomain:', userSubdomain)
-            } else if (userData.user?.tenantId) {
-              // Fallback: Get organization details to find subdomain
-              const orgDetailsResponse = await fetch(`/api/organization/${userData.user.tenantId}`)
-              const orgData = await orgDetailsResponse.json()
-              userSubdomain = orgData.organization?.subdomain
-              console.log('🔍 [BILLING-SUCCESS] Found subdomain from org API:', userSubdomain)
-            }
-          } catch (error) {
-            console.warn('Could not fetch user organization info:', error)
-          }
-        }
-        
-        // Check if they used the SOFTWAREOWNER promo code
-        const promoCode = sessionId ? await checkPromoCodeUsed(sessionId) : null
-        
-        const usedSoftwareOwnerPromo = promoCode === 'SOFTWAREOWNER'
-        const shouldStartOnboarding = !isSoftwareOwner && !usedSoftwareOwnerPromo
-        
-        // For non-software owners, check real subdomain activation status
-        let subdomainStatus: 'checking' | 'pending_payment' | 'active' | 'error' = 'checking'
-        let isSubdomainActivated = false
-        
-        if (!isSoftwareOwner && !usedSoftwareOwnerPromo && userEmail) {
-          try {
-            console.log('🔍 [BILLING-SUCCESS] Checking real subdomain status...')
-            const statusResponse = await fetch('/api/subdomains/status', {
+            const subdomainResponse = await fetch('/api/subdomains/status', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userEmail })
+              body: JSON.stringify({ userEmail }),
+              credentials: 'include'
             })
-            const statusResult = await statusResponse.json()
             
-            if (statusResult.success && statusResult.subdomain) {
-              subdomainStatus = statusResult.subdomain.status || 'error'
-              isSubdomainActivated = statusResult.subdomain.status === 'active'
-              console.log(`✅ [BILLING-SUCCESS] Subdomain status confirmed: ${subdomainStatus}`)
-            } else {
-              subdomainStatus = 'error'
-              console.warn('⚠️ [BILLING-SUCCESS] Could not verify subdomain status:', statusResult.error)
+            if (subdomainResponse.ok) {
+              const subdomainData = await subdomainResponse.json()
+              if (subdomainData.success && subdomainData.subdomain) {
+                setUserSubdomain(subdomainData.subdomain.subdomain)
+              }
             }
-          } catch (statusError) {
-            subdomainStatus = 'error'
-            console.warn('⚠️ [BILLING-SUCCESS] Error checking subdomain status:', statusError)
+          } catch (error) {
+            console.warn('Could not fetch subdomain:', error)
           }
-        } else {
-          // Software owners don't need subdomain activation
-          subdomainStatus = 'active'
-          isSubdomainActivated = true
         }
-
-        setSuccessData({
-          sessionId: sessionId || undefined,
-          promoCode: promoCode || undefined,
-          isSoftwareOwner: isSoftwareOwner || usedSoftwareOwnerPromo,
-          shouldStartOnboarding,
-          userSubdomain: userSubdomain || undefined,
-          processed,
-          gatewayError,
-          subdomainStatus,
-          isSubdomainActivated
-        })
         
-        // Note: Subdomain activation now happens in payment gateway before success page
-        // Status checking here provides real-time confirmation for UI updates
-        
-        // Only auto-redirect software owners
-        if (isSoftwareOwner || usedSoftwareOwnerPromo) {
-          setTimeout(() => {
-            router.push('/owner/dashboard')
-          }, 3000)
-        }
       } catch (error) {
-        console.error('Error checking user status:', error)
-      } finally {
-        setLoading(false)
+        console.error('Success page initialization error:', error)
       }
     }
 
-    checkUserStatus()
-  }, [router])
-
-  // Manual activation function
-  const handleManualActivation = async () => {
-    setManualActivating(true)
-    
-    try {
-      const urlParams = new URLSearchParams(window.location.search)
-      const sessionId = urlParams.get('session_id')
-      
-      // Get user email from current session
-      const authResponse = await fetch('/api/auth/me')
-      const authData = await authResponse.json()
-      const userEmail = authData.user?.email
-      
-      if (!userEmail) {
-        alert('Could not find user email. Please try logging in again.')
-        return
-      }
-      
-      // Call manual activation API
-      const response = await fetch('/api/subdomains/manual-activate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userEmail })
-      })
-      
-      const result = await response.json()
-      
-      if (result.success) {
-        // Refresh the subdomain status
-        const statusResponse = await fetch('/api/subdomains/status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userEmail })
-        })
-        const statusResult = await statusResponse.json()
-        
-        if (statusResult.success && statusResult.subdomain) {
-          setSuccessData(prev => ({
-            ...prev,
-            subdomainStatus: statusResult.subdomain.status,
-            isSubdomainActivated: statusResult.subdomain.status === 'active'
-          }))
-        }
-        
-        alert('Subdomain activated successfully!')
-      } else {
-        alert(`Activation failed: ${result.error}`)
-      }
-    } catch (error) {
-      console.error('Manual activation error:', error)
-      alert('Activation failed. Please try again.')
-    } finally {
-      setManualActivating(false)
-    }
-  }
-
-  const handleGoToSubdomain = () => {
-    if (!successData.isSubdomainActivated) {
-      alert('Please wait for subdomain activation to complete before accessing your portal.')
-      return
-    }
-    
-    // Clear session and redirect directly to login-owner page
-    fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
-      router.push('/login-owner')
-    })
-  }
-
-  async function checkPromoCodeUsed(sessionId: string): Promise<string | null> {
-    try {
-      const response = await fetch(`/api/stripe/check-session-promo?session_id=${sessionId}`)
-      const data = await response.json()
-      return data.promoCode || null
-    } catch (error) {
-      console.error('Error checking promo code:', error)
-      return null
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="loading-card">
-          <div className="loading-spinner"></div>
-          <h2 className="loading-title">Processing...</h2>
-          <p className="loading-text">Setting up your account...</p>
-        </div>
-      </div>
-    )
-  }
+    initializeSuccess()
+  }, [])
 
   return (
     <div className="success-container">
-      <div className="success-card">
-        <div className="success-header">
-          <div className="success-icon">
-            <CheckCircle className="check-icon" />
-          </div>
-          <h2 className="success-title">
-            {successData.isSoftwareOwner ? 'Welcome Back!' : 'Payment Successful!'}
-          </h2>
-          <p className="success-subtitle">
-            {successData.isSoftwareOwner 
-              ? 'Software Owner access confirmed. Redirecting to your dashboard...'
-              : 'Thank you for your subscription. You will now be redirected to login to your tenant portal!'
-            }
-          </p>
-          
-          {/* Payment Gateway Status Indicator */}
-          {!successData.isSoftwareOwner && (
-            <div className={`gateway-status ${getGatewayStatusClass(successData)}`}>
-              {getGatewayStatusMessage(successData)}
-            </div>
-          )}
+      {/* Header Section */}
+      <div className="success-header-section">
+        <div className="success-icon-large">
+          <CheckCircle className="check-icon-large" />
         </div>
-
-        <div className={`status-card ${!successData.isSoftwareOwner ? (successData.isSubdomainActivated ? 'activated' : 'pending') : ''}`}>
-          <div className="status-header">
-            <CheckCircle className={`status-icon ${!successData.isSoftwareOwner && !successData.isSubdomainActivated ? 'pending' : ''}`} />
-            <h3 className="status-title">
-              {successData.isSoftwareOwner ? 'Software Owner Access' : getSubdomainStatusTitle(successData)}
-            </h3>
+        <h1 className="success-main-title">🎉 Welcome to GhostCRM!</h1>
+        <h2 className="success-subtitle">Your {planType} Plan is Now Active</h2>
+        
+        {/* Email Check Notice */}
+        <div className="email-check-notice">
+          <div className="email-icon">
+            <Mail className="mail-icon" />
           </div>
-          <p className="status-description">
-            {successData.isSoftwareOwner 
-              ? 'Full system access granted. You can manage all tenants and system settings.'
-              : getSubdomainStatusDescription(successData)
-            }
-          </p>
-          {successData.promoCode && (
-            <div className="promo-code">
-              Promo code used: {successData.promoCode}
-            </div>
-          )}
-        </div>
-
-        <div className="redirect-card">
-          {successData.isSoftwareOwner ? (
-            <p className="redirect-text">
-              Redirecting you to{' '}
-              <span className="redirect-destination">Software Owner Dashboard</span>
-              {' '}in 3 seconds...
+          <div className="email-content">
+            <h3>📧 Check Your Email Now!</h3>
+            <p>
+              We've sent you a <strong>comprehensive welcome email</strong> containing:
             </p>
-          ) : (
-            <div className="tenant-redirect-info">
-              <p className="redirect-text">
-                Your custom subdomain portal is ready:{' '}
-                {successData.userSubdomain && (
-                  <span className="redirect-destination">
-                    {successData.userSubdomain}.ghostcrm.ai
-                  </span>
-                )}
-              </p>
-              <p className="redirect-subtitle">
-                Click below to clear your session and login to your tenant portal
-              </p>
+            <ul>
+              <li>🔗 Your personalized subdomain login link{userSubdomain ? ` (${userSubdomain}.ghostcrm.ai)` : ''}</li>
+              <li>📚 Complete getting started guide</li>
+              <li>💡 Pro tips from automotive CRM experts</li>
+              <li>📞 Direct contact information for your setup specialist</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* What You Can Do Section */}
+      <div className="features-showcase">
+        <h2 className="features-title">🚀 Here's What You Can Do Right Now</h2>
+        
+        <div className="features-grid">
+          {/* Lead Management */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <Target className="icon" />
             </div>
-          )}
-        </div>
+            <h3>Smart Lead Management</h3>
+            <ul>
+              <li>Capture leads from 15+ sources automatically</li>
+              <li>AI-powered lead scoring and prioritization</li>
+              <li>Automatic follow-up sequences</li>
+              <li>Hot lead alerts via SMS/Email</li>
+            </ul>
+          </div>
 
-        <div className="button-group">
-          {successData.isSoftwareOwner ? (
-            <Link href="/billing" className="secondary-button">
-              Manage Subscription
-            </Link>
-          ) : (
-            <>
-              {/* Manual Activation Button */}
-              {!successData.isSubdomainActivated && (
-                <button 
-                  onClick={handleManualActivation}
-                  className="manual-activate-button"
-                  disabled={manualActivating}
-                >
-                  {manualActivating ? (
-                    <span>⏳ Activating...</span>
-                  ) : (
-                    <span>🔄 Activate Subdomain Manually</span>
-                  )}
-                </button>
-              )}
-              
-              <button 
-                onClick={handleGoToSubdomain}
-                className={`primary-button ${!successData.isSubdomainActivated ? 'disabled' : ''}`}
-                disabled={!successData.userSubdomain || !successData.isSubdomainActivated}
-              >
-                <ArrowRight className="button-icon" />
-                Go to My Tenant Portal
-              </button>
-              <Link href="/billing" className="secondary-button">
-                Manage Subscription
-              </Link>
-            </>
-          )}
-        </div>
+          {/* Inventory Management */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <Car className="icon" />
+            </div>
+            <h3>Vehicle Inventory</h3>
+            <ul>
+              <li>Track up to 2,000 vehicles in your inventory</li>
+              <li>Automatic VIN decoding and specifications</li>
+              <li>Photo management and virtual tours</li>
+              <li>Pricing intelligence and market analysis</li>
+            </ul>
+          </div>
 
-        <div className="support-text">
-          <p>
-            Questions? Contact us at{' '}
-            <a href="mailto:support@ghostcrm.com" className="support-link">
-              support@ghostcrm.com
-            </a>
-          </p>
+          {/* Team Collaboration */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <Users className="icon" />
+            </div>
+            <h3>Team Management</h3>
+            <ul>
+              <li>Add up to 25 team members</li>
+              <li>Role-based permissions and access control</li>
+              <li>Performance tracking and leaderboards</li>
+              <li>Commission calculations and reporting</li>
+            </ul>
+          </div>
+
+          {/* Analytics & Reporting */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <BarChart3 className="icon" />
+            </div>
+            <h3>Advanced Analytics</h3>
+            <ul>
+              <li>Real-time sales performance dashboards</li>
+              <li>ROI tracking and conversion analytics</li>
+              <li>Customer journey mapping</li>
+              <li>Automated daily/weekly reports</li>
+            </ul>
+          </div>
+
+          {/* Communication Hub */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <MessageSquare className="icon" />
+            </div>
+            <h3>Omnichannel Communication</h3>
+            <ul>
+              <li>Unified inbox for SMS, Email, Chat</li>
+              <li>AI-powered response suggestions</li>
+              <li>Automated appointment scheduling</li>
+              <li>Customer communication history</li>
+            </ul>
+          </div>
+
+          {/* Mobile Access */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <Smartphone className="icon" />
+            </div>
+            <h3>Mobile CRM Access</h3>
+            <ul>
+              <li>Full-featured mobile app for iOS/Android</li>
+              <li>Offline mode for lot walks and test drives</li>
+              <li>Photo capture and document scanning</li>
+              <li>Push notifications for urgent leads</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Next Steps Section */}
+      <div className="next-steps-section">
+        <h2 className="next-steps-title">🎯 Your Next Steps</h2>
+        
+        <div className="steps-grid">
+          <div className="step-card">
+            <div className="step-number">1</div>
+            <div className="step-content">
+              <h3>Check Your Email</h3>
+              <p>Open the welcome email we just sent you. It contains your login link and getting started checklist.</p>
+            </div>
+          </div>
+          
+          <div className="step-card">
+            <div className="step-number">2</div>
+            <div className="step-content">
+              <h3>Access Your CRM</h3>
+              <p>Click the link in your email to access your personalized CRM at {userSubdomain ? `${userSubdomain}.ghostcrm.ai` : 'your custom subdomain'}.</p>
+            </div>
+          </div>
+          
+          <div className="step-card">
+            <div className="step-number">3</div>
+            <div className="step-content">
+              <h3>Schedule Your Setup Call</h3>
+              <p>Book a 30-minute onboarding call with your dedicated setup specialist (included in your plan).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Guarantee Section */}
+      <div className="guarantee-section">
+        <div className="guarantee-content">
+          <div className="guarantee-icon">
+            <Shield className="shield-icon" />
+          </div>
+          <div>
+            <h3>30-Day Money-Back Guarantee</h3>
+            <p>Not satisfied? Get a full refund within 30 days, no questions asked. We're confident you'll love GhostCRM!</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Support Section */}
+      <div className="support-section">
+        <h3>Need Help Getting Started?</h3>
+        <div className="support-options">
+          <button className="support-btn primary">
+            <MessageSquare className="btn-icon" />
+            Live Chat Support
+          </button>
+          <button className="support-btn secondary">
+            <Calendar className="btn-icon" />
+            Schedule Setup Call
+          </button>
+          <a 
+            href={userSubdomain ? `https://${userSubdomain}.ghostcrm.ai/login` : '#'}
+            className="support-btn tertiary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <ExternalLink className="btn-icon" />
+            Access Your CRM
+          </a>
         </div>
       </div>
     </div>
   )
 }
 
-// Helper function to determine gateway status CSS class
-function getGatewayStatusClass(successData: SuccessData): string {
-  if (successData.isSubdomainActivated) {
-    return 'processed';
-  } else if (successData.gatewayError || successData.subdomainStatus === 'error') {
-    return 'error';
-  } else if (successData.subdomainStatus === 'pending_payment') {
-    return 'pending';
-  } else {
-    return 'standard';
-  }
-}
-
-// Helper function to get gateway status message
-function getGatewayStatusMessage(successData: SuccessData): JSX.Element {
-  if (successData.isSubdomainActivated) {
-    return <span className="gateway-processed">✅ Account activated instantly through secure payment gateway</span>;
-  } else if (successData.gatewayError) {
-    return <span className="gateway-error">⚠️ Payment successful - Account activation processing</span>;
-  } else if (successData.subdomainStatus === 'error') {
-    return <span className="gateway-error">⚠️ Activation verification in progress</span>;
-  } else if (successData.subdomainStatus === 'pending_payment') {
-    return <span className="gateway-pending">🔄 Payment confirmed - Finalizing subdomain activation</span>;
-  } else if (successData.subdomainStatus === 'checking') {
-    return <span className="gateway-standard">🔍 Payment confirmed - Verifying account activation</span>;
-  } else {
-    return <span className="gateway-standard">💳 Payment confirmed - Activating your account</span>;
-  }
-}
-
-// Helper function to get subdomain status title
-function getSubdomainStatusTitle(successData: SuccessData): string {
-  if (successData.isSubdomainActivated) {
-    return 'Subscription Activated';
-  } else if (successData.subdomainStatus === 'pending_payment') {
-    return 'Activation In Progress';
-  } else if (successData.subdomainStatus === 'error') {
-    return 'Activation Pending';
-  } else {
-    return 'Processing Activation';
-  }
-}
-
-// Helper function to get subdomain status description
-function getSubdomainStatusDescription(successData: SuccessData): string {
-  if (successData.isSubdomainActivated) {
-    return 'Your GhostCRM subscription is now active and your custom subdomain portal is ready to use.';
-  } else if (successData.subdomainStatus === 'pending_payment') {
-    return 'Your payment has been confirmed. We are finalizing your subdomain activation and it will be ready shortly.';
-  } else if (successData.subdomainStatus === 'error') {
-    return 'Your payment was successful. We are working on activating your subdomain portal.';
-  } else {
-    return 'Your payment has been confirmed and we are processing your account activation.';
-  }
-}
-
-export default function CheckoutSuccessPage() {
+export default function BillingSuccessPage() {
   return (
-    <Suspense fallback={
-      <div className="fallback-container">
-        <div className="fallback-spinner"></div>
-      </div>
-    }>
+    <Suspense fallback={<div>Loading...</div>}>
       <SuccessContent />
     </Suspense>
   )

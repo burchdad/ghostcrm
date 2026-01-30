@@ -94,7 +94,7 @@ async function loadTranslations(lang: string): Promise<Record<string, any>> {
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState("en");
   const [loadedLanguages, setLoadedLanguages] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // ✨ Start as false for instant render
 
   // Load initial translations and auto-detect browser language
   useEffect(() => {
@@ -115,13 +115,19 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Load the initial language translations
-      await loadTranslations(initialLang);
-      setLang(initialLang);
-      setLoadedLanguages([initialLang]);
-      setIsLoading(false);
+      // Load translations in background without blocking render
+      try {
+        await loadTranslations(initialLang);
+        setLang(initialLang);
+        setLoadedLanguages([initialLang]);
+      } catch (error) {
+        console.warn("Translation loading failed, using fallbacks:", error);
+        setLang("en");
+        setLoadedLanguages(["en"]);
+      }
     };
 
+    // Initialize async without blocking render
     initializeI18n();
   }, []);
 
@@ -186,7 +192,17 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   };
 
   if (isLoading) {
-    return <div>Loading translations...</div>;
+    // 🚀 NON-BLOCKING: Render children immediately with fallback translations
+    return (
+      <I18nContext.Provider value={{ 
+        lang: "en", 
+        setLang: handleSetLang, 
+        t: (key: string) => key, // Fallback to key if translations not loaded
+        loadedLanguages: [] 
+      }}>
+        {children}
+      </I18nContext.Provider>
+    );
   }
 
   return (

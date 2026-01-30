@@ -1,72 +1,73 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/utils/supabase/admin'
-import { jwtVerify } from 'jose'
+import { createSupabaseServer } from '@/utils/supabase/server';
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get JWT token from cookies
-    const cookieStore = request.cookies
-    const token = cookieStore.get('ghost_session')?.value
+    // Use Supabase session instead of custom JWT
+    const supabase = await createSupabaseServer();
     
-    if (!token) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
       return NextResponse.json({ 
         isSoftwareOwner: false, 
         userRole: null,
         error: 'No authentication token' 
-      }, { status: 401 })
+      }, { status: 401 });
     }
 
-    // Verify JWT token
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
-    const { payload } = await jwtVerify(token, secret)
-    
-    const userEmail = payload.email as string
-    const userId = payload.userId as string
+    const userEmail = user.email;
+    const userId = user.id;
     
     if (!userEmail || !userId) {
       return NextResponse.json({ 
         isSoftwareOwner: false, 
         userRole: null,
-        error: 'Invalid token' 
-      }, { status: 401 })
+        error: 'Invalid user session' 
+      }, { status: 401 });
     }
 
     // Check if user is the software owner
-    const softwareOwnerEmail = process.env.SOFTWARE_OWNER_EMAIL || 'admin@ghostcrm.com'
-    const isSoftwareOwner = userEmail === softwareOwnerEmail
+    const softwareOwnerEmail = process.env.SOFTWARE_OWNER_EMAIL || 'admin@ghostcrm.com';
+    const isSoftwareOwner = userEmail === softwareOwnerEmail;
     
-    // Get user profile to check their role
+    // Get user profile to check their role from users table (not user_profiles)
     const { data: profile, error: profileError } = await supabaseAdmin
-      .from('user_profiles')
-      .select('role, is_admin')
+      .from('users') // 🔧 FIX: Use 'users' table instead of 'user_profiles'
+      .select('role, email')
       .eq('id', userId)
-      .single()
+      .single();
 
     if (profileError) {
-      console.warn('⚠️ [OWNER-CHECK] Profile not found:', profileError.message)
+      console.warn('⚠️ [OWNER-CHECK] Profile not found:', profileError.message);
     }
 
-    // Alternative check: user is software owner if they're a global admin
-    const isGlobalAdmin = profile?.is_admin === true && profile?.role === 'admin'
+    // Check if user is admin or owner role
+    const isGlobalAdmin = profile?.role === 'admin' || profile?.role === 'owner';
     
     const result = {
       isSoftwareOwner: isSoftwareOwner || isGlobalAdmin,
-      userRole: profile?.role || payload.role || null,
-      isAdmin: profile?.is_admin || false,
+      userRole: profile?.role || null,
+      isAdmin: isGlobalAdmin,
       userEmail: userEmail,
       softwareOwnerEmail,
       emailMatch: isSoftwareOwner,
       globalAdmin: isGlobalAdmin
-    }
+    };
     
-    return NextResponse.json(result)
+    return NextResponse.json(result);
 
   } catch (error: any) {
+    console.error('❌ [OWNER-CHECK] Error:', error);
     return NextResponse.json({ 
       isSoftwareOwner: false, 
       userRole: null,
       error: 'Internal server error',
       details: error.message 
-    }, { status: 500 })
+    }, { status: 500 });
   }
 }

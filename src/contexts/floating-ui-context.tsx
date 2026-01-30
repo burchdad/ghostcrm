@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, useMemo } from "react";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
 
 interface FloatingUIContextType {
   shouldShowFloatingButtons: boolean;
@@ -16,19 +17,42 @@ export function useFloatingUI() {
 
 export function FloatingUIProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, isAuthenticated } = useAuth();
 
   const shouldShowFloatingButtons = useMemo(() => {
-    // Hide floating buttons on login/auth pages
+    // 🚨 CRITICAL: Only show floating buttons on authenticated tenant pages
+    // Not on: public pages, billing signup, marketing, login/register
+    
+    // Hide floating buttons on marketing, auth, and public pages
     const hideOnPages = [
       '/',
       '/login',
       '/register', 
       '/reset-password',
-      '/unauthorized'
+      '/unauthorized',
+      '/billing', // 🔧 FIX: Hide on public billing/signup page (not tenant billing)
+      '/demo',
+      '/marketing',
+      '/about',
+      '/contact',
+      '/privacy',
+      '/terms'
     ];
     
-    return !hideOnPages.includes(pathname) && !pathname.includes('/marketing');
-  }, [pathname]);
+    // Check conditions for hiding
+    const isPublicPage = hideOnPages.includes(pathname);
+    const isMarketingPage = pathname.includes('/marketing');
+    const isNotAuthenticated = !isAuthenticated;
+    const hasNoTenantContext = !user?.tenantId && !user?.organizationId; // Must have tenant or organization context
+    
+    // Only show if:
+    // 1. Not on public/marketing/auth pages
+    // 2. User is authenticated
+    // 3. User has tenant context (tenantId or organizationId)
+    const shouldShow = !isPublicPage && !isMarketingPage && isAuthenticated && (!!user?.tenantId || !!user?.organizationId);
+    
+    return shouldShow;
+  }, [pathname, isAuthenticated, user?.tenantId]);
 
   return (
     <FloatingUIContext.Provider value={{ shouldShowFloatingButtons }}>

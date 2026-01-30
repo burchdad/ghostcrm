@@ -3,13 +3,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { hash } from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { limitKey } from "@/lib/rateLimitEdge";
 import { withCORS } from "@/lib/cors";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import speakeasy from "speakeasy";
 
 type RegisterBody = {
   email?: string;
@@ -18,22 +14,118 @@ type RegisterBody = {
   lastName?: string;
   companyName?: string;
   subdomain?: string;
-  role?: string;
 };
 
-async function registerHandler(req: Request) {
-  console.log("🚀 [REGISTER] Starting registration process...");
+function jsonError(message: string, status = 400, extra?: Record<string, any>) {
+  return NextResponse.json({ error: message, ...(extra ?? {}) }, { status });
+}
 
+function normalizeEmail(email: string) {
+  return String(email).trim().toLowerCase();
+}
+
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Your DB-side regex is stricter; keep route-side validation aligned.
+function validateSubdomainOrThrow(subdomain: string) {
+  const s = subdomain.trim().toLowerCase();
+  const re = /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/; // 3-63, no leading/trailing hyphen
+  if (!re.test(s)) {
+    throw new Error(
+      "Invalid subdomain format. Use 3–63 chars: lowercase letters, numbers, hyphens; cannot start/end with hyphen."
+    );
+  }
+
+  const reserved = new Set([
+    "www", "api", "admin", "app", "mail", "ftp", "blog", "support",
+    "help", "docs", "status", "dev", "staging", "test", "demo",
+    "dashboard", "login", "register", "auth", "billing", "account",
+  ]);
+  if (reserved.has(s)) {
+    throw new Error(`'${s}' is a reserved subdomain name. Please choose a different name.`);
+  }
+
+  return s;
+}
+
+function defaultOrgName(body: RegisterBody) {
+  const fn = (body.firstName ?? "").trim();
+  const cn = (body.companyName ?? "").trim();
+  if (cn) return cn;
+  if (fn) return `${fn}'s Organization`;
+  return "My Organization";
+}
+
+function generateBaseSubdomain(body: RegisterBody, authUserId: string) {
+  const provided = (body.subdomain ?? "").trim();
+  if (provided) return validateSubdomainOrThrow(provided);
+
+  const cn = (body.companyName ?? "").trim().toLowerCase();
+  if (cn) {
+    const base = cn
+      .replace(/[^a-z0-9]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 20);
+    // if company name becomes empty, fall back
+    if (base.length >= 3) return base;
+  }
+
+  return `org-${authUserId.slice(0, 8)}`; // already valid format
+}
+
+// Wait for trigger-created public.users row
+async function waitForPublicUser(authUserId: string, maxRetries = 8, delayMs = 250) {
+  for (let i = 0; i < maxRetries; i++) {
+    const { data, error } = await supabaseAdmin
+      .from("users")
+      .select("id,email")
+      .eq("id", authUserId)
+      .maybeSingle();
+
+    if (data?.id) return data;
+
+    // Ignore "no rows" style errors; only break early on real failures
+    if (error && error.code && error.code !== "PGRST116") {
+      // keep retrying a couple times, but don't spin forever
+      if (i >= 2) throw new Error("Database error while waiting for user sync trigger.");
+    }
+
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+  throw new Error("User sync trigger did not create public user record in time.");
+}
+
+function sanitizeErrorForClient(e: any) {
+  const msg = e?.message ? String(e.message) : "Registration failed";
+  // Don't leak internals in prod
+  if (process.env.NODE_ENV === "production") {
+    // Map a few common cases safely
+    if (msg.toLowerCase().includes("reserved subdomain")) return { error: msg };
+    if (msg.toLowerCase().includes("invalid subdomain")) return { error: msg };
+    if (msg.toLowerCase().includes("invalid email")) return { error: "Invalid email format" };
+    if (msg.toLowerCase().includes("already exists")) return { error: "An account with this email already exists" };
+    if (msg.toLowerCase().includes("subdomain") && msg.toLowerCase().includes("unique")) {
+      return { error: "Registration temporarily unavailable. Please try again in a moment." };
+    }
+    return { error: "Registration failed. Please try again." };
+  }
+  return { error: msg };
+}
+
+export const POST = withCORS(registerHandler);
+
+async function registerHandler(req: Request) {
   try {
-    const {
-      email,
-      password,
-      firstName,
-      lastName,
-      companyName,
-      subdomain,
-      role,
-    }: RegisterBody = await req.json();
+    const body: RegisterBody = await req.json().catch(() => ({}));
+
+    const emailRaw = body.email ?? "";
+    const password = body.password ?? "";
+    const firstName = (body.firstName ?? "").trim();
+    const lastName = (body.lastName ?? "").trim();
+    const companyName = (body.companyName ?? "").trim();
 
     // --- Rate limit by client IP
     const clientIP =
@@ -41,398 +133,290 @@ async function registerHandler(req: Request) {
       req.headers.get("x-real-ip") ??
       "unknown";
     const rateKey = `register:${clientIP}`;
-    const rateResult = await limitKey(rateKey);
-    if (!rateResult.allowed) {
-      return NextResponse.json(
-        { error: "Too many registration attempts. Please try again later." },
-        { status: 429 }
-      );
+    const rate = await limitKey(rateKey);
+    if (!rate.allowed) {
+      return jsonError("Too many registration attempts. Please try again later.", 429);
     }
 
-    // --- Validate inputs
-    if (!email || !password) {
-      console.log("❌ [REGISTER] Missing email or password");
-      return NextResponse.json(
-        { error: "Missing email or password" },
-        { status: 400 }
-      );
+    // --- Validate basics
+    const email = normalizeEmail(emailRaw);
+    if (!email || !password) return jsonError("Missing email or password", 400);
+    if (!isValidEmail(email)) return jsonError("Invalid email format", 400);
+    if (password.length < 8) return jsonError("Password must be at least 8 characters", 400);
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return jsonError("Database configuration error. Please contact support.", 500);
     }
-    
-    // Validate subdomain if provided
-    if (subdomain) {
-      const subdomainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
-      if (!subdomainRegex.test(subdomain) || subdomain.length < 3 || subdomain.length > 63) {
-        console.log("❌ [REGISTER] Invalid subdomain format:", subdomain);
-        return NextResponse.json(
-          { error: "Invalid subdomain format. Must be 3-63 characters, lowercase letters, numbers, and hyphens only." },
-          { status: 400 }
-        );
-      }
+
+    // 🎯 CREATE AUTH USER + ORGANIZATION + PENDING SUBDOMAIN
+    // Set redirect URL for email verification - use existing NEXT_PUBLIC_BASE_URL
+    const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                   process.env.NEXT_PUBLIC_SITE_URL || 
+                   (process.env.NODE_ENV === 'production' ? 'https://ghostcrm.ai' : 'http://localhost:3000');
+    const redirectTo = `${siteUrl}/auth/callback`;
+
+    console.log('[REGISTER] Site URL configuration:', {
+      nodeEnv: process.env.NODE_ENV,
+      nextPublicBaseUrl: process.env.NEXT_PUBLIC_BASE_URL,
+      nextPublicSiteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+      computedSiteUrl: siteUrl,
+      redirectTo: redirectTo
+    });
+
+    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // 🎯 Allow immediate login - verification happens post-login
+      user_metadata: {
+        first_name: firstName,
+        last_name: lastName,
+        company_name: companyName,
+        role: "tenant-owner", // 🎯 They're creating their org, so they're the owner
+        email_verification_pending: true, // 🎯 Flag for post-login verification
+      },
+    });
+
+    if (createErr) {
+      console.log('[REGISTER] Auth creation error:', createErr);
       
-      // Check for reserved subdomains
-      const reservedSubdomains = [
-        'www', 'api', 'admin', 'app', 'mail', 'ftp', 'blog', 'support', 
-        'help', 'docs', 'status', 'dev', 'staging', 'test', 'demo',
-        'dashboard', 'login', 'register', 'auth', 'billing', 'account'
-      ];
-      
-      if (reservedSubdomains.includes(subdomain.toLowerCase())) {
-        console.log("❌ [REGISTER] Reserved subdomain:", subdomain);
-        return NextResponse.json(
-          { error: `'${subdomain}' is a reserved subdomain name. Please choose a different name.` },
-          { status: 400 }
-        );
+      // normalize common duplicate user situations into 409
+      const msg = createErr.message?.toLowerCase?.() ?? "";
+      const isDup =
+        createErr.status === 422 ||
+        createErr.code === '23505' || // PostgreSQL unique violation
+        msg.includes("already") ||
+        msg.includes("registered") ||
+        msg.includes("duplicate") ||
+        msg.includes("email_already_taken");
+
+      if (isDup) {
+        return jsonError("An account with this email already exists.", 409, {
+          suggestion: "Try signing in or use password reset.",
+          code: "EMAIL_ALREADY_EXISTS"
+        });
       }
-    }
-    
-    const emailNorm = String(email).trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
-      console.log("❌ [REGISTER] Invalid email format:", emailNorm);
-      return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
-    }
 
-    // --- All registrations create company owners
-    const userRole = "owner"; // Simplified: only owners can register
-    
-    // All registered users create organizations
-    const isCreatingOrganization = true;
-
-    // --- Validate Supabase env
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.SUPABASE_SERVICE_ROLE_KEY
-    ) {
-      console.error("❌ [REGISTER] Missing Supabase configuration");
-      return NextResponse.json(
-        { error: "Database configuration error. Please contact support." },
-        { status: 500 }
-      );
-    }
-
-    // --- Check if user exists
-    console.log("🔍 [REGISTER] Checking if user already exists…");
-    let existing = null as { id: string; email: string } | null;
-    try {
-      const result = await supabaseAdmin
-        .from("users")
-        .select("id,email")
-        .eq("email", emailNorm)
-        .single();
-      existing = result.data ?? null;
-
-      // If error is "no rows" (PGRST116), that's fine; else surface the error
-      if (result.error && result.error.code !== "PGRST116") {
-        console.error("❌ [REGISTER] Database error:", result.error);
-        return NextResponse.json(
-          { error: "Database connection error. Please try again." },
-          { status: 500 }
-        );
+      // Rate limiting error
+      if (msg.includes("rate") || msg.includes("limit")) {
+        return jsonError("Too many registration attempts. Please try again later.", 429);
       }
-    } catch (err) {
-      console.error("❌ [REGISTER] Supabase query failed:", err);
-      return NextResponse.json(
-        { error: "Database connection error. Please try again." },
-        { status: 500 }
-      );
-    }
 
-    if (existing) {
-      console.log("❌ [REGISTER] User already exists:", emailNorm);
-      return NextResponse.json(
-        { error: "An account with this email already exists" },
-        { status: 409 }
-      );
-    }
-
-    // --- Hash and insert
-    console.log("🔐 [REGISTER] Hashing password…");
-    const password_hash = await hash(password, 10);
-    
-    // --- Generate security fields for complete user setup
-    console.log("� [REGISTER] Generating security fields...");
-    const tenant_id = crypto.randomUUID();
-    const totp_secret = speakeasy.generateSecret({
-      name: `GhostCRM (${emailNorm})`,
-      issuer: 'GhostCRM'
-    }).base32;
-    const jwt_token = crypto.randomUUID(); // Placeholder token field
-
-    console.log("�💾 [REGISTER] Inserting new user into database…");
-    const insertResult = await supabaseAdmin
-      .from("users")
-      .insert({
-        email: emailNorm,
-        password_hash,
-        role: userRole,
-        first_name: firstName ?? "",
-        last_name: lastName ?? "",
-        company_name: companyName ?? "",
-        tenant_id: tenant_id,
-        totp_secret: totp_secret,
-        webauthn_credentials: JSON.stringify([]), // Empty array for new users
-        jwt_token: jwt_token,
-        organization_id: null // Will be set after organization creation
-      })
-      .select("id,email,role,tenant_id,totp_secret,webauthn_credentials,jwt_token")
-      .single();
-
-    if (insertResult.error) {
-      const { code, message } = insertResult.error;
-      if (code === "23505" || /duplicate/i.test(message)) {
-        console.log("❌ [REGISTER] Duplicate email on insert:", emailNorm);
-        return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+      // sanitize details in production
+      if (process.env.NODE_ENV === "production") {
+        return jsonError("Registration failed. Please try again.", 500);
       }
-      console.log("❌ [REGISTER] Database error on insert:", insertResult.error);
-      return NextResponse.json(
-        { error: "db_error", detail: message },
-        { status: 500 }
-      );
+      return jsonError("Registration failed.", 500, { detail: createErr.message });
     }
 
-    const user = insertResult.data!;
-    console.log("✅ [REGISTER] User created successfully:", user.id);
+    const authUserId = created?.user?.id;
+    if (!authUserId) return jsonError("Registration failed. Please try again.", 500);
 
-    // --- Create organization/tenant for all registrations
+    // 🎯 CREATE ORGANIZATION + PENDING SUBDOMAIN
     let organizationId: string | null = null;
-    console.log("🏢 [REGISTER] Creating organization for company owner...");
+    let subdomainName: string | null = null;
     
-    // Use user-provided subdomain or generate from company name
-    let baseSubdomain = subdomain || (companyName 
-      ? companyName.toLowerCase()
-          .replace(/[^a-z0-9]/g, '-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, '')
-          .substring(0, 20)
-      : `org-${user.id.substring(0, 8)}`);
-    
-    // Ensure subdomain uniqueness
-    let counter = 1;
-    let finalSubdomain = baseSubdomain;
-    
-    while (true) {
-      // Check both organizations and placeholder subdomains tables
-      const [orgCheck, subdomainCheck] = await Promise.all([
+    try {
+      console.log('[REGISTER] Creating organization and pending subdomain for user:', authUserId);
+      
+      // Generate subdomain name
+      subdomainName = generateBaseSubdomain(body, authUserId);
+      console.log('[REGISTER] Generated subdomain:', subdomainName);
+      
+      // Check if subdomain already exists in BOTH tables
+      const [subdomainCheck, organizationCheck] = await Promise.all([
         supabaseAdmin
-          .from("organizations")
-          .select("id")
-          .eq("subdomain", finalSubdomain)
+          .from('subdomains')
+          .select('subdomain')
+          .eq('subdomain', subdomainName)
           .single(),
         supabaseAdmin
-          .from("subdomains")
-          .select("id")
-          .eq("subdomain", finalSubdomain)
+          .from('organizations')
+          .select('subdomain')
+          .eq('subdomain', subdomainName)
           .single()
       ]);
-      
-      if (!orgCheck.data && !subdomainCheck.data) break;
-      
-      finalSubdomain = `${baseSubdomain}-${counter}`;
-      counter++;
-      
-      // Prevent infinite loop
-      if (counter > 100) {
-        finalSubdomain = `org-${user.id.substring(0, 8)}-${Date.now()}`;
-        break;
+        
+      if (subdomainCheck.data || organizationCheck.data) {
+        // Generate a unique subdomain by appending random chars
+        let attempts = 0;
+        let isUnique = false;
+        
+        while (!isUnique && attempts < 10) {
+          const randomSuffix = Math.random().toString(36).substring(2, 6);
+          const candidateSubdomain = `${subdomainName}-${randomSuffix}`;
+          
+          const [newSubdomainCheck, newOrganizationCheck] = await Promise.all([
+            supabaseAdmin
+              .from('subdomains')
+              .select('subdomain')
+              .eq('subdomain', candidateSubdomain)
+              .single(),
+            supabaseAdmin
+              .from('organizations')
+              .select('subdomain')
+              .eq('subdomain', candidateSubdomain)
+              .single()
+          ]);
+          
+          if (!newSubdomainCheck.data && !newOrganizationCheck.data) {
+            subdomainName = candidateSubdomain;
+            isUnique = true;
+            console.log('[REGISTER] Generated unique subdomain:', subdomainName);
+          }
+          
+          attempts++;
+        }
+        
+        if (!isUnique) {
+          // Fallback to timestamp-based naming
+          subdomainName = `org-${authUserId.slice(0, 8)}-${Date.now()}`;
+          console.log('[REGISTER] Using timestamp fallback subdomain:', subdomainName);
+        }
       }
-    }
-
-    try {
-      const orgResult = await supabaseAdmin
-        .from("organizations")
+      
+      // Create organization record
+      const orgName = defaultOrgName(body);
+      const { data: newOrg, error: orgError } = await supabaseAdmin
+        .from('organizations')
         .insert({
-          name: companyName || `${firstName}'s Organization`,
-          subdomain: finalSubdomain,
-          owner_id: user.id,
-          status: "active",
-          onboarding_completed: false,
+          name: orgName,
+          subdomain: subdomainName,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
-        .select("id")
+        .select('id')
         .single();
-
-      if (orgResult.error) {
-        console.error("❌ [REGISTER] Failed to create organization:", orgResult.error);
-        throw new Error(`Organization creation failed: ${orgResult.error.message}`);
+        
+      if (orgError || !newOrg) {
+        console.error('[REGISTER] Failed to create organization:', orgError);
+        
+        // Check if it's a subdomain uniqueness violation
+        const isSubdomainConflict = orgError?.code === '23505' && 
+          (orgError?.message?.includes('subdomain') || orgError?.message?.includes('organizations_subdomain_key'));
+        
+        if (isSubdomainConflict) {
+          // Retry with a timestamp-based unique subdomain
+          const fallbackSubdomain = `org-${authUserId.slice(0, 8)}-${Date.now()}`;
+          console.log('[REGISTER] Subdomain conflict, retrying with fallback:', fallbackSubdomain);
+          
+          const { data: retryOrg, error: retryError } = await supabaseAdmin
+            .from('organizations')
+            .insert({
+              name: orgName,
+              subdomain: fallbackSubdomain,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .select('id')
+            .single();
+            
+          if (retryError || !retryOrg) {
+            console.error('[REGISTER] Retry failed:', retryError);
+            throw new Error('Failed to create organization with unique subdomain');
+          }
+          
+          organizationId = retryOrg.id;
+          subdomainName = fallbackSubdomain;
+          console.log('[REGISTER] Retry succeeded:', { id: organizationId, subdomain: subdomainName });
+        } else {
+          throw new Error('Failed to create organization');
+        }
+      } else {
+        organizationId = newOrg.id;
+        console.log('[REGISTER] Created organization:', { id: organizationId, name: orgName, subdomain: subdomainName });
       }
       
-      organizationId = orgResult.data.id;
-      console.log("✅ [REGISTER] Organization created:", organizationId, "with subdomain:", finalSubdomain);
-
-      // Create organization membership as owner
-      const membershipResult = await supabaseAdmin
-        .from("organization_memberships")
+      // Create pending subdomain record
+      const { error: subdomainError } = await supabaseAdmin
+        .from('subdomains')
         .insert({
+          subdomain: subdomainName,
           organization_id: organizationId,
-          user_id: user.id,
-          role: "owner", // All registrations are owners
-          status: "active",
+          organization_name: orgName,
+          owner_email: email,
+          status: 'pending', // 🎯 KEY: This is what the webhook will look for!
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         });
-
-      if (membershipResult.error) {
-        console.error("❌ [REGISTER] Failed to create membership:", membershipResult.error);
-        throw new Error(`Membership creation failed: ${membershipResult.error.message}`);
+        
+      if (subdomainError) {
+        console.error('[REGISTER] Failed to create subdomain record:', subdomainError);
+        
+        // Check if it's a subdomain uniqueness violation
+        const isSubdomainConflict = subdomainError?.code === '23505' && 
+          subdomainError?.message?.includes('subdomain');
+        
+        if (isSubdomainConflict) {
+          console.warn('[REGISTER] Subdomain record already exists, continuing with organization creation');
+          // Don't fail registration - the important part (organization) is created
+        } else {
+          throw new Error('Failed to create subdomain record');
+        }
+      } else {
+        console.log('[REGISTER] Created pending subdomain record:', { subdomain: subdomainName, status: 'pending' });
       }
       
-      console.log("✅ [REGISTER] Organization membership created");
-
-      // Update user record with organization info as owner
-      const { error: updateError } = await supabaseAdmin
-        .from("users")
+      // Update user record with organization_id
+      const { error: userUpdateError } = await supabaseAdmin
+        .from('users')
         .update({ 
           organization_id: organizationId,
-          role: "owner" // Always owner for registrations
+          updated_at: new Date().toISOString()
         })
-        .eq("id", user.id);
+        .eq('id', authUserId);
         
-      if (updateError) {
-        console.error("❌ [REGISTER] Failed to update user with organization:", updateError);
-        throw new Error(`User update failed: ${updateError.message}`);
+      if (userUpdateError) {
+        console.warn('[REGISTER] Failed to update user with organization_id:', userUpdateError);
+        // Don't fail registration for this
       }
       
-      console.log("✅ [REGISTER] User updated with organization");
-      
-      // Create placeholder subdomain entry (inactive until payment)
-      try {
-        const { error: subdomainError } = await supabaseAdmin
-          .from("subdomains")
-          .insert({
-            subdomain: finalSubdomain,
-            organization_id: organizationId,
-            organization_name: companyName || `${firstName}'s Organization`,
-            owner_email: emailNorm,
-            status: 'pending_payment', // Will be activated after payment
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-          
-        if (subdomainError) {
-          console.error("❌ [REGISTER] Failed to create subdomain placeholder:", subdomainError);
-          // Don't fail registration for this, but log the error
-        } else {
-          console.log("✅ [REGISTER] Placeholder subdomain created:", finalSubdomain);
-        }
-      } catch (subdomainError) {
-        console.error("❌ [REGISTER] Subdomain creation error:", subdomainError);
-      }
-    } catch (orgError) {
-      console.error("❌ [REGISTER] Organization setup failed:", orgError);
-      
-      // Clean up the user record since org setup failed
-      await supabaseAdmin
-        .from("users")
-        .delete()
-        .eq("id", user.id);
-      
-      return NextResponse.json(
-        { error: "Account setup failed. Please try again with a different company name." },
-        { status: 500 }
-      );
+    } catch (orgCreationError) {
+      console.error('[REGISTER] Organization/subdomain creation failed:', orgCreationError);
+      // Don't fail the entire registration - user can still go through checkout
+      // The webhook will handle organization creation as fallback
     }
 
-    // --- Audit (best effort; ignore failures)
+    // 🎯 NO IMMEDIATE VERIFICATION - Verizon-style post-login setup approach
+    // Users will verify contact info AFTER login through PostLoginSetupModal
+    console.log('[REGISTER] Account created - verification will happen post-login');
+
+    // 🎯 TRIGGERS STILL CREATE public.users + public.profiles (but no org fields)
+    // Wait for trigger sync (optional - for immediate profile access)
     try {
-      await supabaseAdmin.from("audit_events").insert({
-        org_id: process.env.DEFAULT_ORG_ID ?? null,
-        actor_id: user.id,
-        entity: "user",
-        entity_id: user.id,
-        action: "register",
-        diff: { email: emailNorm },
-      });
-    } catch (auditErr) {
-      console.warn("⚠️ [REGISTER] Audit log failed:", auditErr);
+      await waitForPublicUser(authUserId);
+    } catch (triggerError) {
+      console.warn("[REGISTER] Trigger sync failed (non-fatal):", triggerError);
+      // Continue - not critical for registration success
     }
 
-    // --- Welcome email (optional, fail-soft)
-    try {
-      if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM) {
-        const sg = (await import("@sendgrid/mail")).default;
-        sg.setApiKey(process.env.SENDGRID_API_KEY);
-        await sg.send({
-          to: emailNorm,
-          from: process.env.SENDGRID_FROM,
-          subject: "Welcome to GhostCRM",
-          text: "Your account has been created.",
-        });
-        console.log("✅ [REGISTER] Welcome email sent");
-      } else {
-        console.log("ℹ️ [REGISTER] No SendGrid config; skipping email");
-      }
-    } catch (e) {
-      console.warn("⚠️ [REGISTER] SendGrid error:", (e as any)?.message || e);
-    }
-
-    // --- Create Supabase Auth user and establish session
-    console.log("🔐 [REGISTER] Creating Supabase Auth user...");
-    
-    // Create Supabase Auth user if not already existing
-    const { data: adminUser, error: adminErr } = await supabaseAdmin.auth.admin.createUser({
-      email: emailNorm,
-      password: password, // use the plaintext password the user posted
-      email_confirm: true // mark confirmed to avoid verify step
-    });
-    
-    if (adminErr && adminErr.status !== 422 /* user already exists */) {
-      console.warn("⚠️ [REGISTER] createUser failed:", adminErr);
-    } else {
-      console.log("✅ [REGISTER] Supabase Auth user created/exists");
-    }
-
-    // Build a response that we can attach Supabase cookies to
-    let res = NextResponse.json({
+    // 🎯 ENHANCED REGISTRATION RESPONSE - Include organization and subdomain info
+    return NextResponse.json({
       success: true,
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        role: user.role,
-        organizationId: organizationId 
+      message: "Account created successfully! Please select your plan.",
+      user: {
+        id: authUserId,
+        email,
+        role: "tenant-owner", // 🎯 They're the owner from registration
+        email_confirmed: false,
+        organizationId: organizationId, // 🎯 Now created during registration
+        tenantId: organizationId, // 🎯 Same as organizationId
       },
       organization: organizationId ? {
         id: organizationId,
-        name: companyName || `${firstName}'s Organization`,
-        role: "owner" // All registrations are owners
+        name: defaultOrgName(body),
+        subdomain: subdomainName
       } : null,
-      trial_mode: true,
+      subdomain: subdomainName ? {
+        name: subdomainName,
+        status: 'pending', // 🎯 Ready for webhook activation!
+        url: `https://${subdomainName}.ghostcrm.ai`
+      } : null,
+      next_step: "select_plan", // ✅ Always go to billing for plan selection
+      next_url: "/billing",
     });
 
-    // --- Attach Supabase session cookies by signing the user in server-side
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.log("🍪 [REGISTER] Setting up Supabase session cookies...");
-      
-      const cookieStore = cookies();
-      const supa = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-        {
-          cookies: {
-            getAll: () => cookieStore.getAll(),
-            setAll: (cs) => cs.forEach((c) => res.cookies.set(c)),
-          },
-        }
-      );
-
-      // Sign in to create sb-* cookies
-      const { error: signInErr } = await supa.auth.signInWithPassword({
-        email: emailNorm,
-        password: password,
-      });
-      
-      if (signInErr) {
-        console.warn("⚠️ [REGISTER] signInWithPassword failed:", signInErr.message);
-      } else {
-        console.log("✅ [REGISTER] Supabase session established");
-      }
-    }
-
-    console.log("🎉 [REGISTER] Registration completed:", user.id);
-    return res;
   } catch (e: any) {
-    console.error("💥 [REGISTER] Unexpected error:", e);
-    return NextResponse.json(
-      { error: "server_error", detail: e?.message || String(e) },
-      { status: 500 }
-    );
+    console.error("[REGISTER] unexpected error:", e);
+    return NextResponse.json(sanitizeErrorForClient(e), { status: 500 });
   }
 }
-
-// CORS-wrapped POST handler
-export const POST = withCORS(registerHandler);

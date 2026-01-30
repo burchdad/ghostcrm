@@ -184,16 +184,22 @@ export default function Sidebar() {
 
   // Determine user type and role
   // Check if user has tenant/organization context (indicates tenant owner vs software owner)
-  const hasOrganizationContext = user?.tenantId && user.tenantId.trim() !== '';
+  const hasOrganizationContext = (user?.tenantId && user.tenantId.trim() !== '') || 
+                                 (user?.organizationId && user.organizationId.trim() !== '');
   
   // Alternative detection for tenant owners: check if on tenant-owner path or known tenant owner email
   const isOnTenantOwnerPath = pathname.startsWith('/tenant-owner');
   const isKnownTenantOwner = user?.email === 'burchsl4@gmail.com';
   const isTenantOwnerByPath = isOnTenantOwnerPath || isKnownTenantOwner;
   
-  // Role-based access determination
-  const isSoftwareOwner = user?.role === 'owner' && !hasOrganizationContext && !isTenantOwnerByPath; // Platform owner
-  const isTenantOwner = user?.role === 'owner' && (hasOrganizationContext || isTenantOwnerByPath); // Dealership owner
+  // Role-based access determination - handle multiple role formats
+  const isOwnerRole = user?.role === 'owner' || user?.role === 'tenant-owner';
+  
+  // Special case: if user has 'user' role but is on tenant-owner path AND has organizationId, treat as tenant owner
+  const isUserOnTenantPath = user?.role === 'user' && isOnTenantOwnerPath && hasOrganizationContext;
+  
+  const isSoftwareOwner = isOwnerRole && !hasOrganizationContext && !isTenantOwnerByPath; // Platform owner
+  const isTenantOwner = isOwnerRole || isUserOnTenantPath || (hasOrganizationContext && isTenantOwnerByPath); // Dealership owner
   const isTenantAdmin = user?.role === 'admin' && hasOrganizationContext; // Dealership admin
   const isSalesManager = user?.role === 'manager' && hasOrganizationContext; // Sales Manager
   const isSalesRep = user?.role === 'sales_rep' && hasOrganizationContext; // Sales Rep

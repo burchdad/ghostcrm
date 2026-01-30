@@ -1,44 +1,89 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from '@/contexts/auth-context';
 import BrandPanel from "@/components/auth/BrandPanel";
 import AuthForm from "@/components/auth/AuthForm";
+import { PostLoginSetupModal } from "@/components/modals/PostLoginSetupModal";
+import { getBaseDomain, isSubdomain } from '@/lib/utils/environment';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const { user, supabaseUser, isLoading } = useAuth();
+  const [successMessage, setSuccessMessage] = useState<string | undefined>();
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [setupData, setSetupData] = useState<{
+    email?: string;
+  }>({});
 
-  // Redirect if already authenticated based on role and context
+  // Determine if we should show owner access button (only on main domain, not subdomains)
+  const [showOwnerAccess, setShowOwnerAccess] = useState(false);
+
   useEffect(() => {
-    if (user && !isLoading) {
-      console.log('🔄 [LoginPage] Redirecting authenticated user:', user.email, 'Role:', user.role);
+    // Only show software owner access on the main domain (not tenant subdomains)
+    const isOnSubdomain = isSubdomain();
+    setShowOwnerAccess(!isOnSubdomain);
+    
+    console.log('🏢 [LoginPage] Domain check:', {
+      hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
+      isSubdomain: isOnSubdomain,
+      showOwnerAccess: !isOnSubdomain
+    });
+  }, []);
+
+  // Check for registration success
+  useEffect(() => {
+    if (searchParams.get('registered') === 'true') {
+      setSuccessMessage('🎉 Account created successfully! Please log in to continue.');
+    }
+  }, [searchParams]);
+
+  // Helper function to handle redirect after verification is complete
+  const handlePostVerificationRedirect = () => {
+    if (!user) return;
+
+    console.log('🎯 [LoginPage] handlePostVerificationRedirect called for user:', user.email);
+    
+    const currentHost = window.location.hostname;
+    const baseDomain = getBaseDomain();
+    
+    console.log('🌐 [LoginPage] Current host:', currentHost, 'Base domain:', baseDomain);
+
+    // Check if we're on a subdomain
+    if (currentHost !== baseDomain && currentHost.endsWith(`.${baseDomain}`)) {
+      // We're on a subdomain - redirect to tenant dashboard
+      const redirectPath = "/tenant-owner/dashboard";
+      console.log('🏢 [LoginPage] On subdomain - redirecting to tenant dashboard:', redirectPath);
+      router.push(redirectPath);
+      return;
+    }
+
+    // We're on main domain - redirect based on role
+    console.log('🏠 [LoginPage] On main domain - checking role...');
+    let redirectPath = "/tenant-owner/dashboard"; // Default to tenant dashboard for all users
+
+    if (user) {
+      // Enhanced role-based routing with more specific paths
+      const userRole = user.role || 'user';
+      console.log('👤 [LoginPage] User role:', userRole);
       
-      // Simple role-based redirect - eliminate complex detection logic
-      let redirectPath = "/dashboard"; // default
-      
-      switch (user.role) {
-        case 'owner':
-          // Check if we're on a tenant subdomain or if this is a tenant owner
-          const hostname = window.location.hostname;
-          const isSubdomain = hostname !== 'localhost' && 
-                              hostname !== '127.0.0.1' && 
-                              (hostname.includes('.localhost') || hostname.includes('.ghostcrm.ai'));
-          
-          // For development: if user has tenant_id or is known tenant owner email, redirect to tenant dashboard
-          const isTenantOwner = user.tenantId || user.email === 'burchsl4@gmail.com';
-          
-          console.log('🔍 [LoginPage] Owner detection:', { hostname, isSubdomain, isTenantOwner, tenantId: user.tenantId });
-          
-          if (isSubdomain || isTenantOwner) {
-            redirectPath = "/tenant-owner/dashboard";
+      switch (userRole) {
+        case 'software_owner':
+          // Check if user has an active subdomain (from user profile)
+          if (user.tenantId && user.tenantId !== 'default-org') {
+            redirectPath = `https://${user.tenantId}.${baseDomain}/tenant-owner/dashboard`;
           } else {
-            redirectPath = "/owner/dashboard"; // Software owner
+            redirectPath = "/dashboard"; // Only software owners go to main dashboard
           }
           break;
+        case 'owner':
+          // For tenant owners, redirect directly to tenant dashboard
+          redirectPath = "/tenant-owner/dashboard";
+          break;
         case 'admin':
-          redirectPath = "/dashboard";
+          redirectPath = "/tenant-owner/dashboard";
           break;
         case 'manager':
           redirectPath = "/tenant-salesmanager/leads";
@@ -47,19 +92,53 @@ export default function LoginPage() {
           redirectPath = "/tenant-salesrep/leads";
           break;
         case 'user':
-          // Regular user role - redirect to main dashboard
-          redirectPath = "/dashboard";
+          // Regular user role - redirect to tenant dashboard if on subdomain
+          redirectPath = "/tenant-owner/dashboard";
           break;
         default:
-          console.warn('🚨 [LoginPage] Unknown role:', user.role, '- defaulting to dashboard');
-          redirectPath = "/dashboard";
+          console.warn('🚨 [LoginPage] Unknown role:', user.role, '- defaulting to tenant dashboard');
+          redirectPath = "/tenant-owner/dashboard";
       }
       
       console.log('➡️ [LoginPage] Redirecting to:', redirectPath);
       // Immediate redirect without delay
       router.push(redirectPath);
     }
-  }, [user, isLoading, router]);
+  };
+
+  // Check if user needs post-login verification setup
+  useEffect(() => {
+    if (user && !isLoading) {
+      console.log('🔄 [LoginPage] Checking verification status for user:', user.email);
+      
+      // Only show setup for truly unverified users
+      // Don't show if email is already confirmed in Supabase Auth
+      const isEmailConfirmed = supabaseUser?.email_confirmed_at != null;
+      const needsSetup = !isEmailConfirmed && (
+        supabaseUser?.user_metadata?.email_verification_pending === true ||
+        supabaseUser?.user_metadata?.verification_setup_completed !== true
+      );
+      
+      console.log('📊 [LoginPage] Setup check:', {
+        isEmailConfirmed,
+        email_verification_pending: supabaseUser?.user_metadata?.email_verification_pending,
+        verification_setup_completed: supabaseUser?.user_metadata?.verification_setup_completed,
+        needsSetup
+      });
+      
+      if (needsSetup) {
+        console.log('📧 [LoginPage] User needs post-login setup');
+        setSetupData({
+          email: user.email || ''
+        });
+        setShowVerificationModal(true);
+        return; // Don't redirect until setup is complete
+      }
+      
+      // Proceed with normal redirect logic if setup not needed
+      handlePostVerificationRedirect();
+    }
+  }, [user, supabaseUser, isLoading, router]);
 
   // Emergency timeout to prevent infinite loading
   useEffect(() => {
@@ -75,39 +154,11 @@ export default function LoginPage() {
     return () => clearTimeout(emergencyTimeout);
   }, [isLoading]);
 
-  // Show loading spinner while auth is initializing
-  if (isLoading) {
-    console.log('⏳ [LoginPage] Showing loading state');
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0c0c1e 0%, #1a1a2e 35%, #16213e 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'white'
-      }}>
-        <div style={{
-          textAlign: 'center',
-          fontSize: '18px'
-        }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            border: '4px solid rgba(255,255,255,0.1)',
-            borderTop: '4px solid #8b5cf6',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 16px auto'
-          }}></div>
-          Loading...
-          <div style={{ fontSize: '14px', marginTop: '8px', opacity: 0.7 }}>
-            If this takes too long, please refresh the page
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Helper function to handle redirect after setup is complete
+  const handleSetupComplete = () => {
+    setShowVerificationModal(false);
+    handlePostVerificationRedirect();
+  };
 
   console.log('🎯 [LoginPage] Rendering login form');
   return (
@@ -206,10 +257,22 @@ export default function LoginPage() {
 
           {/* Auth Form */}
           <div style={{ position: 'relative', zIndex: 2 }} className="auth-form-container-mobile">
-            <AuthForm />
+            <AuthForm 
+              successMessage={successMessage}
+              showOwnerAccess={showOwnerAccess}
+              isStaffLogin={showOwnerAccess}
+            />
           </div>
         </div>
       </div>
+
+      {/* Post-Login Setup Modal */}
+      <PostLoginSetupModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        onSetupComplete={handleSetupComplete}
+        userEmail={setupData.email || ''}
+      />
     </div>
   );
 }

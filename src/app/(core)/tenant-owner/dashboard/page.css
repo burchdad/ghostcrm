@@ -1288,8 +1288,110 @@
   background: #2563eb;
 }
 
+/* Mobile Navigation Bar */
+.mobile-nav-bar {
+  display: none; /* Hidden on desktop */
+  position: fixed;
+  top: 60px; /* Below header */
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  padding: 0.75rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-nav-actions {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mobile-nav-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  height: 60px;
+  padding: 0.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-nav-btn:hover {
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-nav-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-nav-icon {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+  line-height: 1;
+}
+
+/* Specific button colors */
+.mobile-nav-btn.leads {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-color: rgba(59, 130, 246, 0.2);
+  color: #1e40af;
+}
+
+.mobile-nav-btn.deals {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border-color: rgba(34, 197, 94, 0.2);
+  color: #15803d;
+}
+
+.mobile-nav-btn.inventory {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #a16207;
+}
+
+.mobile-nav-btn.calendar {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  border-color: rgba(99, 102, 241, 0.2);
+  color: #4338ca;
+}
+
+.mobile-nav-btn.collaboration {
+  background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+  border-color: rgba(236, 72, 153, 0.2);
+  color: #be185d;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
+  .mobile-nav-bar {
+    display: block;
+  }
+  
+  .tenant-dashboard-content {
+    padding-top: 80px; /* Account for mobile nav */
+  }
   .tenant-dashboard-metrics-grid {
     gap: 1rem;
   }
@@ -1340,5 +1442,136 @@
     width: 180px;
     min-width: 180px;
     padding: 1rem;
+  }
+  
+  .mobile-nav-btn {
+    min-width: 55px;
+    height: 55px;
+    font-size: 0.7rem;
+  }
+  
+  .mobile-nav-icon {
+    font-size: 1.1rem;
+  }
+  
+  .mobile-nav-actions {
+    gap: 0.375rem;
+  }
+}
+
+/* 
+  ===========================================
+  📱 MOBILE FLOATING NAVIGATION INTEGRATION
+  ===========================================
+  Clean mobile layout with floating navigation
+*/
+
+/* Only affect tenant dashboard mobile layout */
+@media (max-width: 768px) {
+  /* Hide ALL navigation elements that would appear on mobile */
+  .tenant-dashboard-container .mobile-nav-bar,
+  .tenant-dashboard-container .mobile-nav-buttons,
+  .tenant-dashboard-container .sidebar,
+  .tenant-dashboard-container .desktop-sidebar,
+  .tenant-dashboard-container .traditional-nav {
+    display: none !important;
+  }
+  
+  /* Tenant dashboard specific mobile adjustments */
+  .tenant-dashboard-container {
+    padding: 0;
+    width: 100%;
+    margin: 0;
+  }
+  
+  .tenant-dashboard-content {
+    padding: 1rem 0.5rem;
+    margin: 0;
+    width: 100%;
+    /* Add bottom padding to prevent overlap with floating navigation */
+    padding-bottom: 100px;
+  }
+  
+  /* Adjust metrics grid for mobile within tenant dashboard */
+  .tenant-dashboard-container .tenant-dashboard-metrics-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0;
+    width: 100%;
+  }
+  
+  .tenant-dashboard-container .tenant-dashboard-metric-card {
+    width: 100%;
+    min-width: auto;
+    min-height: 80px;
+    padding: 1rem;
+    margin: 0;
+  }
+  
+  /* Improve section spacing on mobile */
+  .tenant-dashboard-container .tenant-dashboard-section {
+    margin-bottom: 1.5rem;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+  }
+  
+  .tenant-dashboard-container .tenant-dashboard-section-header {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .tenant-dashboard-container .tenant-dashboard-section-title {
+    font-size: 1.125rem;
+  }
+  
+  /* Adjust Virtual GM Briefing for mobile */
+  .tenant-dashboard-container .virtual-gm-briefing-container,
+  .tenant-dashboard-container .virtual-gm-section {
+    margin: 0.5rem 0;
+    border-radius: 0.75rem;
+    width: 100%;
+  }
+  
+  /* Ensure floating navigation is shown within tenant dashboard */
+  .tenant-dashboard-container .mobile-floating-nav {
+    display: block;
+  }
+  
+  /* Hide any remaining desktop elements */
+  .tenant-dashboard-container .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Tablet adjustments - scoped to tenant dashboard */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .tenant-dashboard-container .tenant-dashboard-metrics-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .tenant-dashboard-container .tenant-dashboard-metric-card {
+    flex: 1;
+    min-width: 250px;
+  }
+  
+  /* Hide floating navigation on tablet - keep desktop layout */
+  .tenant-dashboard-container .mobile-floating-nav {
+    display: none !important;
+  }
+}
+
+/* Desktop - ensure floating navigation is hidden within tenant dashboard */
+@media (min-width: 1025px) {
+  .tenant-dashboard-container .mobile-floating-nav {
+    display: none !important;
+  }
+  
+  .tenant-dashboard-container .mobile-nav-bar,
+  .tenant-dashboard-container .mobile-nav-buttons {
+    display: none !important;
   }
 }

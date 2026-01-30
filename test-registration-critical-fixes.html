@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Critical Registration Fixes</title>
+</head>
+<body>
+    <h1>Test Registration API - Critical Fixes</h1>
+    <button onclick="testRegistration()">Test Registration</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testRegistration() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Testing registration...';
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'criticalfixtest@example.com',
+                        password: 'TestPass123',
+                        firstName: 'Critical',
+                        lastName: 'Fix',
+                        companyName: 'Critical Fix Company'
+                    })
+                });
+
+                const data = await response.text();
+                resultDiv.textContent = `Status: ${response.status}\n\nResponse:\n${data}`;
+                
+                if (response.ok) {
+                    resultDiv.style.color = 'green';
+                } else {
+                    resultDiv.style.color = 'red';
+                }
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}`;
+                resultDiv.style.color = 'red';
+            }
+        }
+    </script>
+</body>
+</html>

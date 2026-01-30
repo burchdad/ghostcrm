@@ -51,8 +51,10 @@ export default function RegisterPage() {
       }
 
       localStorage.setItem('userEmail', email);
-      setMessage('Account created! Redirecting to billing...');
-      setTimeout(() => router.push('/billing'), 1500);
+      
+      // ✅ SIMPLE FLOW: Account created -> Go to billing to select plan
+      setMessage('Account created successfully!');
+      setTimeout(() => router.push('/billing?welcome=true'), 1500);
     } catch (err: any) {
       setMessage(err.message || 'Registration failed');
     } finally {
@@ -160,7 +162,7 @@ export default function RegisterPage() {
               left: '50%',
               transform: 'translate(-50%, -50%)',
               width: 'min(380px, 90vw)',
-              height: 'min(90vh, 800px)',
+              height: 'min(95vh, 900px)',
               background: 'rgba(255, 255, 255, 0.05)',
               backdropFilter: 'blur(20px)',
               borderRadius: '1.5rem',
@@ -177,14 +179,13 @@ export default function RegisterPage() {
               width: '100%',
               maxWidth: '350px',
               padding: '0.75rem',
-              height: 'min(90vh, 800px)',
-              overflow: 'auto',
+              height: 'min(95vh, 900px)',
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'space-between',
+              justifyContent: 'flex-start',
             }}
           >
-            <div style={{ textAlign: 'center', marginBottom: '0.5rem', flexShrink: 0 }}>
+            <div style={{ textAlign: 'center', marginBottom: '0.3rem', flexShrink: 0 }}>
               <div
                 style={{
                   display: 'inline-flex',
@@ -223,7 +224,7 @@ export default function RegisterPage() {
             <form onSubmit={onSubmit} style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column' }}>
               <div style={{ flex: 1 }}>
               {/* First Name */}
-              <div style={{ marginBottom: '0.45rem' }}>
+              <div style={{ marginBottom: '0.3rem' }}>
                 <label
                   style={{
                     display: 'block',
@@ -260,7 +261,7 @@ export default function RegisterPage() {
               </div>
 
               {/* Last Name */}
-              <div style={{ marginBottom: '0.5rem' }}>
+              <div style={{ marginBottom: '0.3rem' }}>
                 <label
                   style={{
                     display: 'block',
@@ -297,7 +298,7 @@ export default function RegisterPage() {
               </div>
 
               {/* Company Name */}
-              <div style={{ marginBottom: '0.5rem' }}>
+              <div style={{ marginBottom: '0.3rem' }}>
                 <label
                   style={{
                     display: 'block',
@@ -334,7 +335,7 @@ export default function RegisterPage() {
               </div>
 
               {/* Subdomain */}
-              <div style={{ marginBottom: '0.5rem' }}>
+              <div style={{ marginBottom: '0.3rem' }}>
                 <label
                   style={{
                     display: 'block',
@@ -351,7 +352,12 @@ export default function RegisterPage() {
                     id="subdomain"
                     type="text"
                     value={subdomain}
-                    onChange={(e) => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    onChange={(e) => {
+                      const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                      // Prevent leading/trailing hyphens and ensure minimum length
+                      const cleaned = value.replace(/^-+|-+$/g, '');
+                      setSubdomain(cleaned);
+                    }}
                     required
                     style={{
                       width: '100%',
@@ -382,13 +388,10 @@ export default function RegisterPage() {
                     .ghostcrm.ai
                   </div>
                 </div>
-                <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                  This will be your custom login URL: {subdomain || 'your-company'}.ghostcrm.ai
-                </p>
               </div>
 
               {/* Email */}
-              <div style={{ marginBottom: '0.5rem' }}>
+              <div style={{ marginBottom: '0.3rem' }}>
                 <label
                   style={{
                     display: 'block',
@@ -425,7 +428,7 @@ export default function RegisterPage() {
               </div>
 
               {/* Password */}
-              <div style={{ marginBottom: '0.5rem' }}>
+              <div style={{ marginBottom: '0.3rem' }}>
                 <label
                   style={{
                     display: 'block',
@@ -480,7 +483,7 @@ export default function RegisterPage() {
               </div>
 
               {/* Confirm Password */}
-              <div style={{ marginBottom: '0.5rem' }}>
+              <div style={{ marginBottom: '0.3rem' }}>
                 <label
                   style={{
                     display: 'block',

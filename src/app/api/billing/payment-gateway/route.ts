@@ -6,12 +6,17 @@ export async function GET(request: NextRequest) {
   
   try {
     console.log('🔄 [PAYMENT-GATEWAY] Processing payment completion...');
+    console.log('🔍 [PAYMENT-GATEWAY] Full URL:', request.url);
+    console.log('🔍 [PAYMENT-GATEWAY] Search params:', Object.fromEntries(searchParams.entries()));
+    console.log('🔍 [PAYMENT-GATEWAY] NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL);
 
     const sessionId = searchParams.get('session_id');
 
     if (!sessionId) {
       console.error('❌ [PAYMENT-GATEWAY] No session ID provided');
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/billing/error?error=no-session`);
+      const errorUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai'}/billing/error?error=no-session`;
+      console.log('🔄 [PAYMENT-GATEWAY] Redirecting to error:', errorUrl);
+      return NextResponse.redirect(errorUrl);
     }
 
     console.log('🔍 [PAYMENT-GATEWAY] Processing session:', sessionId);
@@ -88,15 +93,19 @@ export async function GET(request: NextRequest) {
     await updatePaymentStatus(session);
 
     // Redirect to success page with processed flag
-    const successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/billing/success?session_id=${sessionId}&processed=true`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai';
+    const successUrl = `${baseUrl}/billing/success?session_id=${sessionId}&processed=true`;
     console.log('🎉 [PAYMENT-GATEWAY] Payment processing complete, redirecting to:', successUrl);
+    console.log('🔍 [PAYMENT-GATEWAY] Environment NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL);
     
     return NextResponse.redirect(successUrl);
 
   } catch (error) {
     console.error('❌ [PAYMENT-GATEWAY] Unexpected error:', error);
     // Don't block user from success page due to processing errors
-    const fallbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/billing/success?session_id=${searchParams.get('session_id')}&gateway_error=true`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ghostcrm.ai';
+    const fallbackUrl = `${baseUrl}/billing/success?session_id=${searchParams.get('session_id')}&gateway_error=true`;
+    console.log('🔄 [PAYMENT-GATEWAY] Using fallback redirect:', fallbackUrl);
     return NextResponse.redirect(fallbackUrl);
   }
 }
