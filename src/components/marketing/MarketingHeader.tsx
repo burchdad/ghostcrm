@@ -121,12 +121,12 @@ export default function MarketingHeader() {
             </span>
           </Link>
 
-          {/* Desktop Navigation - Hidden on mobile and tablet */}
+          {/* Desktop Navigation - Force hidden on mobile and tablet */}
           <div style={{
-            display: 'flex',
+            display: 'none',
             alignItems: 'center',
             gap: '1rem'
-          }} className="hidden xl:flex">
+          }} className="hidden lg:flex">
             {/* Home Link (show on other pages) */}
             {pathname !== '/' && (
               <Link href="/" style={{
@@ -369,10 +369,10 @@ export default function MarketingHeader() {
             )}
           </div>
 
-          {/* Mobile menu button - Show on mobile, tablet, and smaller desktop */}
+          {/* Mobile menu button - Force show on mobile and tablet */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="xl:hidden"
+            className="lg:hidden"
             style={{
               display: 'flex',
               alignItems: 'center',
