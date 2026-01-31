@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Car, Crown, LogIn, Menu, X, Home, Play, CreditCard } from "lucide-react";
+import { LogIn, Menu, X, Home, Play, CreditCard } from "lucide-react";
 import { usePathname } from 'next/navigation';
 import ContactSalesModal from "@/components/modals/ContactSalesModal";
 import { isSubdomain } from '@/lib/utils/environment';
+import EnhancedLogo from './EnhancedLogo';
 
 export default function MobileHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -56,43 +57,8 @@ export default function MobileHeader() {
           height: '4rem',
           gap: '0.5rem'
         }}>
-          {/* Mobile Logo */}
-          <Link href="/" style={{
-            display: 'flex',
-            alignItems: 'center',
-            textDecoration: 'none',
-            gap: '0.5rem',
-            transition: 'all 0.3s ease',
-            flexShrink: 0
-          }}>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <Car style={{
-                width: '1.75rem',
-                height: '1.75rem',
-                color: isScrolled ? '#8b5cf6' : '#ffffff',
-                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
-                transition: 'color 0.3s ease'
-              }} />
-              <Crown style={{
-                position: 'absolute',
-                top: '-4px',
-                right: '-6px',
-                width: '0.625rem',
-                height: '0.625rem',
-                color: '#fbbf24',
-                animation: 'pulse 2s infinite'
-              }} />
-            </div>
-            <span style={{
-              fontSize: '1.25rem',
-              fontWeight: '800',
-              color: isScrolled ? '#8b5cf6' : '#ffffff',
-              transition: 'all 0.3s ease',
-              letterSpacing: '-0.25px'
-            }}>
-              GhostCRM
-            </span>
-          </Link>
+          {/* Enhanced Mobile Logo */}
+          <EnhancedLogo isScrolled={isScrolled} isMobile={true} />
 
           {/* Mobile Hamburger Menu Button */}
           <button
