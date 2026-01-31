@@ -8,6 +8,11 @@ import { isSubdomain, extractSubdomain } from '@/lib/utils/environment';
 export default function HeroSection() {
   const [isOnSubdomain, setIsOnSubdomain] = useState(false);
   const [companyName, setCompanyName] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const onSubdomain = isSubdomain();
@@ -90,18 +95,19 @@ export default function HeroSection() {
         </div>
 
         {/* Simplified dashboard preview for tenants */}
-        <div className="dashboard-preview-container">
-          <div className="dashboard-mockup">
-            <div className="browser-header">
-              <div className="browser-controls">
-                <div className="browser-dot bg-red-500" />
-                <div className="browser-dot bg-yellow-500" />
-                <div className="browser-dot bg-green-500" />
+        {isMounted && (
+          <div className="dashboard-preview-container">
+            <div className="dashboard-mockup">
+              <div className="browser-header">
+                <div className="browser-controls">
+                  <div className="browser-dot bg-red-500" />
+                  <div className="browser-dot bg-yellow-500" />
+                  <div className="browser-dot bg-green-500" />
+                </div>
+                <div className="browser-url">
+                  <span className="url-text">{companyName.toLowerCase().replace(/\s+/g, '')}.ghostcrm.com</span>
+                </div>
               </div>
-              <div className="browser-url">
-                <span className="url-text">{companyName.toLowerCase().replace(/\s+/g, '')}.ghostcrm.com</span>
-              </div>
-            </div>
 
             <div className="dashboard-content">
               <div className="dashboard-grid">
@@ -140,7 +146,7 @@ export default function HeroSection() {
               </div>
             </div>
           </div>
-        </div>
+        )}
       </section>
     );
   }
@@ -190,8 +196,9 @@ export default function HeroSection() {
       </div>
 
       {/* Interactive Dashboard Preview */}
-      <div className="dashboard-preview-container">
-        <div className="dashboard-mockup">
+      {isMounted && (
+        <div className="dashboard-preview-container">
+          <div className="dashboard-mockup">
           <div className="browser-header">
             <div className="browser-controls">
               <div className="browser-dot bg-red-500" />
@@ -240,17 +247,18 @@ export default function HeroSection() {
             </div>
           </div>
         </div>
-      </div>
-      
-      {/* Scroll Indicator */}
-      <div className="scroll-indicator">
-        <div className="scroll-indicator-content">
-          <span className="scroll-text">Scroll to explore</span>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="scroll-icon">
-            <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          </div>
+        )}
+        
+        {/* Scroll Indicator */}
+        <div className="scroll-indicator">
+          <div className="scroll-indicator-content">
+            <span className="scroll-text">Scroll to explore</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="scroll-icon">
+              <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
         </div>
-      </div>
-    </section>
-  );
+      </section>
+    );
 }

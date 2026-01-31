@@ -30,6 +30,21 @@ export const viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        {/* Preload critical fonts and assets to prevent FOUC */}
+        <link rel="preload" as="style" href="/fonts" />
+        <link rel="preload" as="image" href="/hero-preview.webp" />
+        <style dangerouslySetInnerHTML={{ __html: `
+          /* Critical CSS to prevent header flash */
+          nav[style*="position: fixed"] { 
+            opacity: 0; 
+            transform: translateY(-20px); 
+          }
+          .dashboard-mockup { 
+            opacity: 0; 
+          }
+        ` }} />
+      </head>
       <body className="bg-gray-900" suppressHydrationWarning={true}>
         <GlobalErrorBoundary>
           <Providers>

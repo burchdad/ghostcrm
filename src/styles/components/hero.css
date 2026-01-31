@@ -234,7 +234,20 @@
   max-width: 1100px !important;
   margin: 0 auto;
   transform: perspective(1000px) rotateX(5deg) rotateY(-2deg);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.4s ease;
+  opacity: 0;
+  animation: dashboardSlideIn 0.8s ease-out 0.6s forwards;
+}
+
+@keyframes dashboardSlideIn {
+  from {
+    opacity: 0;
+    transform: perspective(1000px) rotateX(15deg) rotateY(-5deg) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1000px) rotateX(5deg) rotateY(-2deg) translateY(0);
+  }
 }
 
 .dashboard-mockup:hover {
