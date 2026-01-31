@@ -1,0 +1,505 @@
+/* Tenant Owner Billing Page Styles */
+
+.tenant-billing-page {
+  padding: 1.5rem;
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+/* Loading States */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+}
+
+.loading-skeleton {
+  width: 100%;
+  max-width: 1200px;
+  animation: pulse 2s infinite;
+}
+
+.skeleton-header {
+  height: 2rem;
+  background-color: #e5e7eb;
+  border-radius: 0.375rem;
+  margin-bottom: 1.5rem;
+  width: 33.333333%;
+}
+
+.skeleton-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.skeleton-card {
+  height: 8rem;
+  background-color: #e5e7eb;
+  border-radius: 0.375rem;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Header Section */
+.billing-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.header-content {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  color: #6b7280;
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+  font-size: 1rem;
+}
+
+.upgrade-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.upgrade-button:hover {
+  background-color: #1d4ed8;
+}
+
+.button-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Cards */
+.current-plan-card,
+.payment-method-card,
+.usage-metrics-card,
+.invoices-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Current Plan Card */
+.plan-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.plan-info {
+  flex: 1;
+}
+
+.plan-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.plan-price {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #2563eb;
+  margin: 0;
+}
+
+.price-period {
+  font-size: 1rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.billing-info {
+  text-align: right;
+}
+
+.next-billing-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.next-billing-date {
+  font-weight: 500;
+  color: #111827;
+  margin: 0.25rem 0 0 0;
+}
+
+.plan-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.primary-button {
+  padding: 0.5rem 1rem;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.primary-button:hover {
+  background-color: #1d4ed8;
+}
+
+.secondary-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  background-color: white;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.secondary-button:hover {
+  background-color: #f9fafb;
+}
+
+/* Payment Method Card */
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 1rem 0;
+}
+
+.payment-method-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.payment-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.payment-icon {
+  width: 2rem;
+  height: 2rem;
+  color: #9ca3af;
+}
+
+.payment-details {
+  flex: 1;
+}
+
+.card-number {
+  font-weight: 500;
+  color: #111827;
+  margin: 0;
+}
+
+.card-expiry {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
+
+.edit-button {
+  padding: 0.25rem;
+  color: #2563eb;
+  background-color: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.edit-button:hover {
+  background-color: #dbeafe;
+}
+
+.edit-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Usage Metrics */
+.metrics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.metric-item {
+  width: 100%;
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.metric-value {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.progress-bar {
+  width: 100%;
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  height: 0.5rem;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.progress-fill.usage-good {
+  background-color: #10b981;
+}
+
+.progress-fill.usage-warning {
+  background-color: #f59e0b;
+}
+
+.progress-fill.usage-danger {
+  background-color: #ef4444;
+}
+
+/* Invoices */
+.invoices-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.view-all-button {
+  color: #2563eb;
+  background-color: transparent;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.view-all-button:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.invoices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.invoice-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.invoice-item:hover {
+  background-color: #f9fafb;
+}
+
+.invoice-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.invoice-status-icon {
+  padding: 0.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invoice-status-icon.status-paid {
+  background-color: #d1fae5;
+}
+
+.invoice-status-icon.status-pending {
+  background-color: #fef3c7;
+}
+
+.invoice-status-icon.status-failed {
+  background-color: #fee2e2;
+}
+
+.status-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.invoice-status-icon.status-paid .status-icon {
+  color: #059669;
+}
+
+.invoice-status-icon.status-pending .status-icon {
+  color: #d97706;
+}
+
+.invoice-status-icon.status-failed .status-icon {
+  color: #dc2626;
+}
+
+.invoice-details {
+  flex: 1;
+}
+
+.invoice-id {
+  font-weight: 500;
+  color: #111827;
+  margin: 0;
+}
+
+.invoice-date {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
+
+.invoice-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.invoice-amount {
+  font-weight: 500;
+  color: #111827;
+}
+
+.download-button {
+  padding: 0.25rem;
+  color: #9ca3af;
+  background-color: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.download-button:hover {
+  color: #6b7280;
+}
+
+.download-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Coming Soon Notice */
+.coming-soon-notice {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background-color: #dbeafe;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  max-width: 20rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.notice-title {
+  font-size: 0.875rem;
+  color: #1e40af;
+  font-weight: 500;
+  margin: 0;
+}
+
+.notice-subtitle {
+  font-size: 0.75rem;
+  color: #2563eb;
+  margin: 0.25rem 0 0 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tenant-billing-page {
+    padding: 1rem;
+  }
+  
+  .billing-header-section {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .plan-details {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .billing-info {
+    text-align: left;
+  }
+  
+  .plan-actions {
+    flex-direction: column;
+  }
+  
+  .payment-method-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .skeleton-cards {
+    grid-template-columns: 1fr;
+  }
+}

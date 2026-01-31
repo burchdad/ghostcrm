@@ -1,0 +1,193 @@
+/* Billing Cancel Page Styles */
+
+.cancel-page-container {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .cancel-page-container {
+    padding: 3rem 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cancel-page-container {
+    padding: 3rem 2rem;
+  }
+}
+
+.cancel-main-wrapper {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 28rem;
+}
+
+@media (min-width: 640px) {
+  .cancel-main-wrapper {
+    max-width: 28rem;
+  }
+}
+
+.cancel-card {
+  background-color: white;
+  padding: 2rem 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border-radius: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .cancel-card {
+    padding: 2rem 2.5rem;
+  }
+}
+
+.cancel-content {
+  text-align: center;
+}
+
+.cancel-main-icon {
+  margin: 0 auto;
+  height: 4rem;
+  width: 4rem;
+  color: #9ca3af;
+}
+
+.cancel-title {
+  margin-top: 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.cancel-subtitle {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.cancel-actions {
+  margin-top: 2rem;
+}
+
+.cancel-actions > * + * {
+  margin-top: 1rem;
+}
+
+.warning-notice {
+  background-color: #fefce8;
+  border: 1px solid #fde68a;
+  border-radius: 0.375rem;
+  padding: 1rem;
+}
+
+.warning-content {
+  display: flex;
+}
+
+.warning-icon {
+  height: 1.25rem;
+  width: 1.25rem;
+  color: #f59e0b;
+}
+
+.warning-details {
+  margin-left: 0.75rem;
+}
+
+.warning-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #92400e;
+}
+
+.warning-message {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #a16207;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.primary-button {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  background-color: #2563eb;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.primary-button:hover {
+  background-color: #1d4ed8;
+  color: white;
+  text-decoration: none;
+}
+
+.primary-button:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #93c5fd;
+}
+
+.secondary-button {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  background-color: white;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.secondary-button:hover {
+  background-color: #f9fafb;
+  color: #374151;
+  text-decoration: none;
+}
+
+.secondary-button:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #93c5fd;
+}
+
+.support-footer {
+  text-align: center;
+}
+
+.support-notice {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.support-email-link {
+  color: #2563eb;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.support-email-link:hover {
+  color: #1d4ed8;
+}

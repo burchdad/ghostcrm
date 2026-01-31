@@ -1,0 +1,25 @@
+/*
+  ===========================================
+  🧩 NAVIGATION COMPONENTS
+  ===========================================
+  Styles for navigation elements including UnifiedToolbar
+*/
+
+.unified-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 50;
+  background-color: white;
+  border-bottom: 1px solid #ffffff;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-container {
+  display: flex;
+  align-items: center;
+  height: 64px;
+  width: 100%;
+}

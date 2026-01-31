@@ -1,0 +1,268 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { getUserFromRequest, isAuthenticated } from '@/lib/auth/server';
+
+// Types for better type safety
+interface Message {
+  id: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  timestamp: Date;
+  type: 'text' | 'file' | 'system';
+  attachments?: Array<{
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+  }>;
+}
+
+export const dynamic = 'force-dynamic';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+/**
+ * GET /api/collaboration/messages
+ * Retrieve messages for a specific channel
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
+    }
+
+    // Get params from query
+    const { searchParams } = new URL(request.url);
+    const channelId = searchParams.get('channelId');
+    const tenantId = user.organizationId;
+
+    if (!channelId) {
+      return NextResponse.json(
+        { error: 'Channel ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Verify channel access and tenant ownership
+    const { data: channel } = await supabase
+      .from('collaboration_channels')
+      .select('id, organization_id, type, members')
+      .eq('id', channelId)
+      .eq('organization_id', tenantId)
+      .single();
+
+    if (!channel) {
+      return NextResponse.json(
+        { error: 'Channel not found or access denied' },
+        { status: 404 }
+      );
+    }
+
+    // For private/direct channels, verify user is a member
+    if ((channel.type === 'private' || channel.type === 'direct') && 
+        !channel.members?.includes(user.id)) {
+      return NextResponse.json(
+        { error: 'Access denied to this channel' },
+        { status: 403 }
+      );
+    }
+
+    // Get messages for the channel
+    const { data: messages, error } = await supabase
+      .from('collaboration_messages')
+      .select(`
+        id,
+        content,
+        message_type,
+        created_at,
+        user_id,
+        attachments
+      `)
+      .eq('channel_id', channelId)
+      .eq('organization_id', tenantId)
+      .order('created_at', { ascending: true })
+      .limit(100); // Limit to last 100 messages
+
+    if (error) {
+      console.error('Error fetching messages:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch messages' },
+        { status: 500 }
+      );
+    }
+
+    // Get user details separately to avoid foreign key issues
+    const userIds = [...new Set((messages || []).map((m: any) => m.user_id))];
+    const { data: users } = await supabase
+      .from('users')
+      .select('id, email, first_name, last_name')
+      .in('id', userIds);
+
+    // Transform to frontend format
+    const formattedMessages: Message[] = (messages || []).map((message: any) => {
+      const user = users?.find(u => u.id === message.user_id);
+      return {
+        id: message.id,
+        senderId: message.user_id,
+        senderName: user ? 
+          `${user.first_name || ''} ${user.last_name || ''}`.trim() || 
+          user.email?.split('@')[0] : 
+          'Unknown',
+        content: message.content,
+        timestamp: new Date(message.created_at),
+        type: message.message_type || 'text',
+        attachments: message.attachments || []
+      };
+    });
+
+    return NextResponse.json({
+      success: true,
+      messages: formattedMessages
+    });
+
+  } catch (error) {
+    console.error('Error in messages API:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/collaboration/messages
+ * Send a new message to a channel
+ */
+export async function POST(request: NextRequest) {
+  try {
+    // Check authentication using Supabase SSR
+    if (!(await isAuthenticated(request))) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    // Get user data from Supabase session
+    const user = await getUserFromRequest(request);
+    if (!user || !user.organizationId) {
+      return NextResponse.json({ error: 'Invalid token or missing organization' }, { status: 401 });
+    }
+
+    const tenantId = user.organizationId;
+    const userId = user.id;
+
+    // Parse request body
+    const body = await request.json();
+    const { content, channelId } = body;
+
+    // Validate input
+    if (!content || !channelId) {
+      return NextResponse.json(
+        { error: 'Content and channel ID are required' },
+        { status: 400 }
+      );
+    }
+
+    // Verify channel access and tenant ownership
+    const { data: channel } = await supabase
+      .from('collaboration_channels')
+      .select('id, organization_id, type, members')
+      .eq('id', channelId)
+      .eq('organization_id', tenantId)
+      .single();
+
+    if (!channel) {
+      return NextResponse.json(
+        { error: 'Channel not found or access denied' },
+        { status: 404 }
+      );
+    }
+
+    // For private/direct channels, verify user is a member
+    if ((channel.type === 'private' || channel.type === 'direct') && 
+        !channel.members?.includes(userId)) {
+      return NextResponse.json(
+        { error: 'Access denied to this channel' },
+        { status: 403 }
+      );
+    }
+
+    // Create message
+    const { data: message, error } = await supabase
+      .from('collaboration_messages')
+      .insert([{
+        content,
+        channel_id: channelId,
+        user_id: userId,
+        organization_id: tenantId,
+        message_type: 'text'
+      }])
+      .select(`
+        id,
+        content,
+        message_type,
+        created_at,
+        user_id
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error creating message:', error);
+      return NextResponse.json(
+        { error: 'Failed to send message' },
+        { status: 500 }
+      );
+    }
+
+    // Get user details separately
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id, email, first_name, last_name')
+      .eq('id', userId)
+      .single();
+
+    // Update channel's last message
+    await supabase
+      .from('collaboration_channels')
+      .update({ 
+        last_message_id: message.id,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', channelId);
+
+    // Transform to frontend format
+    const formattedMessage: Message = {
+      id: message.id,
+      senderId: message.user_id,
+      senderName: userData ? 
+        `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || 
+        userData.email?.split('@')[0] : 
+        'Unknown',
+      content: message.content,
+      timestamp: new Date(message.created_at),
+      type: message.message_type || 'text',
+      attachments: []
+    };
+
+    return NextResponse.json({
+      success: true,
+      message: formattedMessage
+    });
+
+  } catch (error) {
+    console.error('Error in send message API:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

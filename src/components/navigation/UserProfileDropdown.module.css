@@ -1,0 +1,220 @@
+/* UserProfileDropdown.module.css */
+
+.dropdownContainer {
+  position: relative;
+}
+
+.dropdownTrigger {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #dbeafe, #e0e7ff);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #bfdbfe;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  transform: scale(1);
+}
+
+.dropdownTrigger:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  transform: scale(1.05);
+}
+
+.dropdownTrigger:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.avatarImage {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.avatarEmoji {
+  font-size: 20px;
+  transition: transform 0.2s ease;
+}
+
+.dropdownTrigger:hover .avatarEmoji {
+  transform: scale(1.1);
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 288px;
+  max-width: calc(100vw - 16px);
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  z-index: 9999;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  animation: dropdownAppear 0.2s ease-out;
+  
+  /* Ensure it stays within viewport */
+  transform-origin: top right;
+}
+
+/* Responsive positioning for small screens */
+@media (max-width: 640px) {
+  .dropdownMenu {
+    right: -16px;
+    width: calc(100vw - 32px);
+    max-width: 320px;
+  }
+}
+
+/* Check if dropdown would overflow and adjust */
+@supports (anchor-name: --dropdown-anchor) {
+  .dropdownMenu {
+    position: absolute;
+    position-anchor: --dropdown-anchor;
+    margin: 8px 0;
+  }
+}
+
+@keyframes dropdownAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.profileHeader {
+  background: linear-gradient(135deg, #dbeafe, #e0e7ff);
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.profileHeaderContent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatarButton {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #bfdbfe, #c7d2fe);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+.avatarButton:hover {
+  background: linear-gradient(135deg, #93c5fd, #a5b4fc);
+}
+
+.cameraIcon {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  background-color: #3b82f6;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 2px solid white;
+}
+
+.userInfo {
+  flex: 1;
+}
+
+.userName {
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  font-size: 16px;
+}
+
+.userOrg {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.menuItems {
+  padding: 12px;
+}
+
+.menuItem {
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #374151;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.menuItem:hover {
+  color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.menuItem.logout {
+  color: #dc2626;
+}
+
+.menuItem.logout:hover {
+  color: #b91c1c;
+  background-color: #fef2f2;
+}
+
+.menuIcon {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.menuItem:hover .menuIcon {
+  transform: scale(1.1);
+}
+
+.menuText {
+  font-weight: 500;
+  flex: 1;
+}
+
+.divider {
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 8px 0;
+}
+
+.hiddenInput {
+  display: none;
+}

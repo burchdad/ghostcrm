@@ -1,0 +1,396 @@
+/* 
+  ===========================================
+  📱 MOBILE NAVIGATION BUTTONS
+  ===========================================
+  Touch-optimized navigation buttons for mobile devices
+  Similar styling to AI chat and collaboration buttons
+*/
+
+/* Mobile navigation should only appear on mobile within tenant dashboard context */
+.mobile-nav-buttons {
+  display: none; /* Hidden by default, shown only on mobile */
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 1rem;
+  margin: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.mobile-nav-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.mobile-nav-item {
+  width: 100%;
+}
+
+.mobile-nav-button {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  min-height: 60px; /* Touch-friendly minimum height */
+}
+
+.mobile-nav-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(147, 51, 234, 0.1), transparent);
+  transition: left 0.6s ease;
+}
+
+.mobile-nav-button:hover::before,
+.mobile-nav-button.active::before {
+  left: 100%;
+}
+
+.mobile-nav-button:hover {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  border-color: #c084fc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.15);
+}
+
+.mobile-nav-button.active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  border-color: #7c3aed;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  color: white;
+}
+
+.mobile-nav-button.active .mobile-nav-icon {
+  color: white;
+}
+
+.mobile-nav-button.active .mobile-nav-label {
+  color: white;
+}
+
+.mobile-nav-button.active .mobile-nav-chevron {
+  color: white;
+}
+
+.mobile-nav-button-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.mobile-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  border-radius: 0.75rem;
+  color: #6366f1;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  border: 2px solid rgba(99, 102, 241, 0.1);
+}
+
+.mobile-nav-button:hover .mobile-nav-icon {
+  background: linear-gradient(135deg, #c084fc 0%, #a855f7 100%);
+  color: white;
+  transform: scale(1.05);
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.mobile-nav-button.active .mobile-nav-icon {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.mobile-nav-icon.loading {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: white;
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.mobile-nav-text {
+  flex: 1;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mobile-nav-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1f2937;
+  line-height: 1.2;
+  transition: color 0.3s ease;
+}
+
+.mobile-nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  width: fit-content;
+  min-width: 2rem;
+  height: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.mobile-nav-chevron {
+  color: #6b7280;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.mobile-nav-submenu {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-radius: 0.75rem;
+  border: 2px solid rgba(226, 232, 240, 0.8);
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.mobile-nav-subitem {
+  width: 100%;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+  min-height: 48px; /* Touch-friendly */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.mobile-nav-subitem:last-child {
+  margin-bottom: 0;
+}
+
+.mobile-nav-subitem:hover {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  color: #7c3aed;
+  transform: translateX(6px) scale(1.02);
+  border-color: #c084fc;
+  box-shadow: 0 4px 8px rgba(124, 58, 237, 0.15);
+}
+
+.mobile-nav-subitem.loading {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #6b7280;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.mobile-nav-subitem-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  border-radius: 0.5rem;
+  color: #6366f1;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+.mobile-nav-subitem:hover .mobile-nav-subitem-icon {
+  background: linear-gradient(135deg, #c084fc 0%, #a855f7 100%);
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Active states for mobile buttons */
+.mobile-nav-button.active .mobile-nav-label {
+  color: white;
+}
+
+.mobile-nav-button.active .mobile-nav-chevron {
+  color: white;
+}
+
+/* Loading animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.mobile-nav-button.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+  pointer-events: none;
+}
+@media (max-width: 768px) {
+  .mobile-nav-buttons {
+    display: block;
+    margin: 0.75rem;
+    padding: 1rem;
+  }
+  
+  /* Only target specific mobile layouts - don't interfere with desktop sidebar */
+  .tenant-dashboard-container .desktop-sidebar,
+  .tenant-dashboard-container .traditional-nav {
+    display: none;
+  }
+  
+  /* Adjust main content area for mobile only within tenant dashboard */
+  .tenant-dashboard-container .main-content-area {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  
+  /* Stack buttons on very small screens */
+  @media (max-width: 480px) {
+    .mobile-nav-buttons {
+      margin: 0.5rem;
+      padding: 0.75rem;
+    }
+    
+    .mobile-nav-grid {
+      gap: 0.75rem;
+    }
+    
+    .mobile-nav-button {
+      padding: 1rem;
+      min-height: 64px;
+    }
+    
+    .mobile-nav-label {
+      font-size: 0.875rem;
+    }
+    
+    .mobile-nav-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+  }
+  
+  /* Extra small screens */
+  @media (max-width: 360px) {
+    .mobile-nav-buttons {
+      margin: 0.25rem;
+      padding: 0.5rem;
+    }
+    
+    .mobile-nav-button {
+      padding: 0.875rem;
+      min-height: 60px;
+    }
+    
+    .mobile-nav-label {
+      font-size: 0.8rem;
+    }
+  }
+}
+
+/* Desktop and tablet - ensure mobile navigation is completely hidden */
+@media (min-width: 769px) {
+  .mobile-nav-buttons {
+    display: none !important;
+  }
+  
+  /* Ensure desktop sidebar functionality is preserved */
+  .tenant-dashboard-container .desktop-sidebar,
+  .tenant-dashboard-container .traditional-nav {
+    display: block; /* Restore any hidden sidebars */
+  }
+}
+
+/* Animation keyframes */
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.mobile-nav-button {
+  animation: fadeInScale 0.3s ease-out;
+}
+
+/* Loading state */
+.mobile-nav-button.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.mobile-nav-button.loading .mobile-nav-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

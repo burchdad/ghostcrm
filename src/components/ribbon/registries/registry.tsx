@@ -1,0 +1,10 @@
+export { CONTROLS_DEVELOPER } from "./registry_developer";
+export { CONTROLS_DATA } from "./registry_data";
+export { CONTROLS_AUTOMATION } from "./registry_automation";
+export { CONTROLS_AI, getAIControls } from "./registry_ai";
+export { CONTROLS_REPORTS } from "./registry_reports";
+export { CONTROLS } from "./registry_home";
+export { CONTROLS_SETTINGS } from "./registry_settings";
+export { CONTROLS_EDIT } from "./registry_edit";
+export { CONTROLS_FILE } from "./registry_file";
+export { CONTROLS_COLLABORATION } from "./collaboration-controls";

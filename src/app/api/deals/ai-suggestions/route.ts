@@ -1,0 +1,358 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { getUserFromRequest, isAuthenticated } from "@/lib/auth/server";
+
+// Use Node.js runtime to avoid Edge Runtime issues with Supabase
+export const runtime = "nodejs";
+export const dynamic = 'force-dynamic';
+
+// Create a service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+interface AIMatch {
+  leadId: string;
+  vehicleId: string;
+  leadName: string;
+  vehicleDesc: string;
+  leadBudget: string;
+  vehiclePrice: number;
+  score: number;
+  factors: string[];
+  leadStage: string;
+  vehicleCondition: string;
+  matchTags: string[];
+}
+
+// AI Matching Algorithm - Server-side with SQL optimization
+export async function GET(req: NextRequest) {
+  try {
+    // Check authentication using JWT
+    if (!(await isAuthenticated(req))) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    // Get user data from JWT
+    const user = await getUserFromRequest(req);
+    if (!user || !user.organizationId) {
+      return NextResponse.json(
+        { error: "User organization not found" },
+        { status: 401 }
+      );
+    }
+
+    const organizationId = user.organizationId;
+    
+    if (!organizationId) {
+      return NextResponse.json({ 
+        error: "Organization not found", 
+        suggestions: [] 
+      }, { status: 403 });
+    }
+
+    // Fetch active leads (no existing deals, not closed)
+    const { data: leads, error: leadsError } = await supabaseAdmin
+      .from('leads')
+      .select(`
+        id,
+        contact_id,
+        stage,
+        budget_range,
+        vehicle_interest,
+        contacts:contact_id (
+          first_name,
+          last_name,
+          email,
+          phone
+        )
+      `)
+      .eq('organization_id', organizationId) // Use correct column name
+      .not('stage', 'in', '(closed,lost)')
+      .order('updated_at', { ascending: false });
+
+    if (leadsError) {
+      console.error('Error fetching leads:', leadsError);
+      return NextResponse.json({ 
+        error: "Failed to fetch leads", 
+        suggestions: [] 
+      }, { status: 500 });
+    }
+
+    // Fetch available inventory
+    const { data: inventory, error: inventoryError } = await supabaseAdmin
+      .from('inventory')
+      .select('id, name, brand, model, year, price_selling, condition, status, vin')
+      .eq('organization_id', organizationId) // Use correct column name
+      .eq('status', 'available')
+      .order('price_selling', { ascending: true });
+
+    if (inventoryError) {
+      console.error('Error fetching inventory:', inventoryError);
+      return NextResponse.json({ 
+        error: "Failed to fetch inventory", 
+        suggestions: [] 
+      }, { status: 500 });
+    }
+
+    // Fetch existing deals to avoid duplicates
+    const { data: existingDeals, error: dealsError } = await supabaseAdmin
+      .from('deals')
+      .select('lead_id, customer_name')
+      .eq('organization_id', organizationId) // Use correct column name
+      .not('stage', 'in', '(closed_lost)');
+
+    if (dealsError) {
+      console.error('Error fetching existing deals:', dealsError);
+    }
+
+    // Generate AI matches
+    const suggestions = generateAIMatches(
+      leads || [], 
+      inventory || [], 
+      existingDeals || []
+    );
+
+    return NextResponse.json({ 
+      suggestions,
+      metadata: {
+        totalLeads: leads?.length || 0,
+        totalInventory: inventory?.length || 0,
+        matchesFound: suggestions.length,
+        organizationId: organizationId
+      }
+    });
+
+  } catch (error) {
+    console.error('AI Suggestions API error:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
+    return NextResponse.json({ 
+      error: "Internal server error", 
+      suggestions: [],
+      debug: process.env.NODE_ENV === 'development' ? {
+        message: error instanceof Error ? error.message : 'Unknown error'
+      } : undefined
+    }, { status: 500 });
+  }
+}
+
+// Core AI Matching Logic
+function generateAIMatches(
+  leads: any[], 
+  inventory: any[], 
+  existingDeals: any[]
+): AIMatch[] {
+  if (!leads.length || !inventory.length) return [];
+
+  const matches: AIMatch[] = [];
+  const existingLeadIds = new Set(existingDeals.map(d => d.lead_id));
+  const existingCustomerNames = new Set(
+    existingDeals.map(d => d.customer_name?.toLowerCase()).filter(Boolean)
+  );
+
+  for (const lead of leads) {
+    // Skip leads with existing deals
+    const leadFullName = `${lead.contacts?.first_name || ''} ${lead.contacts?.last_name || ''}`.trim().toLowerCase();
+    
+    if (existingLeadIds.has(lead.id) || 
+        existingCustomerNames.has(leadFullName)) {
+      continue;
+    }
+
+    // Extract lead preferences
+    const leadBudget = parseBudgetRange(lead.budget_range);
+    const vehicleInterest = lead.vehicle_interest || '';
+    const leadStage = lead.stage || 'new';
+
+    // Find best matching vehicles
+    const vehicleMatches = inventory
+      .map(vehicle => {
+        const matchResult = calculateMatchScore(lead, vehicle, leadBudget, vehicleInterest, leadStage);
+        
+        if (matchResult.score > 30) { // Minimum viable match threshold
+          return {
+            leadId: lead.id,
+            vehicleId: vehicle.id,
+            leadName: leadFullName || `${lead.contacts?.first_name} ${lead.contacts?.last_name}`,
+            vehicleDesc: `${vehicle.year} ${vehicle.brand || vehicle.name} ${vehicle.model}`,
+            leadBudget: leadBudget ? 
+              `$${(leadBudget.min/1000).toFixed(0)}k-$${(leadBudget.max/1000).toFixed(0)}k` : 
+              'Budget not specified',
+            vehiclePrice: vehicle.price_selling,
+            score: Math.round(matchResult.score),
+            factors: matchResult.factors,
+            leadStage,
+            vehicleCondition: vehicle.condition,
+            matchTags: generateMatchTags(matchResult, leadStage, vehicle)
+          };
+        }
+        return null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => b!.score - a!.score)
+      .slice(0, 1); // Top match per lead
+
+    if (vehicleMatches.length > 0) {
+      matches.push(vehicleMatches[0]!);
+    }
+  }
+
+  // Return top 5 matches across all leads
+  return matches
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+}
+
+// Enhanced scoring algorithm
+function calculateMatchScore(
+  lead: any, 
+  vehicle: any, 
+  leadBudget: { min: number; max: number } | null,
+  vehicleInterest: string,
+  leadStage: string
+) {
+  let score = 0;
+  const factors: string[] = [];
+
+  // Budget compatibility (40% weight)
+  if (leadBudget && vehicle.price_selling) {
+    if (vehicle.price_selling >= leadBudget.min && vehicle.price_selling <= leadBudget.max) {
+      // Perfect budget fit
+      score += 40;
+      factors.push('Perfect budget match');
+    } else if (vehicle.price_selling <= leadBudget.max * 1.1) {
+      // Slightly over budget but reasonable
+      const overBudgetPenalty = Math.abs(vehicle.price_selling - leadBudget.max) / leadBudget.max;
+      score += Math.max(15, 40 - (overBudgetPenalty * 25));
+      factors.push('Within budget range');
+    }
+  } else if (vehicle.price_selling && vehicle.price_selling < 50000) {
+    // Default assumption for reasonable pricing
+    score += 20;
+    factors.push('Reasonably priced');
+  }
+
+  // Vehicle preference matching (30% weight)
+  const vehicleText = `${vehicle.brand || vehicle.name} ${vehicle.model}`.toLowerCase();
+  const interestText = vehicleInterest.toLowerCase();
+  
+  if (interestText.includes((vehicle.brand || vehicle.name)?.toLowerCase())) {
+    score += 20;
+    factors.push('Brand preference match');
+  }
+  if (interestText.includes(vehicle.model?.toLowerCase())) {
+    score += 15;
+    factors.push('Model preference match');
+  }
+  
+  // Check for vehicle type keywords in interest
+  const vehicleTypeKeywords = ['sedan', 'suv', 'truck', 'coupe', 'convertible', 'wagon', 'hatchback'];
+  for (const keyword of vehicleTypeKeywords) {
+    if (interestText.includes(keyword)) {
+      score += 10;
+      factors.push('Vehicle type preference');
+      break;
+    }
+  }
+
+  // Lead quality scoring (20% weight)
+  const stageScores = {
+    'qualified': 20,
+    'contacted': 15,
+    'interested': 12,
+    'new': 8,
+    'cold': 5
+  };
+  const stageScore = stageScores[leadStage as keyof typeof stageScores] || 8;
+  score += stageScore;
+  factors.push(`Lead quality: ${leadStage}`);
+
+  // Vehicle condition bonus (10% weight)
+  if (vehicle.condition === 'new') {
+    score += 10;
+    factors.push('New vehicle');
+  } else if (vehicle.condition === 'certified') {
+    score += 8;
+    factors.push('Certified pre-owned');
+  } else {
+    score += 5;
+    factors.push('Used vehicle');
+  }
+
+  return {
+    score: Math.min(100, score),
+    factors
+  };
+}
+
+// Generate contextual tags for the match
+function generateMatchTags(
+  matchResult: { score: number; factors: string[] },
+  leadStage: string,
+  vehicle: any
+): string[] {
+  const tags: string[] = [];
+
+  // Score-based tags
+  if (matchResult.score >= 80) tags.push('hot');
+  else if (matchResult.score >= 60) tags.push('good');
+  else tags.push('potential');
+
+  // Lead-based tags
+  if (leadStage === 'qualified') tags.push('financing');
+  if (leadStage === 'interested') tags.push('ready');
+
+  // Vehicle-based tags
+  if (vehicle.condition === 'new') tags.push('new');
+  if (matchResult.factors.includes('Brand preference match')) tags.push('preference');
+
+  return tags;
+}
+
+// Enhanced budget parsing with multiple formats
+function parseBudgetRange(budgetStr: string): { min: number; max: number } | null {
+  if (!budgetStr) return null;
+  
+  // Handle various budget formats
+  const cleanStr = budgetStr.replace(/[$,\s]/g, '').toLowerCase();
+  
+  // Range formats: "25000-35000", "25k-35k", "25-35k"
+  const rangeMatch = cleanStr.match(/(\d+(?:\.\d+)?)(k?)\s*[-–to]\s*(\d+(?:\.\d+)?)(k?)/);
+  if (rangeMatch) {
+    let min = parseFloat(rangeMatch[1]);
+    let max = parseFloat(rangeMatch[3]);
+    
+    // Handle k notation
+    if (rangeMatch[2] === 'k' || rangeMatch[4] === 'k') {
+      min *= 1000;
+      max *= 1000;
+    }
+    
+    return { min, max };
+  }
+  
+  // Single value with "under" or "up to"
+  const underMatch = cleanStr.match(/(?:under|upto|maximum)(\d+(?:\.\d+)?)(k?)/);
+  if (underMatch) {
+    let max = parseFloat(underMatch[1]);
+    if (underMatch[2] === 'k') max *= 1000;
+    return { min: 0, max };
+  }
+  
+  // Single value - assume it's maximum
+  const singleMatch = cleanStr.match(/(\d+(?:\.\d+)?)(k?)/);
+  if (singleMatch) {
+    let value = parseFloat(singleMatch[1]);
+    if (singleMatch[2] === 'k') value *= 1000;
+    return { min: value * 0.8, max: value }; // Assume 20% range below
+  }
+  
+  return null;
+}

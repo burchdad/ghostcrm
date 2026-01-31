@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Success Page Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .button { 
+            padding: 10px 20px; 
+            margin: 10px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .primary { background: #3b82f6; color: white; }
+        .secondary { background: #f59e0b; color: white; }
+        .disabled { background: #ccc; color: #666; cursor: not-allowed; }
+        .active { background: #10b981; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Payment Success Page - Manual Activation Test</h1>
+    
+    <div id="status">
+        <h2>Subdomain Status: <span id="statusText">Checking...</span></h2>
+    </div>
+    
+    <div id="manualActivationSection" style="display: none;">
+        <button id="manualActivateBtn" class="button secondary">🔄 Activate Subdomain Manually</button>
+    </div>
+    
+    <div>
+        <button id="portalBtn" class="button primary disabled">Go to My Tenant Portal</button>
+        <a href="/billing" class="button">Manage Subscription</a>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <h3>Test with Email:</h3>
+        <input type="email" id="testEmail" placeholder="Enter test email" style="padding: 8px; width: 250px;">
+        <button onclick="setTestEmail()" class="button primary">Set Email</button>
+    </div>
+
+    <div style="margin-top: 20px; background: #f5f5f5; padding: 15px; border-radius: 5px;">
+        <h4>Status Log:</h4>
+        <div id="logOutput"></div>
+    </div>
+
+    <script>
+        let userEmail = '';
+        let checkInterval;
+        
+        function log(message) {
+            const logOutput = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            logOutput.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        function setTestEmail() {
+            const email = document.getElementById('testEmail').value;
+            if (email) {
+                userEmail = email;
+                log(`Testing with email: ${email}`);
+                checkSubdomainStatus();
+                startStatusChecking();
+            }
+        }
+
+        async function checkSubdomainStatus() {
+            if (!userEmail) return;
+            
+            try {
+                const response = await fetch('/api/subdomains/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail })
+                });
+                
+                const data = await response.json();
+                updateUI(data);
+                log(`Status check: ${JSON.stringify(data)}`);
+            } catch (error) {
+                log(`Status check error: ${error.message}`);
+            }
+        }
+
+        async function manualActivate() {
+            if (!userEmail) return;
+            
+            const btn = document.getElementById('manualActivateBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Activating...';
+            
+            try {
+                const response = await fetch('/api/subdomains/manual-activate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userEmail })
+                });
+                
+                const data = await response.json();
+                log(`Manual activation: ${JSON.stringify(data)}`);
+                
+                if (data.success) {
+                    log('✅ Manual activation successful!');
+                    checkSubdomainStatus(); // Recheck status
+                } else {
+                    log(`❌ Manual activation failed: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                log(`❌ Manual activation error: ${error.message}`);
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '🔄 Activate Subdomain Manually';
+        }
+
+        function updateUI(statusData) {
+            const statusText = document.getElementById('statusText');
+            const manualSection = document.getElementById('manualActivationSection');
+            const portalBtn = document.getElementById('portalBtn');
+            
+            if (statusData.success) {
+                const status = statusData.subdomainStatus || statusData.status;
+                const isActivated = status === 'active';
+                
+                statusText.textContent = status;
+                statusText.style.color = isActivated ? '#10b981' : '#f59e0b';
+                
+                if (isActivated) {
+                    manualSection.style.display = 'none';
+                    portalBtn.className = 'button active';
+                    portalBtn.disabled = false;
+                    portalBtn.textContent = 'Go to My Tenant Portal ✅';
+                } else {
+                    manualSection.style.display = 'block';
+                    portalBtn.className = 'button primary disabled';
+                    portalBtn.disabled = true;
+                    portalBtn.textContent = 'Go to My Tenant Portal (Disabled)';
+                }
+            } else {
+                statusText.textContent = 'Error checking status';
+                statusText.style.color = '#ef4444';
+                log(`Status error: ${statusData.error || 'Unknown error'}`);
+            }
+        }
+
+        function startStatusChecking() {
+            if (checkInterval) clearInterval(checkInterval);
+            checkInterval = setInterval(checkSubdomainStatus, 5000); // Check every 5 seconds
+        }
+
+        // Event listeners
+        document.getElementById('manualActivateBtn').addEventListener('click', manualActivate);
+        
+        // Initial setup
+        log('Success page loaded. Enter an email to test manual activation.');
+    </script>
+</body>
+</html>

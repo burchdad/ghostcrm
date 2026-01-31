@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Registration Flow</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .subdomain-preview {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Registration Flow Test</h1>
+        <p><strong>This test verifies our new subdomain field in registration.</strong></p>
+        
+        <form id="testForm">
+            <div class="form-group">
+                <label for="firstName">First Name:</label>
+                <input type="text" id="firstName" value="John" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="lastName">Last Name:</label>
+                <input type="text" id="lastName" value="Doe" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="companyName">Company Name:</label>
+                <input type="text" id="companyName" value="Test Motors Inc" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="subdomain">Subdomain:</label>
+                <input type="text" id="subdomain" value="testmotors" required>
+                <div class="subdomain-preview" id="subdomainPreview">
+                    Will create: testmotors.ghostcrm.ai
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" value="Password123!" required>
+            </div>
+            
+            <button type="submit">🚀 Test Registration</button>
+        </form>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Generate unique email
+        document.getElementById('email').value = `test.${Date.now()}@example.com`;
+        
+        // Update subdomain preview
+        function updateSubdomainPreview() {
+            const subdomain = document.getElementById('subdomain').value || 'your-company';
+            document.getElementById('subdomainPreview').textContent = 
+                `Will create: ${subdomain}.ghostcrm.ai`;
+        }
+        
+        document.getElementById('subdomain').addEventListener('input', updateSubdomainPreview);
+        
+        // Handle form submission
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="info">🔄 Testing registration...</div>';
+            
+            const formData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                companyName: document.getElementById('companyName').value,
+                subdomain: document.getElementById('subdomain').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                role: 'owner'
+            };
+            
+            console.log('🚀 Testing registration with:', { ...formData, password: '***hidden***' });
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+✅ Registration Successful!
+
+📊 Response:
+${JSON.stringify(data, null, 2)}
+
+🔍 Next Steps:
+1. Check if subdomain placeholder was created in database
+2. Go through payment flow  
+3. Stripe webhook should activate subdomain
+4. Test redirect to tenant login
+
+🌐 Expected subdomain URL: https://${formData.subdomain}.ghostcrm.ai/login-owner
+                        </div>
+                    `;
+                    
+                    // Test auth/me endpoint
+                    setTimeout(async () => {
+                        try {
+                            const authResponse = await fetch('/api/auth/me');
+                            const authData = await authResponse.json();
+                            
+                            const authResult = document.createElement('div');
+                            authResult.className = 'info';
+                            authResult.innerHTML = `
+🔍 Auth Check Result:
+${JSON.stringify(authData, null, 2)}
+                            `;
+                            resultDiv.appendChild(authResult);
+                        } catch (authError) {
+                            console.error('Auth check failed:', authError);
+                        }
+                    }, 1000);
+                    
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+❌ Registration Failed
+
+Error: ${data.error || 'Unknown error'}
+Detail: ${data.detail || 'No additional details'}
+
+Response:
+${JSON.stringify(data, null, 2)}
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+💥 Network Error
+
+${error.message}
+
+Make sure the development server is running on localhost:3001
+                    </div>
+                `;
+                console.error('Registration test failed:', error);
+            }
+        });
+    </script>
+</body>
+</html>

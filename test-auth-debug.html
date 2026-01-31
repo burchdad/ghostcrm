@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Debug Test</title>
+</head>
+<body>
+    <h1>Authentication Debug Test</h1>
+    
+    <div id="results"></div>
+    
+    <button onclick="testAuthentication()">Test Authentication Flow</button>
+    <button onclick="clearResults()">Clear Results</button>
+    
+    <script>
+        async function testAuthentication() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h3>Testing Authentication...</h3>';
+            
+            try {
+                // Test 1: Check JWT cookie
+                const response1 = await fetch('/api/debug/jwt');
+                const jwt = await response1.json();
+                results.innerHTML += `<p><strong>JWT Debug:</strong> ${JSON.stringify(jwt, null, 2)}</p>`;
+                
+                // Test 2: Test auth/me endpoint
+                const response2 = await fetch('/api/auth/me');
+                const authMe = await response2.json();
+                results.innerHTML += `<p><strong>Auth Me:</strong> ${JSON.stringify(authMe, null, 2)}</p>`;
+                
+                // Test 3: Test deals endpoint (previously failing)
+                const response3 = await fetch('/api/deals');
+                const deals = await response3.json();
+                results.innerHTML += `<p><strong>Deals API:</strong> Status ${response3.status} - ${JSON.stringify(deals, null, 2)}</p>`;
+                
+                // Test 4: Test deals AI suggestions (previously failing)
+                const response4 = await fetch('/api/deals/ai-suggestions');
+                const suggestions = await response4.json();
+                results.innerHTML += `<p><strong>AI Suggestions:</strong> Status ${response4.status} - ${JSON.stringify(suggestions, null, 2)}</p>`;
+                
+            } catch (error) {
+                results.innerHTML += `<p><strong>Error:</strong> ${error.message}</p>`;
+            }
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        // Auto-run test on load
+        window.addEventListener('DOMContentLoaded', testAuthentication);
+    </script>
+</body>
+</html>

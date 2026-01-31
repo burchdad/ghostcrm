@@ -1,0 +1,486 @@
+/* Container for the notification dropdown */
+.container {
+  position: relative;
+  display: inline-block;
+}
+
+/* Trigger button styling */
+.triggerButton {
+  position: relative;
+  padding: 0.5rem;
+  color: #6b7280;
+  background: transparent;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(1);
+  outline: none;
+}
+
+.triggerButton:hover {
+  color: #2563eb;
+  background-color: #eff6ff;
+  transform: scale(1.05);
+}
+
+.triggerButton:focus {
+  color: #2563eb;
+  background-color: #eff6ff;
+  box-shadow: 0 0 0 2px #93c5fd;
+}
+
+.bellIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: transform 0.2s ease;
+}
+
+.triggerButton:hover .bellIcon {
+  transform: scale(1.1);
+}
+
+/* Notification badge */
+.badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
+  animation: pulse 2s infinite;
+  border: 2px solid white;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Dropdown panel */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 24rem;
+  max-width: calc(100vw - 2rem);
+  background: white;
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  border-radius: 1rem;
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  z-index: 1000;
+  max-height: 32rem;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  animation: dropdownAppear 0.2s ease-out;
+}
+
+@keyframes dropdownAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header section */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.headerIcon {
+  padding: 0.5rem;
+  background: #dbeafe;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.headerBellIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #2563eb;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.headerTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.headerBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+  color: #b91c1c;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(185, 28, 28, 0.1);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.markAllButton {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #2563eb;
+  background: transparent;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.markAllButton:hover {
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.settingsButton {
+  padding: 0.5rem;
+  color: #6b7280;
+  background: transparent;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settingsButton:hover {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.settingsIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Notifications list */
+.notificationsList {
+  max-height: 20rem;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.notificationsList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notificationsList::-webkit-scrollbar-track {
+  background: #f9fafb;
+}
+
+.notificationsList::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.notificationsList::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Empty state */
+.emptyState {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.emptyIcon {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 0.75rem auto;
+  color: #d1d5db;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Notification item */
+.notificationItem {
+  padding: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.notificationItem:last-child {
+  border-bottom: none;
+}
+
+.notificationItem:hover {
+  background: #f9fafb;
+}
+
+.notificationItem.unread {
+  background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+  border-left: 3px solid #2563eb;
+}
+
+.notificationItem.unread:hover {
+  background: linear-gradient(135deg, #e0f2fe 0%, #e6fffa 100%);
+}
+
+.notificationContent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+/* Type icon */
+.typeIcon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+/* Type-specific styling */
+.typeSuccess {
+  color: #059669;
+  background-color: #ecfdf5;
+}
+
+.typeWarning {
+  color: #d97706;
+  background-color: #fffbeb;
+}
+
+.typeError {
+  color: #dc2626;
+  background-color: #fef2f2;
+}
+
+.typeInfo {
+  color: #2563eb;
+  background-color: #eff6ff;
+}
+
+/* Notification body */
+.notificationBody {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.notificationHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.notificationTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.unreadTitle {
+  color: #111827;
+}
+
+.readTitle {
+  color: #4b5563;
+}
+
+.unreadDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: #2563eb;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 0.5rem;
+  margin-left: 0.5rem;
+}
+
+.notificationMessage {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.notificationTime {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* Delete button */
+.deleteButton {
+  padding: 0.25rem;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.125rem;
+}
+
+.deleteButton:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.deleteIcon {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.deleteButton:hover .deleteIcon {
+  transform: scale(1.1);
+}
+
+/* Footer */
+.footer {
+  padding: 0.75rem;
+  border-top: 1px solid #f3f4f6;
+  background: #f9fafb;
+}
+
+.viewAllButton {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #2563eb;
+  background: transparent;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewAllButton:hover {
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .dropdown {
+    width: calc(100vw - 2rem);
+    right: -1rem;
+    max-height: 24rem;
+  }
+  
+  .header {
+    padding: 1rem;
+  }
+  
+  .headerTitle {
+    font-size: 1rem;
+  }
+  
+  .notificationItem {
+    padding: 0.75rem;
+  }
+  
+  .notificationContent {
+    gap: 0.5rem;
+  }
+  
+  .typeIcon {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
+/* Focus management for accessibility */
+.triggerButton:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.markAllButton:focus-visible,
+.settingsButton:focus-visible,
+.deleteButton:focus-visible,
+.viewAllButton:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .badge {
+    animation: none;
+  }
+  
+  .dropdown {
+    animation: none;
+  }
+  
+  .triggerButton {
+    transition: none;
+  }
+  
+  .bellIcon,
+  .deleteIcon {
+    transition: none;
+  }
+}

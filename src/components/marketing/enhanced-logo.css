@@ -1,0 +1,89 @@
+/* Enhanced Logo Styles */
+.enhanced-logo-container {
+  position: relative;
+  z-index: 10;
+}
+
+.enhanced-logo-container:hover {
+  transform: scale(1.02) translateY(-1px);
+}
+
+.enhanced-logo-text {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.enhanced-logo-container:hover .enhanced-logo-text {
+  text-shadow: 0 4px 20px rgba(139, 92, 246, 0.4) !important;
+}
+
+/* Pulse animation for accent dots */
+@keyframes logoAccentPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+.logo-accent-dot {
+  animation: logoAccentPulse 3s ease-in-out infinite;
+}
+
+.logo-accent-dot:nth-child(2) {
+  animation-delay: 1.5s;
+}
+
+/* Glow effect enhancement */
+.logo-glow-effect {
+  transition: all 0.4s ease;
+  opacity: 0.8;
+}
+
+.enhanced-logo-container:hover .logo-glow-effect {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Text gradient animation on hover */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.enhanced-logo-container:hover .enhanced-logo-text {
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+}
+
+/* Mobile specific enhancements */
+@media (max-width: 768px) {
+  .enhanced-logo-container {
+    transform: scale(1);
+  }
+  
+  .enhanced-logo-container:hover {
+    transform: scale(1.01) translateY(-0.5px);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .enhanced-logo-text {
+    text-shadow: none !important;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .enhanced-logo-container,
+  .enhanced-logo-text,
+  .logo-accent-dot,
+  .logo-glow-effect {
+    animation: none !important;
+    transition: none !important;
+  }
+}

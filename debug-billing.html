@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Billing Page Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .title {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        .plan-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .plan-card:hover {
+            transform: translateY(-10px);
+        }
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .plan-price {
+            font-size: 2.5rem;
+            font-weight: black;
+            margin: 1rem 0;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🚀 Billing Page Debug Test</h1>
+        <p style="text-align: center; font-size: 1.2rem; margin-bottom: 3rem;">
+            This is a simple HTML version to test if basic styling and layout work correctly.
+        </p>
+
+        <div class="plans-grid">
+            <div class="plan-card">
+                <div class="plan-name">Starter</div>
+                <div class="plan-price">$299<span style="font-size: 1rem;">/month</span></div>
+                <p>Perfect for small dealerships getting started</p>
+                <button class="btn" onclick="testCheckout('starter')">Select Starter</button>
+            </div>
+            
+            <div class="plan-card" style="border: 2px solid white;">
+                <div class="plan-name">Professional ⭐</div>
+                <div class="plan-price">$599<span style="font-size: 1rem;">/month</span></div>
+                <p>Enhanced tools for growing dealerships</p>
+                <button class="btn" onclick="testCheckout('professional')">Select Professional</button>
+            </div>
+            
+            <div class="plan-card">
+                <div class="plan-name">Enterprise</div>
+                <div class="plan-price">$999<span style="font-size: 1rem;">/month</span></div>
+                <p>Complete solution for large dealership groups</p>
+                <button class="btn" onclick="testCheckout('enterprise')">Select Enterprise</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading billing page...</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 3rem;">
+            <button class="btn" onclick="showLoading()">Test Loading State</button>
+            <button class="btn" onclick="hideLoading()">Hide Loading</button>
+            <a href="http://localhost:3000/billing" target="_blank" style="margin-left: 1rem;">
+                <button class="btn">Test Real Billing Page</button>
+            </a>
+        </div>
+
+        <div style="background: rgba(255, 255, 255, 0.1); border-radius: 1rem; padding: 2rem; margin-top: 3rem;">
+            <h3>🔍 Debug Information:</h3>
+            <ul style="text-align: left;">
+                <li>✅ HTML renders correctly</li>
+                <li>✅ CSS gradients and styling work</li>
+                <li>✅ Animations and interactions work</li>
+                <li>✅ Font loading and typography work</li>
+                <li>⏳ Next.js React component needs testing</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function testCheckout(plan) {
+            alert(`Selected ${plan} plan! This would normally redirect to Stripe checkout.`);
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            console.log('Loading state activated');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            console.log('Loading state hidden');
+        }
+
+        // Auto-test on page load
+        console.log('Billing page debug test loaded successfully');
+        console.log('If you see this message, JavaScript is working correctly');
+    </script>
+</body>
+</html>

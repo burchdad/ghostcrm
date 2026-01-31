@@ -1,0 +1,39 @@
+# Node modules
+node_modules/
+
+# Build output
+.next/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env files
+.env*
+.env.local
+
+# Security - Never commit these files
+STRIPE_PRODUCTION_KEYS.txt
+*_PRODUCTION_KEYS.txt
+*_SECRETS.txt
+
+# IDE files
+.vscode/
+.idea/
+
+# TypeScript build info
+*.tsbuildinfo
+.vercel
+
+# Generated audio files from ElevenLabs (temporary files)
+/public/audio/*.mp3
+/public/audio/*.wav
+
+# Tenant custom voice files (contain personal recordings)
+/public/voices/*/
+!/public/voices/.gitkeep

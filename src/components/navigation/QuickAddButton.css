@@ -1,0 +1,251 @@
+/* 
+  ===========================================
+  ⚡ QUICK ADD BUTTON STYLES
+  ===========================================
+  Component: /components/navigation/QuickAddButton.tsx
+  Purpose: Floating action button with enhanced glass morphism design
+  Theme: Modern glass effects with gradient backgrounds
+*/
+
+/* Quick Add Floating Button */
+.quick-add-button {
+  position: fixed;
+  bottom: 2rem;
+  left: 2rem;
+  z-index: 50;
+  
+  /* Button Design */
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.95) 0%, 
+    rgba(37, 99, 235, 0.95) 50%,
+    rgba(29, 78, 216, 0.98) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  
+  /* Shadow and Effects */
+  box-shadow: 
+    0 8px 32px rgba(59, 130, 246, 0.4),
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  
+  /* Icon Styling */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  
+  /* Smooth Transitions */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+}
+
+.quick-add-button svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: transform 0.3s ease;
+}
+
+/* Hover Effects */
+.quick-add-button:hover {
+  transform: translateY(-4px) scale(1.05);
+  background: linear-gradient(135deg, 
+    rgba(37, 99, 235, 0.98) 0%, 
+    rgba(29, 78, 216, 0.98) 50%,
+    rgba(30, 64, 175, 0.98) 100%);
+  box-shadow: 
+    0 12px 40px rgba(59, 130, 246, 0.5),
+    0 6px 20px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.quick-add-button:hover svg {
+  transform: rotate(90deg) scale(1.1);
+}
+
+/* Active/Click Effects */
+.quick-add-button:active {
+  transform: translateY(-2px) scale(0.98);
+  box-shadow: 
+    0 8px 25px rgba(59, 130, 246, 0.4),
+    0 3px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Focus for Accessibility */
+.quick-add-button:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+.quick-add-button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 2px;
+}
+
+/* Pulse Animation for Attention */
+.quick-add-button::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.3) 0%, 
+    rgba(37, 99, 235, 0.3) 100%);
+  z-index: -1;
+  animation: pulse-ring 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  opacity: 0;
+}
+
+@keyframes pulse-ring {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.3);
+  }
+}
+
+/* Subtle glow effect */
+.quick-add-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.02) 100%);
+  pointer-events: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .quick-add-button {
+    bottom: 1.5rem;
+    left: 1.5rem;
+    width: 3rem;
+    height: 3rem;
+  }
+  
+  .quick-add-button svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .quick-add-button {
+    bottom: 1rem;
+    left: 1rem;
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  
+  .quick-add-button svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .quick-add-button {
+    background: linear-gradient(135deg, 
+      rgba(59, 130, 246, 0.9) 0%, 
+      rgba(37, 99, 235, 0.9) 50%,
+      rgba(29, 78, 216, 0.95) 100%);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      0 8px 32px rgba(59, 130, 246, 0.3),
+      0 4px 16px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  
+  .quick-add-button:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 
+      0 12px 40px rgba(59, 130, 246, 0.4),
+      0 6px 20px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .quick-add-button {
+    background: #0066cc;
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  }
+  
+  .quick-add-button:hover {
+    background: #0052a3;
+    border-color: #ffffff;
+  }
+  
+  .quick-add-button:focus {
+    outline: 3px solid #ffff00;
+    outline-offset: 2px;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .quick-add-button {
+    transition: none;
+  }
+  
+  .quick-add-button::before {
+    animation: none;
+  }
+  
+  .quick-add-button svg {
+    transition: none;
+  }
+  
+  .quick-add-button:hover {
+    transform: none;
+  }
+  
+  .quick-add-button:hover svg {
+    transform: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .quick-add-button {
+    display: none;
+  }
+}
+
+/* Accessibility - Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

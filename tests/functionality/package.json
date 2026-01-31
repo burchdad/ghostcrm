@@ -1,0 +1,36 @@
+{
+  "name": "ghostcrm-functionality-tests",
+  "version": "1.0.0",
+  "description": "Comprehensive functionality testing suite for GhostCRM",
+  "main": "master-test-suite.js",
+  "scripts": {
+    "test": "node master-test-suite.js",
+    "test:ui": "node ui-component-tests.js",
+    "test:pages": "node page-functionality-tests.js",
+    "test:api": "node api-endpoint-tests.js",
+    "test:auth": "node authentication-tests.js",
+    "test:db": "node database-integration-tests.js",
+    "test:platform": "node cross-platform-accessibility-tests.js",
+    "test:security": "node ../security/security-test-runner.js",
+    "install-deps": "npm install",
+    "setup": "npm run install-deps && npm run test:api"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0",
+    "@axe-core/playwright": "^4.8.2",
+    "node-fetch": "^2.6.7",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "keywords": [
+    "testing",
+    "playwright",
+    "functionality",
+    "crm",
+    "automation"
+  ],
+  "author": "GhostCRM Team",
+  "license": "MIT"
+}

@@ -1,0 +1,83 @@
+/* Marketing Page Layout */
+.marketing-page {
+  background: linear-gradient(180deg, 
+    rgba(102, 126, 234, 1) 0%,
+    rgba(118, 75, 162, 1) 40%,
+    #ffffff 40%
+  );
+}
+
+/* Mobile Marketing Header Improvements */
+@media (max-width: 640px) {
+  .marketing-page nav {
+    padding: 0 0.5rem !important;
+  }
+  
+  .marketing-page nav > div {
+    padding: 0 0.5rem !important;
+    gap: 0.25rem !important;
+  }
+  
+  /* Prevent header overflow on small screens */
+  .marketing-page nav {
+    overflow: hidden;
+  }
+  
+  /* Ensure mobile menu doesn't cause layout shifts */
+  .marketing-page nav button {
+    flex-shrink: 0 !important;
+  }
+}
+
+/* Section Transitions */
+.section-transition {
+  height: 100px;
+  background: linear-gradient(180deg, 
+    rgba(118, 75, 162, 0) 0%,
+    rgba(255, 255, 255, 1) 100%
+  );
+}
+
+.section-divider {
+  padding: 5rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.divider-line {
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%,
+    rgba(148, 163, 184, 0.4) 20%,
+    rgba(59, 130, 246, 0.6) 50%,
+    rgba(148, 163, 184, 0.4) 80%,
+    transparent 100%
+  );
+  position: relative;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.divider-line::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(229, 231, 235, 0.3);
+}

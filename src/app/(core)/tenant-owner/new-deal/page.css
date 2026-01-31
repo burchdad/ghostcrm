@@ -1,0 +1,413 @@
+/* 
+  ===========================================
+  💰 TENANT OWNER NEW DEAL PAGE STYLES
+  ===========================================
+  Component: page.tsx
+  Purpose: Tenant owner new deal creation page
+  Theme: Modern glass morphism with green gradient theme for deals
+*/
+
+/* Page Container */
+.tenant-new-deal-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #ecfdf5 20%, #d1fae5 40%, #a7f3d0 60%, #6ee7b7 80%, #10b981 100%);
+  position: relative;
+  overflow-x: hidden;
+  padding: 0;
+}
+
+.tenant-new-deal-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 25% 25%, rgba(16, 185, 129, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 75% 25%, rgba(34, 197, 94, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 25% 75%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 75% 75%, rgba(147, 51, 234, 0.08) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 1;
+  animation: dealFloat 25s infinite ease-in-out;
+}
+
+@keyframes dealFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-15px) rotate(0.5deg); }
+  50% { transform: translateY(10px) rotate(-0.3deg); }
+  75% { transform: translateY(-8px) rotate(0.2deg); }
+}
+
+/* Form Container */
+.new-deal-form-container {
+  position: relative;
+  z-index: 2;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* Form Sections */
+.deal-form-section {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 1rem;
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
+}
+
+.deal-form-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 25px 30px -5px rgba(0, 0, 0, 0.15),
+    0 15px 15px -5px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Section Headers */
+.deal-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+}
+
+.deal-section-header span {
+  font-size: 1.5rem;
+}
+
+/* Form Grid */
+.deal-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .deal-form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .deal-form-grid.grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.deal-form-grid.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Form Elements */
+.deal-form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.deal-form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.deal-form-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #10b981;
+  border-color: transparent;
+  background: rgba(255, 255, 255, 1);
+}
+
+.deal-form-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Array Input Containers */
+.deal-array-container {
+  margin-bottom: 1rem;
+}
+
+.deal-array-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.deal-array-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.deal-array-tag.products {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.deal-array-tag.competitors {
+  background-color: #fecaca;
+  color: #991b1b;
+}
+
+.deal-array-tag.tags {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.deal-array-tag button {
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.deal-array-tag button:hover {
+  opacity: 1;
+}
+
+.deal-array-input-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.deal-array-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.deal-quick-add-btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #475569;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
+}
+
+.deal-quick-add-btn:hover {
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+/* Action Buttons */
+.deal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1.5rem;
+}
+
+.deal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+}
+
+.deal-btn-cancel {
+  color: #6b7280;
+  background: transparent;
+}
+
+.deal-btn-cancel:hover {
+  color: #1f2937;
+}
+
+.deal-btn-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);
+}
+
+.deal-btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px 0 rgba(16, 185, 129, 0.5);
+}
+
+.deal-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Loading Spinner */
+.deal-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid white;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Header */
+.deal-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.deal-page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.deal-page-title h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.deal-page-title h1 span {
+  font-size: 2.25rem;
+}
+
+.deal-page-subtitle {
+  color: #64748b;
+  margin-top: 0.5rem;
+  font-size: 1rem;
+}
+
+.deal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .new-deal-form-container {
+    padding: 1rem;
+  }
+  
+  .deal-page-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .deal-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .deal-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .deal-array-input-row {
+    flex-direction: column;
+  }
+  
+  .deal-quick-add-btn {
+    width: 100%;
+  }
+}
+
+/* Financial Input Styling */
+.deal-financial-input {
+  position: relative;
+}
+
+.deal-currency-symbol {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.deal-financial-input input {
+  padding-left: 2rem;
+}
+
+/* Form Validation */
+.deal-form-input:invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.deal-form-input:valid:not(:placeholder-shown) {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .deal-form-section {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .deal-section-header,
+  .deal-form-label,
+  .deal-page-title h1 {
+    color: #f1f5f9;
+  }
+  
+  .deal-page-subtitle {
+    color: #94a3b8;
+  }
+  
+  .deal-form-input {
+    background: rgba(15, 23, 42, 0.8);
+    border-color: #475569;
+    color: #f1f5f9;
+  }
+  
+  .deal-form-input::placeholder {
+    color: #64748b;
+  }
+}
+
+/* Success Animation */
+@keyframes dealSuccess {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.deal-success {
+  animation: dealSuccess 0.6s ease;
+}

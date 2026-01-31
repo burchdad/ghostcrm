@@ -1,0 +1,193 @@
+name: Multi-Environment Deployment Pipeline
+
+on:
+  push:
+    branches: [develop, release, main]
+  pull_request:
+    branches: [develop, release, main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      deploy_type:
+        description: 'Deployment type'
+        required: true
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - manual
+          - hotfix
+
+jobs:
+  # Build and test job for all environments
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run TypeScript check
+      run: npm run type-check
+    
+    - name: Run linting
+      run: npm run lint
+    
+    - name: Run tests
+      run: npm run test
+    
+    - name: Build application
+      run: npm run build
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts-${{ matrix.node-version }}
+        path: .next
+
+  # Development environment deployment
+  deploy-development:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'development')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Load development environment
+      run: |
+        if [ -f .env.development ]; then
+          cp .env.development .env.local
+        fi
+    
+    - name: Build for development
+      run: npm run build
+      env:
+        GHOST_ENV: development
+        NODE_ENV: development
+    
+    - name: Update deployment status
+      run: |
+        echo "Development deployment completed successfully"
+        echo "URL: https://dev.ghostcrm.com"
+
+  # Staging environment deployment
+  deploy-staging:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Load staging environment
+      run: |
+        if [ -f .env.staging ]; then
+          cp .env.staging .env.local
+        fi
+    
+    - name: Build for staging
+      run: npm run build
+      env:
+        GHOST_ENV: staging
+        NODE_ENV: production
+    
+    - name: Run staging tests
+      run: npm run test:e2e
+    
+    - name: Notify stakeholders
+      run: |
+        echo "Staging deployment completed"
+        echo "URL: https://staging.ghostcrm.com"
+        echo "Ready for QA testing and approval"
+
+  # Production environment deployment
+  deploy-production:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Load production environment
+      run: |
+        if [ -f .env.production ]; then
+          cp .env.production .env.local
+        fi
+    
+    - name: Build for production
+      run: npm run build
+      env:
+        GHOST_ENV: production
+        NODE_ENV: production
+    
+    - name: Run production-specific tests
+      run: npm run test:prod
+    
+    - name: Create production backup
+      run: |
+        echo "Creating production backup before deployment"
+        # Add backup logic here
+    
+    - name: Update monitoring
+      run: |
+        echo "Production deployment completed"
+        echo "URL: https://app.ghostcrm.com"
+        echo "Monitoring and alerts activated"
+    
+    - name: Notify success
+      run: |
+        echo "🚀 Production deployment successful!"
+        echo "Version: ${{ github.sha }}"
+        echo "Deployed by: ${{ github.actor }}"

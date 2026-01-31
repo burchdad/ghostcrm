@@ -1,0 +1,113 @@
+/* Mobile-specific styles for UnifiedToolbar */
+
+/* Mobile breakpoints - matches the variables.css breakpoint */
+@media (max-width: 767px) {
+  /* Hide ribbon tabs (File, Edit, Settings, AI) on mobile */
+  .tabsContainer {
+    display: none !important;
+  }
+  
+  /* Hide search bar on mobile */
+  .searchContainer {
+    display: none !important;
+  }
+  
+  /* Adjust toolbar container for mobile layout */
+  .toolbarContainer {
+    justify-content: space-between;
+    padding: 0;
+    height: var(--unified-toolbar-h, 56px);
+  }
+  
+  /* Logo section adjustments for mobile */
+  .logoSection {
+    padding: 0 12px;
+    border-right: none;
+    background: linear-gradient(to right, #eff6ff, #eef2ff);
+    flex-shrink: 0;
+    height: 100%;
+  }
+  
+  /* Smaller logo text for mobile */
+  .logoText {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  /* Smaller logo icon for mobile */
+  .logoIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  
+  /* Right section adjustments for mobile */
+  .rightSection {
+    padding: 0 12px;
+    gap: 16px;
+    border-left: none;
+    background: transparent;
+    flex-shrink: 0;
+    height: 100%;
+  }
+  
+  /* Hide online users indicator on mobile - first div in rightSection */
+  .rightSection > div:first-child {
+    display: none !important;
+  }
+  
+  /* Hide bulk mode toggle on mobile - any button in rightSection */
+  .rightSection > button {
+    display: none !important;
+  }
+  
+  /* Ensure toolbar uses CSS variable height */
+  .unifiedToolbar {
+    height: var(--unified-toolbar-h, 56px);
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  /* Further reduce logo text size */
+  .logoText {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  
+  /* Further reduce logo icon size */
+  .logoIcon {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+  
+  /* Reduce padding for smaller screens */
+  .logoSection {
+    padding: 0 8px;
+    gap: 8px;
+  }
+  
+  .rightSection {
+    padding: 0 8px;
+    gap: 12px;
+  }
+}
+
+/* Very small screens (portrait phones) */
+@media (max-width: 360px) {
+  /* Hide language selector on very small screens (3rd from last) */
+  .rightSection > div:nth-last-child(3) {
+    display: none !important;
+  }
+  
+  /* Further reduce spacing */
+  .rightSection {
+    gap: 8px;
+  }
+  
+  /* Consider shorter app name for very small screens */
+  .logoText {
+    font-size: 14px;
+  }
+}

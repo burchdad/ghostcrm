@@ -1,0 +1,992 @@
+/* Public Billing Page Styles */
+
+/* BUTTON FUNCTIONALITY FIXES - Ensure all buttons are clickable */
+.billing-page button, 
+.billing-page .contact-button, 
+.billing-page .enhanced-checkout-button, 
+.billing-page .billing-plan-cta, 
+.billing-page .faq-question {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  z-index: 100 !important;
+  position: relative !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* Add click feedback for better UX */
+.billing-page button:active,
+.billing-page .contact-button:active, 
+.billing-page .enhanced-checkout-button:active,
+.billing-page .billing-plan-cta:active {
+  transform: scale(0.98) !important;
+  transition: transform 0.1s ease !important;
+}
+
+/* Ensure no overlapping elements block clicks */
+.billing-page button:hover,
+.billing-page .contact-button:hover, 
+.billing-page .enhanced-checkout-button:hover {
+  z-index: 200 !important;
+}
+
+/* Disable pointer events only for decorative elements */
+.billing-page .floating-icons,
+.billing-page .floating-icon,
+.billing-page .billing-hero-background > div:not(.billing-container) {
+  pointer-events: none !important;
+}
+
+/* Reset and body styles for proper scrolling - Billing page specific */
+.billing-page html,
+html.billing-active {
+  scroll-behavior: smooth !important;
+  overflow-y: auto !important;
+}
+
+.billing-page body,
+body.billing-active {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  background: transparent !important;
+}
+
+/* Ensure billing page overrides any global background */
+.billing-page,
+.billing-page *,
+.billing-page *::before,
+.billing-page *::after {
+  box-sizing: border-box;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(2deg); }
+  66% { transform: translateY(5px) rotate(-1deg); }
+}
+
+@keyframes float-around {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg) scale(1);
+    opacity: 0.7;
+  }
+  25% { 
+    transform: translateY(-15px) rotate(90deg) scale(1.1);
+    opacity: 1;
+  }
+  50% { 
+    transform: translateY(-10px) rotate(180deg) scale(0.9);
+    opacity: 0.8;
+  }
+  75% { 
+    transform: translateY(-20px) rotate(270deg) scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { 
+    text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+  }
+  50% { 
+    text-shadow: 0 0 40px rgba(139, 92, 246, 0.8), 0 0 60px rgba(236, 72, 153, 0.4);
+  }
+}
+
+@keyframes number-glow {
+  0% { 
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+    transform: scale(1);
+  }
+  100% { 
+    text-shadow: 0 0 30px rgba(16, 185, 129, 0.8), 0 0 40px rgba(16, 185, 129, 0.3);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes count-up {
+  from { 
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to { 
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Animation Classes */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-float.delay-1000 {
+  animation-delay: 1s;
+}
+
+.animate-float.delay-2000 {
+  animation-delay: 2s;
+}
+
+/* Main Page Styles */
+.billing-page {
+  min-height: 100vh !important;
+  position: relative !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background-attachment: fixed !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scroll-behavior: smooth !important;
+  z-index: 1 !important;
+}
+
+.billing-hero-background {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+
+.billing-container {
+  position: relative !important;
+  z-index: 10 !important;
+  padding: 2rem 1rem !important;
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  min-height: 100vh !important;
+  padding-bottom: 4rem !important;
+}
+
+/* Header Styles */
+.billing-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  position: relative;
+  z-index: 2;
+}
+
+.header-animation-container {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 2rem;
+}
+
+.floating-icons {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.floating-icon {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  animation: float-around 8s ease-in-out infinite;
+}
+
+.floating-icon:nth-child(1) {
+  top: -20px;
+  left: -80px;
+  animation-delay: 0s;
+}
+
+.floating-icon:nth-child(2) {
+  top: -40px;
+  right: -60px;
+  animation-delay: 2s;
+}
+
+.floating-icon:nth-child(3) {
+  bottom: -20px;
+  left: -60px;
+  animation-delay: 4s;
+}
+
+.floating-icon:nth-child(4) {
+  bottom: -40px;
+  right: -80px;
+  animation-delay: 6s;
+}
+
+.main-title {
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #ddd6fe 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+}
+
+.title-highlight {
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: block;
+  margin-top: 0.5rem;
+  position: relative;
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+.subtitle {
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 800px;
+  margin: 0 auto 3rem;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.highlight-number {
+  color: #10b981;
+  font-weight: 800;
+  font-size: 1.5em;
+  text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+  animation: number-glow 2s ease-in-out infinite alternate;
+}
+
+.highlight-feature {
+  color: #3b82f6;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(59, 130, 246, 0.5);
+  text-underline-offset: 4px;
+}
+
+.stats-container {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin: 3rem 0;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  text-align: center;
+  position: relative;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.stat-item:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #10b981, #059669);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: block;
+  margin-bottom: 0.5rem;
+  animation: count-up 2s ease-out;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cta-text {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+  margin: 2rem 0;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+}
+
+/* Toggle Styles */
+.billing-toggle-container {
+  margin-bottom: 4rem;
+  text-align: center;
+}
+
+.billing-toggle {
+  display: inline-flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  margin-top: 1rem;
+}
+
+/* Plan Grid Styles */
+.billing-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-bottom: 4rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.billing-plan-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 2rem;
+  padding: 2rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  pointer-events: auto !important;
+  z-index: 10 !important;
+}
+
+.billing-plan-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  border-color: rgba(255,255,255,0.4);
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08));
+}
+
+.billing-plan-card.popular {
+  border: 2px solid #10b981;
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+  position: relative;
+}
+
+.billing-plan-card.popular::before {
+  content: "Most Popular";
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0 0 1rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.billing-plan-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.billing-plan-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.billing-plan-description {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}
+
+.billing-plan-price {
+  margin-bottom: 1rem;
+}
+
+.billing-plan-price-amount {
+  font-size: 3rem;
+  font-weight: 900;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.billing-plan-price-period {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.billing-plan-setup {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+.billing-plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+}
+
+.billing-plan-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.billing-plan-feature svg {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.billing-plan-cta {
+  width: 100%;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.billing-plan-cta.primary {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  color: white;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
+}
+
+.billing-plan-cta.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
+}
+
+.billing-plan-cta.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.billing-plan-cta.secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Testimonials Styles */
+.billing-testimonials {
+  margin: 4rem 0;
+}
+
+/* Selected Plan Section Styles */
+.selected-plan-section {
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08)) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  border-radius: 2rem !important;
+  padding: 3rem 2rem !important;
+  margin: 3rem 0 !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2) !important;
+}
+
+.selected-plan-title {
+  color: white !important;
+  font-size: 3rem !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  margin-bottom: 2rem !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.selected-plan-subtitle {
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 1.5rem !important;
+  text-align: center !important;
+  margin-bottom: 3rem !important;
+  font-weight: 500 !important;
+}
+
+.pricing-breakdown {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  gap: 2rem !important;
+  margin-bottom: 3rem !important;
+}
+
+.pricing-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1)) !important;
+  backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  border-radius: 1.5rem !important;
+  padding: 2rem !important;
+  text-align: center !important;
+  transition: all 0.3s ease !important;
+}
+
+.pricing-card:hover {
+  transform: translateY(-5px) !important;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.3) !important;
+  background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.15)) !important;
+}
+
+.pricing-card.featured {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3)) !important;
+  border: 2px solid rgba(139, 92, 246, 0.5) !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3) !important;
+}
+
+.pricing-amount {
+  font-size: 3.5rem !important;
+  font-weight: 900 !important;
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.pricing-label {
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 1rem !important;
+}
+
+.pricing-description {
+  color: rgba(255,255,255,0.8) !important;
+  font-size: 0.95rem !important;
+}
+
+/* Plan Benefits Section */
+.plan-benefits {
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06)) !important;
+  backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+  border-radius: 2rem !important;
+  padding: 2.5rem !important;
+  margin-bottom: 3rem !important;
+}
+
+.plan-benefits h4 {
+  color: white !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 1.5rem !important;
+  padding-bottom: 1rem !important;
+  border-bottom: 2px solid rgba(255,255,255,0.2) !important;
+}
+
+.benefits-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  gap: 2rem !important;
+}
+
+.benefit-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 1.1rem !important;
+  font-weight: 500 !important;
+  padding: 0.5rem 0 !important;
+}
+
+.benefit-icon {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  color: #10b981 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Enhanced Checkout Button */
+.checkout-button-container {
+  text-align: center !important;
+  margin: 3rem 0 !important;
+}
+
+.enhanced-checkout-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  padding: 1.5rem 3rem !important;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+  color: white !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  border: none !important;
+  border-radius: 2rem !important;
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4) !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  text-decoration: none !important;
+  z-index: 20 !important;
+  position: relative !important;
+  outline: none !important;
+}
+
+.enhanced-checkout-button:hover {
+  transform: translateY(-3px) scale(1.05) !important;
+  box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6) !important;
+  background: linear-gradient(135deg, #7c3aed, #db2777) !important;
+}
+
+.checkout-security-text {
+  color: rgba(255,255,255,0.8) !important;
+  font-size: 1rem !important;
+  margin-top: 1rem !important;
+  font-weight: 500 !important;
+}
+
+/* Testimonials Enhancement */
+.billing-testimonials {
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  border-radius: 2rem !important;
+  padding: 4rem 2rem !important;
+  margin: 4rem 0 !important;
+}
+
+.testimonials-title {
+  color: white !important;
+  font-size: 3rem !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  margin-bottom: 1rem !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.testimonials-subtitle {
+  color: rgba(255,255,255,0.85) !important;
+  font-size: 1.3rem !important;
+  text-align: center !important;
+  margin-bottom: 3rem !important;
+  font-weight: 500 !important;
+}
+
+.testimonial-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08)) !important;
+  backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+  border-radius: 1.5rem !important;
+  padding: 2rem !important;
+  transition: all 0.3s ease !important;
+  height: 100% !important;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.12)) !important;
+}
+
+.testimonial-quote {
+  color: rgba(255,255,255,0.95) !important;
+  font-size: 1.1rem !important;
+  line-height: 1.6 !important;
+  font-style: italic !important;
+  margin-bottom: 2rem !important;
+}
+
+.testimonial-author {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+}
+
+.author-avatar {
+  width: 3rem !important;
+  height: 3rem !important;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.5rem !important;
+  color: white !important;
+  font-weight: 700 !important;
+}
+
+.author-info h4 {
+  color: white !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  margin: 0 0 0.25rem 0 !important;
+}
+
+.author-info p {
+  color: rgba(255,255,255,0.75) !important;
+  font-size: 0.9rem !important;
+  margin: 0 !important;
+}
+
+/* FAQ Enhancement */
+.faq-section {
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  border-radius: 2rem !important;
+  padding: 4rem 2rem !important;
+  margin: 4rem 0 !important;
+}
+
+.faq-title {
+  color: white !important;
+  font-size: 3rem !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  margin-bottom: 1rem !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.faq-subtitle {
+  color: rgba(255,255,255,0.85) !important;
+  font-size: 1.3rem !important;
+  text-align: center !important;
+  margin-bottom: 3rem !important;
+  font-weight: 500 !important;
+}
+
+.faq-item {
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06)) !important;
+  backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+  border-radius: 1rem !important;
+  margin-bottom: 1rem !important;
+  overflow: hidden !important;
+  transition: all 0.3s ease !important;
+}
+
+.faq-item:hover {
+  background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.1)) !important;
+  border-color: rgba(255,255,255,0.4) !important;
+}
+
+.faq-question {
+  width: 100% !important;
+  text-align: left !important;
+  padding: 1.5rem !important;
+  background: transparent !important;
+  border: none !important;
+  color: white !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  transition: all 0.3s ease !important;
+  z-index: 10 !important;
+  position: relative !important;
+}
+
+.faq-question:hover {
+  background: rgba(255,255,255,0.1) !important;
+}
+
+.faq-answer {
+  padding: 0 1.5rem 1.5rem 1.5rem !important;
+  border-top: 1px solid rgba(255,255,255,0.15) !important;
+  color: rgba(255,255,255,0.85) !important;
+  font-size: 1rem !important;
+  line-height: 1.6 !important;
+}
+
+/* Contact Section Enhancement */
+.contact-section {
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08)) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  border-radius: 2rem !important;
+  padding: 4rem 2rem !important;
+  margin: 4rem 0 !important;
+  text-align: center !important;
+}
+
+.contact-title {
+  color: white !important;
+  font-size: 2.5rem !important;
+  font-weight: 900 !important;
+  margin-bottom: 1rem !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.contact-subtitle {
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 1.2rem !important;
+  margin-bottom: 3rem !important;
+  font-weight: 500 !important;
+}
+
+.contact-buttons {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+  align-items: center !important;
+}
+
+@media (min-width: 640px) {
+  .contact-buttons {
+    flex-direction: row !important;
+    justify-content: center !important;
+  }
+}
+
+.contact-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  padding: 1rem 2rem !important;
+  border-radius: 1rem !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  text-decoration: none !important;
+  transition: all 0.3s ease !important;
+  min-width: 200px !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  border: none !important;
+  outline: none !important;
+  z-index: 10 !important;
+  position: relative !important;
+}
+
+.contact-button.primary {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3) !important;
+}
+
+.contact-button.primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4) !important;
+  background: linear-gradient(135deg, #059669, #047857) !important;
+}
+
+.contact-button.secondary {
+  background: rgba(255,255,255,0.15) !important;
+  color: white !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+}
+
+.contact-button.secondary:hover {
+  transform: translateY(-2px) !important;
+  background: rgba(255,255,255,0.25) !important;
+  border-color: rgba(255,255,255,0.5) !important;
+}
+
+.contact-button.tertiary {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: white !important;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3) !important;
+}
+
+.contact-button.tertiary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4) !important;
+  background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .billing-page {
+    background-attachment: scroll; /* Better for mobile performance */
+  }
+  
+  .billing-container {
+    padding: 1rem 0.5rem;
+    padding-bottom: 3rem;
+  }
+  
+  .billing-header {
+    margin-bottom: 2rem;
+  }
+  
+  .stats-container {
+    gap: 1.5rem;
+    flex-direction: column;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+  }
+  
+  .floating-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  .stat-item {
+    padding: 1rem;
+  }
+  
+  .billing-plans-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+  
+  .billing-plan-card {
+    padding: 1.5rem;
+  }
+  
+  .billing-plan-price-amount {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .billing-page {
+    background-attachment: scroll;
+  }
+  
+  .billing-container {
+    padding: 0.5rem;
+    padding-bottom: 2rem;
+  }
+  
+  .floating-icons {
+    display: none;
+  }
+  
+  .main-title {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .billing-plan-card {
+    padding: 1rem;
+  }
+}

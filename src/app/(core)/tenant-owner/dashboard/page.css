@@ -1,0 +1,1577 @@
+/* 
+  ===========================================
+  💼 TENANT OWNER DASHBOARD STYLES
+  ===========================================
+  Component: page.tsx
+  Purpose: Comprehensive tenant owner dashboard with analytics and management
+  Theme: Glass morphism with gradient backgrounds
+*/
+
+/* Enhanced Page Container */
+.tenant-dashboard-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #e8eaf6 100%);
+}
+
+/* Charts Section Styling */
+.tenant-dashboard-section.charts {
+  margin-bottom: 2rem;
+}
+
+.tenant-dashboard-section-icon.charts {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.tenant-dashboard-section .chart-grid-container {
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tenant-dashboard-section .chart-empty-state {
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tenant-dashboard-section .chart-empty-state .empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.tenant-dashboard-section .chart-view-toggle {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+}
+
+.tenant-dashboard-section .chart-view-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.tenant-dashboard-section .chart-view-button.active {
+  background: white;
+  color: #2563eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.tenant-dashboard-section .chart-view-button:not(.active) {
+  color: #64748b;
+}
+
+.tenant-dashboard-section .chart-view-button:not(.active):hover {
+  color: #334155;
+}
+
+/* Enhanced Header with Glass Effect */
+.tenant-dashboard-header {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  position: sticky;
+  top: 4rem; /* Stay below the global navigation (h-16 = 4rem) */
+  z-index: 40; /* Below global navigation (z-50) but above content */
+}
+
+/* Header Section with Metrics and AI Assistant */
+.tenant-dashboard-header-section {
+  margin-bottom: 2rem;
+}
+
+.tenant-dashboard-top-section {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.tenant-dashboard-metrics-container {
+  flex: 1;
+}
+
+.tenant-dashboard-ai-container {
+  flex-shrink: 0;
+  width: 350px;
+}
+
+.tenant-dashboard-ai-assistant {
+  height: 100%;
+  min-height: 400px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .tenant-dashboard-top-section {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .tenant-dashboard-ai-container {
+    width: 100%;
+  }
+  
+  .tenant-dashboard-ai-assistant {
+    min-height: 300px;
+  }
+}
+
+.tenant-dashboard-header-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  height: 5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tenant-dashboard-title-section {
+  display: flex;
+  align-items: center;
+}
+
+.tenant-dashboard-crown {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #f59e0b;
+  margin-right: 1rem;
+  filter: drop-shadow(0 4px 8px rgba(245, 158, 11, 0.3));
+  position: relative;
+}
+
+.tenant-dashboard-crown::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: linear-gradient(45deg, #fbbf24, #f59e0b);
+  border-radius: 50%;
+  opacity: 0.2;
+  filter: blur(8px);
+  animation: crown-glow 3s ease-in-out infinite;
+}
+
+@keyframes crown-glow {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.4; }
+}
+
+.tenant-dashboard-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.25rem;
+}
+
+.tenant-dashboard-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.tenant-dashboard-status-badge {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  color: #065f46;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid #a7f3d0;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
+}
+
+.tenant-dashboard-status-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.5rem;
+  color: #059669;
+}
+
+/* Enhanced Loading State */
+.tenant-dashboard-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 50%, #e8eaf6 100%);
+}
+
+.tenant-dashboard-loading-spinner {
+  position: relative;
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto;
+}
+
+.tenant-dashboard-loading-ring {
+  position: absolute;
+  width: 4rem;
+  height: 4rem;
+  border: 4px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.tenant-dashboard-loading-ring:first-child {
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+  border-radius: 50%;
+}
+
+.tenant-dashboard-loading-ring:last-child {
+  border-top: 4px solid #3b82f6;
+  border-right: 4px solid #8b5cf6;
+  border-bottom: transparent;
+  border-left: transparent;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.tenant-dashboard-loading-text {
+  margin-top: 1.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 0.75rem;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.tenant-dashboard-loading-title {
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.tenant-dashboard-loading-subtitle {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+/* Enhanced Content Container */
+.tenant-dashboard-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+}
+
+/* Enhanced Metrics - Horizontal Scrollable Layout */
+.tenant-dashboard-metrics-grid {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 0;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.5rem;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Scrollbar styling */
+.tenant-dashboard-metrics-grid::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tenant-dashboard-metrics-grid::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 2px;
+}
+
+.tenant-dashboard-metrics-grid::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+.tenant-dashboard-metrics-grid::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Enhanced Metric Cards */
+.tenant-dashboard-metric-card {
+  position: relative;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+  flex-shrink: 0;
+  width: 280px;
+  min-width: 280px;
+}
+
+/* Clickable card styles */
+.tenant-dashboard-metric-card.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.tenant-dashboard-metric-card.clickable:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+.tenant-dashboard-metric-card.clickable:active {
+  transform: translateY(-4px) scale(0.98);
+}
+
+.tenant-dashboard-metric-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+.tenant-dashboard-metric-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.tenant-dashboard-metric-card:hover::before {
+  opacity: 1;
+}
+
+/* Revenue Card */
+.tenant-dashboard-metric-card.revenue {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.tenant-dashboard-metric-card.revenue::before {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(21, 128, 61, 0.1) 100%);
+}
+
+/* Performance Card */
+.tenant-dashboard-metric-card.performance {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.tenant-dashboard-metric-card.performance::before {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+}
+
+/* Deals Card */
+.tenant-dashboard-metric-card.deals {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+}
+
+.tenant-dashboard-metric-card.deals::before {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+}
+
+/* Satisfaction Card */
+.tenant-dashboard-metric-card.satisfaction {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+}
+
+.tenant-dashboard-metric-card.satisfaction::before {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%);
+}
+
+.tenant-dashboard-metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.tenant-dashboard-metric-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.tenant-dashboard-metric-label.revenue { color: #065f46; }
+.tenant-dashboard-metric-label.performance { color: #1e40af; }
+.tenant-dashboard-metric-label.deals { color: #6b21a8; }
+.tenant-dashboard-metric-label.satisfaction { color: #3730a3; }
+
+.tenant-dashboard-metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  line-height: 1;
+}
+
+.tenant-dashboard-metric-icon {
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.tenant-dashboard-metric-icon.revenue {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.tenant-dashboard-metric-icon.performance {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.tenant-dashboard-metric-icon.deals {
+  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+}
+
+.tenant-dashboard-metric-icon.satisfaction {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+.tenant-dashboard-metric-icon svg {
+  width: 2rem;
+  height: 2rem;
+  color: white;
+}
+
+.tenant-dashboard-metric-trend {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 0.5rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.tenant-dashboard-metric-trend.positive {
+  color: #065f46;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.tenant-dashboard-metric-trend svg {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.25rem;
+}
+
+.tenant-dashboard-progress-bar {
+  position: relative;
+  width: 100%;
+  background: rgba(59, 130, 246, 0.2);
+  border-radius: 9999px;
+  height: 0.75rem;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.tenant-dashboard-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+/* Enhanced Actions Grid */
+.tenant-dashboard-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .tenant-dashboard-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.tenant-dashboard-section {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.5s ease;
+}
+
+.tenant-dashboard-section:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.tenant-dashboard-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.tenant-dashboard-section-icon {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  margin-right: 0.75rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.tenant-dashboard-section-icon.management {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+}
+
+.tenant-dashboard-section-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: white;
+}
+
+.tenant-dashboard-action-button {
+  width: 100%;
+  text-align: left;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  border: 2px solid #f3f4f6;
+  background: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transform: scale(1);
+}
+
+.tenant-dashboard-action-button:hover {
+  border-color: #bfdbfe;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  transform: scale(1.02);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+
+.tenant-dashboard-action-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tenant-dashboard-action-text h4 {
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+  transition: color 0.3s ease;
+}
+
+.tenant-dashboard-action-button:hover .tenant-dashboard-action-text h4 {
+  color: #1e40af;
+}
+
+.tenant-dashboard-action-text p {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.tenant-dashboard-action-icon {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  transition: all 0.3s ease;
+}
+
+.tenant-dashboard-action-button:hover .tenant-dashboard-action-icon {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.tenant-dashboard-action-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #3b82f6;
+  transition: color 0.3s ease;
+}
+
+.tenant-dashboard-action-button:hover .tenant-dashboard-action-icon svg {
+  color: white;
+}
+
+/* Activity Timeline */
+.tenant-dashboard-activity-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+}
+
+.tenant-dashboard-activity-item.success {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #a7f3d0;
+}
+
+.tenant-dashboard-activity-item.info {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-color: #93c5fd;
+}
+
+.tenant-dashboard-activity-item.warning {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #fcd34d;
+}
+
+.tenant-dashboard-activity-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  margin-right: 1rem;
+  margin-top: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.tenant-dashboard-activity-dot.success {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.tenant-dashboard-activity-dot.info {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.tenant-dashboard-activity-dot.warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.tenant-dashboard-activity-content {
+  flex: 1;
+}
+
+.tenant-dashboard-activity-title {
+  font-weight: 700;
+  color: #1f2937;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.tenant-dashboard-activity-description {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.tenant-dashboard-activity-description.success { color: #065f46; }
+.tenant-dashboard-activity-description.info { color: #1e40af; }
+.tenant-dashboard-activity-description.warning { color: #92400e; }
+
+.tenant-dashboard-activity-time {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Alert Cards */
+.tenant-dashboard-alert {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.tenant-dashboard-alert.warning {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-left-color: #f59e0b;
+}
+
+.tenant-dashboard-alert.success {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-left-color: #10b981;
+}
+
+.tenant-dashboard-alert.info {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-left-color: #3b82f6;
+}
+
+.tenant-dashboard-alert-icon {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  margin-right: 1rem;
+}
+
+.tenant-dashboard-alert-icon.warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.tenant-dashboard-alert-icon.success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.tenant-dashboard-alert-icon.info {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.tenant-dashboard-alert-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: white;
+}
+
+.tenant-dashboard-alert-content h4 {
+  font-weight: 700;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.tenant-dashboard-alert-content.warning h4 { color: #92400e; }
+.tenant-dashboard-alert-content.success h4 { color: #065f46; }
+.tenant-dashboard-alert-content.info h4 { color: #1e40af; }
+
+.tenant-dashboard-alert-content p {
+  font-size: 0.75rem;
+}
+
+.tenant-dashboard-alert-content.warning p { color: #a16207; }
+.tenant-dashboard-alert-content.success p { color: #047857; }
+.tenant-dashboard-alert-content.info p { color: #1d4ed8; }
+
+/* ===========================================
+   ⚡ CLICKABLE INTERACTIVE ELEMENTS
+   ========================================= */
+
+/* Clickable activity items */
+.tenant-dashboard-activity-item.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.tenant-dashboard-activity-item.clickable:hover {
+  transform: translateX(4px);
+  background-color: rgba(59, 130, 246, 0.05);
+  border-left: 3px solid #3b82f6;
+  padding-left: calc(1rem - 3px);
+}
+
+.tenant-dashboard-activity-item.clickable:active {
+  transform: translateX(2px);
+}
+
+.tenant-dashboard-activity-item.clickable:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
+/* Clickable alert/task items */
+.tenant-dashboard-alert.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.tenant-dashboard-alert.clickable:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tenant-dashboard-alert.clickable:active {
+  transform: scale(1.01);
+}
+
+.tenant-dashboard-alert.clickable:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
+/* Enhanced clickable metric cards */
+.tenant-dashboard-metric-card.clickable {
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.tenant-dashboard-metric-card.clickable:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.tenant-dashboard-metric-card.clickable:active {
+  transform: translateY(-2px) scale(1.01);
+  transition-duration: 0.1s;
+}
+
+.tenant-dashboard-metric-card.clickable:focus {
+  outline: 3px solid #3b82f6;
+  outline-offset: 3px;
+}
+
+/* Business management action buttons enhanced interactivity */
+.tenant-dashboard-action-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.tenant-dashboard-action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.tenant-dashboard-action-button:active {
+  transform: translateY(0);
+}
+
+/* Visual feedback for interactive elements */
+.clickable::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(59, 130, 246, 0), rgba(59, 130, 246, 0.02));
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  pointer-events: none;
+}
+
+.clickable:hover::before {
+  opacity: 1;
+}
+
+/* 
+  ===========================================
+  🎯 GM COMMAND CENTER ENHANCEMENTS V2
+  ===========================================
+  Updated: Horizontal metrics layout like leads/deals pages
+*/
+
+/* GM Metrics Section */
+.gm-metrics-section {
+  margin-bottom: 2rem;
+}
+
+/* GM Metrics Header - Simplified */
+.gm-metrics-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0 0.5rem;
+}
+
+.gm-metrics-customize-btn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.gm-metrics-customize-btn:hover {
+  background: #e2e8f0;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+/* Horizontal Metrics Layout - Updated for Grid */
+.gm-metrics-horizontal {
+  display: block;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+/* Remove horizontal scroll styles as we're using grid now */
+
+/* Grid-based metric cards */
+
+.gm-metric-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  width: 100%;
+  flex-shrink: 0;
+  flex-grow: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gm-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
+}
+
+.gm-metric-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.gm-metric-icon {
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gm-metric-icon.revenue { background: rgba(34, 197, 94, 0.1); color: #059669; }
+.gm-metric-icon.performance { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.gm-metric-icon.response { background: rgba(168, 85, 247, 0.1); color: #8b5cf6; }
+.gm-metric-icon.leads { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.gm-metric-icon.finance { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+
+.gm-metric-info {
+  flex: 1;
+}
+
+.gm-metric-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  margin-bottom: 0.25rem;
+}
+
+.gm-metric-value {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.gm-metric-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.gm-metric-trend.positive { color: #059669; }
+.gm-metric-trend.neutral { color: #d97706; }
+.gm-metric-trend.negative { color: #dc2626; }
+
+.gm-metric-status {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.gm-metric-status.excellent { color: #059669; }
+.gm-metric-status.good { color: #d97706; }
+.gm-metric-status.needs-attention { color: #dc2626; }
+.gm-metric-status.positive { color: #059669; }
+.gm-metric-status.neutral { color: #6b7280; }
+
+.gm-metric-progress {
+  background: #f3f4f6;
+  border-radius: 0.25rem;
+  height: 0.5rem;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+/* Virtual GM Section - Full Width */
+.virtual-gm-section {
+  margin-bottom: 2rem;
+}
+
+.virtual-gm-assistant {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  color: white;
+  box-shadow: 0 4px 20px rgba(30, 41, 59, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.virtual-gm-header {
+  margin-bottom: 1rem;
+}
+
+.virtual-gm-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.virtual-gm-subtitle {
+  font-size: 0.875rem;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.virtual-gm-briefing {
+  margin-bottom: 1.5rem;
+}
+
+.virtual-gm-briefing h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #e2e8f0;
+}
+
+.gm-alert {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  border-left: 4px solid;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.gm-alert.priority-high {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.gm-alert.priority-medium {
+  border-left-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.gm-alert.priority-low {
+  border-left-color: #06b6d4;
+  background: rgba(6, 182, 212, 0.1);
+}
+
+.gm-alert.priority-success {
+  border-left-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.gm-alert.priority-critical {
+  border-left-color: #dc2626;
+  background: rgba(220, 38, 38, 0.15);
+  animation: pulse 2s infinite;
+}
+
+.gm-alert.priority-opportunity {
+  border-left-color: #0ea5e9;
+  background: rgba(14, 165, 233, 0.1);
+}
+
+.gm-alert.priority-neutral {
+  border-left-color: #64748b;
+  background: rgba(100, 116, 139, 0.1);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.gm-briefing-alerts {
+  space-y: 0.5rem;
+}
+
+.alert-message {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.alert-action {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  font-style: italic;
+}
+
+.virtual-gm-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.gm-action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: white;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 120px;
+}
+
+.gm-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Metrics Customization Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.metrics-modal {
+  background: white;
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: #374151;
+}
+
+.modal-content {
+  padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.modal-description {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.metrics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.metric-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease;
+}
+
+.metric-option:hover {
+  background-color: #f9fafb;
+}
+
+.metric-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.metric-checkbox input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+.metric-checkbox input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.metric-label {
+  font-weight: 500;
+  color: #111827;
+  flex: 1;
+}
+
+.metric-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-left: 1.75rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  flex-shrink: 0;
+}
+
+.metrics-count {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.save-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.save-btn:hover {
+  background: #2563eb;
+}
+
+/* Mobile Navigation Bar */
+.mobile-nav-bar {
+  display: none; /* Hidden on desktop */
+  position: fixed;
+  top: 60px; /* Below header */
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  padding: 0.75rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-nav-actions {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mobile-nav-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  height: 60px;
+  padding: 0.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-nav-btn:hover {
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-nav-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-nav-icon {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+  line-height: 1;
+}
+
+/* Specific button colors */
+.mobile-nav-btn.leads {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-color: rgba(59, 130, 246, 0.2);
+  color: #1e40af;
+}
+
+.mobile-nav-btn.deals {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border-color: rgba(34, 197, 94, 0.2);
+  color: #15803d;
+}
+
+.mobile-nav-btn.inventory {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #a16207;
+}
+
+.mobile-nav-btn.calendar {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  border-color: rgba(99, 102, 241, 0.2);
+  color: #4338ca;
+}
+
+.mobile-nav-btn.collaboration {
+  background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+  border-color: rgba(236, 72, 153, 0.2);
+  color: #be185d;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .mobile-nav-bar {
+    display: block;
+  }
+  
+  .tenant-dashboard-content {
+    padding-top: 80px; /* Account for mobile nav */
+  }
+  .tenant-dashboard-metrics-grid {
+    gap: 1rem;
+  }
+  
+  .tenant-dashboard-metric-card {
+    width: 220px;
+    min-width: 220px;
+    padding: 1.5rem;
+  }
+  
+  .gm-metric-card {
+    padding: 1rem;
+  }
+  
+  .gm-metric-content {
+    align-items: center;
+  }
+  
+  .virtual-gm-actions {
+    flex-direction: column;
+  }
+  
+  .gm-action-btn {
+    min-width: auto;
+  }
+  
+  .metrics-modal {
+    width: 95%;
+    margin: 1rem;
+    max-height: 85vh;
+  }
+  
+  .modal-content {
+    padding: 1rem;
+  }
+  
+  .modal-header {
+    padding: 1rem;
+  }
+  
+  .modal-footer {
+    padding: 1rem;
+  }
+}
+/* Small mobile screens - smaller cards */
+@media (max-width: 480px) {
+  .tenant-dashboard-metric-card {
+    width: 180px;
+    min-width: 180px;
+    padding: 1rem;
+  }
+  
+  .mobile-nav-btn {
+    min-width: 55px;
+    height: 55px;
+    font-size: 0.7rem;
+  }
+  
+  .mobile-nav-icon {
+    font-size: 1.1rem;
+  }
+  
+  .mobile-nav-actions {
+    gap: 0.375rem;
+  }
+}
+
+/* 
+  ===========================================
+  📱 MOBILE FLOATING NAVIGATION INTEGRATION
+  ===========================================
+  Clean mobile layout with floating navigation
+*/
+
+/* Only affect tenant dashboard mobile layout */
+@media (max-width: 768px) {
+  /* Hide ALL navigation elements that would appear on mobile */
+  .tenant-dashboard-container .mobile-nav-bar,
+  .tenant-dashboard-container .mobile-nav-buttons,
+  .tenant-dashboard-container .sidebar,
+  .tenant-dashboard-container .desktop-sidebar,
+  .tenant-dashboard-container .traditional-nav {
+    display: none !important;
+  }
+  
+  /* Tenant dashboard specific mobile adjustments */
+  .tenant-dashboard-container {
+    padding: 0;
+    width: 100%;
+    margin: 0;
+  }
+  
+  .tenant-dashboard-content {
+    padding: 1rem 0.5rem;
+    margin: 0;
+    width: 100%;
+    /* Add bottom padding to prevent overlap with floating navigation */
+    padding-bottom: 100px;
+  }
+  
+  /* Adjust metrics grid for mobile within tenant dashboard */
+  .tenant-dashboard-container .tenant-dashboard-metrics-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0;
+    width: 100%;
+  }
+  
+  .tenant-dashboard-container .tenant-dashboard-metric-card {
+    width: 100%;
+    min-width: auto;
+    min-height: 80px;
+    padding: 1rem;
+    margin: 0;
+  }
+  
+  /* Improve section spacing on mobile */
+  .tenant-dashboard-container .tenant-dashboard-section {
+    margin-bottom: 1.5rem;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+  }
+  
+  .tenant-dashboard-container .tenant-dashboard-section-header {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .tenant-dashboard-container .tenant-dashboard-section-title {
+    font-size: 1.125rem;
+  }
+  
+  /* Adjust Virtual GM Briefing for mobile */
+  .tenant-dashboard-container .virtual-gm-briefing-container,
+  .tenant-dashboard-container .virtual-gm-section {
+    margin: 0.5rem 0;
+    border-radius: 0.75rem;
+    width: 100%;
+  }
+  
+  /* Ensure floating navigation is shown within tenant dashboard */
+  .tenant-dashboard-container .mobile-floating-nav {
+    display: block;
+  }
+  
+  /* Hide any remaining desktop elements */
+  .tenant-dashboard-container .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Tablet adjustments - scoped to tenant dashboard */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .tenant-dashboard-container .tenant-dashboard-metrics-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .tenant-dashboard-container .tenant-dashboard-metric-card {
+    flex: 1;
+    min-width: 250px;
+  }
+  
+  /* Hide floating navigation on tablet - keep desktop layout */
+  .tenant-dashboard-container .mobile-floating-nav {
+    display: none !important;
+  }
+}
+
+/* Desktop - ensure floating navigation is hidden within tenant dashboard */
+@media (min-width: 1025px) {
+  .tenant-dashboard-container .mobile-floating-nav {
+    display: none !important;
+  }
+  
+  .tenant-dashboard-container .mobile-nav-bar,
+  .tenant-dashboard-container .mobile-nav-buttons {
+    display: none !important;
+  }
+}
