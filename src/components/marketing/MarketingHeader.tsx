@@ -18,6 +18,9 @@ export default function MarketingHeader() {
     windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'server'
   });
 
+  // Test deployment to ghostcrm.dev - Development Branch
+  // Enhanced logo should be visible on development environment
+
   // During loading state, show desktop header to prevent flash
   if (isLoading) {
     return <DesktopHeader />;
