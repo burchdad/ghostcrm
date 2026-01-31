@@ -22,11 +22,10 @@ export default function HeroSection() {
     setIsOnSubdomain(onSubdomain);
     
     if (onSubdomain && subdomain) {
-      // Convert subdomain to company name (e.g., "burchmotors" -> "Burch Motors")
       formattedName = subdomain
-        .split(/(?=[A-Z])/) // Split on capital letters
+        .split(/(?=[A-Z])/)
         .join(' ')
-        .split(/[\s-_]+/) // Split on spaces, hyphens, underscores
+        .split(/[\s-_]+/)
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
       
@@ -41,11 +40,9 @@ export default function HeroSection() {
     });
   }, []);
 
-  // Subdomain (tenant) version
   if (isOnSubdomain) {
     return (
-      <>
-        <section className="hero-section">
+      <section className="hero-section">
         <div className="hero-container">
           <h1 className="hero-title">
             Welcome to{" "}
@@ -94,70 +91,12 @@ export default function HeroSection() {
             </div>
           </div>
         </div>
-
-        {/* Simplified dashboard preview for tenants */}
-        {isMounted && (
-          <div className="dashboard-preview-container">
-            <div className="dashboard-mockup">
-              <div className="browser-header">
-                <div className="browser-controls">
-                  <div className="browser-dot bg-red-500" />
-                  <div className="browser-dot bg-yellow-500" />
-                  <div className="browser-dot bg-green-500" />
-                </div>
-                <div className="browser-url">
-                  <span className="url-text">{companyName.toLowerCase().replace(/\s+/g, '')}.ghostcrm.com</span>
-                </div>
-              </div>
-
-              <div className="dashboard-content">
-                <div className="dashboard-grid">
-                  <div className="dashboard-card">
-                    <div className="dashboard-card-header">
-                      <h3 className="dashboard-card-title">Your Active Leads</h3>
-                      <div className="dashboard-card-icon bg-green-100">
-                        <TrendingUp className="w-5 h-5 text-green-600" />
-                      </div>
-                    </div>
-                    <div className="dashboard-card-value">Ready</div>
-                    <div className="dashboard-card-trend text-green-600">Login to view</div>
-                  </div>
-
-                  <div className="dashboard-card">
-                    <div className="dashboard-card-header">
-                      <h3 className="dashboard-card-title">Sales Pipeline</h3>
-                      <div className="dashboard-card-icon bg-blue-100">
-                        <BarChart3 className="w-5 h-5 text-blue-600" />
-                      </div>
-                    </div>
-                    <div className="dashboard-card-value">Waiting</div>
-                    <div className="dashboard-card-trend text-blue-600">Login to access</div>
-                  </div>
-
-                  <div className="dashboard-card">
-                    <div className="dashboard-card-header">
-                      <h3 className="dashboard-card-title">Today's Schedule</h3>
-                      <div className="dashboard-card-icon bg-purple-100">
-                        <Calendar className="w-5 h-5 text-purple-600" />
-                      </div>
-                    </div>
-                    <div className="dashboard-card-value">Available</div>
-                    <div className="dashboard-card-trend text-purple-600">Login to see</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        </section>
-      </>
+      </section>
     );
   }
 
-  // Main domain (marketing) version
   return (
-    <>
-      <section className="hero-section">
+    <section className="hero-section">
       <div className="hero-container">
         <h1 className="hero-title">
           Transform Your{" "}
@@ -199,70 +138,14 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* Interactive Dashboard Preview */}
-      {isMounted && (
-        <div className="dashboard-preview-container">
-          <div className="dashboard-mockup">
-            <div className="browser-header">
-              <div className="browser-controls">
-                <div className="browser-dot bg-red-500" />
-                <div className="browser-dot bg-yellow-500" />
-                <div className="browser-dot bg-green-500" />
-              </div>
-              <div className="browser-url">
-                <span className="url-text">ghostcrm.com/dashboard</span>
-              </div>
-            </div>
-
-            <div className="dashboard-content">
-              <div className="dashboard-grid">
-                <div className="dashboard-card">
-                  <div className="dashboard-card-header">
-                    <h3 className="dashboard-card-title">Total Leads</h3>
-                    <div className="dashboard-card-icon bg-green-100">
-                      <TrendingUp className="w-5 h-5 text-green-600" />
-                    </div>
-                  </div>
-                  <div className="dashboard-card-value">1,247</div>
-                  <div className="dashboard-card-trend text-green-600">↗ +12% this month</div>
-                </div>
-
-                <div className="dashboard-card">
-                  <div className="dashboard-card-header">
-                    <h3 className="dashboard-card-title">Sales Pipeline</h3>
-                    <div className="dashboard-card-icon bg-blue-100">
-                      <BarChart3 className="w-5 h-5 text-blue-600" />
-                    </div>
-                  </div>
-                  <div className="dashboard-card-value">$487K</div>
-                  <div className="dashboard-card-trend text-blue-600">↗ +28% this month</div>
-                </div>
-
-                <div className="dashboard-card">
-                  <div className="dashboard-card-header">
-                    <h3 className="dashboard-card-title">Appointments</h3>
-                    <div className="dashboard-card-icon bg-purple-100">
-                      <Calendar className="w-5 h-5 text-purple-600" />
-                    </div>
-                  </div>
-                  <div className="dashboard-card-value">23</div>
-                  <div className="dashboard-card-trend text-purple-600">↗ Today</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Scroll Indicator */}
-        <div className="scroll-indicator">
-          <div className="scroll-indicator-content">
-            <span className="scroll-text">Scroll to explore</span>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="scroll-icon">
-              <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
+      <div className="scroll-indicator">
+        <div className="scroll-indicator-content">
+          <span className="scroll-text">Scroll to explore</span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="scroll-icon">
+            <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }
