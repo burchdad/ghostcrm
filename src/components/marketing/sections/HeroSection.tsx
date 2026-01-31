@@ -51,10 +51,10 @@ export default function HeroSection() {
             <span className="hero-gradient-text">
               {companyName}
             </span>
-            <div className="hero-subtitle">
-              Access your dealership's CRM dashboard to manage leads, track sales, and connect with customers.
-            </div>
           </h1>
+          <div className="hero-subtitle">
+            Access your dealership's CRM dashboard to manage leads, track sales, and connect with customers.
+          </div>
 
           <div className="hero-cta-group">
             <Link
@@ -160,10 +160,10 @@ export default function HeroSection() {
           <span className="hero-gradient-text">
             Automotive Sales
           </span>
-          <div className="hero-subtitle">
-            Streamline your dealership operations, boost sales by 40%, and deliver exceptional customer experiences with Ghost CRM.
-          </div>
         </h1>
+        <div className="hero-subtitle">
+          Streamline your dealership operations, boost sales by 40%, and deliver exceptional customer experiences with Ghost CRM.
+        </div>
 
         <div className="hero-cta-group">
           <Link
