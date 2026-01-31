@@ -104,12 +104,6 @@ export default function MarketingHeader() {
               fontSize: '1.5rem',
               fontWeight: '800',
               color: isScrolled ? '#8b5cf6' : '#ffffff',
-              background: isScrolled 
-                ? 'linear-gradient(135deg, #8b5cf6, #3b82f6)'
-                : 'linear-gradient(135deg, #ffffff, #e2e8f0)',
-              WebkitBackgroundClip: 'text',
-              backgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
               transition: 'all 0.3s ease',
               letterSpacing: '-0.5px'
             }}>
@@ -120,12 +114,6 @@ export default function MarketingHeader() {
               fontSize: '1.25rem',
               fontWeight: '800',
               color: isScrolled ? '#8b5cf6' : '#ffffff',
-              background: isScrolled 
-                ? 'linear-gradient(135deg, #8b5cf6, #3b82f6)'
-                : 'linear-gradient(135deg, #ffffff, #e2e8f0)',
-              WebkitBackgroundClip: 'text',
-              backgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
               transition: 'all 0.3s ease',
               letterSpacing: '-0.25px'
             }}>
