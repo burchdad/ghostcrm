@@ -109,7 +109,6 @@ export default function DesktopHeader() {
               transition: 'all 0.3s ease',
               backdropFilter: 'blur(10px)'
             }}>
-              <Crown style={{ width: '1rem', height: '1rem' }} />
               Features
             </Link>
 
