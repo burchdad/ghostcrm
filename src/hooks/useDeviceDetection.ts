@@ -21,6 +21,13 @@ export function useDeviceDetection() {
       }
       
       setIsLoading(false);
+      
+      // Debug logging
+      console.log('🔍 [Device Detection]:', {
+        width,
+        deviceType: width < 768 ? 'mobile' : width < 1024 ? 'tablet' : 'desktop',
+        timestamp: new Date().toISOString()
+      });
     };
 
     // Initial detection
