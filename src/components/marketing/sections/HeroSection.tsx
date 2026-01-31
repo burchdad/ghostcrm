@@ -8,11 +8,6 @@ import { isSubdomain, extractSubdomain } from '@/lib/utils/environment';
 export default function HeroSection() {
   const [isOnSubdomain, setIsOnSubdomain] = useState(false);
   const [companyName, setCompanyName] = useState('');
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     const onSubdomain = isSubdomain();
@@ -31,13 +26,6 @@ export default function HeroSection() {
       
       setCompanyName(formattedName);
     }
-
-    console.log('🏠 [HeroSection] Domain check:', {
-      hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
-      isSubdomain: onSubdomain,
-      subdomain,
-      companyName: formattedName
-    });
   }, []);
 
   if (isOnSubdomain) {

@@ -12,12 +12,7 @@ export default function MarketingHeader() {
   const [showContactSales, setShowContactSales] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showStaffLogin, setShowStaffLogin] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,7 +37,6 @@ export default function MarketingHeader() {
   return (
     <>
       <nav
-        data-mounted={isMounted}
         style={{
           position: 'fixed',
           top: 0,
@@ -56,10 +50,7 @@ export default function MarketingHeader() {
           borderBottom: isScrolled 
             ? '1px solid rgba(139, 92, 246, 0.2)' 
             : '1px solid rgba(255, 255, 255, 0.1)',
-          transition: 'all 0.3s ease',
-          animation: isMounted ? 'slideDown 0.4s ease-out' : 'none',
-          opacity: isMounted ? 1 : 0,
-          transform: isMounted ? 'translateY(0)' : 'translateY(-20px)'
+          transition: 'all 0.3s ease'
         }}>
         <div style={{
           maxWidth: '80rem',
