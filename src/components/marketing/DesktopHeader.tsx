@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { LogIn, Home, Play, CreditCard } from "lucide-react";
+import { LogIn, Home, Play, CreditCard, Crown } from "lucide-react";
 import { usePathname } from 'next/navigation';
 import ContactSalesModal from "@/components/modals/ContactSalesModal";
 import { isSubdomain } from '@/lib/utils/environment';
