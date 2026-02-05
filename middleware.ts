@@ -122,7 +122,7 @@ async function handleSubdomainRouting(
   }
 
   // 🚨 FIX 2: Check public paths BEFORE doing DB lookup
-  const publicPaths = ["/login", "/register", "/about", "/pricing", "/tenant-not-found", "/verify-email"];
+  const publicPaths = ["/login", "/register", "/about", "/marketing/pricing", "/tenant-not-found", "/verify-email"];
   if (publicPaths.some(p => pathname === p || pathname.startsWith(p + "/"))) {
     debugLog('📖 [MIDDLEWARE] Public tenant path - allowing access');
     return response;

@@ -16,7 +16,7 @@ export const AUTH_PUBLIC_PATHS = [
 ] as const;
 
 export const MARKETING_PUBLIC_PATHS = [
-  '/pricing',
+  '/marketing/pricing',
   '/features', 
   '/demo',
   '/terms',

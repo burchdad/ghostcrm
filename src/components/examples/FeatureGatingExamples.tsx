@@ -52,7 +52,7 @@ export function BasicFeatureExample({ tenantId }: ExampleComponentProps) {
           <UpgradePrompt 
             featureId="ai_insights"
             requiredPlan="Professional"
-            onUpgradeClick={() => window.location.href = '/pricing'}
+            onUpgradeClick={() => window.location.href = '/marketing/pricing'}
           />
         }
       >
@@ -139,7 +139,7 @@ export function UsageLimitExample({ tenantId }: ExampleComponentProps) {
         limitReachedComponent={
           <UpgradePrompt 
             customMessage="You've reached your contact limit. Upgrade to add more contacts."
-            onUpgradeClick={() => window.location.href = '/pricing'}
+            onUpgradeClick={() => window.location.href = '/marketing/pricing'}
           />
         }
       >

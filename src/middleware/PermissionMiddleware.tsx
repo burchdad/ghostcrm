@@ -338,7 +338,7 @@ export function RouteGuard({ children, fallbackComponent: FallbackComponent }: P
     '/login-salesrep',   // sales rep role-specific login
     '/owner/login',  // software owner login
     '/marketing',    // marketing section root
-    '/pricing',      // public pricing page  
+    '/marketing/pricing',      // public pricing page  
     '/features',     // public features page
     '/demo',         // free demo landing
     '/inventory/qr-vehicle-profile', // Public QR vehicle profiles

@@ -114,7 +114,7 @@ export default function DesktopHeader() {
             </Link>
 
             {/* Pricing Link (show on home and other pages, but not pricing) */}
-            {pathname !== '/pricing' && pathname !== '/marketing/pricing' && (
+            {pathname !== '/marketing/pricing' && (
               <Link href="/marketing/pricing" style={{
                 display: 'flex',
                 alignItems: 'center',

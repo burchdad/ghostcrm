@@ -68,7 +68,7 @@ export class FeatureAccessControl {
       return {
         hasAccess: false,
         reason: 'not_subscribed',
-        upgradeUrl: '/pricing'
+        upgradeUrl: '/marketing/pricing'
       };
     }
 
@@ -100,7 +100,7 @@ export class FeatureAccessControl {
     return {
       hasAccess: false,
       reason: 'plan_required',
-      upgradeUrl: '/pricing'
+      upgradeUrl: '/marketing/pricing'
     };
   }
 
@@ -129,7 +129,7 @@ export class FeatureAccessControl {
         reason: 'limit_exceeded',
         currentUsage: usage,
         limit: limit,
-        upgradeUrl: '/pricing'
+        upgradeUrl: '/marketing/pricing'
       };
     }
 

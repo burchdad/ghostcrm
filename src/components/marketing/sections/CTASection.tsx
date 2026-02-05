@@ -19,7 +19,7 @@ export default function CTASection() {
               Start Free Trial
               <ArrowRight className="cta-icon" />
             </Link>
-            <Link href="/pricing" className="cta-secondary">
+            <Link href="/marketing/pricing" className="cta-secondary">
               View Pricing
             </Link>
           </div>

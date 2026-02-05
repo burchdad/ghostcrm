@@ -185,7 +185,7 @@ export default function MobileHeader() {
               </Link>
               
               {/* Pricing Link */}
-              {pathname !== '/pricing' && pathname !== '/marketing/pricing' && (
+              {pathname !== '/marketing/pricing' && (
                 <Link 
                   href="/marketing/pricing" 
                   style={{
