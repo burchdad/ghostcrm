@@ -1,0 +1,200 @@
+/* Mobile Navigation Floating Buttons Styles */
+
+/* Floating Navigation Buttons */
+.floating-nav-buttons {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Category Button Base */
+.floating-category-btn {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+.floating-category-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.floating-category-btn.active {
+  transform: scale(1.1);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+}
+
+/* Dropdown Menu */
+.floating-dropdown {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 0.75rem;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  padding: 0.75rem 0.25rem;
+  min-width: 12rem;
+  max-height: 20rem;
+  overflow-y: auto;
+  backdrop-filter: blur(20px);
+  animation: dropdown-appear 0.2s ease-out;
+}
+
+@keyframes dropdown-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Dropdown Header */
+.floating-dropdown-header {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 0.5rem;
+}
+
+.floating-dropdown-header h3 {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Dropdown Items */
+.floating-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  margin: 0 0.5rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.floating-dropdown-item:hover {
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+.floating-dropdown-item.active {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.floating-dropdown-item.disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.floating-dropdown-item svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+/* Coming Soon Badge */
+.coming-soon-badge {
+  font-size: 0.75rem;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  margin-left: auto;
+}
+
+/* Backdrop */
+.floating-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
+  z-index: 40;
+  animation: backdrop-appear 0.2s ease-out;
+}
+
+@keyframes backdrop-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Color Classes */
+.bg-purple-500 { background-color: #8b5cf6; }
+.bg-blue-500 { background-color: #3b82f6; }
+.bg-green-500 { background-color: #10b981; }
+.bg-orange-500 { background-color: #f97316; }
+.bg-indigo-500 { background-color: #6366f1; }
+.bg-pink-500 { background-color: #ec4899; }
+
+/* Touch Enhancements */
+@media (pointer: coarse) {
+  .floating-category-btn {
+    width: 3.75rem;
+    height: 3.75rem;
+  }
+  
+  .floating-dropdown-item {
+    padding: 1rem 0.75rem;
+    min-height: 2.75rem;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .floating-category-btn,
+  .floating-dropdown-item {
+    transition: none;
+  }
+  
+  .floating-dropdown {
+    animation: none;
+  }
+  
+  .floating-backdrop {
+    animation: none;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .floating-category-btn {
+    border: 2px solid white;
+  }
+  
+  .floating-dropdown {
+    border: 2px solid #000;
+  }
+  
+  .floating-dropdown-item.active {
+    background-color: #000;
+    color: #fff;
+  }
+}

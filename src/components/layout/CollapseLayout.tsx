@@ -4,6 +4,7 @@ import React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import UnifiedToolbar from "@/components/navigation/UnifiedToolbar";
 import Sidebar from "@/components/layout/Sidebar";
+import FloatingNavButtons from "@/components/navigation/FloatingNavButtons";
 
 // Safe auth hook that handles missing context gracefully
 function useSafeAuth() {
@@ -19,11 +20,23 @@ function useSafeAuth() {
 export default function CollapseLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = React.useState(false);
   const [expandedMode, setExpandedMode] = React.useState<"video" | "whiteboard" | "documents" | null>(null);
+  const [isMobile, setIsMobile] = React.useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useSafeAuth();
   
   React.useEffect(() => { setMounted(true); }, []);
+
+  // Check for mobile screen size
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Check if we're on the landing page
   const isLandingPage = pathname === "/";
@@ -80,9 +93,9 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
       {/* Unified Toolbar - combines Topbar + Ribbon */}
       <UnifiedToolbar />
 
-      {/* Left Sidebar (CRM Navigation) */}
+      {/* Left Sidebar (CRM Navigation) - Hidden on mobile */}
       <aside
-        className="fixed left-0 bottom-0 z-30 themed-bg-primary shadow-lg border-r themed-border overflow-hidden"
+        className={`fixed left-0 bottom-0 z-30 themed-bg-primary shadow-lg border-r themed-border overflow-hidden ${isMobile ? 'hidden' : 'block'}`}
         style={{
           top: "var(--unified-toolbar-h, 64px)",
           width: `${sidebarWidth}px`,
@@ -142,19 +155,22 @@ export default function CollapseLayout({ children }: { children: React.ReactNode
         </div>
       )}
 
-      {/* Main content (no right sidebar, now using global floating collaboration button) */}
+      {/* Main content (responsive padding for mobile/desktop) */}
       <main 
         className="main-content themed-bg-tertiary"
         style={{ 
           paddingTop: "calc(var(--unified-toolbar-h, 64px) + 10px)",
-          paddingLeft: `${sidebarWidth + 16}px`,
-          paddingRight: expandedMode ? "16px" : "16px", // No collaboration sidebar padding needed
+          paddingLeft: isMobile ? "16px" : `${sidebarWidth + 16}px`,
+          paddingRight: expandedMode ? "16px" : "16px",
           minHeight: "calc(100vh - var(--unified-toolbar-h, 64px))",
-          paddingBottom: "40px", // Extra space at bottom
+          paddingBottom: isMobile ? "100px" : "40px", // Extra space on mobile for floating buttons
         }}
       >
         <div className="max-w-screen-2xl mx-auto px-6 py-6">{children}</div>
       </main>
+
+      {/* Floating Navigation Buttons (Mobile Only) */}
+      <FloatingNavButtons />
     </div>
   );
 }
