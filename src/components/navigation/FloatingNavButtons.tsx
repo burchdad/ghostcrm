@@ -188,11 +188,32 @@ export default function FloatingNavButtons({ className = "" }: FloatingNavButton
   const categories = getNavCategories();
 
   const handleCategoryClick = (categoryId: string) => {
-    setOpenCategory(openCategory === categoryId ? null : categoryId);
+    // Accordion behavior: close the current category if it's already open,
+    // otherwise close any open category and open the clicked one
+    if (openCategory === categoryId) {
+      setOpenCategory(null); // Close if clicking the same category
+    } else {
+      // Small delay to allow previous dropdown to start closing before opening new one
+      if (openCategory) {
+        setOpenCategory(null);
+        setTimeout(() => setOpenCategory(categoryId), 100);
+      } else {
+        setOpenCategory(categoryId); // Open immediately if no category is open
+      }
+    }
   };
 
   const handleBackdropClick = () => {
     setOpenCategory(null);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent, categoryId: string) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleCategoryClick(categoryId);
+    } else if (event.key === 'Escape') {
+      setOpenCategory(null);
+    }
   };
 
   return (
@@ -260,10 +281,17 @@ export default function FloatingNavButtons({ className = "" }: FloatingNavButton
               {/* Category Button */}
               <button
                 onClick={() => handleCategoryClick(category.id)}
+                onKeyDown={(e) => handleKeyDown(e, category.id)}
                 className={`floating-category-btn ${category.color} ${isOpen ? 'active' : ''}`}
-                aria-label={`Open ${category.name} menu`}
+                aria-label={`Open ${category.name} menu (${category.items.filter(item => item.enabled).length} items)`}
+                aria-expanded={isOpen}
+                tabIndex={0}
               >
                 <Icon className="w-6 h-6" />
+                {/* Item count badge */}
+                <span className="category-badge" aria-hidden="true">
+                  {category.items.filter(item => item.enabled).length}
+                </span>
               </button>
             </div>
           );
