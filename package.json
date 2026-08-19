@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "check": "npm run type-check",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",

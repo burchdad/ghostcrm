@@ -636,6 +636,24 @@ export default function Leads() {
           </div>
         </div>
 
+        <div
+          className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900"
+          aria-label="Mission Control discovery handoff"
+        >
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div className="font-semibold">Mission Control discovery lead</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-blue-700">
+              whr_1787163452384_813e9e2edb67
+            </div>
+          </div>
+          <p className="mt-1 text-blue-800">
+            Codex QA Integration Lead 20260819181650 is sales-ready and needs discovery for GhostCRM website lead generation.
+          </p>
+          <p className="mt-1 text-blue-700">
+            Route to the GhostCRM canonical client and track next action in Mission Control.
+          </p>
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-4 mb-4 w-full">
           <div className="relative flex-1 max-w-none">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
